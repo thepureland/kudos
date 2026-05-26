@@ -6,33 +6,33 @@ import java.beans.Transient
 
 
 /**
- * 基础系统菜单树结点响应VO
+ * Base system menu tree node response VO
  *
  * @author K
  * @since 1.0.0
  */
 open class BaseMenuTreeNode: IJsonResult, ITreeNode<String>, Comparable<BaseMenuTreeNode> {
 
-    /** 名称，或其国际化key */
+    /** Name, or its i18n key */
     var title: String? = null
 
     /** id */
     var id: String? = null
 
-    /** 父id */
+    /** Parent id */
     @get:Transient
     var parentId: String? = null
 
-    /** 在同父节点下的排序号 */
+    /** Order number among siblings under the same parent */
     @get:Transient
     var seqNo: Int? = null
 
 
-    /** 孩子结点 */
+    /** Child nodes */
 //    @get:JsonInclude(JsonInclude.Include.NON_EMPTY) //TODO
     var children = mutableListOf<ITreeNode<String>>()
 
-    override fun _getId(): String = requireNotNull(id) { "BaseMenuTreeNode.id 不能为空" }
+    override fun _getId(): String = requireNotNull(id) { "BaseMenuTreeNode.id must not be null" }
 
     override fun _getParentId(): String? = parentId
 

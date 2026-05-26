@@ -8,55 +8,55 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 系统数据库表-实体关联对象
+ * System table-entity binding object.
  *
  * @author K
  * @since 1.0.0
  */
 object SysSystems : Table<SysSystem>("sys_system") {
 
-    /** 编码 */
+    /** Code */
     var code = varchar("code").bindTo { it.code }
 
-    /** 名称 */
+    /** Name */
     var name = varchar("name").bindTo { it.name }
 
-    /** 是否子系统 */
+    /** Whether it is a sub-system */
     var subSystem = boolean("sub_system").bindTo { it.subSystem }
 
-    /** 父系统编号 */
+    /** Parent system code */
     var parentCode = varchar("parent_code").bindTo { it.parentCode }
 
-    /** 备注 */
+    /** Remark */
     var remark = varchar("remark").bindTo { it.remark }
 
-    /** 是否启用 */
+    /** Whether enabled */
     var active = boolean("active").bindTo { it.active }
 
-    /** 是否内置 */
+    /** Whether built-in */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
 
-    /** 创建者id */
+    /** Creator id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 创建者名称 */
+    /** Creator name */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 创建时间 */
+    /** Created time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新者id */
+    /** Updater id */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 更新者名称 */
+    /** Updater name */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 更新时间 */
+    /** Updated time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 
 
-    /** 主键别名 */
+    /** Primary key alias */
     var id = code.primaryKey()
 
 

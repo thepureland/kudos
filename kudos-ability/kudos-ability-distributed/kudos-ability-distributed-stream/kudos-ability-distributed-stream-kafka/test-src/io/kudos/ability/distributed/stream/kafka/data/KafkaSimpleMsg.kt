@@ -3,7 +3,7 @@ package io.kudos.ability.distributed.stream.kafka.data
 import java.io.Serializable
 
 /**
- * kafka测试简单消息封装
+ * Simple message wrapper used in Kafka tests.
  *
  * @author shane
  * @author K

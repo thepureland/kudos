@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 机构客户端代理接口
+ * Organization client proxy interface.
  *
  * @author K
  * @author AI: Cursor

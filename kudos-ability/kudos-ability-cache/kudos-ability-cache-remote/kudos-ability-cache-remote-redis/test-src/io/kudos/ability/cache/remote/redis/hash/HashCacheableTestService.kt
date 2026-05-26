@@ -56,7 +56,8 @@ open class HashCacheableTestService {
         key = "#id",
         entityClass = TestRow::class,
         unless = "#result == null",
-        // 所有可以用來篩選的副屬性，因回寫緩存時要順帶維護其索引，所以同一緩存各方法中須保持一致的定義！！！
+        // All secondary properties usable for filtering. Their indexes are maintained alongside writes,
+        // so every method targeting the same cache MUST keep this list consistent!!!
         filterableProperties = ["type", "status"]
     )
     open fun getTestRowById(id: String): TestRow? {
@@ -67,7 +68,8 @@ open class HashCacheableTestService {
     @HashBatchCacheableByPrimary(
         cacheNames = ["testHash"],
         entityClass = TestRow::class,
-        // 所有可以用來篩選的副屬性，因回寫緩存時要順帶維護其索引，所以同一緩存各方法中須保持一致的定義！！！
+        // All secondary properties usable for filtering. Their indexes are maintained alongside writes,
+        // so every method targeting the same cache MUST keep this list consistent!!!
         filterableProperties = ["type", "status"]
     )
     open fun getTestRowsByIds(ids: List<String>): Map<String, TestRow?> {
@@ -79,7 +81,8 @@ open class HashCacheableTestService {
         cacheNames = ["testHash"],
         filterExpressions = ["#type"],
         entityClass = TestRow::class,
-        // 所有可以用來篩選的副屬性，因回寫緩存時要順帶維護其索引，所以同一緩存各方法中須保持一致的定義！！！
+        // All secondary properties usable for filtering. Their indexes are maintained alongside writes,
+        // so every method targeting the same cache MUST keep this list consistent!!!
         filterableProperties = ["type", "status"]
     )
     open fun listTestRowsByType(type: Int): List<TestRow> {
@@ -91,7 +94,8 @@ open class HashCacheableTestService {
         cacheNames = ["testHash"],
         filterExpressions = ["#type", "#status"],
         entityClass = TestRow::class,
-        // 所有可以用來篩選的副屬性，因回寫緩存時要順帶維護其索引，所以同一緩存各方法中須保持一致的定義！！！
+        // All secondary properties usable for filtering. Their indexes are maintained alongside writes,
+        // so every method targeting the same cache MUST keep this list consistent!!!
         filterableProperties = ["type", "status"]
     )
     open fun listTestRowsByTypeAndStatus(type: Int, status: Int): List<TestRow> {

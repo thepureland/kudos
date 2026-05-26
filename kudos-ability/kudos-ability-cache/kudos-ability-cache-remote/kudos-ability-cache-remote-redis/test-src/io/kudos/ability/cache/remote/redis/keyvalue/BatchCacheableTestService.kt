@@ -8,7 +8,7 @@ import java.io.Serializable
 import java.time.LocalDateTime
 
 /**
- * 批量缓存测试模拟服务。
+ * Mock service for batch cache tests.
  *
  * @author K
  * @author AI: Codex
@@ -30,8 +30,8 @@ open class BatchCacheableTestService {
 
     @Cacheable(key = "#module.concat('::').concat(#age).concat('::').concat(#name).concat('::').concat(#type)")
     open fun load(module: String, age: Int, name: String, active: Boolean, type: Int): List<TestCacheObject> {
-        log.debug("单条加载数据，参数：$module, $age, $name, $type")
-        Thread.sleep(1000) // 模拟耗时的io操作
+        log.debug("Single load; params: $module, $age, $name, $type")
+        Thread.sleep(1000) // simulate a slow I/O operation
         val data = allData.filter { it.module == module && it.age == age && it.name == name && it.type == type }
         val result = mutableListOf<TestCacheObject>()
         val now = LocalDateTime.now()
@@ -47,8 +47,8 @@ open class BatchCacheableTestService {
     open fun batchLoad(
         module: String, ages: List<Int>, names: Array<String>, active: Boolean, type: Int
     ): Map<String, List<TestCacheObject>> {
-        log.debug("批量加载数据，参数：$module, $ages, ${names.toList()}, $type")
-        Thread.sleep(1000) // 模拟耗时的io操作
+        log.debug("Batch load; params: $module, $ages, ${names.toList()}, $type")
+        Thread.sleep(1000) // simulate a slow I/O operation
         val list = allData.filter { it.module == module && it.age in ages && it.name in names && it.type == type }
         val result = linkedMapOf<String, List<TestCacheObject>>()
         val now = LocalDateTime.now()
@@ -61,7 +61,7 @@ open class BatchCacheableTestService {
     }
 
     /**
-     * 批量缓存测试值对象。
+     * Value object used by batch cache tests.
      *
      * @author K
      * @author AI: Codex

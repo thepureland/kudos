@@ -19,15 +19,15 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 机构 Hash 缓存处理器
+ * Organization Hash cache handler.
  *
- * 数据来源表：user_org；主键为 id，缓存的 key 即 id，value 为 [UserOrgCacheEntry]。
- * 使用 Hash 结构存储，支持按 id 存取、按 tenantId 二级索引查询。
+ * Source table: user_org; primary key is id. The cache key is id and the value is [UserOrgCacheEntry].
+ * Stored as a Hash, supporting get-by-id and a secondary index by tenantId.
  *
- * - 按 id：getOrgById、getOrgsByIds（等价原 OrgByIdCache，含 active=false）
- * - 按租户：getOrgsByTenantId、getOrgIdsByTenantId
+ * - By id: getOrgById, getOrgsByIds (equivalent to the legacy OrgByIdCache, including active=false)
+ * - By tenant: getOrgsByTenantId, getOrgIdsByTenantId
  *
- * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
+ * Before use, add an entry named [CACHE_NAME] with hash=true in the sys_cache config table.
  *
  * @author K
  * @since 1.0.0
@@ -43,7 +43,7 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
     companion object {
         const val CACHE_NAME = "USER_ORG__HASH"
 
-        /** 可筛选副属性：按 tenantId 索引，用于按租户查询 */
+        /** Filterable secondary properties: indexed by tenantId for tenant-scoped queries. */
         val FILTERABLE_PROPERTIES = setOf(
             UserOrgCacheEntry::tenantId.name,
         )
@@ -58,10 +58,10 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
     override fun doReload(id: Any): UserOrgCacheEntry? = userOrgDao.getAs(id.toString())
 
     /**
-     * 根据 id 从缓存获取机构，未命中则查库并回写。
+     * Get an organization from the cache by id; on miss, load from DB and write back.
      *
-     * @param id 机构 id（主键），非空
-     * @return 机构缓存项，不存在时 null
+     * @param id organization id (primary key), non-blank
+     * @return cache entry, or null if not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -71,15 +71,15 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
         filterableProperties = ["tenantId"]
     )
     open fun getOrgById(id: String): UserOrgCacheEntry? {
-        require(id.isNotBlank()) { "获取机构时 id 不能为空" }
+        require(id.isNotBlank()) { "id must not be blank when fetching an organization" }
         return userOrgDao.getAs<UserOrgCacheEntry>(id)
     }
 
     /**
-     * 根据多个 id 从缓存批量获取机构，未命中的从库加载并回写。
+     * Batch-get organizations from the cache by multiple ids; missing entries are loaded from DB and written back.
      *
-     * @param ids 机构 id 集合，可为空
-     * @return id -> 实体 映射，仅包含能查到的 id
+     * @param ids organization id collection (may be empty)
+     * @return id -> entity map, including only ids that were found
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -93,10 +93,10 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
     }
 
     /**
-     * 根据租户ID从缓存获取机构列表，未命中则查库并回写。
+     * Get the organization list for a tenant from the cache; on miss, load from DB and write back.
      *
-     * @param tenantId 租户 id
-     * @return 机构缓存项列表
+     * @param tenantId tenant id
+     * @return list of organization cache entries
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -109,30 +109,30 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
     }
 
     /**
-     * 从库全量加载机构并刷新 Hash 缓存（含 active=false，等价原 OrgByIdCache 全量）。
+     * Load all organizations from DB and refresh the Hash cache (including active=false, equivalent to the legacy OrgByIdCache full load).
      *
-     * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
+     * @param clear when true, clear the cache before writing; when false, overwrite in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载机构 Hash 缓存")
+            log.info("Cache disabled; skipping organization Hash cache load")
             return
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
         val list = userOrgDao.searchAs<UserOrgCacheEntry>()
-        log.debug("从数据库加载 ${list.size} 条机构，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} organizations from DB; refreshing Hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 新增机构后同步：将指定 id 的实体从库加载并写入缓存。 */
+    /** Sync after organization insert: load the entity by id from DB and write it to the cache. */
     open fun syncOnInsert(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME) || !HashCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = userOrgDao.getAs<UserOrgCacheEntry>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 更新机构后同步：从库重新加载并写入缓存。 */
+    /** Sync after organization update: reload from DB and write to the cache. */
     open fun syncOnUpdate(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) return
         val item = userOrgDao.getAs<UserOrgCacheEntry>(id) ?: return
@@ -141,13 +141,13 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
         }
     }
 
-    /** 删除机构后同步：从缓存中移除该 id。 */
+    /** Sync after organization delete: remove the id from the cache. */
     open fun syncOnDelete(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, id, UserOrgCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 批量删除机构后同步：从缓存中移除这些 id（单条 Pub/Sub 通知，避免 N+1 风暴）。 */
+    /** Sync after batch organization delete: remove the ids from the cache (single Pub/Sub notification to avoid N+1 storm). */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME) || ids.isEmpty()) return
         hashCache().deleteByIds(CACHE_NAME, ids, UserOrgCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())

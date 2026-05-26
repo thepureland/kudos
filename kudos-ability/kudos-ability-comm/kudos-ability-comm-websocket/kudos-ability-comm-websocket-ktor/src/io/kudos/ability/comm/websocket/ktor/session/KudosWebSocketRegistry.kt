@@ -4,19 +4,23 @@ import io.kudos.base.logger.LogFactory
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * 进程级 WebSocket 会话注册中心。
+ * Process-level WebSocket session registry.
  *
- * 三套索引同步维护：
- *  - `sessionId → session`（主索引）
- *  - `userId → Set<sessionId>`（一个用户可能多端在线）
- *  - `tenantId → Set<sessionId>`（按租户广播）
+ * Maintains three indexes in sync:
+ *  - `sessionId → session` (primary index)
+ *  - `userId → Set<sessionId>` (a user may be online on multiple devices)
+ *  - `tenantId → Set<sessionId>` (broadcast by tenant)
  *
- * **不**持久化、**不**跨进程同步——单实例部署够用；多实例部署的"全局广播"需要业务侧自己
- * 做（典型方案：每条业务消息走 Redis pub/sub，每个进程的本类各自再广播给本进程内 session）。
+ * **Not** persisted and **not** synchronized across processes — sufficient for single-instance
+ * deployments. For multi-instance "global broadcast", the business side must handle it
+ * (typical solution: route each business message via Redis pub/sub, and each process's instance
+ * of this class re-broadcasts to its own in-process sessions).
  *
- * 线程安全：所有索引用 `ConcurrentHashMap` + 内部 `Set` 也是并发的 [java.util.Collections.newSetFromMap]。
- * 写操作（[register] / [unregister]）会同时更新三个索引；为简化语义没有原子化整体——会有
- * 极短的"主索引已写但二级索引还没写"窗口，业务侧广播代码不要假设强原子性。
+ * Thread-safety: all indexes use `ConcurrentHashMap`, and inner `Set`s are also concurrent
+ * via [java.util.Collections.newSetFromMap]. Write operations ([register] / [unregister])
+ * update all three indexes; for simplicity the overall update is not atomic — there is a very
+ * brief window where the primary index is written but the secondary indexes are not, so
+ * business broadcast code must not assume strong atomicity.
  *
  * @author K
  * @since 1.0.0
@@ -29,12 +33,12 @@ class KudosWebSocketRegistry {
     private val byUserId = ConcurrentHashMap<String, MutableSet<String>>()
     private val byTenantId = ConcurrentHashMap<String, MutableSet<String>>()
 
-    /** 已注册的会话总数。 */
+    /** Total number of registered sessions. */
     val size: Int get() = byId.size
 
     /**
-     * 把一个会话加入注册中心。重复 [KudosWebSocketSessionRef.sessionId] 会覆盖原条目
-     * （不强制——业务侧只要保证 sessionId 唯一）。
+     * Adds a session to the registry. A duplicate [KudosWebSocketSessionRef.sessionId] overwrites
+     * the existing entry (not enforced — the business side is expected to ensure sessionId uniqueness).
      */
     fun register(session: KudosWebSocketSessionRef) {
         byId[session.sessionId] = session
@@ -44,13 +48,13 @@ class KudosWebSocketRegistry {
         session.tenantId?.let { tid ->
             byTenantId.computeIfAbsent(tid) { newConcurrentSet() }.add(session.sessionId)
         }
-        log.debug("注册 WebSocket 会话 sessionId={0} userId={1} tenantId={2} total={3}",
+        log.debug("Registered WebSocket session sessionId={0} userId={1} tenantId={2} total={3}",
             session.sessionId, session.userId, session.tenantId, size)
     }
 
     /**
-     * 从注册中心剔除一个会话。**不会**主动 close 连接——调用方决定关闭时机
-     * （典型用法：路由的 `finally` 里调本方法）。
+     * Removes a session from the registry. Does **not** actively close the connection — the
+     * caller decides when to close it (typical usage: call this method in the route's `finally` block).
      */
     fun unregister(sessionId: String) {
         val session = byId.remove(sessionId) ?: return
@@ -66,22 +70,22 @@ class KudosWebSocketRegistry {
                 if (ids.isNullOrEmpty()) null else ids
             }
         }
-        log.debug("注销 WebSocket 会话 sessionId={0} userId={1} tenantId={2} total={3}",
+        log.debug("Unregistered WebSocket session sessionId={0} userId={1} tenantId={2} total={3}",
             sessionId, session.userId, session.tenantId, size)
     }
 
-    /** 按 sessionId 取会话，没找到返回 `null`。 */
+    /** Returns the session for the given sessionId, or `null` if not found. */
     fun findById(sessionId: String): KudosWebSocketSessionRef? = byId[sessionId]
 
-    /** 按 userId 取所有会话快照（不是 live view，遍历时不会被并发修改影响）。 */
+    /** Returns a snapshot of all sessions for the given userId (not a live view, safe to iterate under concurrent modification). */
     fun findByUserId(userId: String): List<KudosWebSocketSessionRef> =
         byUserId[userId].orEmpty().mapNotNull { byId[it] }
 
-    /** 按 tenantId 取所有会话快照。 */
+    /** Returns a snapshot of all sessions for the given tenantId. */
     fun findByTenantId(tenantId: String): List<KudosWebSocketSessionRef> =
         byTenantId[tenantId].orEmpty().mapNotNull { byId[it] }
 
-    /** 当前全部会话的快照。 */
+    /** Snapshot of all current sessions. */
     fun all(): List<KudosWebSocketSessionRef> = byId.values.toList()
 
     private fun newConcurrentSet(): MutableSet<String> =

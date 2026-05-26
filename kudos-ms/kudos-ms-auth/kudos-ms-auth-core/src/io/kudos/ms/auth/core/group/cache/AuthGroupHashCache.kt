@@ -19,15 +19,16 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 用户组 Hash 缓存处理器
+ * User group Hash cache handler.
  *
- * 数据来源表：auth_group；主键为 id，缓存的 key 即 id，value 为 [AuthGroupCacheEntry]。
- * 使用 Hash 结构存储，支持按 id 存取、按 tenantId+code 二级索引查询
+ * Source table: auth_group. The primary key is id, the cache key is the id,
+ * and the value is [AuthGroupCacheEntry]. Stored as a Hash that supports lookups
+ * by id and by a (tenantId, code) secondary index.
  *
- * - 按 id：getGroupById、getGroupsByIds
- * - 按租户+用户组编码：getGroupByTenantIdAndGroupCode
+ * - By id: getGroupById, getGroupsByIds
+ * - By tenant + group code: getGroupByTenantIdAndGroupCode
  *
- * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
+ * Requires a sys_cache entry named [CACHE_NAME] with hash=true.
  *
  * @author K
  * @since 1.0.0
@@ -43,7 +44,7 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheEntry>() 
     companion object {
         const val CACHE_NAME = "AUTH_GROUP__HASH"
 
-        /** 可筛选副属性：按 tenantId、code 建二级索引（不包含 active） */
+        /** Filterable secondary properties: builds a secondary index over (tenantId, code); excludes active. */
         val FILTERABLE_PROPERTIES = setOf(
             AuthGroupCacheEntry::tenantId.name,
             AuthGroupCacheEntry::code.name
@@ -59,10 +60,10 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheEntry>() 
     override fun doReload(id: Any): AuthGroupCacheEntry? = authGroupDao.getAs(id.toString())
 
     /**
-     * 根据 id 从缓存获取用户组，未命中则查库并回写。
+     * Loads a user group from the cache by id; on a miss, reads from the DB and writes back.
      *
-     * @param id 用户组 id（主键），非空
-     * @return 用户组缓存项，不存在时 null
+     * @param id user group id (primary key); must not be blank
+     * @return cache entry, or null if not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -72,15 +73,15 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheEntry>() 
         filterableProperties = ["tenantId", "code"]
     )
     open fun getGroupById(id: String): AuthGroupCacheEntry? {
-        require(id.isNotBlank()) { "获取用户组时 id 不能为空" }
+        require(id.isNotBlank()) { "id must not be blank when fetching a user group" }
         return authGroupDao.getAs<AuthGroupCacheEntry>(id)
     }
 
     /**
-     * 根据多个 id 从缓存批量获取用户组，未命中的从库加载并回写。
+     * Batch-loads user groups from the cache by id; misses are read from the DB and written back.
      *
-     * @param ids 用户组 id 集合，可为空
-     * @return id -> 实体 映射，仅包含能查到的 id
+     * @param ids user group ids; may be empty
+     * @return id -> entity map, containing only ids that were found
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -94,11 +95,11 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheEntry>() 
     }
 
     /**
-     * 根据租户、用户组编码从缓存获取用户组，未命中则查库并回写（不区分 active）。
+     * Get a group from the cache by tenant id and group code; on miss, load from DB and write back (regardless of active).
      *
-     * @param tenantId 租户 id
-     * @param code 用户组编码
-     * @return 用户组缓存项，不存在时 null
+     * @param tenantId tenant id
+     * @param code group code
+     * @return group cache entry, or null if not found
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -111,30 +112,30 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheEntry>() 
     }
 
     /**
-     * 从库全量加载用户组并刷新 Hash 缓存（含 active=false，等价原 GroupByIdCache 全量）。
+     * Load all groups from DB and refresh the Hash cache (including active=false, equivalent to the legacy GroupByIdCache full load).
      *
-     * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
+     * @param clear when true, clear the cache before writing; when false, overwrite in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载用户组 Hash 缓存")
+            log.info("Cache disabled; skipping group Hash cache load")
             return
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
         val list = authGroupDao.searchAs<AuthGroupCacheEntry>()
-        log.debug("从数据库加载 ${list.size} 条用户组，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} groups from DB; refreshing Hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 新增用户组后同步：将指定 id 的实体从库加载并写入缓存。 */
+    /** Sync after group insert: load the entity by id from DB and write it to the cache. */
     open fun syncOnInsert(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME) || !HashCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = authGroupDao.getAs<AuthGroupCacheEntry>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 更新用户组后同步：从库重新加载并写入缓存。 */
+    /** Sync after group update: reload from DB and write to the cache. */
     open fun syncOnUpdate(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) return
         val item = authGroupDao.getAs<AuthGroupCacheEntry>(id) ?: return
@@ -143,13 +144,13 @@ open class AuthGroupHashCache : AbstractHashCacheHandler<AuthGroupCacheEntry>() 
         }
     }
 
-    /** 删除用户组后同步：从缓存中移除该 id。 */
+    /** Sync after group delete: remove the id from the cache. */
     open fun syncOnDelete(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, id, AuthGroupCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 批量删除用户组后同步：从缓存中移除这些 id（单条 Pub/Sub 通知，避免 N+1 风暴）。 */
+    /** Sync after batch group delete: remove the ids from the cache (single Pub/Sub notification to avoid N+1 storm). */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME) || ids.isEmpty()) return
         hashCache().deleteByIds(CACHE_NAME, ids, AuthGroupCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())

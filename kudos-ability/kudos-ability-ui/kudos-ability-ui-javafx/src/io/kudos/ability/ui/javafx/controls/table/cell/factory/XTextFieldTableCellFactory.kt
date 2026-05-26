@@ -7,11 +7,12 @@ import javafx.util.Callback
 import javafx.util.StringConverter
 
 /**
- * 字符串输入 [TableCell] 工厂。
+ * Factory for a string-input [TableCell].
  *
- * 使用透传式 [StringConverter]（toString / fromString 都恒等），仅复用 [XTextFieldTableCell] 的"焦点切走也提交"行为。
+ * Uses a pass-through [StringConverter] (toString / fromString are both identity); only reuses
+ * the "commit when focus moves away" behavior of [XTextFieldTableCell].
  *
- * @param S 行数据类型
+ * @param S Row data type
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -19,10 +20,10 @@ import javafx.util.StringConverter
 class XTextFieldTableCellFactory<S> : Callback<TableColumn<S, String>?, TableCell<S, String>?> {
 
     /**
-     * 为列创建一个新的字符串 cell 实例。
+     * Create a new string cell instance for the column.
      *
-     * @param param 当前列
-     * @return 字符串编辑用的 [XTextFieldTableCell]
+     * @param param The current column
+     * @return An [XTextFieldTableCell] for string editing
      * @author K
      * @since 1.0.0
      */

@@ -7,7 +7,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for SysCacheDao
  *
- * 测试数据来源：`SysCacheDaoTest.sql`
+ * Test data source: `SysCacheDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor

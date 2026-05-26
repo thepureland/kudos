@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.cache.annotation.Cacheable
 
 /**
- * 远程 K-V 缓存测试服务。
+ * Remote K-V cache test service.
  *
  * @author K
  * @author AI: Codex
@@ -24,7 +24,7 @@ open class CacheTestService {
 
     @Cacheable(cacheNames = ["test"], key = "#id")
     open fun getFromDB(id: String): String {
-        LogFactory.getLog(CacheTestService::class).info("模拟去db查询~~~$id")
+        LogFactory.getLog(CacheTestService::class).info("Simulating a DB query ~~~$id")
         return RandomStringKit.uuidWithoutDelimiter()
     }
 
@@ -38,7 +38,7 @@ open class CacheTestService {
     private val configNoExists: String? = null
 
 //    /**
-//     * 从配置中心获取属性，需要启动注册中心和配置中心
+//     * Reads a property from the config center; requires the registry and config center to be running.
 //     */
 //    @Test
 //    fun getConfigRemote() {
@@ -46,7 +46,7 @@ open class CacheTestService {
 //    }
 //
 //    /**
-//     * 从本地配置文件获取属性，不用启动注册中心和配置中心
+//     * Reads a property from the local config file; no registry or config center required.
 //     */
 //    @Test
 //    fun getConfigLocal() {
@@ -54,7 +54,7 @@ open class CacheTestService {
 //    }
 //
 //    /**
-//     * 不存在的配置，取默认值
+//     * Missing property falls back to the default value.
 //     */
 //    @Test
 //    fun getConfigNoExists() {

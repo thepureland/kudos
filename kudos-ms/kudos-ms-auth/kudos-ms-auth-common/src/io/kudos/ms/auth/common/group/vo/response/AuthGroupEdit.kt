@@ -4,29 +4,29 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 用户组编辑响应VO
+ * Response VO for user group edit.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthGroupEdit (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String = "",
 
-    /** 用户组编码 */
+    /** User group code. */
     val code: String? = null,
 
-    /** 用户组名称 */
+    /** User group name. */
     val name: String? = null,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 子系统编码 */
+    /** Subsystem code. */
     val subsysCode: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
 ) : IIdEntity<String>

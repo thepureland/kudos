@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
 /**
- * RocketMQ测试服务
+ * RocketMQ test service.
  *
  * @author shane
  * @author K
@@ -38,12 +38,12 @@ class RocketMqMainService : IRocketMqMainService {
         while (flag) {
             Thread.sleep(1000)
             log.info("${consumerHandler.flag}")
-            // 待消费者接收信息后修改 flag 为 false
+            // Flip flag to false once the consumer has received the message
             if (consumerHandler.flag) {
                 flag = false
             }
         }
-        log.info("收到 mq 消息")
+        log.info("received mq message")
         return result
     }
 

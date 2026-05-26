@@ -6,7 +6,7 @@ import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 
 /**
- * CnIdCardNo约束验证器
+ * Validator for the CnIdCardNo constraint.
  *
  * @author K
  * @since 1.0.0

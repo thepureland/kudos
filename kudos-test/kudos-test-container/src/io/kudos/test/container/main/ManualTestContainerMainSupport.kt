@@ -7,10 +7,11 @@ import org.testcontainers.DockerClientFactory
 import kotlin.system.measureTimeMillis
 
 /**
- * 手动启动单个测试容器前的清理工具。
+ * Cleanup utility used before manually starting a single test container.
  *
- * 仅供 `XxxTestContainer.main` 这类人工预启动入口使用；
- * 一般测试启动路径必须保留 kudos TestContainer 的跨 JVM 复用语义，不要在测试中调用本类。
+ * Intended only for manual prelaunch entry points such as `XxxTestContainer.main`.
+ * Do not call this from tests: the normal test startup path must preserve kudos TestContainer's
+ * cross-JVM reuse semantics.
  *
  * @author K
  * @author AI: Claude
@@ -19,14 +20,15 @@ import kotlin.system.measureTimeMillis
 object ManualTestContainerMainSupport {
 
     /**
-     * 删除所有带指定 label 的容器（含已退出的），为手动启动入口提供干净状态。
+     * Removes all containers (including exited ones) with the given label, providing a clean state for
+     * the manual startup entry point.
      *
-     * @param label 容器助记名（Docker label 值）
-     * @param displayName 日志中展示的容器名
+     * @param label container mnemonic name (Docker label value)
+     * @param displayName container name shown in logs
      */
     fun removeExistingContainers(label: String, displayName: String) {
         val dockerClient: DockerClient = DockerClientFactory.lazyClient()
-        // 手动预启动入口要提供干净容器；测试本身仍透过同一 label 复用，避免破坏并行测试。
+        // The manual prelaunch entry point must provide clean containers; tests themselves still reuse via the same label, so parallel tests are not disrupted.
         val containers: List<Container> = dockerClient.listContainersCmd()
             .withShowAll(true)
             .withLabelFilter(mapOf(TestContainerKit.LABEL_KEY to label))
@@ -41,7 +43,7 @@ object ManualTestContainerMainSupport {
         val id = container.id
         val shortId = if (id == null || id.length <= 12) id else id.substring(0, 12)
         println(">>>>>>>>>>>>>>>>>>>> Removing existing $displayName container: $shortId")
-        // remove --force --volumes 同时覆盖 running/exited 状态，避免旧数据卷影响下一次手动启动。
+        // remove --force --volumes covers both running/exited states, preventing stale data volumes from affecting the next manual startup.
         val elapsed = measureTimeMillis {
             dockerClient.removeContainerCmd(id)
                 .withForce(true)

@@ -14,7 +14,7 @@ import javafx.scene.control.ButtonType
 import javafx.stage.Stage
 
 /**
- * 多表代码生成器向导，用户可继承此类来提供自定义的TemplateModelCreator
+ * Multi-table code generator wizard; subclass this to provide a custom TemplateModelCreator.
  *
  * @author K
  * @since 1.0.0
@@ -22,24 +22,25 @@ import javafx.stage.Stage
 open class MultiTablesCodeGenerateWizard : Application() {
 
     /**
-     * 得到模板数据模型创建者
-     * 开发者可通过继承CodeGenerateWizard并重写该方法来提供自定义的TemplateModelCreator,
-     * 以些来达到模板和填充模板的数据可完全自定义的目的
+     * Returns the template data-model creator.
+     * Developers can subclass CodeGenerateWizard and override this method to supply a custom
+     * TemplateModelCreator, allowing both the template and the data filled into it to be fully customized.
      */
     open fun getTemplateModelCreator(): TemplateModelCreator = TemplateModelCreator()
 
     /**
-     * JavaFX 应用入口；构建"配置 → 选表批量生成"的两步向导。
+     * JavaFX application entry point; builds the two-step "config → select tables for batch generation" wizard.
      *
-     * 与 [SingleTableCodeGenerateWizard] 的主要区别是 page2 用 [BatchGenerationController]
-     * 一次性勾选多表生成，没有 page3 的"按文件勾选"环节——批量场景下逐文件勾选不现实。
+     * The main difference from [SingleTableCodeGenerateWizard] is that page2 uses [BatchGenerationController]
+     * to select multiple tables in one shot — there is no page3 for per-file selection because that is
+     * impractical in the batch scenario.
      *
-     * @param stage JavaFX 主舞台
+     * @param stage primary JavaFX stage
      * @author K
      * @since 1.0.0
      */
     override fun start(stage: Stage) {
-        val wizard = Wizard("多表代码生成器")
+        val wizard = Wizard("Multi-table Code Generator")
         CodeGeneratorContext.templateModelCreator = getTemplateModelCreator()
 
         // --- page 1: config page
@@ -47,7 +48,7 @@ open class MultiTablesCodeGenerateWizard : Application() {
         val databasePanel = fxmlLoader.load<Parent>(javaClass.getResourceAsStream("/fxml/config.fxml"))
         val configController = fxmlLoader.getController<ConfigController>()
         val page1 = object : Wizard.WizardPane() {
-            override fun onExitingPage(wizard: Wizard?) { //wizard的bug: 从page3回到page2会执行该方法
+            override fun onExitingPage(wizard: Wizard?) { // wizard bug: going back from page3 to page2 invokes this method
                 try {
                     configController.canGoOn()
                     configController.storeConfig()
@@ -57,7 +58,7 @@ open class MultiTablesCodeGenerateWizard : Application() {
                 }
             }
         }
-        page1.headerText = "请配置以下信息："
+        page1.headerText = "Please configure the following:"
         page1.content = databasePanel
 
 
@@ -73,7 +74,7 @@ open class MultiTablesCodeGenerateWizard : Application() {
                 button.isDisable = true
             }
         }
-        page2.headerText = "请选择表："
+        page2.headerText = "Please select tables:"
         page2.content = tablesPanel
 
 

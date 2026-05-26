@@ -8,7 +8,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for UserContactWayService
  *
- * 测试数据来源：`UserContactWayServiceTest.sql`
+ * Test data source: `UserContactWayServiceTest.sql`.
  *
  * @author K
  * @author AI: Codex

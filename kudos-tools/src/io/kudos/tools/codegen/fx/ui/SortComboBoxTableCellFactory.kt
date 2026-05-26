@@ -7,7 +7,7 @@ import javafx.scene.control.cell.ComboBoxTableCell
 import javafx.util.Callback
 
 /**
- * 排序规则ComboBox表格单元格工厂
+ * Sort-order ComboBox table cell factory.
  *
  * @author K
  * @since 1.0.0
@@ -16,7 +16,7 @@ class SortComboBoxTableCellFactory<S>: Callback<TableColumn<S, String>?, TableCe
 
     @Suppress("UNCHECKED_CAST")
     override fun call(param: TableColumn<S, String>?): TableCell<S, String> {
-        val strings = FXCollections.observableArrayList("", "升序", "降序")
+        val strings = FXCollections.observableArrayList("", "Ascending", "Descending")
         return ComboBoxTableCell<S?, Any?>(*strings.toTypedArray()) as TableCell<S, String>
     }
 

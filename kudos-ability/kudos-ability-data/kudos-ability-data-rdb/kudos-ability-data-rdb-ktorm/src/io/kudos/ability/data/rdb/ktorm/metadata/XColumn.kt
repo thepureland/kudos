@@ -5,6 +5,6 @@ import io.kudos.ability.data.rdb.ktorm.support.KtormSqlType
 
 
 /**
- * 返回Ktorm框架对应的sql类型的函数名
+ * Returns the function name of the SQL type corresponding to the Ktorm framework.
  */
 fun Column.getKtormSqlTypeFunName(): String = KtormSqlType.getFunName(kotlinType)

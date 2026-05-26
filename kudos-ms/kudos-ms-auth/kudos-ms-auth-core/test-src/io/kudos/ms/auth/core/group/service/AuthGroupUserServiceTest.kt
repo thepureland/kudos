@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for AuthGroupUserService
  *
- * 测试数据来源：`AuthGroupUserServiceTest.sql`
+ * Test data source: `AuthGroupUserServiceTest.sql`
  *
  * @author K
  * @author AI: Codex
@@ -45,10 +45,10 @@ class AuthGroupUserServiceTest : RdbAndRedisCacheTestBase() {
         val groupId = "9c1b2a3d-0000-0000-0000-000000000083"
         val userId = "9c1b2a3d-0000-0000-0000-000000000080"
 
-        // 测试存在的关系
+        // Test existing relation
         assertTrue(authGroupUserService.exists(groupId, userId))
 
-        // 测试不存在的关系
+        // Test non-existing relation
         assertFalse(authGroupUserService.exists(groupId, "non-existent-user-id"))
     }
 
@@ -61,17 +61,17 @@ class AuthGroupUserServiceTest : RdbAndRedisCacheTestBase() {
             "9c1b2a3d-0000-0000-0000-000000000082"
         )
 
-        // 批量绑定
+        // Batch bind
         val count = authGroupUserService.batchBind(groupId, userIds)
         assertTrue(count >= 3)
 
-        // 验证绑定成功
+        // Verify binding succeeded
         val boundUserIds = authGroupUserService.getUserIdsByGroupId(groupId)
         assertTrue(boundUserIds.containsAll(userIds))
 
-        // 测试重复绑定（应该跳过已存在的）
+        // Test duplicate binding (should skip existing ones)
         val count2 = authGroupUserService.batchBind(groupId, userIds)
-        assertTrue(count2 == 0) // 应该返回0，因为都已存在
+        assertTrue(count2 == 0) // Should return 0 because all already exist
     }
 
     @Test
@@ -79,16 +79,16 @@ class AuthGroupUserServiceTest : RdbAndRedisCacheTestBase() {
         val groupId = "9c1b2a3d-0000-0000-0000-000000000083"
         val userId = "9c1b2a3d-0000-0000-0000-000000000081"
 
-        // 验证关系存在
+        // Verify relation exists
         assertTrue(authGroupUserService.exists(groupId, userId))
 
-        // 解绑
+        // Unbind
         assertTrue(authGroupUserService.unbind(groupId, userId))
 
-        // 验证关系已不存在
+        // Verify relation no longer exists
         assertFalse(authGroupUserService.exists(groupId, userId))
 
-        // 重新绑定以便后续测试
+        // Re-bind for subsequent tests
         authGroupUserService.batchBind(groupId, listOf(userId))
     }
 }

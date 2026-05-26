@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 消息接收者群组数据访问对象
+ * Message receiver group data access object.
  *
  * @author K
  * @author AI: Codex

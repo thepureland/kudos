@@ -17,7 +17,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * IdEntitiesRedisHashDao 测试用例（基于 RedisTestContainer）
+ * Test cases for IdEntitiesRedisHashDao (based on RedisTestContainer).
  *
  * @author K
  * @author AI: Codex
@@ -30,12 +30,12 @@ internal class IdEntitiesRedisHashDaoTest {
     @Resource
     private lateinit var redisTemplates: RedisTemplates
 
-    /** 每个测试使用独立 key 前缀，避免测试间数据互相污染 */
+    /** Each test uses an independent key prefix to avoid cross-test data pollution. */
     private fun key(prefix: String) = "rdb:test:IdEntitiesHashDao:$prefix"
 
     private fun dao(): IdEntitiesRedisHashDao = IdEntitiesRedisHashDao(redisTemplates)
 
-    /** 测试用索引属性：type 建 Set+ZSet，sortScore 建 ZSet */
+    /** Index attributes for tests: `type` indexed as Set+ZSet, `sortScore` indexed as ZSet. */
     private val setIdx = setOf("type")
     private val zsetIdx = setOf("type", "sortScore")
 
@@ -106,11 +106,11 @@ internal class IdEntitiesRedisHashDaoTest {
         val k = key("deleteById")
         dao.save(k, TestRow(id = "u1", name = "A"))
         assertEquals("A", dao.getById(k, "u1", TestRow::class)?.name)
-        dao.deleteById(k, "u1", TestRow::class)  // 未建索引，无需传索引参数
+        dao.deleteById(k, "u1", TestRow::class)  // no indexes, no index arguments required
         assertNull(dao.getById(k, "u1", TestRow::class))
     }
 
-    /** 带索引保存时，删除需传入相同的索引属性集合才能正确从索引中移除 */
+    /** When saving with indexes, delete must be passed the same set of index attributes to correctly remove them from the indexes. */
     @Test
     fun deleteById_withIndex() {
         val dao = dao()
@@ -133,7 +133,7 @@ internal class IdEntitiesRedisHashDaoTest {
             TestRow(id = "a", name = "A"),
             TestRow(id = "b", name = "B")
         )
-        dao.refreshAll(k, newList)  // 不建索引，使用默认空集合
+        dao.refreshAll(k, newList)  // no indexes; uses default empty set
         assertNull(dao.getById(k, "old", TestRow::class))
         assertEquals("A", dao.getById(k, "a", TestRow::class)?.name)
         assertEquals("B", dao.getById(k, "b", TestRow::class)?.name)
@@ -231,7 +231,7 @@ internal class IdEntitiesRedisHashDaoTest {
         assertEquals("i3", page[1].id)
     }
 
-    // ---------- 二级索引（Set/ZSet）测试：通过方法参数传入索引属性集合 ----------
+    // ---------- Secondary index (Set/ZSet) tests: index attribute set passed via method arguments ----------
 
     @Test
     fun listBySetIndex() {
@@ -265,7 +265,7 @@ internal class IdEntitiesRedisHashDaoTest {
         assertEquals("b", pageAsc[1].id)
     }
 
-    // ---------- list(criteria, pageNo, pageSize, orders) 测试 ----------
+    // ---------- list(criteria, pageNo, pageSize, orders) tests ----------
 
     @Test
     fun list_noCriteria_firstPage() {
@@ -312,7 +312,7 @@ internal class IdEntitiesRedisHashDaoTest {
 }
 
 /**
- * 简单测试行实体。
+ * Simple test row entity.
  *
  * @author K
  * @author AI: Codex
@@ -325,7 +325,7 @@ data class TestRow(
 ) : IIdEntity<String>
 
 /**
- * 带 type 与 sortScore 的实体，用于二级索引测试。
+ * Entity with `type` and `sortScore`, used for secondary index tests.
  *
  * @author K
  * @author AI: Codex

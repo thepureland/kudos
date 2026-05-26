@@ -8,17 +8,17 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * [DefaultCacheConfigProvider] yml 字符串解析 + 按策略分组的单测。
+ * Unit tests for [DefaultCacheConfigProvider] yml string parsing and grouping by strategy.
  *
- * 覆盖：
- *  - 基本字段解析：`name=X&strategy=Y&ttl=Z` 三件套
- *  - 按 [io.kudos.ability.cache.common.enums.CacheStrategy] 分组：SINGLE_LOCAL / REMOTE / LOCAL_REMOTE
- *    各自的视图正确切分
- *  - `hash=true` 进入 hashCacheConfigs 视图
- *  - 缺 strategy → 抛错（README 文档化的解析期校验）
- *  - 空白行 / 空列表的安全处理
- *  - resolvedStrategyCode 兜底（仅 strategyDictCode 也能分组）—— 守护 round-5
- *    迁移的 raw-reader → derived prop 改动
+ * Coverage:
+ *  - Basic field parsing: the `name=X&strategy=Y&ttl=Z` triplet.
+ *  - Grouping by [io.kudos.ability.cache.common.enums.CacheStrategy]: SINGLE_LOCAL / REMOTE / LOCAL_REMOTE
+ *    views are partitioned correctly.
+ *  - `hash=true` lands in the hashCacheConfigs view.
+ *  - Missing strategy → throws (parse-time validation documented in the README).
+ *  - Safe handling of blank lines / empty lists.
+ *  - resolvedStrategyCode fallback (grouping works with only strategyDictCode) — guards the round-5
+ *    raw-reader → derived prop migration.
  *
  * @author K
  * @author AI: Codex
@@ -66,31 +66,31 @@ internal class DefaultCacheConfigProviderTest {
             "name=PLAIN&strategy=REMOTE",
             "name=DICT&strategy=REMOTE&hash=true",
         )
-        // 仅 hash=true 的进入 hash 视图
+        // Only entries with hash=true land in the hash view.
         assertEquals(setOf("DICT"), provider.getHashCacheConfigs().keys)
-        // 但仍出现在 all / strategy 视图
+        // They still appear in the all / strategy views.
         assertEquals(setOf("PLAIN", "DICT"), provider.getAllCacheConfigs().keys)
         assertEquals(setOf("PLAIN", "DICT"), provider.getRemoteCacheConfigs().keys)
     }
 
     @Test
     fun missingStrategy_throwsAtInit() {
-        // 解析期校验：缺 strategy / strategyDictCode 应当快速失败
+        // Parse-time validation: missing strategy / strategyDictCode should fail fast.
         val ex = assertFails { newProvider("name=USER&ttl=900") }
-        assertTrue(ex.message?.contains("cache item 缺少 strategy") == true,
-            "错误信息应明确指出缺 strategy，实际：${ex.message}")
+        assertTrue(ex.message?.contains("cache item is missing strategy") == true,
+            "Error message should clearly indicate the missing strategy; actual: ${ex.message}")
     }
 
     @Test
     fun resolvedStrategyCode_groupsByDictCode_whenStrategyMissing() {
-        // 即使 yml 配置只填 strategyDictCode（DB 字典码路径），分组也应按 derived prop 工作
+        // Even when yml only sets strategyDictCode (the DB dict-code path), grouping should work via the derived prop.
         val provider = newProvider("name=DICT_ONLY&strategyDictCode=LOCAL_REMOTE")
         assertEquals(setOf("DICT_ONLY"), provider.getLocalRemoteCacheConfigs().keys)
     }
 
     @Test
     fun blankLines_skipped() {
-        // 空白行不应导致 NPE / 解析错误
+        // Blank lines must not cause NPE or parse errors.
         val provider = newProvider(
             "name=A&strategy=REMOTE",
             "   ",
@@ -152,8 +152,8 @@ internal class DefaultCacheConfigProviderTest {
     fun stringCacheItem_unknownFieldFailsFast() {
         val ex = assertFails { newProvider("name=USER&strategy=REMOTE&ttle=900") }
         assertTrue(
-            ex.message?.contains("未知字段 'ttle'") == true,
-            "错误信息应明确指出未知字段，实际：${ex.message}"
+            ex.message?.contains("unknown field 'ttle'") == true,
+            "Error message should clearly indicate the unknown field; actual: ${ex.message}"
         )
     }
 
@@ -161,8 +161,8 @@ internal class DefaultCacheConfigProviderTest {
     fun stringCacheItem_malformedTokenFailsFast() {
         val ex = assertFails { newProvider("name=USER&strategy=REMOTE&ttl") }
         assertTrue(
-            ex.message?.contains("参数格式错误") == true,
-            "错误信息应明确指出参数格式错误，实际：${ex.message}"
+            ex.message?.contains("parameter format is invalid") == true,
+            "Error message should clearly indicate the parameter format error; actual: ${ex.message}"
         )
     }
 
@@ -170,8 +170,8 @@ internal class DefaultCacheConfigProviderTest {
     fun invalidStrategy_failsFast() {
         val ex = assertFails { newProvider("name=USER&strategy=NOT_A_STRATEGY") }
         assertTrue(
-            ex.message?.contains("strategy 非法 'NOT_A_STRATEGY'") == true,
-            "错误信息应明确指出非法 strategy，实际：${ex.message}"
+            ex.message?.contains("strategy is invalid 'NOT_A_STRATEGY'") == true,
+            "Error message should clearly indicate the invalid strategy; actual: ${ex.message}"
         )
     }
 

@@ -6,12 +6,12 @@ import java.net.URLDecoder
 import java.net.URLEncoder
 
 /**
- * 封装各种格式的编码解码工具类
+ * Wraps various encoding/decoding utilities.
  *
  * <p>
- * 1.Commons-Codec的 hex/base64 编码
- * 2.自制的base62 编码
- * 3.JDK提供的URLEncoder
+ * 1. Hex/Base64 encoding via Commons-Codec
+ * 2. Custom Base62 encoding
+ * 3. JDK-provided URLEncoder
  * </p>
  *
  * @author K
@@ -23,60 +23,60 @@ object EncodeKit {
     private val BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".toCharArray()
 
     /**
-     * Hex编码
+     * Hex encoding.
      *
-     * @param input 待Hex编码的字节数组
-     * @return 编码后的字符串
+     * @param input the byte array to hex-encode
+     * @return the encoded string
      * @author K
      * @since 1.0.0
      */
     fun encodeHex(input: ByteArray): String = Hex.encodeHexString(input)
 
     /**
-     * Hex解码
+     * Hex decoding.
      *
-     * @param input 待Hex解码的字符串
-     * @return 解码后的字节数组
+     * @param input the hex string to decode
+     * @return the decoded byte array
      * @author K
      * @since 1.0.0
      */
     fun decodeHex(input: String): ByteArray = Hex.decodeHex(input.toCharArray())
 
     /**
-     * Base64编码
+     * Base64 encoding.
      *
-     * @param input 待Base64编码的字节数组
-     * @return 编码后的字符串
+     * @param input the byte array to Base64-encode
+     * @return the encoded string
      * @author K
      * @since 1.0.0
      */
     fun encodeBase64(input: ByteArray): String = Base64.encodeBase64String(input)
 
     /**
-     * Base64编码, URL安全(将Base64中的URL非法字符'+'和'/'转为'-'和'_', 见RFC3548).
+     * Base64 encoding, URL-safe (replaces the URL-unsafe characters '+' and '/' in Base64 with '-' and '_', per RFC3548).
      *
-     * @param input 待Base64编码的字节数组
-     * @return 编码后的字符串
+     * @param input the byte array to Base64-encode
+     * @return the encoded string
      * @author K
      * @since 1.0.0
      */
     fun encodeUrlSafeBase64(input: ByteArray): String = Base64.encodeBase64URLSafeString(input)
 
     /**
-     * Base64解码
+     * Base64 decoding.
      *
-     * @param input 待Hex解码的字符串
-     * @return 解码后的字节数组
+     * @param input the Base64 string to decode
+     * @return the decoded byte array
      * @author K
      * @since 1.0.0
      */
     fun decodeBase64(input: String): ByteArray = Base64.decodeBase64(input)
 
     /**
-     * Base62编码
+     * Base62 encoding.
      *
-     * @param input 待Base62编码的字节数组
-     * @return 编码后的字符串
+     * @param input the byte array to Base62-encode
+     * @return the encoded string
      * @author K
      * @since 1.0.0
      */
@@ -84,20 +84,20 @@ object EncodeKit {
         String(CharArray(input.size) { BASE62[(input[it].toInt() and 0xFF) % BASE62.size] })
 
     /**
-     * URL 编码, Encode默认为UTF-8.
+     * URL encoding; the encoding defaults to UTF-8.
      *
-     * @param part 待编码的部分
-     * @return 编码完的字符串
+     * @param part the part to encode
+     * @return the encoded string
      * @author K
      * @since 1.0.0
      */
     fun urlEncode(part: String): String = URLEncoder.encode(part, DEFAULT_URL_ENCODING)
 
     /**
-     * URL 解码, Encode默认为UTF-8.
+     * URL decoding; the encoding defaults to UTF-8.
      *
-     * @param part 待解码的部分
-     * @return 解码后的字符串
+     * @param part the part to decode
+     * @return the decoded string
      * @author K
      * @since 1.0.0
      */

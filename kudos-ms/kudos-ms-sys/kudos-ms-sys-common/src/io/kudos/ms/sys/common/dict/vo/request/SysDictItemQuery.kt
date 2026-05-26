@@ -7,50 +7,50 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 字典项列表查询条件请求VO
+ * Dictionary item list query criteria request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDictItemQuery (
 
-    /** 主键 */
+    /** Primary key */
     val id: String? = null,
 
-    /** 字典项代码 */
+    /** Dictionary item code */
     val itemCode: String? = null,
 
-    /** 字典项名称 */
+    /** Dictionary item name */
     val itemName: String? = null,
 
-    /** 字典id */
+    /** Dictionary id */
     val dictId: String? = null,
 
-    /** 字典项排序 */
+    /** Dictionary item order number */
     val orderNum: Int? = null,
 
-    /** 父id */
+    /** Parent id */
     var parentId: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active */
     var active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean? = null,
 
-    /** 字典类型 */
+    /** Dictionary type */
     val dictType: String? = null,
 
-    /** 字典名称 */
+    /** Dictionary name */
     val dictName: String? = null,
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     var atomicServiceCode: String? = null,
 
-    /** 字典是否启用 */
+    /** Whether dictionary is active */
     val dictActive: Boolean? = null,
 
 ) : ListSearchPayload() {

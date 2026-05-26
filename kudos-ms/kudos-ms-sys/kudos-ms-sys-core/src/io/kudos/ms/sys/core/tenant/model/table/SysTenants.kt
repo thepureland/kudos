@@ -6,20 +6,20 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 租户数据库表-实体关联对象
+ * Tenant table-to-entity binding.
  *
  * @author K
  * @since 1.0.0
  */
 object SysTenants : ManagedTable<SysTenant>("sys_tenant") {
 
-    /** 名称 */
+    /** Name */
     var name = varchar("name").bindTo { it.name }
 
-    /** 时区 */
+    /** Timezone */
     var timezone = varchar("timezone").bindTo { it.timezone }
 
-    /** 默认语言编码 */
+    /** Default language code */
     var defaultLanguageCode = varchar("default_language_code").bindTo { it.defaultLanguageCode }
 
 

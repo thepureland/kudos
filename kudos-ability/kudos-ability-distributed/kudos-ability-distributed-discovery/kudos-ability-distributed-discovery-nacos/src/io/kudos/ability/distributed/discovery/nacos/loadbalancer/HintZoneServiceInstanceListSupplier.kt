@@ -11,20 +11,21 @@ import org.springframework.util.StringUtils
 import reactor.core.publisher.Flux
 
 /**
- * 按 Request Header Hint 选择服务实例 zone 的 `ServiceInstanceListSupplier`。
+ * `ServiceInstanceListSupplier` that selects the zone of service instances based on a request header hint.
  *
- * 规则（[filteredByHint]）：
- *  - 请求 hint header 有值 → 只选 `metadata.zoneMetadataKey` 与 hint 一致的实例；命中为空时降级返回全部
- *  - 请求 hint header 为空 + 配置了默认 `LoadBalancerZoneConfig.zone` →
- *    选 `metadata.zoneMetadataKey` 与默认 zone 一致或未设 zone 的实例
- *  - 请求 hint header 为空 + 未配置默认 zone → 返回全部
+ * Rules (see [filteredByHint]):
+ *  - Request hint header has a value -> pick only instances whose `metadata.zoneMetadataKey` equals the hint; fall back to all when none match
+ *  - Request hint header is empty + a default `LoadBalancerZoneConfig.zone` is configured ->
+ *    pick instances whose `metadata.zoneMetadataKey` equals the default zone or is unset
+ *  - Request hint header is empty + no default zone configured -> return all
  *
- * hint header 名通过 spring-cloud-loadbalancer 标准属性
- * `spring.cloud.loadbalancer.{serviceId}.hint-header-name` 配置（默认 `X-SC-LB-Hint`）。
+ * The hint header name is configured via the spring-cloud-loadbalancer standard property
+ * `spring.cloud.loadbalancer.{serviceId}.hint-header-name` (default `X-SC-LB-Hint`).
  *
- * **metadata 字段名**通过构造参数 [zoneMetadataKey] 注入，默认 `"zone"` 与 spring-cloud-loadbalancer
- * 的 `ZONE` 约定一致。业务侧如果 nacos 实例上挂的是别的字段名（如 `region` / `cluster-zone`），
- * 装配处传入对应键。
+ * The **metadata field name** is injected through the [zoneMetadataKey] constructor parameter;
+ * the default `"zone"` matches the spring-cloud-loadbalancer `ZONE` convention. If application code
+ * tags nacos instances with a different field (e.g. `region` / `cluster-zone`), pass the
+ * corresponding key during wiring.
  *
  * @author K
  * @since 1.0.0
@@ -46,11 +47,11 @@ class HintZoneServiceInstanceListSupplier(
         }
 
     /**
-     * 从负载均衡请求上下文中提取 hint 字符串。
-     * 上下文为 null 或非 [RequestDataContext]（如直接 RPC 调用未带 HTTP 头）时返回 null。
+     * Extract the hint string from the load balancer request context.
+     * Returns null when the context is null or not a [RequestDataContext] (e.g. a direct RPC call without HTTP headers).
      *
-     * @param requestContext spring-cloud-loadbalancer 给的 Request 上下文
-     * @return hint 字符串；不可用时 null
+     * @param requestContext the Request context supplied by spring-cloud-loadbalancer
+     * @return the hint string; null when not available
      * @author K
      * @since 1.0.0
      */
@@ -58,10 +59,10 @@ class HintZoneServiceInstanceListSupplier(
         (requestContext as? RequestDataContext)?.let(::getHintFromHeader)
 
     /**
-     * 从 HTTP 客户端请求头里取 hint，header 名由 `spring.cloud.loadbalancer.{serviceId}.hint-header-name` 配置。
+     * Read the hint from the HTTP client request header; the header name is configured via `spring.cloud.loadbalancer.{serviceId}.hint-header-name`.
      *
-     * @param context HTTP 请求上下文
-     * @return header 中的 hint 值；缺失返回 null
+     * @param context the HTTP request context
+     * @return the hint value from the header; null when absent
      * @author K
      * @since 1.0.0
      */
@@ -69,16 +70,16 @@ class HintZoneServiceInstanceListSupplier(
         context.clientRequest?.headers?.getFirst(properties.hintHeaderName)
 
     companion object {
-        /** 与 spring-cloud-loadbalancer 内部 `ZONE` 常量一致的默认字段名。 */
+        /** Default field name matching spring-cloud-loadbalancer's internal `ZONE` constant. */
         const val DEFAULT_ZONE_METADATA_KEY: String = "zone"
 
         /**
-         * 纯函数版本的实例过滤——抽出来便于单测，不依赖 Spring / Reactor 任何上下文。
+         * Pure-function instance filter — extracted for unit testing, no dependency on Spring / Reactor context.
          *
-         *  - `hint` 非空 → 只选 `metadata[zoneMetadataKey] == hint` 的实例；命中为空时返回**全部**
-         *    （降级，避免业务请求因为 zone 配错被完全拒绝）
-         *  - `hint` 为空 + `defaultZone` 非空 → 选 `metadata[zoneMetadataKey]` 为空或等于 defaultZone 的实例
-         *  - `hint` 为空 + `defaultZone` 为空 → 原样返回（等效不做 zone 过滤）
+         *  - `hint` non-empty -> pick only instances with `metadata[zoneMetadataKey] == hint`; return **all** when nothing matches
+         *    (fallback so that misconfigured zones do not reject all business requests)
+         *  - `hint` empty + `defaultZone` non-empty -> pick instances whose `metadata[zoneMetadataKey]` is empty or equals defaultZone
+         *  - `hint` empty + `defaultZone` empty -> return unchanged (effectively no zone filtering)
          */
         internal fun filteredByHint(
             instances: MutableList<ServiceInstance>,
@@ -88,7 +89,7 @@ class HintZoneServiceInstanceListSupplier(
         ): MutableList<ServiceInstance> {
             if (!StringUtils.hasText(hint)) {
                 if (defaultZone.isNullOrBlank()) return instances
-                // 只取服务实际发布时未配置 zone 或与默认配置一致的实例
+                // Pick only instances that were published without a zone or whose zone matches the default config
                 return instances.filterTo(mutableListOf()) { instance ->
                     val zone = instance.metadata?.getOrDefault(zoneMetadataKey, "")
                     zone.isNullOrBlank() || zone == defaultZone
@@ -98,7 +99,7 @@ class HintZoneServiceInstanceListSupplier(
             val matched = instances.filterTo(mutableListOf()) {
                 it.metadata?.getOrDefault(zoneMetadataKey, "") == hint
             }
-            // 找不到匹配 hint 的实例时降级返回全部，避免业务请求被完全拒绝
+            // Fall back to all instances when no hint match is found, so business requests are not fully rejected
             return if (matched.isNotEmpty()) matched else instances
         }
     }

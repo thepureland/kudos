@@ -4,8 +4,8 @@ import org.springframework.cache.annotation.Cacheable
 import org.springframework.core.annotation.AliasFor
 
 /**
- * 租户隔离版本的 [Cacheable]——`@AliasFor` 直通 Spring 注解，仅把
- * `keyGenerator` 默认值预置为 `tenantCacheKeyGenerator`，让缓存 key 自带租户维度。
+ * Tenant-isolated version of [Cacheable] — directly aliased to the Spring annotation via `@AliasFor`, simply presetting
+ * the default value of `keyGenerator` to `tenantCacheKeyGenerator` so that the cache key carries the tenant dimension.
  *
  * @author K
  * @since 1.0.0

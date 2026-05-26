@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 视图 `v_sys_access_rule_with_ip` 一行的扁平 DTO，用于列表查询与 API 出参。
+ * Flattened DTO for one row of the `v_sys_access_rule_with_ip` view; used for list queries and API responses.
  *
  * @author K
  * @author AI: Cursor
@@ -13,15 +13,15 @@ import java.time.LocalDateTime
  */
 data class VSysAccessRuleWithIpRow(
 
-    /** 行主键：COALESCE(ip.id, ar.id)；无 IP 子行时为父规则 id */
+    /** Row primary key: COALESCE(ip.id, ar.id); falls back to the parent rule id when there is no IP child row. */
     val id: String = "",
 
-    /** 父访问规则 id（sys_access_rule.id） */
+    /** Parent access rule id (sys_access_rule.id). */
     val parentId: String = "",
 
     val tenantId: String? = null,
 
-    /** 关联 `sys_tenant.name`；平台级规则（无租户）为 null */
+    /** Joined `sys_tenant.name`; null for platform-level rules (no tenant). */
     val tenantName: String? = null,
 
     val systemCode: String? = null,
@@ -46,7 +46,7 @@ data class VSysAccessRuleWithIpRow(
 
     val parentUpdateTime: LocalDateTime? = null,
 
-    /** sys_access_rule_ip.id，无 IP 子行时为 null */
+    /** sys_access_rule_ip.id; null when there is no IP child row. */
     val ipId: String? = null,
 
     val ipStart: BigDecimal? = null,

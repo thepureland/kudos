@@ -1,50 +1,50 @@
 package io.kudos.ms.sys.common.dict.vo.response
 
 /**
- * 字典项列表查询结果响应VO
+ * Response VO for dict item list query results.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDictItemRow (
 
-    /** 字典项id */
+    /** Dict item id */
     val id: String = "",
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String = "",
 
-    /** 字典id */
+    /** Dict id */
     val dictId: String = "",
 
-    /** 字典类型 */
+    /** Dict type */
     val dictType: String = "",
 
-    /** 字典名称 */
+    /** Dict name */
     val dictName: String = "",
 
-    /** 字典项编号 */
+    /** Dict item code */
     val itemCode: String = "",
 
-    /** 父项ID */
+    /** Parent item id */
     val parentId: String? = null,
 
-    /** 字典项名称，或其国际化key */
+    /** Dict item name, or its i18n key */
     val itemName: String = "",
 
-    /** 该字典编号在同父节点下的排序号 */
+    /** Order number of this item under the same parent */
     val orderNum: Int? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 父项编号 */
+    /** Parent item code */
     var parentCode: String? = null,
 
-    /** 所有父项ID */
+    /** All parent item ids */
     var parentIds: List<String>? = null
 
 )

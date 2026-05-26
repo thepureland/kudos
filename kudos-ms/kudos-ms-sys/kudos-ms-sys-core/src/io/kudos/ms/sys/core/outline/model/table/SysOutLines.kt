@@ -7,29 +7,29 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 出网白名单数据库表-实体关联对象
+ * Outbound allowlist table-to-entity binding.
  *
  * @author K
  * @since 1.0.0
  */
 object SysOutLines : ManagedTable<SysOutLine>("sys_out_line") {
 
-    /** 名称 */
+    /** Name */
     var name = varchar("name").bindTo { it.name }
 
-    /** 主机名或通配符 */
+    /** Host or wildcard */
     var host = varchar("host").bindTo { it.host }
 
-    /** 端口；NULL 表示任意端口 */
+    /** Port; NULL means any port */
     var port = int("port").bindTo { it.port }
 
-    /** 协议 */
+    /** Protocol */
     var protocol = varchar("protocol").bindTo { it.protocol }
 
-    /** 系统编码 */
+    /** System code */
     var systemCode = varchar("system_code").bindTo { it.systemCode }
 
-    /** 租户id */
+    /** Tenant id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
 }

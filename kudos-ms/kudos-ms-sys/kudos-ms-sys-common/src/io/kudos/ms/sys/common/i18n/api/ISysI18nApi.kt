@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 国际化 对外API
+ * Public API for internationalization (i18n).
  *
  * @author K
  * @since 1.0.0

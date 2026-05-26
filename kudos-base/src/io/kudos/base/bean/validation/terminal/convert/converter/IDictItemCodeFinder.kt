@@ -1,7 +1,7 @@
 package io.kudos.base.bean.validation.terminal.convert.converter
 
 /**
- * 字典项编码查找器接口
+ * Dictionary item code finder interface.
  *
  * @author K
  * @since 1.0.0
@@ -9,8 +9,8 @@ package io.kudos.base.bean.validation.terminal.convert.converter
 interface IDictItemCodeFinder {
 
     /**
-     * @param atomicServiceCode 微服务编码
-     * @param dictType 字典类型
+     * @param atomicServiceCode the microservice code
+     * @param dictType the dictionary type
      */
     fun getDictItemCodes(atomicServiceCode: String, dictType: String): Set<String>
 

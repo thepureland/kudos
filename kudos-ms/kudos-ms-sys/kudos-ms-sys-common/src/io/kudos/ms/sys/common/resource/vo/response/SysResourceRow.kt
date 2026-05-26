@@ -1,44 +1,44 @@
 package io.kudos.ms.sys.common.resource.vo.response
 
 /**
- * 资源列表查询结果响应VO
+ * Resource list query result response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysResourceRow (
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
     /** url */
     val url: String? = null,
 
-    /** 资源类型字典代码 */
+    /** Resource type dict code */
     val resourceTypeDictCode: String = "",
 
-    /** 父id */
+    /** Parent id */
     val parentId: String? = null,
 
-    /** 在同父节点下的排序号 */
+    /** Order number among siblings under the same parent */
     val orderNum: Int? = null,
 
-    /** 图标 */
+    /** Icon */
     val icon: String? = null,
 
-    /** 子系统编码 */
+    /** Sub-system code */
     val subSystemCode: String = "",
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = false,
 
 )

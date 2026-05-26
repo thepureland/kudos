@@ -1,11 +1,11 @@
 package io.kudos.ms.user.core.account.event
 
 /**
- * 用户-机构关系（`user_org_user`）领域事件。Join 表，两条缓存投影：
- * - UserIdsByOrgIdCache：按 orgId 查 userIds
- * - OrgIdsByUserIdCache：按 userId 查 orgIds
+ * User-organization association (`user_org_user`) domain events. Join table with two cache projections:
+ * - UserIdsByOrgIdCache: lookup userIds by orgId
+ * - OrgIdsByUserIdCache: lookup orgIds by userId
  *
- * 关系变更通常同时影响 orgId 一侧和涉及的 userIds 一侧。
+ * Association changes normally affect both the orgId side and the involved userIds side.
  *
  * @author K
  * @author AI: Cursor
@@ -13,15 +13,15 @@ package io.kudos.ms.user.core.account.event
  */
 sealed interface UserOrgUserEvent
 
-/** 一组用户-机构关系变更（绑定或解绑）；listener 按 orgId / userIds 双向失效缓存。 */
+/** A batch of user-organization association changes (bind or unbind); listeners invalidate caches on both orgId and userIds sides. */
 data class UserOrgUserRelationsChanged(
     val orgId: String,
     val userIds: Collection<String>,
 ) : UserOrgUserEvent
 
 /**
- * 修改管理员标记。仅同步 `userIdsByOrgIdCache` 中该 orgId 视图
- * （缓存不含 orgAdmin 字段，但调用方约定保持一致性）。
+ * Update of the admin flag. Only refreshes the orgId view in `userIdsByOrgIdCache`
+ * (the cache does not include the orgAdmin field, but callers agree to keep them consistent).
  */
 data class UserOrgUserAdminUpdated(
     val id: String,

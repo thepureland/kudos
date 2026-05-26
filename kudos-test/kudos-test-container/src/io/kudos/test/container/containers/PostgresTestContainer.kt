@@ -18,10 +18,10 @@ import java.sql.SQLException
 import java.sql.Statement
 
 /**
- * postgres测试容器
+ * postgres test container.
  *
- * 若需将库文件持久到宿主机，请设置系统属性 [SYS_PROP_HOST_DATA_DIR] 或环境变量 [ENV_HOST_DATA_DIR]，
- * 该路径将绑定到容器内 `/var/lib/postgresql/data`（读写）；未设置时数据仅存于容器层，与原先行为一致。
+ * To persist database files to the host, set the system property [SYS_PROP_HOST_DATA_DIR] or environment variable [ENV_HOST_DATA_DIR];
+ * that path is bound to `/var/lib/postgresql/data` inside the container (read-write). When unset, data is stored only in the container layer, matching the previous behavior.
  *
  * @author K
  * @author AI: Cursor
@@ -29,13 +29,13 @@ import java.sql.Statement
  */
 object PostgresTestContainer {
 
-    /** 宿主机数据目录；优先于 [ENV_HOST_DATA_DIR] */
+    /** Host data directory; takes precedence over [ENV_HOST_DATA_DIR]. */
     const val SYS_PROP_HOST_DATA_DIR = "kudos.test.postgres.data.dir"
 
-    /** 宿主机数据目录（系统属性未设置时使用） */
+    /** Host data directory (used when the system property is unset). */
     const val ENV_HOST_DATA_DIR = "KUDOS_TEST_POSTGRES_DATA_DIR"
 
-    /** 官方镜像默认 PGDATA */
+    /** Default PGDATA path in the official image. */
     private const val CONTAINER_PGDATA = "/var/lib/postgresql/data"
 
     private const val LOCALHOST = "127.0.0.1"
@@ -49,12 +49,11 @@ object PostgresTestContainer {
     const val DATABASE = "test"
 
     /**
-     * 容器在宿主机上的 postgres 映射端口。**仅在容器启动后可用** —— 之前的调用会抛错。
+     * The host-side mapped port of the postgres container. **Only available after the container has started** — earlier calls throw.
      *
-     * 不再固定为 25432：testcontainers 由 docker 动态分配端口，避免本机其它进程
-     * （例如别的项目残留的 postgres 容器）占住固定端口让测试启动失败。所有外部
-     * 调用通过这个 getter 拿端口；yml/CLI arg 里写的端口仅作为 fallback，运行时
-     * 会被 [registerProperties] / CLI `--spring.datasource...url` 覆盖。
+     * No longer fixed at 25432: testcontainers asks Docker for a dynamic port, avoiding test startup failures when another local process
+     * (e.g. a leftover postgres container from another project) is holding a fixed port. All external callers should obtain the port via this getter;
+     * any port specified in yml/CLI args is only a fallback and will be overridden at runtime by [registerProperties] / CLI `--spring.datasource...url`.
      */
     val PORT: Int
         get() {
@@ -75,23 +74,23 @@ object PostgresTestContainer {
     private var container: GenericContainer<*>? = null
 
     /**
-     * 使用默认库名启动 postgres 容器。
+     * Starts the postgres container using the default database name.
      *
-     * @param registry Spring 动态属性注册器，可用于注册或覆盖已注册属性，也可为 {@code null}
-     * @return 当前运行中的 postgres 容器信息
+     * @param registry the Spring dynamic property registry, used to register or override already-registered properties; may be {@code null}
+     * @return information about the currently running postgres container
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
         return startIfNeeded(registry, DATABASE)
     }
 
     /**
-     * 启动 postgres 容器，并确保指定 database 已存在。
+     * Starts the postgres container and ensures the given database exists.
      * <p>
-     * 如果容器尚未启动，则先启动容器；如果容器已存在，则直接在现有容器内补建 database。
+     * If the container has not been started, it is started first; if it is already running, the database is created inside the existing container.
      *
-     * @param registry Spring 动态属性注册器，可用于注册或覆盖已注册属性，也可为 {@code null}
-     * @param database 需要确保存在的数据库名
-     * @return 当前运行中的 postgres 容器信息
+     * @param registry the Spring dynamic property registry, used to register or override already-registered properties; may be {@code null}
+     * @param database the database name to ensure exists
+     * @return information about the currently running postgres container
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?, database: String): Container {
         return TestContainerCrossProcessLock.run(PostgresTestContainer::class.java, "postgres") {
@@ -105,16 +104,16 @@ object PostgresTestContainer {
     }
 
     /**
-     * 延迟创建容器定义，避免在对象初始化阶段就固定容器状态。
+     * Lazily creates the container definition to avoid fixing container state at object initialization time.
      *
-     * @return postgres 容器定义
+     * @return the postgres container definition
      */
     private fun getOrCreateContainer(): GenericContainer<*> {
         if (container == null) {
             container = GenericContainer(IMAGE_NAME).apply {
-                // 不调 bindingPort —— 让 testcontainers 自动分配宿主机端口。固定 25432 时
-                // 一旦本机有别的 postgres 占着该端口（例如其它项目残留的 container），整个
-                // 测试就会因为 "port is already allocated" 启动失败。
+                // Do not call bindingPort — let testcontainers auto-assign a host port. With a fixed 25432,
+                // if another local postgres process holds that port (e.g. a leftover container from another project), the
+                // whole test would fail at startup with "port is already allocated".
                 withExposedPorts(CONTAINER_PORT)
                 withEnv("POSTGRES_DB", DATABASE)
                 withEnv("POSTGRES_USER", USERNAME)
@@ -131,9 +130,9 @@ object PostgresTestContainer {
     }
 
     /**
-     * 解析宿主机上用于持久化 PGDATA 的目录。
+     * Resolves the host-side directory used to persist PGDATA.
      *
-     * @return 非空绝对或规范路径时返回该路径；未配置时返回 `null`（不挂载卷）
+     * @return the path when a non-empty absolute or canonical path is configured; `null` when unconfigured (no volume mounted)
      */
     private fun resolveHostDataDir(): String? {
         val fromProp = System.getProperty(SYS_PROP_HOST_DATA_DIR)?.trim().orEmpty()
@@ -145,7 +144,7 @@ object PostgresTestContainer {
     }
 
     /**
-     * 连接管理库 {@code postgres}，按需创建目标 database。
+     * Connects to the admin database {@code postgres} and creates the target database on demand.
      */
     private fun ensureDatabaseExists(runningContainer: Container, database: String) {
         validateDatabaseName(database)
@@ -174,10 +173,10 @@ object PostgresTestContainer {
     }
 
     /**
-     * 构造连接管理库使用的 JDBC URL。
+     * Builds the JDBC URL used to connect to the admin database.
      *
-     * @param runningContainer 当前运行中的容器
-     * @return 指向 postgres 管理库的 JDBC URL
+     * @param runningContainer the currently running container
+     * @return the JDBC URL pointing to the postgres admin database
      */
     private fun buildAdminJdbcUrl(runningContainer: Container): String {
         val port = runningContainer.ports.firstOrNull()?.publicPort
@@ -186,7 +185,7 @@ object PostgresTestContainer {
     }
 
     /**
-     * 检查目标 database 是否已经存在。
+     * Checks whether the target database already exists.
      */
     private fun databaseExists(connection: Connection, database: String): Boolean {
         val sql = "select 1 from pg_database where datname = ?"
@@ -199,7 +198,7 @@ object PostgresTestContainer {
     }
 
     /**
-     * 限制 database 名称字符集，避免空值和非法标识符带来建库风险。
+     * Restricts the character set of database names to avoid the risks of empty or invalid identifiers during creation.
      */
     private fun validateDatabaseName(database: String) {
         require(database.isNotBlank()) { "database must not be blank" }
@@ -209,7 +208,7 @@ object PostgresTestContainer {
     }
 
     /**
-     * 在数据库尚未就绪时短暂等待后重试。
+     * Sleeps briefly before retrying when the database is not yet ready.
      */
     private fun sleepBeforeRetry() {
         try {
@@ -221,7 +220,7 @@ object PostgresTestContainer {
     }
 
     /**
-     * 注册指定 database 对应的数据源属性。
+     * Registers data-source properties corresponding to the specified database.
      */
     private fun registerProperties(
         registry: DynamicPropertyRegistry,
@@ -238,9 +237,9 @@ object PostgresTestContainer {
     }
 
     /**
-     * 返回运行中的容器对象。
+     * Returns the running container instance.
      *
-     * @return 容器对象，如果没有则返回 {@code null}
+     * @return the container instance, or {@code null} if none is running
      */
     fun getRunningContainer(): Container? = TestContainerKit.getRunningContainer(LABEL)
 

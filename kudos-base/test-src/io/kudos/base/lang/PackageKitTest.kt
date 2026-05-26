@@ -6,7 +6,7 @@ import org.apache.commons.lang3.StringUtils
 import kotlin.test.Test
 
 /**
- * PackageKit测试用例
+ * PackageKit test cases.
  *
  * @author K
  * @since 1.0.0

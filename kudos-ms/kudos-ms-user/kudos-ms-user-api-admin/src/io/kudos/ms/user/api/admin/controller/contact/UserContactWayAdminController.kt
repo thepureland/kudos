@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 用户联系方式管理控制器
+ * User contact way admin controller.
  *
  * @author K
  * @since 1.0.0

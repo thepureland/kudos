@@ -1,20 +1,20 @@
 package io.kudos.base.bean.validation.terminal
 
 /**
- * 终端约束数据类
+ * Terminal constraint data class.
  *
  * @author K
  * @since 1.0.0
  */
 data class TerminalConstraint(
 
-    /** bean属性名 */
+    /** Bean property name */
 //    @JsonIgnore
     @Transient
     val prop: String,
-    /** 约束名 */
+    /** Constraint name */
     val constraint: String,
-    /** 约束规则，Array(Map(约束注解的属性名，约束注解的属性值)) */
+    /** Constraint rule: Array(Map(constraint annotation attribute name, constraint annotation attribute value)) */
     val rule: Array<Map<String, Any>>
 ) {
     override fun equals(other: Any?): Boolean {

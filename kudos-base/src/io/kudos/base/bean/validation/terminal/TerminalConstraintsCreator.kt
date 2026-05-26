@@ -14,7 +14,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.full.*
 
 /**
- * 终端约束创建者
+ * Terminal constraints creator.
  *
  * @author K
  * @since 1.0.0
@@ -22,16 +22,16 @@ import kotlin.reflect.full.*
 object TerminalConstraintsCreator {
 
     /**
-     * Map(Bean类名-属性名前缀，Map(属性名， LinkedHashMap(约束名，Array(Map(约束注解的属性名，约束注解的属性值)))))
+     * Map(beanClassName-propertyPrefix, Map(propertyName, LinkedHashMap(constraintName, Array(Map(annotationPropertyName, annotationPropertyValue)))))
      */
     private val constrainCacheMap = mutableMapOf<String, Map<String, LinkedHashMap<String, Array<Map<String, Any>>>>>()
 
     /**
-     * 生成Bean类对应的终端验证规则
+     * Generates the terminal validation rules for the given bean class.
      *
-     * @param beanClass 待校验的bean类
-     * @param propertyPrefix 属性名前缀
-     * @return Map(属性名， LinkedHashMap(约束名，Array(Map(约束注解的属性名，约束注解的属性值))))
+     * @param beanClass the bean class to be validated
+     * @param propertyPrefix the property-name prefix
+     * @return Map(propertyName, LinkedHashMap(constraintName, Array(Map(annotationPropertyName, annotationPropertyValue))))
      * @author K
      * @since 1.0.0
      */
@@ -49,11 +49,11 @@ object TerminalConstraintsCreator {
     }
 
     /**
-     * 解析注解
+     * Parses annotations.
      *
-     * @param annotations MutableMap<属性名, MutableList<注解对象>>
-     * @param beanClass 待校验的bean类
-     * @param parentProperty 父属性对象
+     * @param annotations MutableMap<propertyName, MutableList<annotation>>
+     * @param beanClass the bean class to be validated
+     * @param parentProperty the parent property
      * @author K
      * @since 1.0.0
      */
@@ -66,32 +66,32 @@ object TerminalConstraintsCreator {
 
         for (prop in clazz.memberProperties) {
             if (prop.returnType != Any::class.starProjectedType) {
-                if (prop.getter.hasAnnotation<Valid>()) { // 级联验证
+                if (prop.getter.hasAnnotation<Valid>()) { // cascaded validation
                     parentProp = prop
                     val parentClazz = clazz
                     clazz = prop.returnType.classifier as? KClass<*>
-                        ?: error("无法解析级联属性类型: ${prop.name}")
+                        ?: error("Unable to resolve cascaded property type: ${prop.name}")
                     if (clazz == Array<Any>::class) {
                         clazz = requireNotNull(clazz.companionObject) {
-                            "无法获取数组类型的 companionObject: ${clazz.qualifiedName}"
+                            "Unable to get companionObject for array type: ${clazz.qualifiedName}"
                         }
                     }
                     if (clazz.isSubclassOf(List::class)) {
                         val paramType = prop.typeParameters
                         clazz = paramType[0].starProjectedType.classifier as? KClass<*>
-                            ?: error("无法解析 List 级联属性泛型: ${prop.name}")
+                            ?: error("Unable to resolve generic type of List cascaded property: ${prop.name}")
                     }
                     if (clazz.isSubclassOf(Map::class)) {
                         val paramType = prop.typeParameters
                         clazz = paramType[1].starProjectedType.classifier as? KClass<*>
-                            ?: error("无法解析 Map 级联属性 value 泛型: ${prop.name}")
+                            ?: error("Unable to resolve value generic type of Map cascaded property: ${prop.name}")
                     }
-                    parseAnnotations(annotations, clazz, parentProp) // 递归解析所有类中的注解
+                    parseAnnotations(annotations, clazz, parentProp) // recursively parse annotations in all classes
                     clazz = parentClazz
                     parentProp = null
                 } else {
                     val propName = parentProp?.let { "'${it.name}.${prop.name}'" } ?: prop.name
-                    check(propName.count { it == '.' } <= 1) { "属性嵌套层次超过1层：$propName" }
+                    check(propName.count { it == '.' } <= 1) { "Property nesting exceeds 1 level: $propName" }
                     val annoList = getAnnotationsOnGetter(clazz, prop.name)
                     annotations[propName]?.let(annoList::addAll)
                     if (annoList.isNotEmpty()) {
@@ -103,12 +103,12 @@ object TerminalConstraintsCreator {
     }
 
     /**
-     * 获取校验规则，按属性合并，并将结果转为json
+     * Builds validation rules, merged by property, and converts the result to JSON.
      *
-     * @param annotationsMap MutableMap<属性名, MutableList<注解对象>>
-     * @param propertyPrefix 属性名前缀
-     * @param beanClass 待校验的bean类
-     * @return 验证规则json文本
+     * @param annotationsMap MutableMap<propertyName, MutableList<annotation>>
+     * @param propertyPrefix property-name prefix
+     * @param beanClass the bean class to be validated
+     * @return JSON text of validation rules
      * @author K
      * @since 1.0.0
      */
@@ -125,7 +125,7 @@ object TerminalConstraintsCreator {
             val property = PropertyResolver.toPotQuote(originalProperty, propertyPrefix)
             val context = ConstraintConvertContext(originalProperty, property, propertyPrefix, beanClass)
             annotations.forEach { annotation ->
-                // 为null不需要返回给终端
+                // null entries don't need to be returned to the terminal
                 ConstraintConvertorFactory.getInstance(annotation)?.let { converter ->
                     val terminalConstraint = converter.convert(context)
                     ruleMap.getOrPut(property) { linkedMapOf() }[terminalConstraint.constraint] = terminalConstraint.rule
@@ -136,17 +136,17 @@ object TerminalConstraintsCreator {
     }
 
     /**
-     * 获取类级别的约束注解
+     * Returns the class-level constraint annotations.
      *
-     * @param clazz Bean类
-     * @return Map(属性名，List(约束注解))
+     * @param clazz the bean class
+     * @return Map(propertyName, List(constraintAnnotation))
      * @author K
      * @since 1.0.0
      */
     private fun getAnnotationsOnClass(clazz: KClass<*>): Map<String, MutableList<Annotation>> {
         val annotationMap = mutableMapOf<String, MutableList<Annotation>>()
         for (annotation in clazz.annotations) {
-            // 自定义的类级别约束注解中, 代表类属性数组的属性名定义统一用 properties
+            // In custom class-level constraint annotations, the property representing the array of class properties is consistently named `properties`
             val prop = annotation::class.getMemberProperty("properties")
             val propertyNames = (prop.call(annotation) as? Array<*>)?.filterIsInstance<String>() ?: emptyList()
             val isConstraint = annotation.annotationClass.hasAnnotation<Constraint>()
@@ -160,10 +160,10 @@ object TerminalConstraintsCreator {
     }
 
     /**
-     * 获取Getter上的约束注解
+     * Returns the constraint annotations on the getter.
      *
-     * @param clazz Bean类
-     * @return Map(属性名，List(约束注解))
+     * @param clazz the bean class
+     * @return Map(propertyName, List(constraintAnnotation))
      * @author K
      * @since 1.0.0
      */
@@ -172,15 +172,15 @@ object TerminalConstraintsCreator {
     }
 
     /**
-     * 递归获取 Getter 上的约束注解。
-     * 当子类 override 属性但未重新声明约束时，继续向父接口和父类上查找。
+     * Recursively collects constraint annotations on the getter.
+     * When a subclass overrides a property but does not redeclare its constraints, the search continues into parent interfaces and the superclass.
      *
-     * 使用 [visited] 集合防御接口多继承造成的菱形重复访问；遇到 [Any] 时立即停止。
+     * The [visited] set guards against diamond duplicates caused by multiple interface inheritance; the recursion stops immediately upon reaching [Any].
      *
-     * @param clazz 当前要扫描的类
-     * @param property 属性名
-     * @param visited 已访问过的类集合（防重）
-     * @return 命中的约束注解列表（可能为空）
+     * @param clazz the class currently being scanned
+     * @param property the property name
+     * @param visited the set of classes already visited (deduplication)
+     * @return the list of matched constraint annotations (may be empty)
      * @author K
      * @since 1.0.0
      */
@@ -203,9 +203,9 @@ object TerminalConstraintsCreator {
                 }
             }
         } catch (_: NoSuchElementException) {
-            // 当前类未声明该属性，继续向上查找
+            // Current class does not declare this property; continue searching upward
         } catch (_: IllegalArgumentException) {
-            // 当前类未声明该属性，继续向上查找
+            // Current class does not declare this property; continue searching upward
         }
         clazz.getSuperInterfaces().forEach { superInterface ->
             annotationList.addAll(collectAnnotationsOnGetter(superInterface, property, visited))

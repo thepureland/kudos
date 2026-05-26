@@ -8,7 +8,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Custom测试用例
+ * Test cases for Custom.
  *
  * @author K
  * @since 1.0.0
@@ -29,14 +29,14 @@ internal class CustomTest {
 
     internal data class TestRemoteBean(
 
-        @get:Custom(checkClass = ExistValidator::class, message = "用户名已存在")
+        @get:Custom(checkClass = ExistValidator::class, message = "username already exists")
         val username: String?,
 
-        val mockExist: Boolean = false, // 模拟用户名是否存在
+        val mockExist: Boolean = false, // simulates whether the username exists
 
         @get:Custom.List(
-            Custom(checkClass = Rule1Validator::class, message = "不满足规则1"),
-            Custom(checkClass = Rule2Validator::class, message = "不满足规则2")
+            Custom(checkClass = Rule1Validator::class, message = "does not satisfy rule 1"),
+            Custom(checkClass = Rule2Validator::class, message = "does not satisfy rule 2")
         )
         val address: String?
     )

@@ -5,33 +5,33 @@ import java.io.Serializable
 
 
 /**
- * 国际化缓存项
+ * I18n cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysI18nCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String?,
 
 
-    /** 语言_地区 */
+    /** Language_region */
     val locale: String,
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String,
 
-    /** 国际化类型字典代码 */
+    /** I18n type dict code */
     val i18nTypeDictCode: String,
 
-    /** 国际化命名空间 */
+    /** I18n namespace */
     val namespace: String,
 
-    /** 国际化key */
+    /** I18n key */
     val key: String,
 
-    /** 国际化值 */
+    /** I18n value */
     val value: String,
 
 ) : IIdEntity<String?>, Serializable {

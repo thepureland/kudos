@@ -6,14 +6,14 @@ import jakarta.validation.constraints.NotBlank
 
 
 /**
- * 租户表单更新请求VO
+ * Tenant update form request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysTenantFormUpdate (
 
-    /** 主键 */
+    /** Primary key */
     @get:NotBlank
     @get:FixedLength(36)
     override val id: String,

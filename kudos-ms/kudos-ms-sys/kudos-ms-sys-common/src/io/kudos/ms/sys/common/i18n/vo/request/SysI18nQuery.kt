@@ -7,32 +7,32 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 国际化列表查询条件请求VO
+ * Request VO for querying the i18n list.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysI18nQuery (
 
-    /** 语言_地区 */
+    /** Language_Region */
     val locale: String? = null,
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String? = null,
 
-    /** 国际化类型字典代码 */
+    /** I18n type dictionary code */
     val i18nTypeDictCode: String? = null,
 
-    /** 国际化命名空间 */
+    /** I18n namespace */
     val namespace: String? = null,
 
-    /** 国际化key */
+    /** I18n key */
     val key: String? = null,
 
-    /** 国际化值 */
+    /** I18n value */
     val value: String? = null,
 
-    /** 仅启用 */
+    /** Only enabled */
     val active: Boolean? = true,
 
 ) : ListSearchPayload() {

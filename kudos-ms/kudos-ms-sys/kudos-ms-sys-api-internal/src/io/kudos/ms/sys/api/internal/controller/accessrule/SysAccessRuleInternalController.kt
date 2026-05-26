@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 访问规则 内部 RPC 控制器。路径继承自 [ISysAccessRuleApi] 方法级注解。
+ * Access rule internal RPC controller. Paths are inherited from method-level annotations on [ISysAccessRuleApi].
  *
  * @author K
  * @since 1.0.0

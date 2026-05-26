@@ -7,15 +7,15 @@ import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 
 /**
- * Jackson解码器
- * 用于Feign响应解码，支持将HTTP响应体反序列化为Java对象
+ * Jackson decoder.
+ * Used for Feign response decoding; supports deserializing HTTP response bodies into Java objects.
  */
 class JacksonDecoder(
     private val objectMapper: ObjectMapper
 ) : Decoder {
 
     override fun decode(response: Response, type: Type): Any? {
-        // 常见的空响应直接返回 null
+        // Return null directly for common empty responses
         if (response.status() == 204 || response.status() == 404 || response.body() == null) {
             return null
         }
@@ -23,7 +23,7 @@ class JacksonDecoder(
         val body = response.body() ?: return null
 
         body.asInputStream().use { input ->
-            // String 特判一下，直接按 UTF-8 读
+            // Special-case String: read directly as UTF-8
             if (type == String::class.java) {
                 return input.readAllBytes().toString(StandardCharsets.UTF_8)
             }

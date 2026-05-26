@@ -6,10 +6,11 @@ import java.time.LocalDateTime
 
 
 /**
- * 未送达消息的失败追踪记录。
+ * Failure tracking record for undelivered messages.
  *
- * 与 [MsgReceive] 互补：成功送达写 [MsgReceive]，失败的接收人写本表。
- * 重试由 admin 或后续 retry scheduler 触发，成功后置 [resolved] = true。
+ * Complementary to [MsgReceive]: successful deliveries are written to [MsgReceive],
+ * while failed receivers are written to this table.
+ * Retries are triggered by admin or a subsequent retry scheduler, and [resolved] is set to true on success.
  *
  * @author K
  * @since 1.0.0
@@ -18,34 +19,34 @@ interface MsgUnreceived : IDbEntity<String, MsgUnreceived> {
 
     companion object : DbEntityFactory<MsgUnreceived>()
 
-    /** 原本应该收到消息的用户ID */
+    /** ID of the user who should have received the message */
     var receiverId: String
 
-    /** 关联的发送批次ID（msg_send.id） */
+    /** Associated send batch ID (msg_send.id) */
     var sendId: String
 
-    /** 失败发生的渠道（publish_method 字典码） */
+    /** Channel on which the failure occurred (publish_method dictionary code) */
     var publishMethodDictCode: String
 
-    /** 失败原因，文本，参考 [io.kudos.ms.msg.common.receiver.enums.MsgUnreceivedReasonEnum] */
+    /** Failure reason, text, see [io.kudos.ms.msg.common.receiver.enums.MsgUnreceivedReasonEnum] */
     var failReason: String?
 
-    /** 已重试次数 */
+    /** Retry count */
     var retryCount: Int
 
-    /** 最近一次重试的时间；null 表示还没重试过 */
+    /** Time of the most recent retry; null means no retry has occurred yet */
     var lastRetryTime: LocalDateTime?
 
-    /** 是否已处理（重试成功 / admin 关闭后置 true） */
+    /** Whether it has been resolved (set to true after a successful retry / admin close) */
     var resolved: Boolean
 
-    /** 创建时间 */
+    /** Create time */
     var createTime: LocalDateTime
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime: LocalDateTime?
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId: String
 
 }

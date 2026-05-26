@@ -14,14 +14,16 @@ import org.springframework.beans.factory.annotation.Qualifier
 
 
 /**
- * MinIO（S3 兼容）文件下载服务。
+ * MinIO (S3-compatible) file download service.
  *
- * 客户端选取策略与 [MinioUploadService] 一致：[DownloadFileModel.authServerParam] 为空走静态客户端，
- * 非空走 [MinioClientBuilderFactory] 现场构造。
+ * Client-selection strategy mirrors [MinioUploadService]: a null
+ * [DownloadFileModel.authServerParam] uses the static client; non-null builds one on
+ * the fly via [MinioClientBuilderFactory].
  *
- * **不做本地路径穿越检查**——对象存储里 "filePath" 是 S3 key（任意字符串），不是
- * 文件系统路径，没有真正的"跳出 base-path"语义。`common` 层 `isValid` 的 `..` 检查
- * 在这里更多是兼容形式而非安全屏障。
+ * **Does not perform local path-traversal checks** — in object storage, `filePath`
+ * is an S3 key (arbitrary string), not a filesystem path; there is no genuine
+ * "escape the base-path" semantics. The `..` check in the `common` layer's
+ * `isValid` is more a form of compatibility here than a security guard.
  *
  * @author K
  * @author AI: Codex
@@ -32,13 +34,13 @@ open class MinioDownLoadService : AbstractDownLoadService() {
     @Autowired
     private lateinit var minioClientBuilderFactory: MinioClientBuilderFactory
 
-    /** 静态客户端：来自 `kudos.ability.file.minio.{endpoint,accessKey,secretKey}` 装配。 */
+    /** Static client: assembled from `kudos.ability.file.minio.{endpoint,accessKey,secretKey}`. */
     @Autowired
     @Qualifier("minioClient")
     private lateinit var minioClientDefault: MinioClient
 
     /**
-     * 按 [DownloadFileModel.authServerParam] 决定使用静态 / 动态客户端。
+     * Picks the static or dynamic client based on [DownloadFileModel.authServerParam].
      */
     protected fun getMinioClient(model: DownloadFileModel<*>): MinioClient {
         val auth = model.authServerParam ?: return minioClientDefault

@@ -1,12 +1,12 @@
 package io.kudos.ms.auth.core.role.event
 
 /**
- * 角色-用户关系（`auth_role_user`）领域事件。Join 表，影响三条缓存投影：
- * - UserIdsByRoleIdCache：按 roleId 查 userIds
- * - RoleIdsByUserIdCache：按 userId 查 roleIds
- * - ResourceIdsByUserIdCache：按 userId 查 resourceIds（通过角色聚合，需失效）
+ * Role-User relation (`auth_role_user`) domain events. Join table, affecting three cache projections:
+ * - UserIdsByRoleIdCache: query userIds by roleId
+ * - RoleIdsByUserIdCache: query roleIds by userId
+ * - ResourceIdsByUserIdCache: query resourceIds by userId (aggregated through roles, requires invalidation)
  *
- * 关系变更同时影响 roleId 一侧和涉及的 userIds 一侧。
+ * Relation changes affect both the roleId side and the involved userIds side.
  *
  * @author K
  * @author AI: Cursor
@@ -14,7 +14,7 @@ package io.kudos.ms.auth.core.role.event
  */
 sealed interface AuthRoleUserEvent
 
-/** 一组角色-用户关系变更（绑定或解绑）；listener 按 roleId / userIds 三向失效缓存。 */
+/** A batch of role-user relation changes (bind or unbind); listener invalidates caches three-way by roleId / userIds. */
 data class AuthRoleUserRelationsChanged(
     val roleId: String,
     val userIds: Collection<String>,

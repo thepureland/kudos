@@ -4,11 +4,13 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * AWS SNS 短信发送回调载体。
+ * AWS SNS SMS send callback payload.
  *
- * - 正常 2xx：[statusCode] = 200, [messageId] / [sequenceNumber] 由 AWS 返回
- * - AwsServiceException / SdkServiceException：[statusCode] 来自 SDK，[statusText] 是错误码或描述
- * - 本地异常（连接失败、序列化错误等）：[statusCode] = 599 + "client error"（由 handler 兜底）
+ * - Normal 2xx: [statusCode] = 200, [messageId] / [sequenceNumber] returned by AWS
+ * - AwsServiceException / SdkServiceException: [statusCode] comes from the SDK; [statusText] is
+ *   the error code or description
+ * - Local exception (connection failure, serialization errors, etc.): [statusCode] = 599 +
+ *   "client error" (handled as a fallback by the handler)
  *
  * @author paul
  * @author K

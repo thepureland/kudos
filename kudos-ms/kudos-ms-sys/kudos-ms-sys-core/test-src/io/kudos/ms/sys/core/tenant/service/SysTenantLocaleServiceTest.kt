@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysTenantLocaleService
  *
- * 测试数据来源：`SysTenantLocaleServiceTest.sql`
+ * Test data source: `SysTenantLocaleServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -52,7 +52,7 @@ class SysTenantLocaleServiceTest : RdbAndRedisCacheTestBase() {
         val result = sysTenantLocaleService.unbind(tenantId, localeCode)
         assertTrue(result)
         
-        // 重新绑定
+        // Rebind
         val bindCount = sysTenantLocaleService.batchBind(tenantId, listOf(localeCode))
         assertTrue(bindCount > 0)
     }

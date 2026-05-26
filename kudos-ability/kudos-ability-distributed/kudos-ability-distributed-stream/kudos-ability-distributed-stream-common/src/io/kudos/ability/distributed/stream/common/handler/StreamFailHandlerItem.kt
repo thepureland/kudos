@@ -3,18 +3,18 @@ package io.kudos.ability.distributed.stream.common.handler
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * 流式消息失败处理器注册表
- * 用于管理和查找不同绑定名称对应的失败处理器
+ * Stream message failure handler registry.
+ * Manages and looks up failure handlers by binding name.
  */
 object StreamFailHandlerItem {
-    /** bindName → IStreamFailHandler 注册表；写入在 Spring 装配期，读在消息处理期。 */
+    /** bindName -> IStreamFailHandler registry; written during Spring configuration, read during message handling. */
     private val STREAM_HANDLER = ConcurrentHashMap<String, IStreamFailHandler>()
 
     /**
-     * 注册一个 bindName 对应的失败处理器。
+     * Register a failure handler for the given bindName.
      *
-     * @param bindName Spring Cloud Stream 的 binding 名（如 `outboundOrder-out-0`）
-     * @param listener 失败处理器实例
+     * @param bindName Spring Cloud Stream binding name (e.g. `outboundOrder-out-0`)
+     * @param listener failure handler instance
      * @author K
      * @since 1.0.0
      */
@@ -23,25 +23,26 @@ object StreamFailHandlerItem {
     }
 
     /**
-     * 判断指定 bindName 是否注册过失败处理器。
+     * Check whether a failure handler is registered for the given bindName.
      *
-     * @param bindName binding 名
-     * @return true 表示已注册
+     * @param bindName binding name
+     * @return true if registered
      * @author K
      * @since 1.0.0
      */
     fun hasFailedHandler(bindName: String?): Boolean = STREAM_HANDLER.containsKey(bindName)
 
     /**
-     * 取 bindName 对应的失败处理器；未注册时回落到 [IStreamFailHandler.DEFAULT_BIND_NAME] 对应的默认实现。
-     * 默认实现也未注册时返回 null，由调用方决定如何降级。
+     * Get the failure handler for bindName; falls back to the default implementation under
+     * [IStreamFailHandler.DEFAULT_BIND_NAME] when none is registered. Returns null when neither
+     * exists, leaving the caller to decide how to degrade.
      *
-     * @param bindName binding 名
-     * @return 已注册的处理器或默认实现，皆无则 null
+     * @param bindName binding name
+     * @return registered handler or default implementation, or null if neither exists
      * @author K
      * @since 1.0.0
      */
     fun get(bindName: String): IStreamFailHandler? =
-        //没有设置，则用默认的实现
+        // No specific handler -> use the default implementation
         STREAM_HANDLER[bindName] ?: STREAM_HANDLER[IStreamFailHandler.DEFAULT_BIND_NAME]
 }

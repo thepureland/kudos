@@ -9,7 +9,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * EachConstraintConvertor测试用例
+ * Test cases for EachConstraintConvertor.
  *
  * @author AI: cursor
  * @author K
@@ -25,7 +25,7 @@ internal class EachConstraintConvertorTest {
             val convertor = EachConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
             assertNotNull(rule)
-            // 应该包含子约束的规则
+            // Should contain rules for the sub-constraints
             assertTrue(rule.isNotEmpty())
         }
     }
@@ -37,7 +37,7 @@ internal class EachConstraintConvertorTest {
         if (annotation != null) {
             val convertor = EachConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
-            // 应该包含NotNull和Size等子约束
+            // Should contain sub-constraints such as NotNull and Size
             assertTrue(rule.containsKey("NotNull") || rule.containsKey("Size"))
         }
     }
@@ -45,8 +45,8 @@ internal class EachConstraintConvertorTest {
     data class TestBean(
         @get:Each(
             value = Constraints(
-                notNull = NotNull("不能為null"),
-                size = Size(min = 1, max = 100, message = "大小必須在1到100間")
+                notNull = NotNull("must not be null"),
+                size = Size(min = 1, max = 100, message = "size must be between 1 and 100")
             )
         )
         val items: List<String>?

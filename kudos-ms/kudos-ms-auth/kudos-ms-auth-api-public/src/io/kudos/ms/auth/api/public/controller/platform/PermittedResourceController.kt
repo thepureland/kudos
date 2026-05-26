@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 当前用户可访问资源 控制器。路径继承自 [IPermittedResource] 方法级注解。
+ * Controller exposing resources accessible to the current user. Paths are inherited from method-level annotations on [IPermittedResource].
  *
  * @author K
  * @since 1.0.0

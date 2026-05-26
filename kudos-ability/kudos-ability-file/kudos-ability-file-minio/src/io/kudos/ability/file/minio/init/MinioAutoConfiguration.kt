@@ -19,7 +19,7 @@ import org.springframework.context.annotation.PropertySource
 import java.net.URI
 
 /**
- * minio自动配置类
+ * MinIO auto configuration class.
  *
  * @author unknown
  * @author K

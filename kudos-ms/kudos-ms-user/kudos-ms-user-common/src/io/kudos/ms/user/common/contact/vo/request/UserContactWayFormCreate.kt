@@ -1,7 +1,7 @@
 package io.kudos.ms.user.common.contact.vo.request
 
 /**
- * 用户联系方式表单新建请求VO
+ * User contact way form create request VO
  *
  * @author K
  * @since 1.0.0

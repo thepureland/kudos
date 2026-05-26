@@ -21,12 +21,12 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * 域名缓存处理器
+ * Domain cache handler.
  *
- * 1.数据来源表：sys_domain
- * 2.缓存域名，不包含active=false的
- * 3.缓存的key为：domain name
- * 4.缓存的value为：SysDomainCacheEntry对象
+ * 1. Source table: sys_domain
+ * 2. Caches domains excluding those with active=false
+ * 3. Cache key: domain name
+ * 4. Cache value: SysDomainCacheEntry instance
  *
  * @author K
  * @since 1.0.0
@@ -49,33 +49,33 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheEntry>
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有域名信息！")
+            log.info("Cache is disabled; skip loading and caching all domains!")
             return
         }
 
-        // 加载所有active为true的域名
+        // Load all domains with active=true
         val criteria = Criteria(SysDomain::active eq true)
         val domains = dao.searchAs<SysDomainCacheEntry>(criteria)
-        log.debug("从数据库加载了${domains.size}条域名信息。")
+        log.debug("Loaded ${domains.size} domains from database.")
 
-        // 清除缓存
+        // Clear cache
         if (clear) {
             clear()
         }
 
-        // 缓存域名
+        // Cache domains
         domains.forEach {
             val domain = it.domain
             KeyValueCacheKit.put(CACHE_NAME, domain, it)
         }
-        log.debug("缓存了${domains.size}条域名信息。")
+        log.debug("Cached ${domains.size} domains.")
     }
 
     /**
-     * 根据名称从缓存中获取域名信息，如果缓存中不存在，则从数据库中加载，并写入缓存
+     * Get domain from cache by name; if absent, load from database and write to cache.
      *
-     * @param domain 域名名称
-     * @return SysDomainCacheEntry对象，如果找不到返回null
+     * @param domain domain name
+     * @return SysDomainCacheEntry instance, or null if not found
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -84,7 +84,7 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheEntry>
     )
     open fun getDomain(domain: String): SysDomainCacheEntry? {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在域名${domain}，从数据库中加载...")
+            log.debug("Domain ${domain} not in cache, loading from database...")
         }
 
         val criteria = Criteria.and(
@@ -93,87 +93,87 @@ open class DomainByNameCache : AbstractKeyValueCacheHandler<SysDomainCacheEntry>
         )
         val domains = dao.searchAs<SysDomainCacheEntry>(criteria)
         return if (domains.isEmpty()) {
-            log.debug("从数据库找不到active=true且名为${domain}的域名信息。")
+            log.debug("No active=true domain named ${domain} found in database.")
             null
         } else {
-            log.debug("从数据库加载了名为${domain}的域名信息。")
+            log.debug("Loaded domain ${domain} from database.")
             domains.first()
         }
     }
 
     /**
-     * 数据库插入记录后同步缓存
+     * Sync cache after a database insert.
      *
-     * @param any 包含必要属性的对象
-     * @param id 域名id
+     * @param any object containing the required properties
+     * @param id domain id
      */
     open fun syncOnInsert(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME) && KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
-            log.debug("新增id为${id}的域名后，同步${CACHE_NAME}缓存...")
+            log.debug("After inserting domain with id ${id}, syncing ${CACHE_NAME} cache...")
             val domain = BeanKit.getProperty(any, SysDomain::domain.name) as String
-            KeyValueCacheKit.evict(CACHE_NAME, domain) // 踢除缓存
-            getSelf<DomainByNameCache>().getDomain(domain) // 重新缓存
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            KeyValueCacheKit.evict(CACHE_NAME, domain) // evict cache
+            getSelf<DomainByNameCache>().getDomain(domain) // re-cache
+            log.debug("${CACHE_NAME} cache sync completed.")
         }
     }
 
     /**
-     * 更新数据库记录后同步缓存
+     * Sync cache after a database update.
      *
-     * @param any 包含必要属性的对象
-     * @param id 域名id
+     * @param any object containing the required properties
+     * @param id domain id
      */
     open fun syncOnUpdate(any: Any?, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${id}的域名后，同步${CACHE_NAME}缓存...")
+            log.debug("After updating domain with id ${id}, syncing ${CACHE_NAME} cache...")
             val domain = if (any == null) {
                 dao.get(id)?.domain
             } else {
                 BeanKit.getProperty(any, SysDomain::domain.name) as String
             }
             if (domain.isNullOrBlank()) return
-            KeyValueCacheKit.evict(CACHE_NAME, domain) // 踢除缓存
+            KeyValueCacheKit.evict(CACHE_NAME, domain) // evict cache
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf<DomainByNameCache>().getDomain(domain) // 重新缓存
+                getSelf<DomainByNameCache>().getDomain(domain) // re-cache
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync completed.")
         }
     }
 
     /**
-     * 删除数据库记录后同步缓存
+     * Sync cache after a database delete.
      *
-     * @param any 包含必要属性的对象
-     * @param id 域名id
+     * @param any object containing the required properties
+     * @param id domain id
      */
     open fun syncOnDelete(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除id为${id}的域名后，同步从${CACHE_NAME}缓存中踢除...")
+            log.debug("After deleting domain with id ${id}, evicting from ${CACHE_NAME} cache...")
             val domain = BeanKit.getProperty(any, SysDomain::domain.name) as String
-            KeyValueCacheKit.evict(CACHE_NAME, domain) // 踢除缓存
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            KeyValueCacheKit.evict(CACHE_NAME, domain) // evict cache
+            log.debug("${CACHE_NAME} cache sync completed.")
         }
     }
 
     /**
-     * 批量删除数据库记录后同步缓存
+     * Sync cache after a batch database delete.
      *
-     * @param ids 域名id集合
-     * @param domains 域名名称集合
+     * @param ids domain id collection
+     * @param domains domain name collection
      */
     open fun syncOnBatchDelete(ids: Collection<String>, domains: Set<String>) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("批量删除id为${ids}的域名后，同步从${CACHE_NAME}缓存中踢除...")
+            log.debug("After batch deleting domains with ids ${ids}, evicting from ${CACHE_NAME} cache...")
             domains.forEach {
-                KeyValueCacheKit.evict(CACHE_NAME, it) // 踢除缓存
+                KeyValueCacheKit.evict(CACHE_NAME, it) // evict cache
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync completed.")
         }
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysDomainInserted) {
-        // AFTER_COMMIT 后 DB 行已可见；通过 id 反查 domain name 用作 cache key
+        // After AFTER_COMMIT the DB row is visible; look up the domain name by id for the cache key
         val domain = dao.get(event.id) ?: return
         syncOnInsert(domain, event.id)
     }

@@ -16,7 +16,7 @@ import jakarta.annotation.Resource
 import org.springframework.web.bind.annotation.*
 
 /**
- * 字典项管理控制器
+ * Dictionary item management controller.
  *
  * @author K
  * @since 1.0.0
@@ -33,10 +33,10 @@ class SysDictItemAdminController :
     private lateinit var sysDictItemService: ISysDictItemService
 
     /**
-     * 返回指定id的字典项
+     * Return the dictionary item for the given id.
      *
-     * @param id 主键
-     * @return SysDictItemRow，找不到返回null
+     * @param id primary key
+     * @return SysDictItemRow; returns null if not found
      */
     @GetMapping("/getDictItem")
     fun getDictItem(id: String): SysDictItemCacheEntry? {
@@ -44,9 +44,9 @@ class SysDictItemAdminController :
     }
 
     /**
-     * 分页查询；命中行的 `parentCode` 由 service 内部回填。
+     * Paged query; `parentCode` of matched rows is back-filled internally by the service.
      *
-     * @param sysDictItemQuery 查询参数载体
+     * @param sysDictItemQuery query parameter container
      * @return PagingSearchResult<SysDictItemRow>
      */
     @PostMapping("/pagingSearchDictItem")
@@ -54,11 +54,11 @@ class SysDictItemAdminController :
         vSysDictItemService.pagingSearchWithParentCode(sysDictItemQuery)
 
     /**
-     * 返回指定字典类型的直接孩子(第一层字典项)
+     * Return direct children (first-level dictionary items) of the given dictionary type.
      *
-     * @param atomicServiceCode 原子服务编码
-     * @param dictType 字典类型
-     * @param activeOnly 仅启用，为false将包含未启用的
+     * @param atomicServiceCode atomic service code
+     * @param dictType dictionary type
+     * @param activeOnly active only; false includes inactive ones
      * @return List<SysDictItemNode>
      */
     @GetMapping("/getDirectChildrenOfDict")
@@ -70,12 +70,12 @@ class SysDictItemAdminController :
         sysDictItemService.getDirectChildrenOfDictAsNodes(atomicServiceCode, dictType, activeOnly)
 
     /**
-     * 返回指定字典项的直接孩子
+     * Return direct children of the given dictionary item.
      *
-     * @param atomicServiceCode 原子服务编码
-     * @param dictType 字典类型
-     * @param itemCode 字典项编码
-     * @param activeOnly 仅启用，为false将包含未启用的
+     * @param atomicServiceCode atomic service code
+     * @param dictType dictionary type
+     * @param itemCode dictionary item code
+     * @param activeOnly active only; false includes inactive ones
      * @return List<SysDictItemNode>
      */
     @GetMapping("/getDirectChildrenOfItem")
@@ -88,11 +88,11 @@ class SysDictItemAdminController :
         sysDictItemService.getDirectChildrenOfItemAsNodes(atomicServiceCode, dictType, itemCode, activeOnly)
 
     /**
-     * 根据字典类型和原子服务编码取得对应的字典项
+     * Get dictionary items by dictionary type and atomic service code.
      *
-     * @param dictType 字典类型
-     * @param atomicServiceCode 原子服务编码
-     * @return 字典项列表
+     * @param dictType dictionary type
+     * @param atomicServiceCode atomic service code
+     * @return list of dictionary items
      */
     @GetMapping("/getDictItems")
     fun getDictItems(dictType: String, atomicServiceCode: String): List<SysDictItemCacheEntry> {
@@ -100,10 +100,10 @@ class SysDictItemAdminController :
     }
 
     /**
-     * 批量获取字典项信息
+     * Batch get dictionary item information.
      *
-     * @param dictTypesByAtomicServiceCode Map<原子服务编码，Collection<字典类型编码>>
-     * @return Map<原子服务编码, Map<字典类型，字典项缓存对象列表>>
+     * @param dictTypesByAtomicServiceCode Map<atomic service code, Collection<dictionary type code>>
+     * @return Map<atomic service code, Map<dictionary type, list of dictionary item cache entries>>
      */
     @PostMapping("/batchGetDictItems")
     @ResponseBody
@@ -115,11 +115,11 @@ class SysDictItemAdminController :
     }
 
     /**
-     * 根据字典类型和原子服务编码取得对应的字典项
+     * Get dictionary items by dictionary type and atomic service code.
      *
-     * @param dictType 字典类型
-     * @param atomicServiceCode 原子服务编码
-     * @return LinkedHashMap<字典项编码，字典项译文或其国际化key>
+     * @param dictType dictionary type
+     * @param atomicServiceCode atomic service code
+     * @return LinkedHashMap<dictionary item code, item translation or its i18n key>
      */
     @GetMapping("/getDictItemMap")
     fun getDictItemMap(dictType: String, atomicServiceCode: String): LinkedHashMap<String, String> {
@@ -127,10 +127,10 @@ class SysDictItemAdminController :
     }
 
     /**
-     * 批量获取字典项信息
+     * Batch get dictionary item information.
      *
-     * @param dictTypesByAtomicServiceCode Map<原子服务编码，Collection<字典类型编码>>
-     * @return Map<原子服务编码，Map<字典类型，LinkedHashMap<字典项编码，字典项译文或其国际化key>>>
+     * @param dictTypesByAtomicServiceCode Map<atomic service code, Collection<dictionary type code>>
+     * @return Map<atomic service code, Map<dictionary type, LinkedHashMap<dictionary item code, item translation or its i18n key>>>
      */
     @PostMapping("/batchGetDictItemMap")
     @ResponseBody
@@ -142,11 +142,11 @@ class SysDictItemAdminController :
     }
 
     /**
-     * 更新active状态
+     * Update the active status.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     @PutMapping("/updateActive")
     fun updateActive(id: String, active: Boolean): Boolean {

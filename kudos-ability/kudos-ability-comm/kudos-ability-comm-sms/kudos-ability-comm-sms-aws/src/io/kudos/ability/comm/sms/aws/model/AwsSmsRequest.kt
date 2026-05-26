@@ -5,10 +5,12 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * AWS SNS 短信发送请求体。字段对应 AWS SDK `PublishRequest`；同时携带本次调用使用的 IAM 凭证
- * ([accessKeyId] / [accessKeySecret]) —— 支持"多租户各自一套 AWS IAM"的场景。
+ * AWS SNS SMS send request body. Fields correspond to the AWS SDK `PublishRequest`; it also carries
+ * the IAM credentials ([accessKeyId] / [accessKeySecret]) used for the call - supporting the
+ * "multi-tenant, each with its own AWS IAM" scenario.
  *
- * **不要把本类实例输出到日志** —— [accessKeySecret] 是明文 + [Serializable]，可能被日志 / 缓存序列化时外泄。
+ * **Do not log instances of this class** - [accessKeySecret] is plaintext and [Serializable]
+ * allows it to leak when the object is serialized to logs / caches.
  *
  * @author paul
  * @author K
@@ -16,32 +18,32 @@ import java.io.Serializable
  */
 class AwsSmsRequest : Serializable {
     /**
-     * 区域
+     * Region.
      */
     var region: String? = null
 
     /**
-     * accessKeyId
+     * accessKeyId.
      */
     var accessKeyId: String? = null
 
     /**
-     * accessKeySecret
+     * accessKeySecret.
      */
     var accessKeySecret: String? = null
 
     /**
-     * 接收短信的手机号码, for example, +1XXX5550100
+     * Phone number to receive the SMS, for example, +1XXX5550100.
      */
     var phoneNumber: String? = null
 
     /**
-     * 短信内容
+     * SMS content.
      */
     var message: String? = null
 
     /**
-     * 扩展信息
+     * Extra information.
      */
     var messageAttributes: MutableMap<String?, MessageAttributeValue?>? = null
 

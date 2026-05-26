@@ -31,17 +31,19 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * minio下载操作测试用例
+ * Test cases for MinIO download operations.
  *
- * 说明：
- * 1) 不使用 OIDC / STS，只用 AccessKey/Secret 跟 MinIO 交互，避免 503/初始化时序问题
- * 2) Admin 账户在启动时创建两个测试用户：
- *    - rw_user：docs 桶下对象读写（供上传 + 默认下载）
- *    - ro_user：docs 桶下对象只读（用于“指定 AccessKey 成功下载”的场景）
- * 3) 测试项：
- *    - download_with_default_minio_client：使用默认凭证下载（默认凭证配置成 rw_user）
- *    - download_with_specify_access_key_without_auth：指定错误凭证，期望抛出 FILE_ACCESS_DENY
- *    - download_with_specify_access_key_with_auth：指定 ro_user 凭证，期望下载成功
+ * Notes:
+ * 1) Does not use OIDC / STS; interacts with MinIO only via AccessKey/Secret to
+ *    avoid 503 / initialization-timing issues.
+ * 2) The admin account creates two test users at startup:
+ *    - rw_user: read/write on objects in the docs bucket (for upload + default download).
+ *    - ro_user: read-only on objects in the docs bucket (used in the "successful
+ *      download with a specified AccessKey" scenario).
+ * 3) Tests:
+ *    - download_with_default_minio_client:            download with the default credentials (configured as rw_user).
+ *    - download_with_specify_access_key_without_auth: incorrect credentials, expects FILE_ACCESS_DENY.
+ *    - download_with_specify_access_key_with_auth:    use ro_user credentials, expects successful download.
  *
  * @author AI: Codex
  * @author water
@@ -63,7 +65,7 @@ internal class MinioDownLoadServiceTest {
 
     @BeforeAll
     fun before_download() {
-        // 统一固定到 docs 桶，避免创建随机桶需要额外的“建桶权限”
+        // Fix to the docs bucket so creating a random bucket does not need extra "create-bucket" permission.
         val bucketName = BUCKET
         val tenantId = RandomStringKit.uuid()
 
@@ -83,7 +85,7 @@ internal class MinioDownLoadServiceTest {
     }
 
     /**
-     * 使用配置的用户名密码（默认：rw_user）下载
+     * Downloads using the configured username/password (default: rw_user).
      */
     @Test
     fun download_with_default_minio_client() {
@@ -95,7 +97,7 @@ internal class MinioDownLoadServiceTest {
     }
 
     /**
-     * 指定错误的 AccessKey/Secret，期望被拒绝（FILE_ACCESS_DENY）
+     * Use an incorrect AccessKey/Secret; expects rejection (FILE_ACCESS_DENY).
      */
     @Test
     fun download_with_specify_access_key_without_auth() {
@@ -103,7 +105,7 @@ internal class MinioDownLoadServiceTest {
         val path = requireNotNull(uploaded.filePath) { "filePath" }
         val downloadFileModel = DownloadFileModel.from(path)
 
-        // 故意给错的 accessKey/secretKey
+        // Intentionally use incorrect accessKey/secretKey.
         downloadFileModel.authServerParam = AccessKeyServerParam("bad", "bad")
 
         try {
@@ -115,8 +117,8 @@ internal class MinioDownLoadServiceTest {
     }
 
     /**
-     * 指定只读用户 ro_user 的 AccessKey/Secret 进行下载
-     * 期望成功（ro_user 策略仅允许 GetObject）
+     * Downloads using the read-only user ro_user's AccessKey/Secret.
+     * Expects success (ro_user's policy only allows GetObject).
      */
     @Test
     fun download_with_specify_access_key_with_auth() {
@@ -130,32 +132,32 @@ internal class MinioDownLoadServiceTest {
     }
 
     companion object {
-        // ---- Root 管理员 ----
+        // ---- Root administrator ----
         private const val ROOT_USER = "admin"
         private const val ROOT_USER_SECRET = "12345678"
 
-        // ---- 读写账户（默认凭证，用于上传 + 默认下载）----
+        // ---- Read/write account (default credentials, used for upload + default download) ----
         private const val RW_USER = "rw_user"
         private const val RW_USER_SECRET = "rw_user_secret"
 
-        // ---- 只读账户（用于“指定凭证下载成功”）----
+        // ---- Read-only account (used for "successful download with specified credentials") ----
         private const val RO_USER = "ro_user"
         private const val RO_USER_SECRET = "ro_user_secret"
 
-        // 固定桶名，方便在策略里精确授权
+        // Fixed bucket name for precise authorization in policies.
         private const val BUCKET = "docs"
 
         @JvmStatic
         @DynamicPropertySource
         fun property(registry: DynamicPropertyRegistry) {
-            // 启动容器并注册 endpoint 属性
+            // Start the container and register the endpoint properties.
             val minio = MinioTestContainer.startIfNeeded(registry)
             val address = "http://${minio.ports.first().ip}:${minio.ports.first().publicPort}"
 
-            // 1) 用 root 凭证准备环境：创建 docs 桶 + 两个策略 + 两个用户 + 绑策略
+            // 1) Use root credentials to prepare the environment: create the docs bucket + two policies + two users + bind policies.
             prepareMinioForTests(address)
 
-            // 2) Spring 环境默认凭证：配置为 rw_user（用于 @BeforeAll 的上传动作 & 默认下载）
+            // 2) Spring environment default credentials: set to rw_user (used by @BeforeAll's upload action and the default download).
             registry.add("kudos.ability.file.minio.endpoint") { address }
             registry.add("kudos.ability.file.minio.public-endpoint") { address }
             registry.add("kudos.ability.file.minio.accessKey") { RW_USER }
@@ -163,26 +165,26 @@ internal class MinioDownLoadServiceTest {
         }
 
         /**
-         * 用 root 管理员准备测试环境：
-         * - 创建 docs 桶（如果不存在）
-         * - 创建两个策略：rw-policy（读写），ro-policy（只读）
-         * - 创建两个用户：rw_user、ro_user
-         * - 将策略分别绑定到用户
+         * Prepares the test environment using the root administrator:
+         * - Creates the docs bucket (if it does not exist).
+         * - Creates two policies: rw-policy (read/write) and ro-policy (read-only).
+         * - Creates two users: rw_user and ro_user.
+         * - Binds the respective policies to the users.
          */
         private fun prepareMinioForTests(address: String) {
-            // ---- data 面客户端（用 root 创建桶/放对象时也可用）----
+            // ---- Data-plane client (also used by root to create buckets / put objects) ----
             val rootClient = MinioClient.builder().endpoint(address).credentials(ROOT_USER, ROOT_USER_SECRET).build()
 
-            // 确保桶存在
+            // Ensure the bucket exists.
             val exists = rootClient.bucketExists(BucketExistsArgs.builder().bucket(BUCKET).build())
             if (!exists) {
                 rootClient.makeBucket(MakeBucketArgs.builder().bucket(BUCKET).build())
             }
 
-            // ---- admin 面客户端（创建策略/用户/授权）----
+            // ---- Admin-plane client (creates policies/users/authorizations) ----
             val admin = MinioAdminClient.builder().endpoint(address).credentials(ROOT_USER, ROOT_USER_SECRET).build()
 
-            // 读写策略：允许 docs 桶元信息 + docs/* 对象的读写（方便上传/下载）
+            // Read/write policy: allow docs bucket metadata + read/write on docs/* objects (for upload/download).
             val rwPolicy = """
                 {
                   "Version": "2012-10-17",
@@ -206,7 +208,7 @@ internal class MinioDownLoadServiceTest {
                 }
             """.trimIndent()
 
-            // 只读策略：允许 docs 桶元信息 + docs/* 对象的读取
+            // Read-only policy: allow docs bucket metadata + reads on docs/* objects.
             val roPolicy = """
                 {
                   "Version": "2012-10-17",
@@ -227,19 +229,19 @@ internal class MinioDownLoadServiceTest {
                 }
             """.trimIndent()
 
-            // 创建/覆盖策略（若存在 addCannedPolicy 可能报冲突，可用 runCatching 忽略）
+            // Create/overwrite policies (addCannedPolicy may throw on conflict; runCatching ignores it).
             runCatching { admin.addCannedPolicy("rw-policy", rwPolicy) }
             runCatching { admin.addCannedPolicy("ro-policy", roPolicy) }
 
-            // 创建用户（若已存在可忽略异常）
+            // Create users (ignore exceptions if they already exist).
             runCatching { admin.addUser(RW_USER, Status.ENABLED, RW_USER_SECRET, null, null) }
             runCatching { admin.addUser(RO_USER, Status.ENABLED, RO_USER_SECRET, null, null) }
 
-            // 绑定策略
+            // Bind policies.
             admin.setPolicy(RW_USER, false, "rw-policy")
             admin.setPolicy(RO_USER, false, "ro-policy")
 
-            // 也可以提前放一个对象，供“非上传路径”的下载测试使用（这里不是必须）
+            // We can also pre-place an object for download tests that do not depend on the upload path (not strictly required).
             runCatching {
                 rootClient.putObject(
                     PutObjectArgs.builder()

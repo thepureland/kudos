@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 资源 Feign 容错降级实现。
+ * Resource Feign fault-tolerant fallback implementation.
  *
  * @author K
  * @since 1.0.0

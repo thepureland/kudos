@@ -6,7 +6,7 @@ import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 
 /**
- * AtLeast约束验证器
+ * Validator for the AtLeast constraint.
  *
  * @author K
  * @since 1.0.0
@@ -16,9 +16,9 @@ class AtLeastValidator : ConstraintValidator<AtLeast, Any> {
 
     override fun initialize(atLeast: AtLeast) {
         this.atLeast = atLeast
-        check(atLeast.count >= 0) { "@AtLeast约束指定的count值不能为负数！" }
+        check(atLeast.count >= 0) { "The count specified by @AtLeast must not be negative!" }
         check(atLeast.count <= atLeast.properties.size) {
-            "@AtLeast约束指定的count值【${atLeast.count}】不能比property的个数【${atLeast.properties.size}】大！"
+            "The count [${atLeast.count}] specified by @AtLeast must not exceed the number of properties [${atLeast.properties.size}]!"
         }
     }
 

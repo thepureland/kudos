@@ -8,81 +8,93 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 不可变查询条件载体（接口）
+ * Immutable query-condition payload (interface).
  *
- * 用于封装查询条件，支持灵活的查询规则配置和结果类型控制。
- * 实现类通过**在类中明确定义属性**来自动生成查询条件，简化查询代码的编写。
+ * Encapsulates query conditions and supports flexible rule configuration and result-type control.
+ * Implementations automatically generate query conditions by **explicitly defining properties on the class**,
+ * which simplifies query code.
  *
- * **安全性设计**：本接口仅提供 [getAndOr]/[getOperators] 等方法，实现类只能 override 这些方法而无法暴露 setter，
- * 从而无法在实例创建后由外部修改查询结构。适合承载来自不信任源（如前端、开放 API）的查询参数，降低注入与越权风险。
+ * **Security design**: this interface only exposes methods such as [getAndOr]/[getOperators]; implementations
+ * can only override these methods and cannot expose setters, so the query structure cannot be modified externally
+ * after the instance is created. This makes the type suitable for carrying query parameters from untrusted
+ * sources (e.g. frontend or open APIs), reducing injection and privilege-escalation risks.
  *
- * 核心功能：
- * 1. 自动条件生成：根据属性值自动生成查询条件
- * 2. 灵活操作符：支持为每个属性指定不同的操作符（子类通过重写 [getOperators] 等方法返回固定值）
- * 3. 逻辑关系控制：支持 AND 和 OR 两种逻辑关系
- * 4. 结果类型控制：支持返回实体、属性值或 Map 等多种结果类型
- * 5. 自定义条件：支持完全自定义的查询条件
+ * Core capabilities:
+ * 1. Automatic condition generation: query conditions are generated from property values.
+ * 2. Flexible operators: each property may use a different operator (subclasses return fixed values by overriding
+ *    methods like [getOperators]).
+ * 3. Logical-relation control: supports both AND and OR semantics.
+ * 4. Result-type control: supports returning entities, single property values, or Maps.
+ * 5. Custom conditions: fully customized query conditions are supported.
  *
- * 查询规则：
- * 1. 空值过滤：各个属性只有当其值非空时才会应用该查询条件
- *    - 例外：[getNullProperties] 返回列表中指定的属性，即使值为 null 也会作为查询条件
- * 2. 默认操作符：各个属性的查询逻辑默认都是等于（EQ）
- *    - 可通过 [getOperators] 为特定属性指定不同的操作符
- * 3. 逻辑关系：各属性间的关系默认为 AND
- *    - 可通过重写 [getAndOr] 改变为 OR
+ * Query rules:
+ * 1. Null-value filtering: a property is only applied as a condition when its value is non-null.
+ *    - Exception: properties listed in [getNullProperties] are used as conditions even when their value is null.
+ * 2. Default operator: each property uses equality (EQ) by default.
+ *    - Use [getOperators] to specify a different operator for a particular property.
+ * 3. Logical relation: the relation between properties defaults to AND.
+ *    - Override [getAndOr] to switch to OR.
  *
- * 结果类型控制：
- * - [getReturnProperties] 为空：返回 [getReturnEntityClass] 指定的实体列表，或表对应的 PO 列表
- * - [getReturnProperties] 为单个属性：返回该属性值的列表（如 List<String>）
- * - [getReturnProperties] 为多个属性：返回 Map(属性名, 属性值) 的列表
+ * Result-type control:
+ * - [getReturnProperties] is empty: returns a list of the entity specified by [getReturnEntityClass], or the PO list
+ *   corresponding to the table.
+ * - [getReturnProperties] contains a single property: returns a list of that property's values (e.g. List<String>).
+ * - [getReturnProperties] contains multiple properties: returns a list of Map(propertyName, propertyValue).
  *
- * 优先级：
- * - [getCriterions]（最高）：完全自定义的查询条件，会覆盖所有自动生成的条件
- * - [getOperators]：为特定属性指定操作符，覆盖默认的等于操作
- * - 默认规则：属性值非空时使用等于操作，属性间 AND 关系
+ * Priority:
+ * - [getCriterions] (highest): fully custom query conditions; overrides all auto-generated conditions.
+ * - [getOperators]: specifies operators for particular properties, overriding the default equality.
+ * - Default rule: when the property value is non-null, use equality; properties are combined with AND.
  *
- * 使用场景：
- * - RESTful API 的查询参数封装（推荐：由子类固定结构，请求只填充属性值）
- * - 需要防止外部篡改查询条件的场景
+ * Use cases:
+ * - Encapsulating query parameters for RESTful APIs (recommended: subclasses fix the structure; requests only
+ *   populate property values).
+ * - Scenarios that need to prevent external tampering with query conditions.
  *
- * 注意事项：
- * - 实现类需要定义查询属性，属性名对应数据库字段或实体属性
- * - [getReturnEntityClass] 返回类型的属性可以比 PO 多，但只会自动封装名字一致的属性
- * - [getNullProperties] 用于处理需要查询 null 值的特殊场景
+ * Notes:
+ * - Implementations need to define query properties; property names correspond to database columns or entity
+ *   properties.
+ * - The type returned by [getReturnEntityClass] may contain more properties than the PO, but only properties whose
+ *   names match are populated automatically.
+ * - [getNullProperties] is used for special scenarios where you need to query by null values.
  *
  * @author K
  * @since 1.0.0
  */
 interface ISearchPayload {
 
-    /** 各属性间的查询逻辑关系，默认为 AND。实现类通过重写此方法定制，不可改为可写属性。 */
+    /**
+     * Logical relation among properties; defaults to AND. Implementations customize this by overriding the method;
+     * it must not be exposed as a mutable property.
+     */
     fun getAndOr(): AndOrEnum = AndOrEnum.AND
 
-    /** 值为 null 时须作为查询条件的属性的列表。 */
+    /** List of properties to be used as query conditions even when their value is null. */
     fun getNullProperties(): List<String>? = null
 
     /**
-     * 属性的特殊(非等于)查询操作逻辑，key 必须为该类的属性引用(KProperty0)。
+     * Custom (non-equality) operators for properties; keys must be property references (KProperty0) of this class.
      */
     fun getOperators(): Map<KProperty0<*>, OperatorEnum>? = null
 
     /**
-     * 返回的实体类型。
-     * 仅当 [getReturnProperties] 为空时才会应用；
-     * 若此时为 null，将返回所查询表对应的 PO。
-     * 该类型中定义的属性可以比 PO 多，但只会自动封装名字一致的(类型要能兼容)。
+     * The entity type to return.
+     * Only applied when [getReturnProperties] is empty;
+     * if it is null in that case, the PO corresponding to the queried table is returned.
+     * The type may declare more properties than the PO, but only those with matching names (and compatible types)
+     * are populated automatically.
      */
     fun getReturnEntityClass(): KClass<*>? = null
 
     /**
-     * 查询结果的属性列表。
-     * 若为空，则为 [getReturnEntityClass] 对象列表或表对应的 PO 列表；
-     * 若单个属性，则为该属性值的列表；
-     * 若多个属性，则为 Map(属性名, 属性值) 的列表。
+     * The property list to return.
+     * If empty, returns a list of [getReturnEntityClass] objects or the PO list corresponding to the table;
+     * if a single property, returns a list of that property's values;
+     * if multiple properties, returns a list of Map(propertyName, propertyValue).
      */
     fun getReturnProperties(): List<String>? = null
 
-    /** 完全自定义的属性查询逻辑。优先级最高，会覆盖原来的查询逻辑。 */
+    /** Fully custom property query logic; highest priority, overrides the original query logic. */
     fun getCriterions(): List<Criterion>? = null
 
 }

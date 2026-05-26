@@ -5,14 +5,14 @@ import io.kudos.ms.user.common.login.vo.response.UserLoginRememberMeRow
 
 
 /**
- * 记住我登录列表查询条件请求VO
+ * Remember-me login list query request VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserLoginRememberMeQuery (
 
-    /** 用户名 */
+    /** Username */
     val username: String? = null,
 
 ) : ListSearchPayload() {

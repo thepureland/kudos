@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 访问规则 API本地实现
+ * Local implementation of the access rule API.
  *
  * @author K
  * @since 1.0.0

@@ -16,13 +16,15 @@ import org.springframework.core.annotation.AnnotationUtils
 import org.springframework.stereotype.Component
 
 /**
- * 组件初始化调度器
+ * Component initialization dispatcher.
  *
- *  1) 在配置类自身初始化前调用 beforeInit()
- *  2) 在自身及它生产的所有 @Bean 初始化完毕后调用 afterInit()
- *  3) 对于每个带 @Configuration 且实现 IComponentInitializer 接口的配置类：
- *     a) 如果标注了 @AutoConfigureAfter，强制当前配置类的 BeanDefinition 依赖那些 afterClasses 的 BeanName。
- *     b) 如果标注了 @AutoConfigureBefore，强制 those beforeClasses 的 BeanDefinition 依赖当前配置类的 BeanName（即反向依赖）。
+ *  1) Call beforeInit() before the configuration class itself is initialized.
+ *  2) Call afterInit() after the configuration class itself and all @Bean instances it produces are initialized.
+ *  3) For each configuration class annotated with @Configuration that implements IComponentInitializer:
+ *     a) If annotated with @AutoConfigureAfter, force the current configuration class's BeanDefinition to depend on
+ *        the BeanNames of those afterClasses.
+ *     b) If annotated with @AutoConfigureBefore, force the BeanDefinitions of those beforeClasses to depend on the
+ *        current configuration class's BeanName (i.e. reverse dependency).
  *
  *  @author K
  *  @since 1.0.0
@@ -36,39 +38,40 @@ open class ComponentInitializationDispatcher :
 
     private lateinit var beanFactory: ConfigurableListableBeanFactory
 
-    // key = 配置类 beanName
+    // key = configuration class beanName
     private val componentBeanNames = mutableMapOf<String, MutableSet<String>>()
 
     private val remainingCount = mutableMapOf<String, Int>()
 
-    // 缓存每个配置类的实例，由 Spring 传进来
+    // Cache an instance of each configuration class, passed in by Spring
     private val initializerInstances = mutableMapOf<String, IComponentInitializer>()
 
     private val beforeCalled = mutableSetOf<String>()
     private val afterCalled = mutableSetOf<String>()
 
     /**
-     * 设置BeanFactory并收集组件信息
-     * 
-     * 收集所有IComponentInitializer实现类及其创建的Bean，用于后续的初始化调度。
-     * 
-     * 工作流程：
-     * 1. 类型转换：将BeanFactory转换为ConfigurableListableBeanFactory
-     * 2. 查找组件：获取所有IComponentInitializer类型的Bean名称
-     * 3. 收集子Bean：对于每个组件，收集其创建的所有Bean（通过factoryBeanName匹配）
-     * 4. 记录信息：将组件名称和子Bean集合存储到componentBeanNames
-     * 5. 初始化计数：设置remainingCount，用于跟踪Bean初始化进度
-     * 
-     * 子Bean收集：
-     * - 查找所有factoryBeanName等于组件名称的Bean
-     * - 将组件自身也加入到子Bean集合中
-     * - 这些Bean的初始化完成后，会触发组件的afterInit
-     * 
-     * 计数机制：
-     * - remainingCount记录每个组件还有多少子Bean未初始化
-     * - 当计数减到0时，说明所有子Bean都已初始化，可以调用afterInit
-     * 
-     * @param factory Spring BeanFactory
+     * Set the BeanFactory and collect component information.
+     *
+     * Collects all IComponentInitializer implementations and the beans they create, for use in subsequent
+     * initialization scheduling.
+     *
+     * Workflow:
+     * 1. Type cast: cast BeanFactory to ConfigurableListableBeanFactory.
+     * 2. Find components: get all bean names of type IComponentInitializer.
+     * 3. Collect child beans: for each component, collect all beans it creates (matched by factoryBeanName).
+     * 4. Record information: store the component name and child bean set in componentBeanNames.
+     * 5. Initialize counters: set remainingCount, used to track bean initialization progress.
+     *
+     * Child bean collection:
+     * - Look up all beans whose factoryBeanName equals the component name.
+     * - Add the component itself to the child bean set.
+     * - When these beans finish initializing, the component's afterInit is triggered.
+     *
+     * Counting mechanism:
+     * - remainingCount records how many child beans each component still has uninitialized.
+     * - When the counter drops to 0, all child beans are initialized and afterInit can be invoked.
+     *
+     * @param factory The Spring BeanFactory
      */
     override fun setBeanFactory(factory: BeanFactory) {
         @Suppress("UNCHECKED_CAST")
@@ -77,7 +80,7 @@ open class ComponentInitializationDispatcher :
         beanFactory
             .getBeanNamesForType<IComponentInitializer>()
             .forEach { compName ->
-                // 收集 factoryBeanName == compName 的所有 Bean，再加上 compName 自身
+                // Collect all beans whose factoryBeanName == compName, plus compName itself
                 val children = beanFactory.beanDefinitionNames
                     .filter { name ->
                         beanFactory.getBeanDefinition(name).factoryBeanName == compName
@@ -91,34 +94,34 @@ open class ComponentInitializationDispatcher :
     }
 
     /**
-     * Bean初始化前的处理
-     * 
-     * 在Bean初始化前调用beforeInit方法，并缓存组件实例。
-     * 
-     * 工作流程：
-     * 1. 类型检查：检查Bean是否为IComponentInitializer实例
-     * 2. 重复检查：检查beforeInit是否已被调用（避免重复调用）
-     * 3. 缓存实例：将组件实例缓存到initializerInstances
-     * 4. 调用beforeInit：执行组件的beforeInit方法
-     * 5. 标记已调用：将beanName添加到beforeCalled集合
-     * 
-     * 调用时机：
-     * - 在Bean的构造函数执行后、初始化方法执行前
-     * - 确保在Bean完全初始化前执行beforeInit
-     * 
-     * 注意事项：
-     * - 每个组件的beforeInit只会被调用一次
-     * - 实例会被缓存，避免后续再次getBean
-     * 
-     * @param bean Bean实例
-     * @param beanName Bean名称
-     * @return 处理后的Bean实例
+     * Pre-initialization processing for a bean.
+     *
+     * Calls beforeInit before the bean is initialized and caches the component instance.
+     *
+     * Workflow:
+     * 1. Type check: check whether the bean is an IComponentInitializer.
+     * 2. Duplicate check: check whether beforeInit has already been called (avoid duplicate invocation).
+     * 3. Cache the instance: cache the component instance into initializerInstances.
+     * 4. Invoke beforeInit: execute the component's beforeInit method.
+     * 5. Mark as called: add the beanName to the beforeCalled set.
+     *
+     * Invocation timing:
+     * - After the bean's constructor runs and before its initialization methods run.
+     * - Ensure beforeInit executes before the bean is fully initialized.
+     *
+     * Notes:
+     * - Each component's beforeInit is called only once.
+     * - The instance is cached to avoid calling getBean again later.
+     *
+     * @param bean The bean instance
+     * @param beanName The bean name
+     * @return The processed bean instance
      */
     override fun postProcessBeforeInitialization(bean: Any, beanName: String): Any {
         if (bean is IComponentInitializer && beanName !in beforeCalled) {
-            // 缓存实例
+            // Cache the instance
             initializerInstances[beanName] = bean
-            // 调用 beforeInit
+            // Invoke beforeInit
             bean.beforeInit()
             beforeCalled += beanName
         }
@@ -126,33 +129,34 @@ open class ComponentInitializationDispatcher :
     }
 
     /**
-     * Bean初始化后的处理
-     * 
-     * 跟踪每个组件的子Bean初始化进度，当所有子Bean初始化完成后调用afterInit。
-     * 
-     * 工作流程：
-     * 1. 遍历所有组件：检查当前Bean是否属于某个组件的子Bean
-     * 2. 更新计数：将对应组件的remainingCount减1
-     * 3. 检查完成：如果计数减到0，说明所有子Bean都已初始化
-     * 4. 调用afterInit：从缓存中获取组件实例，调用afterInit方法
-     * 5. 标记已调用：将组件名称添加到afterCalled集合
-     * 
-     * 计数机制：
-     * - 每个组件维护一个remainingCount，初始值为子Bean数量
-     * - 每初始化一个子Bean，计数减1
-     * - 当计数为0时，说明所有子Bean都已初始化完成
-     * 
-     * 调用时机：
-     * - 在Bean的所有初始化方法执行完成后
-     * - 确保所有依赖的Bean都已准备就绪
-     * 
-     * 注意事项：
-     * - 每个组件的afterInit只会被调用一次
-     * - 使用缓存的实例，避免再次getBean造成循环依赖
-     * 
-     * @param bean Bean实例
-     * @param beanName Bean名称
-     * @return 处理后的Bean实例
+     * Post-initialization processing for a bean.
+     *
+     * Tracks each component's child-bean initialization progress, and calls afterInit once all child beans are
+     * initialized.
+     *
+     * Workflow:
+     * 1. Iterate over all components: check whether the current bean belongs to any component's child-bean set.
+     * 2. Update the counter: decrement the corresponding component's remainingCount by 1.
+     * 3. Completion check: if the counter drops to 0, all child beans are initialized.
+     * 4. Invoke afterInit: get the component instance from the cache and call afterInit.
+     * 5. Mark as called: add the component name to the afterCalled set.
+     *
+     * Counting mechanism:
+     * - Each component maintains a remainingCount initialized to its child-bean count.
+     * - Each time a child bean is initialized, the counter is decremented by 1.
+     * - When the counter reaches 0, all child beans have finished initializing.
+     *
+     * Invocation timing:
+     * - After all of the bean's initialization methods have finished executing.
+     * - Ensures every dependency bean is ready.
+     *
+     * Notes:
+     * - Each component's afterInit is called only once.
+     * - The cached instance is used to avoid getBean causing a circular dependency.
+     *
+     * @param bean The bean instance
+     * @param beanName The bean name
+     * @return The processed bean instance
      */
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
         componentBeanNames.forEach { (compName, names) ->
@@ -160,7 +164,7 @@ open class ComponentInitializationDispatcher :
                 val left = (remainingCount[compName] ?: 0) - 1
                 remainingCount[compName] = left
                 if (left == 0) {
-                    // 直接从缓存里拿实例，避免再次 getBean()
+                    // Fetch the instance directly from the cache to avoid calling getBean() again
                     val initializer = initializerInstances[compName]
                     initializer?.afterInit()
                     afterCalled += compName
@@ -171,75 +175,79 @@ open class ComponentInitializationDispatcher :
     }
 
     /**
-     * 获取早期 Bean 引用（例如循环依赖解析阶段）。
+     * Obtain an early bean reference (e.g. during circular dependency resolution).
      *
-     * 此处转发到 [postProcessAfterInitialization]，使代理对象也参与子 Bean 完成计数。
-     * 若 Spring 版本或代理策略导致同一 beanName 多次进入该路径，可能与纯初始化路径叠加；
-     * 若出现 `afterInit` 触发时机异常，请用集成测试对照当前 Spring 小版本行为。
+     * Forwards to [postProcessAfterInitialization] so that proxy objects also participate in the child-bean
+     * completion countdown. If a particular Spring version or proxy strategy causes the same beanName to enter this
+     * path multiple times, it may stack with the plain initialization path; if `afterInit` triggers at unexpected
+     * times, use an integration test to verify behavior against the current Spring minor version.
      *
-     * @param bean Bean实例
-     * @param beanName Bean名称
-     * @return 处理后的Bean实例（可能是代理）
+     * @param bean The bean instance
+     * @param beanName The bean name
+     * @return The processed bean instance (possibly a proxy)
      */
     override fun getEarlyBeanReference(bean: Any, beanName: String): Any {
-        // 让代理也参与 postProcessAfterInitialization 的倒计数
+        // Let the proxy also participate in postProcessAfterInitialization's countdown
         return postProcessAfterInitialization(bean, beanName)
     }
 
     /**
-     * 预测Bean类型
-     * 
-     * 返回Bean的实际类型，不进行任何转换。
-     * 
-     * @param beanClass Bean类
-     * @param beanName Bean名称
-     * @return Bean类
+     * Predict bean type.
+     *
+     * Return the bean's actual type without any conversion.
+     *
+     * @param beanClass The bean class
+     * @param beanName The bean name
+     * @return The bean class
      */
     override fun predictBeanType(beanClass: Class<*>, beanName: String) = beanClass
 
     /**
-     * 获取执行顺序
-     * 
-     * 返回最高优先级，确保在任何Bean实例化之前修改所有BeanDefinition。
-     * 
+     * Get execution order.
+     *
+     * Returns the highest precedence to ensure all BeanDefinitions are modified before any beans are instantiated.
+     *
      * @return Ordered.HIGHEST_PRECEDENCE
      */
-    // 最早执行，确保在任何 Bean 实例化之前修改所有 BeanDefinition
+    // Execute earliest to ensure all BeanDefinitions are modified before any bean instantiation
     override fun getOrder(): Int = Ordered.HIGHEST_PRECEDENCE
 
     /**
-     * 处理Bean定义注册表
-     * 
-     * 扫描所有配置类，处理@AutoConfigureAfter和@AutoConfigureBefore注解，设置Bean依赖关系。
-     * 
-     * 工作流程：
-     * 1. 收集配置类：扫描所有带@Configuration且实现IComponentInitializer的类
-     * 2. 处理@AutoConfigureAfter：
-     *    - 查找当前配置类上的@AutoConfigureAfter注解
-     *    - 将afterClasses对应的配置类BeanName添加到当前Bean的dependsOn
-     *    - 确保当前配置类在afterClasses之后初始化
-     * 3. 处理@AutoConfigureBefore：
-     *    - 查找当前配置类上的@AutoConfigureBefore注解
-     *    - 将当前BeanName添加到beforeClasses对应Bean的dependsOn
-     *    - 确保beforeClasses在当前配置类之前初始化（反向依赖）
-     * 
-     * 依赖合并：
-     * - 如果Bean已有dependsOn，会合并新旧依赖
-     * - 使用LinkedHashSet去重并保持顺序
-     * 
-     * 初始化顺序：
-     * - @AutoConfigureAfter：当前配置类在afterClasses之后初始化
-     * - @AutoConfigureBefore：beforeClasses在当前配置类之前初始化
-     * 
-     * 注意事项：
-     * - 在Bean实例化之前执行，只修改BeanDefinition
-     * - 如果类无法加载，会忽略该配置类
-     * - 依赖关系通过Spring的dependsOn机制实现
-     * 
-     * @param registry Bean定义注册表
+     * Process the bean definition registry.
+     *
+     * Scan all configuration classes, process @AutoConfigureAfter and @AutoConfigureBefore annotations, and set bean
+     * dependencies.
+     *
+     * Workflow:
+     * 1. Collect configuration classes: scan all classes annotated with @Configuration that implement
+     *    IComponentInitializer.
+     * 2. Process @AutoConfigureAfter:
+     *    - Look up the @AutoConfigureAfter annotation on the current configuration class.
+     *    - Add the bean names of the configuration classes corresponding to afterClasses to the current bean's
+     *      dependsOn.
+     *    - Ensure the current configuration class is initialized after afterClasses.
+     * 3. Process @AutoConfigureBefore:
+     *    - Look up the @AutoConfigureBefore annotation on the current configuration class.
+     *    - Add the current bean name to the dependsOn of the beans corresponding to beforeClasses.
+     *    - Ensure beforeClasses are initialized before the current configuration class (reverse dependency).
+     *
+     * Dependency merging:
+     * - If a bean already has dependsOn, the old and new dependencies are merged.
+     * - LinkedHashSet is used to deduplicate while preserving order.
+     *
+     * Initialization order:
+     * - @AutoConfigureAfter: the current configuration class is initialized after afterClasses.
+     * - @AutoConfigureBefore: beforeClasses are initialized before the current configuration class.
+     *
+     * Notes:
+     * - Runs before any bean instantiation and only modifies BeanDefinitions.
+     * - If a class fails to load, the configuration class is ignored.
+     * - Dependencies are implemented via Spring's dependsOn mechanism.
+     *
+     * @param registry The bean definition registry
      */
     override fun postProcessBeanDefinitionRegistry(registry: BeanDefinitionRegistry) {
-        // 1. 收集所有带 @Configuration 且实现 IComponentInitializer 接口的配置类
+        // 1. Collect all configuration classes annotated with @Configuration that implement IComponentInitializer
         val configCandidates = registry.beanDefinitionNames
             .mapNotNull { beanName ->
                 val className = registry.getBeanDefinition(beanName).beanClassName ?: return@mapNotNull null
@@ -251,11 +259,11 @@ open class ComponentInitializationDispatcher :
             .toMap(linkedMapOf())
         if (configCandidates.isEmpty()) return
 
-        // 2. 遍历每个配置类，处理 @AutoConfigureAfter 和 @AutoConfigureBefore
+        // 2. Iterate over each configuration class and process @AutoConfigureAfter and @AutoConfigureBefore
         for ((currentBeanName, currentClassName) in configCandidates) {
             val currentClass = runCatching { Class.forName(currentClassName) }.getOrNull() ?: continue
 
-            // 2a. 处理 @AutoConfigureAfter：当前 Bean 要依赖 afterClasses 所在配置类的 Bean
+            // 2a. Handle @AutoConfigureAfter: the current bean must depend on beans of the afterClasses
             AnnotationUtils.findAnnotation(currentClass, AutoConfigureAfter::class.java)?.let { afterAnno ->
                 val dependsOnAfter = afterAnno.value.flatMap { depClass ->
                     configCandidates.filterValues { it == depClass.qualifiedName }.keys
@@ -265,14 +273,14 @@ open class ComponentInitializationDispatcher :
                 }
             }
 
-            // 2b. 处理 @AutoConfigureBefore：beforeClasses 的 Bean 要依赖当前 Bean
+            // 2b. Handle @AutoConfigureBefore: beans of beforeClasses must depend on the current bean
             AnnotationUtils.findAnnotation(currentClass, AutoConfigureBefore::class.java)?.let { beforeAnno ->
                 beforeAnno.value.forEach { depClass ->
                     configCandidates
                         .filterValues { it == depClass.qualifiedName }
                         .keys
                         .forEach { candidateBeanName ->
-                            // 将 currentBeanName 加到 candidateBeanName 的 dependsOn 列表
+                            // Add currentBeanName to candidateBeanName's dependsOn list
                             appendDependsOn(registry.getBeanDefinition(candidateBeanName), setOf(currentBeanName))
                         }
                 }
@@ -280,7 +288,7 @@ open class ComponentInitializationDispatcher :
         }
     }
 
-    /** 把 [newDepends] 并入 [bd] 已有的 `dependsOn`，保持顺序且去重。 */
+    /** Merge [newDepends] into [bd]'s existing `dependsOn`, preserving order and deduplicating. */
     private fun appendDependsOn(bd: BeanDefinition, newDepends: Set<String>) {
         val merged = LinkedHashSet<String>().apply {
             bd.dependsOn?.let { addAll(it.asList()) }

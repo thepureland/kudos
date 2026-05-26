@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * RdbKit测试用例
+ * Test cases for RdbKit.
  *
  * @author K
  * @author AI: Codex
@@ -45,32 +45,29 @@ internal class RdbKitTest {
     }
 
     /**
-     * 测试determineRdbTypeByDataSource方法
-     * 使用指定的H2数据源
+     * Tests determineRdbTypeByDataSource using a specified H2 data source.
      */
     @Test
     fun determineRdbTypeByDataSourceWithH2() {
         val h2Url = "jdbc:h2:mem:test;DATABASE_TO_LOWER=TRUE;"
         val dataSource = DataSourceKit.createDataSource(h2Url, "sa", "sa")
         val rdbType = RdbKit.determineRdbTypeByDataSource(dataSource)
-        assertEquals(RdbTypeEnum.H2, rdbType, "应该识别为H2数据库")
+        assertEquals(RdbTypeEnum.H2, rdbType, "should be identified as H2")
     }
 
     /**
-     * 测试determineRdbTypeByDataSource方法
-     * 传入null，使用当前上下文的数据源
+     * Tests determineRdbTypeByDataSource passing null, falling back to the current context data source.
      */
     @Test
     fun determineRdbTypeByDataSourceWithNull() {
-        // 使用当前上下文的数据源（从Spring容器获取）
+        // Use the current context data source (fetched from the Spring container).
         val rdbType = RdbKit.determineRdbTypeByDataSource(null)
-        // 根据测试环境的配置，应该是H2
-        assertEquals(RdbTypeEnum.H2, rdbType, "应该识别为H2数据库")
+        // Per the test environment configuration, this should be H2.
+        assertEquals(RdbTypeEnum.H2, rdbType, "should be identified as H2")
     }
 
     /**
-     * 测试determineRdbTypeByDataSource方法
-     * 使用PostgreSQL URL格式的数据源
+     * Tests determineRdbTypeByDataSource using a PostgreSQL URL data source.
      */
     @Test
     fun determineRdbTypeByDataSourceWithPostgreSQL() {
@@ -78,31 +75,29 @@ internal class RdbKitTest {
         val postgresUrl = "jdbc:postgresql://localhost:${PostgresTestContainer.PORT}/${PostgresTestContainer.DATABASE}"
         val dataSource = DataSourceKit.createDataSource(postgresUrl, "pg", "postgres")
         val rdbType = RdbKit.determineRdbTypeByDataSource(dataSource)
-        assertEquals(RdbTypeEnum.POSTGRESQL, rdbType, "应该识别为PostgreSQL数据库")
+        assertEquals(RdbTypeEnum.POSTGRESQL, rdbType, "should be identified as PostgreSQL")
     }
 
 //    /**
-//     * 测试determineRdbTypeByDataSource方法
-//     * 使用MySQL URL格式的数据源
+//     * Tests determineRdbTypeByDataSource using a MySQL URL data source.
 //     */
 //    @Test
 //    fun determineRdbTypeByDataSourceWithMySQL() {
 //        val mysqlUrl = "jdbc:mysql://localhost:3306/testdb"
 //        val dataSource = DataSourceKit.createDataSource(mysqlUrl, "root", "password")
 //        val rdbType = RdbKit.determineRdbTypeByDataSource(dataSource)
-//        assertEquals(RdbTypeEnum.MYSQL, rdbType, "应该识别为MySQL数据库")
+//        assertEquals(RdbTypeEnum.MYSQL, rdbType, "should be identified as MySQL")
 //    }
 //
 //    /**
-//     * 测试determineRdbTypeByDataSource方法
-//     * 使用SQL Server URL格式的数据源
+//     * Tests determineRdbTypeByDataSource using a SQL Server URL data source.
 //     */
 //    @Test
 //    fun determineRdbTypeByDataSourceWithSQLServer() {
 //        val sqlServerUrl = "jdbc:sqlserver://localhost:1433;databaseName=testdb"
 //        val dataSource = DataSourceKit.createDataSource(sqlServerUrl, "sa", "password")
 //        val rdbType = RdbKit.determineRdbTypeByDataSource(dataSource)
-//        assertEquals(RdbTypeEnum.SQLSERVER, rdbType, "应该识别为SQL Server数据库")
+//        assertEquals(RdbTypeEnum.SQLSERVER, rdbType, "should be identified as SQL Server")
 //    }
 
 }

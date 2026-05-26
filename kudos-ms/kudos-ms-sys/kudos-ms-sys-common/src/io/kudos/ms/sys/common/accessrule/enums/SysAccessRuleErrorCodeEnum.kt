@@ -3,7 +3,7 @@ package io.kudos.ms.sys.common.accessrule.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 访问规则错误码
+ * Access rule error codes.
  *
  * @author K
  * @author AI: Codex
@@ -11,55 +11,55 @@ import io.kudos.base.enums.ienums.IErrorCodeEnum
  * @since 1.0.0
  */
 enum class SysAccessRuleErrorCodeEnum(
-    /** 错误码 */
+    /** Error code. */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text. */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Unspecified error. */
+    UNSPECIFIED("UNSPECIFIED", "Unspecified error"),
 
-    /** 新建 IP 规则时未传 parentRuleId，且无法根据子系统解析（缺少 systemCode） */
+    /** When creating an IP rule, parentRuleId is missing and cannot be resolved from the sub-system (systemCode missing). */
     IP_RULE_CREATE_SYSTEM_CODE_REQUIRED(
         "IP_RULE_CREATE_SYSTEM_CODE_REQUIRED",
-        "新增 IP 访问规则时未指定父规则：请传入 parentRuleId，或传入子系统编码（systemCode）由服务端解析父访问规则。",
+        "Parent rule not specified when creating IP access rule: please provide parentRuleId, or provide the sub-system code (systemCode) so the server can resolve the parent access rule.",
     ),
 
-    /** 按子系统与租户维度未找到访问规则主表记录 */
+    /** No access rule master record found for the given sub-system and tenant. */
     PARENT_ACCESS_RULE_NOT_FOUND(
         "PARENT_ACCESS_RULE_NOT_FOUND",
-        "在当前子系统与租户下不存在访问规则，请先新增访问规则后再添加 IP 段。",
+        "No access rule exists for the current sub-system and tenant; please create an access rule before adding IP ranges.",
     ),
 
-    /** 同一子系统编码与租户（含平台级 tenant_id 为空）下已存在访问规则主表记录 */
+    /** An access rule master record already exists for the same sub-system code and tenant (including platform-level tenant_id null). */
     ACCESS_RULE_ALREADY_EXISTS(
         "ACCESS_RULE_ALREADY_EXISTS",
-        "该子系统与租户下已存在访问规则，请勿重复新增。",
+        "An access rule already exists for this sub-system and tenant; do not create duplicates.",
     ),
 
-    /** IP 起始地址无法解析为合法存储值（如 IPv4/IPv6 文本或库内整值） */
+    /** The IP start address cannot be parsed into a valid storage value (e.g. IPv4/IPv6 text or in-database integer value). */
     INVALID_IP_START_ADDRESS(
         "INVALID_IP_START_ADDRESS",
-        "无效的IP起始地址",
+        "Invalid IP start address",
     ),
 
-    /** IP 结束地址无法解析为合法存储值（如 IPv4/IPv6 文本或库内整值） */
+    /** The IP end address cannot be parsed into a valid storage value (e.g. IPv4/IPv6 text or in-database integer value). */
     INVALID_IP_END_ADDRESS(
         "INVALID_IP_END_ADDRESS",
-        "无效的IP结束地址",
+        "Invalid IP end address",
     ),
 
-    /** 按主键查找访问规则失败 */
+    /** Access rule lookup by primary key failed. */
     ACCESS_RULE_NOT_FOUND(
         "ACCESS_RULE_NOT_FOUND",
-        "访问规则不存在",
+        "Access rule does not exist",
     ),
 
-    /** 按主键查找 IP 访问规则失败 */
+    /** IP access rule lookup by primary key failed. */
     IP_RULE_NOT_FOUND(
         "IP_RULE_NOT_FOUND",
-        "IP 访问规则不存在",
+        "IP access rule does not exist",
     );
 
     override val i18nKeyPrefix: String

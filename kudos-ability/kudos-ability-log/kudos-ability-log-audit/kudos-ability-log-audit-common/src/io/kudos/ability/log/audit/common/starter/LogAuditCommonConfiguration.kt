@@ -9,15 +9,17 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * 审计日志通用切面装配。
+ * Common aspect wiring for the audit log.
  *
- * `LogAuditAspect` / `WebLogAuditAspect` 本身已经标 `@Component`，业务侧应用如果开了
- * 对应 package 的 `@ComponentScan` 也能直接拿到 bean——本类只是给业务侧另一条装配路径
- * （走 kudos 自有的 [IComponentInitializer] 调度器）。`@ConditionalOnMissingBean` 让
- * `@Bean` 方法在 `@Component` 已经注册的情况下让位，二选一不冲突。
+ * `LogAuditAspect` / `WebLogAuditAspect` themselves are already `@Component`-annotated; a business application that
+ * enables `@ComponentScan` on the corresponding package can also pick up the beans directly — this class merely
+ * provides an alternative wiring path (via kudos's own [IComponentInitializer] dispatcher).
+ * `@ConditionalOnMissingBean` makes the `@Bean` methods step aside when the `@Component` version is already
+ * registered, so either route works without conflict.
  *
- * **@Configuration + open**：让 Spring CGLIB 代理本类——避免类内 bean 方法互调时
- * 旁路代理重新执行 bean 创建（虽然当前两个方法互不相调，但保留这个保护更稳）。
+ * **@Configuration + open**: allows Spring CGLIB to proxy this class — guarding against in-class bean-method
+ * self-invocation bypassing the proxy and re-running bean creation (although the two methods here do not call each
+ * other today, keeping this protection is safer).
  *
  * @author K
  * @author AI: Codex
@@ -27,9 +29,9 @@ import org.springframework.context.annotation.Configuration
 open class LogAuditCommonConfiguration : IComponentInitializer {
 
     /**
-     * 普通方法级审计切面。
+     * General method-level audit aspect.
      *
-     * @return [LogAuditAspect] 实例
+     * @return a [LogAuditAspect] instance
      * @author K
      * @since 1.0.0
      */
@@ -38,9 +40,9 @@ open class LogAuditCommonConfiguration : IComponentInitializer {
     open fun logAuditAspect() = LogAuditAspect()
 
     /**
-     * Web 调用审计切面。
+     * Web-call audit aspect.
      *
-     * @return [WebLogAuditAspect] 实例
+     * @return a [WebLogAuditAspect] instance
      * @author K
      * @since 1.0.0
      */

@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 
 
 /**
- * IP访问规则表单更新请求VO
+ * IP access rule update form request VO.
  *
  * @author K
  * @since 1.0.0
@@ -31,7 +31,7 @@ data class SysAccessRuleIpFormUpdate (
 
     override val expirationDate: LocalDateTime?,
 
-    /** 父规则id */
+    /** Parent rule id. */
     @get:NotBlank
     @get:FixedLength(36)
     val parentRuleId: String,

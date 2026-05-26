@@ -5,9 +5,9 @@ import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
 import io.kudos.ms.sys.core.dict.model.po.VSysDictItem
 
 /**
- * 字典项视图（v_sys_dict_item）只读服务接口。
+ * Read-only service interface for the dictionary item view (v_sys_dict_item).
  *
- * 数据来源：视图 v_sys_dict_item（sys_dict_item left join sys_dict），仅提供查询能力。
+ * Data source: view v_sys_dict_item (sys_dict_item left join sys_dict); provides query capability only.
  *
  * @author K
  * @since 1.0.0
@@ -15,12 +15,12 @@ import io.kudos.ms.sys.core.dict.model.po.VSysDictItem
 interface IVSysDictItemService : IBaseReadOnlyService<String, VSysDictItem> {
 
     /**
-     * 按原子服务编码、字典类型、字典项代码及启用状态查询字典项（至多一条）。
+     * Query a dictionary item by atomic service code, dictionary type, item code and active status (at most one row).
      *
-     * @param atomicServiceCode 原子服务编码
-     * @param dictType 字典类型
-     * @param itemCode 字典项代码
-     * @return SysDictItemCacheEntry，不存在返回 null
+     * @param atomicServiceCode atomic service code
+     * @param dictType dictionary type
+     * @param itemCode dictionary item code
+     * @return SysDictItemCacheEntry, or null if not found
      */
     fun fetchByAtomicServiceCodeAndDictTypeAndItemCode(
         atomicServiceCode: String,
@@ -29,11 +29,11 @@ interface IVSysDictItemService : IBaseReadOnlyService<String, VSysDictItem> {
     ): SysDictItemCacheEntry?
 
     /**
-     * 按原子服务编码、字典类型及启用状态查询字典项列表（按 orderNum 排序）。
+     * Query the dictionary item list by atomic service code, dictionary type and active status (sorted by orderNum).
      *
-     * @param atomicServiceCode 原子服务编码
-     * @param dictType 字典类型
-     * @return 匹配的 SysDictItemCacheEntry 列表
+     * @param atomicServiceCode atomic service code
+     * @param dictType dictionary type
+     * @return list of matching SysDictItemCacheEntry
      */
     fun searchByAtomicServiceCodeAndDictType(
         atomicServiceCode: String,
@@ -41,36 +41,39 @@ interface IVSysDictItemService : IBaseReadOnlyService<String, VSysDictItem> {
     ): List<SysDictItemCacheEntry>
 
     /**
-     * 按父字典项 id 及启用状态查询子字典项列表（按 orderNum 排序）。
+     * Query the child dictionary item list by parent dictionary item id and active status (sorted by orderNum).
      *
-     * @param parentId 父字典项 id，非空
-     * @return 匹配的 SysDictItemCacheEntry 列表
+     * @param parentId parent dictionary item id, non-null
+     * @return list of matching SysDictItemCacheEntry
      */
     fun searchByParentId(parentId: String): List<SysDictItemCacheEntry>
 
     /**
-     * 返回指定id的字典项缓存
+     * Return the cached dictionary item for the given id.
      *
-     * @param id 主键
-     * @return SysDictItemCacheEntry，不存在返回null
+     * @param id primary key
+     * @return SysDictItemCacheEntry, or null if not found
      */
     fun getFromCache(id: String): SysDictItemCacheEntry?
 
     /**
-     * 返回主键集合对应的字典项缓存
+     * Return the cached dictionary items corresponding to the given primary key set.
      *
-     * @param ids 主键集合
+     * @param ids primary key set
      * @return Map<id, SysDictItemCacheEntry>
      */
     fun searchByIds(ids: Set<String>): Map<String, SysDictItemCacheEntry>
 
     /**
-     * 分页查询字典项；命中行中若 parentId 非空，在返回前回填其 parentCode。
+     * Paginated dictionary item query; for matched rows with a non-null parentId, backfill the parentCode before
+     * returning.
      *
-     * 把 controller 之前手工做的「查询 → 收集 parentId → 二次批量查 → 回填 parentCode」组装逻辑下沉到 service。
+     * Sinks the previously manual "query -> collect parentId -> second batch query -> backfill parentCode"
+     * orchestration done in the controller into the service.
      *
-     * @param payload 分页查询参数
-     * @return 命中的分页结果，每行的 `parentCode` 在父字典项存在时已被回填
+     * @param payload pagination query parameters
+     * @return matched paged result, where each row's `parentCode` has been backfilled when the parent dictionary item
+     *         exists
      */
     fun pagingSearchWithParentCode(
         payload: io.kudos.ms.sys.common.dict.vo.request.SysDictItemQuery

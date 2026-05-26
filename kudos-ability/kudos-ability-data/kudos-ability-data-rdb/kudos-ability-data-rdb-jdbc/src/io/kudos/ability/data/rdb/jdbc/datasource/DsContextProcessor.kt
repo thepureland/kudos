@@ -16,15 +16,20 @@ import org.springframework.stereotype.Component
 import javax.sql.DataSource
 
 /**
- * 把"上下文 dataSourceId"翻译成 baomidou 动态路由表里真正可用的数据源 key 的处理器。
+ * Processor that translates the "context dataSourceId" into a data source key that
+ * actually exists in the baomidou dynamic routing table.
  *
- * 角色：[DynamicDataSourceAspect] 命中 `_context::*` 类型的路由意图后，调用本处理器把
- * 当前上下文（租户 id、服务编码、master/readonly 模式）解析成一个具体 dsKey，然后查路由
- * 表 —— 如果该 dsKey 对应的 DataSource 还没被加载到路由表，就走 [IDynamicDataSourceLoad]
- * 拿配置 + [DsDataSourceCreator] 现场创建 + [IDataSourceProxy] 包代理 + 注册回路由表。
+ * Role: after [DynamicDataSourceAspect] hits a `_context::*`-type routing intent,
+ * it calls this processor to resolve the current context (tenant id, service code,
+ * master/readonly mode) into a concrete dsKey and look it up in the routing table.
+ * If the DataSource for that dsKey is not yet loaded into the routing table, it
+ * goes through [IDynamicDataSourceLoad] to fetch the config + [DsDataSourceCreator]
+ * to build on the fly + [IDataSourceProxy] to wrap a proxy + register back into
+ * the routing table.
  *
- * 单数据源场景（注入的 `dataSource` 不是 [DynamicRoutingDataSource]）下，[getDataSource]
- * / [haveDataSource] / [currentDataSource] 都退化成"返回唯一数据源 / 始终为 true"。
+ * In single-data-source scenarios (the injected `dataSource` is not a
+ * [DynamicRoutingDataSource]), [getDataSource] / [haveDataSource] /
+ * [currentDataSource] degrade to "return the only data source / always true".
  *
  * @author damon
  * @author K
@@ -55,23 +60,29 @@ open class DsContextProcessor {
     private val keyLockRegistry = KeyLockRegistry<String>()
 
     /**
-     * 主入口：把 [DynamicDataSourceAspect] 计算出的 cache map key 翻译成路由表里的真实
-     * dsKey。返回 `null` 表示"当前没有上下文（如未登录请求）"或"控制台租户，跳过路由"。
+     * Main entry: translates the cache map key computed by [DynamicDataSourceAspect]
+     * into the real dsKey in the routing table. Returns `null` to indicate "there
+     * is currently no context (e.g. unauthenticated request)" or "console tenant,
+     * skip routing".
      *
-     * 流程：
-     *  1. 取 [KudosContextHolder] 的快照（`getOrNull` 不会污染 ThreadLocal —— 关键，详见
-     *     上次修过的反模式）；快照为 null 直接返回 null
-     *  2. 控制台租户（[DatasourceConst.CONSOLE_TENANT_ID]）跳过路由
-     *  3. 默认 dsId = context.dataSourceId / mode = master；如果 dsKey 是 readOnly 后缀，
-     *     则切到 context.readOnlyDataSourceId / mode = readonly
-     *  4. 用 [keyLockRegistry] 按 dsKey 加锁（避免同 key 并发创建 DataSource 时重复加载）
-     *  5. 如果有 [dataSourceFinder]，让业务方按"租户 + 服务 + 模式"覆盖出真实 dsId
-     *  6. 最终走 [getDatasourceKey] 确保该 dsId 对应的 DataSource 已注册到路由表
+     * Flow:
+     *  1. Take a snapshot of [KudosContextHolder] (`getOrNull` does not pollute the
+     *     ThreadLocal — the key fix from the anti-pattern we addressed previously);
+     *     return null if the snapshot is null.
+     *  2. The console tenant ([DatasourceConst.CONSOLE_TENANT_ID]) skips routing.
+     *  3. Default dsId = context.dataSourceId / mode = master; if the dsKey has the
+     *     readOnly suffix, switch to context.readOnlyDataSourceId / mode = readonly.
+     *  4. Use [keyLockRegistry] to lock on the dsKey (to avoid duplicate loading
+     *     when concurrent threads create the DataSource for the same key).
+     *  5. If [dataSourceFinder] is present, let the business side override the real
+     *     dsId by "tenant + service + mode".
+     *  6. Finally call [getDatasourceKey] to ensure the DataSource for that dsId
+     *     is registered in the routing table.
      */
     fun doDetermineDatasource(dsKey: String, dsKeyConfig: String?): String? {
         val context = KudosContextHolder.getOrNull() ?: return null
         if (context._datasourceTenantId == DatasourceConst.CONSOLE_TENANT_ID) return null
-        // 备库 dsKey 后缀触发切到 readOnlyDataSourceId / readonly 模式；否则用上下文的主库 id + master
+        // The standby dsKey suffix triggers switching to readOnlyDataSourceId / readonly mode; otherwise use the master id + master from the context.
         val (defaultDsId, mode) = if (DatasourceKeyTool.isReadOnly(dsKey) && context.readOnlyDataSourceId != null) {
             context.readOnlyDataSourceId to DatasourceConst.MODE_READONLY
         } else {
@@ -89,22 +100,24 @@ open class DsContextProcessor {
     }
 
     /**
-     * 确保某 dsId 对应的 DataSource 已经存在于 baomidou 路由表里，没有的话现场创建并注册，
-     * 然后把 dsId 当 key 原样返回。失败（[IDynamicDataSourceLoad] 找不到配置）会抛
-     * [RuntimeException]。
+     * Ensures the DataSource for the given dsId already exists in the baomidou
+     * routing table; if not, builds and registers it on the fly, then returns the
+     * dsId as the key. On failure ([IDynamicDataSourceLoad] cannot find the config)
+     * it throws [RuntimeException].
      *
-     * `protected` —— 留给子类覆盖（例如想用别的方式从路由表里获取/注册）；外部不直接调用。
+     * `protected` — left for subclasses to override (e.g. to fetch/register from
+     * the routing table in another way); not called directly from outside.
      */
     protected fun getDatasourceKey(dsId: String?): String? { //TODO
         val ds = dataSource as DynamicRoutingDataSource
         if (!ds.dataSources.containsKey(dsId)) {
-            // 该dsKey数据源未初始化，加载配置并初始化
+            // The DataSource for this dsKey is not yet initialized; load the config and initialize.
             val dsProperty = dynamicDataSourceLoad.getPropertyById(dsId)
                 ?: run {
-                    log.warn("动态数据源id未配置:{0}", dsId)
-                    throw RuntimeException("动态数据源id未配置!dsId=$dsId")
+                    log.warn("Dynamic data source id is not configured: {0}", dsId)
+                    throw RuntimeException("Dynamic data source id is not configured! dsId=$dsId")
                 }
-            log.warn("開始創建並載數據源id={0}...", dsId)
+            log.warn("Starting to create and load data source id={0}...", dsId)
             val created = dataSourceCreator.createDataSource(dsProperty)
             val toRegister = dataSourceProxy?.proxyDatasource(created) ?: created
             ds.addDataSource(dsId, toRegister)
@@ -113,41 +126,46 @@ open class DsContextProcessor {
     }
 
     /**
-     * 按 dsKey 取真实数据源。路由表是 baomidou 的 [DynamicRoutingDataSource]，单数据源
-     * 场景下 `dataSource` 不是这个类型，退化成"无视 key 直接返回唯一数据源"。
+     * Returns the real data source for a given dsKey. The routing table is
+     * baomidou's [DynamicRoutingDataSource]; in single-data-source scenarios
+     * `dataSource` is not that type, so this degrades to "ignore the key and
+     * return the only data source".
      */
     fun getDataSource(dsKey: String?): DataSource? =
         (dataSource as? DynamicRoutingDataSource)?.getDataSource(dsKey) ?: dataSource
 
     /**
-     * 路由表里是否存在某 dsKey。单数据源场景始终返回 true（"只有这一个数据源"），多数据源
-     * 场景查路由表内部 map。
+     * Whether the given dsKey exists in the routing table. Always returns true in
+     * single-data-source scenarios ("there is only this one data source"); in
+     * multi-data-source scenarios it queries the routing table's internal map.
      */
     fun haveDataSource(dsKey: String?): Boolean =
         (dataSource as? DynamicRoutingDataSource)?.dataSources?.containsKey(dsKey) ?: true
 
     /**
-     * 刷新路由表里某 dsId 对应的数据源条目；`dsId == null` 表示"刷新所有除 primary 之外
-     * 的数据源"。同时清空 [DynamicDataSourceAspect] 的解析缓存，让下一次路由解析重新走
-     * [doDetermineDatasource]。
+     * Refreshes the data source entry for a given dsId in the routing table;
+     * `dsId == null` means "refresh all data sources except primary". Also clears
+     * [DynamicDataSourceAspect]'s resolution cache so the next routing resolution
+     * goes through [doDetermineDatasource] again.
      *
-     * 适用场景：租户数据源在元数据中心被修改后，对外通知重新加载。
+     * Use case: notify reloads when a tenant data source is modified in the
+     * metadata center.
      */
     fun refreshDatasource(dsId: Int?) {
-        log.warn("收到刷新數據源id為：{0} 的請求", dsId)
+        log.warn("Received request to refresh data source id: {0}", dsId)
         val ds = dataSource as DynamicRoutingDataSource
         if (dsId == null) {
-            // 全量刷新：清掉 primary 以外的所有路由，再 afterPropertiesSet() 重建
+            // Full refresh: clear all routes except primary, then afterPropertiesSet() to rebuild.
             ds.dataSources.keys.filter { it != primary }.forEach(ds::removeDataSource)
             ds.afterPropertiesSet()
         } else {
             ds.removeDataSource(dsId.toString())
         }
         DynamicDataSourceAspect.cacheDsCache()
-        log.warn("數據源刷新成功...")
+        log.warn("Data source refresh succeeded...")
     }
 
-    /** 当前线程的"逻辑当前数据源"。多数据源场景委托给 baomidou 的 determineDataSource。 */
+    /** The current thread's "logical current data source". In multi-data-source scenarios, delegates to baomidou's determineDataSource. */
     fun currentDataSource(): DataSource? =
         (dataSource as? DynamicRoutingDataSource)?.determineDataSource() ?: dataSource
 

@@ -20,7 +20,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysDomainService
  *
- * 测试数据来源：`SysDomainServiceTest.sql`
+ * Test data source: `SysDomainServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -43,7 +43,7 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
     private val seededDomainName = "svc-domain-test-1.com"
     private val seededSystemCode = "svc-system-domain-test-1"
 
-    /** 按主键 `get(id)` 取到实体且 id 一致。 */
+    /** Fetch entity via `get(id)`; the id matches. */
     @Test
     fun get_byId_entity() {
         val row = sysDomainService.get(seededId)
@@ -51,7 +51,7 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededId, row.id)
     }
 
-    /** `get(id, SysDomainCacheEntry::class)` 走 DAO 映射为缓存载体类型，字段与种子数据一致。 */
+    /** `get(id, SysDomainCacheEntry::class)` maps via DAO to the cache VO; fields match the seed data. */
     @Test
     fun get_withCacheEntryReturnType_usesDao() {
         val entry = sysDomainService.get(seededId, SysDomainCacheEntry::class)
@@ -62,7 +62,7 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededTenantId, entry.tenantId)
     }
 
-    /** 从按名称缓存读取启用域名；全量 reload 后与库一致。 */
+    /** Read active domains from the by-name cache; after a full reload, contents match the DB. */
     @Test
     fun getDomainFromCache_byName() {
         domainByNameCache.reloadAll(clear = true)
@@ -72,7 +72,7 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededDomainName, entry.domain)
     }
 
-    /** 启用域名下，按 id 的 [SysDomainCacheEntry] 与按名称缓存项主键一致。 */
+    /** For active domains, the by-id [SysDomainCacheEntry] has the same primary key as the by-name cache entry. */
     @Test
     fun getDomainFromCache_matchesGetByIdForActiveRow() {
         domainByNameCache.reloadAll(clear = true)
@@ -83,7 +83,7 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(byId.id, byName.id)
     }
 
-    /** 详情 [SysDomainDetail] 补充租户名称。 */
+    /** [SysDomainDetail] is enriched with the tenant name. */
     @Test
     fun getDetail_tenantNamePopulated() {
         tenantByIdCache.reloadAll(clear = true)
@@ -93,21 +93,21 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals("svc-tenant-domain-test-1", detail.tenantName)
     }
 
-    /** 按租户 id 条件查询列表行。 */
+    /** Query list rows by tenant id. */
     @Test
     fun getDomainsByTenantId() {
         val domains = sysDomainService.getDomainsByTenantId(seededTenantId)
         assertTrue(domains.any { it.domain == seededDomainName })
     }
 
-    /** 按系统编码条件查询列表行。 */
+    /** Query list rows by system code. */
     @Test
     fun getDomainsBySystemCode() {
         val domains = sysDomainService.getDomainsBySystemCode(seededSystemCode)
         assertTrue(domains.any { it.systemCode == seededSystemCode })
     }
 
-    /** 停用后按名称缓存应取不到；恢复启用后应可再次命中。 */
+    /** After disabling, the by-name cache should miss; after re-enabling, it should hit again. */
     @Test
     fun updateActive_syncsDomainByNameCache() {
         domainByNameCache.reloadAll(clear = true)
@@ -122,19 +122,19 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
         assertNotNull(sysDomainService.getDomainFromCache(seededDomainName))
     }
 
-    /** `updateActive` 在主键不存在时返回 false。 */
+    /** `updateActive` returns false when the primary key does not exist. */
     @Test
     fun updateActive_whenIdNotExists_returnsFalse() {
         assertFalse(sysDomainService.updateActive("00000000-0000-0000-0000-000000000001", true))
     }
 
-    /** 删除不存在的主键时返回 false。 */
+    /** Returns false when deleting a non-existent primary key. */
     @Test
     fun deleteById_returnsFalseWhenRowMissing() {
         assertFalse(sysDomainService.deleteById("00000000-0000-0000-0000-000000000001"))
     }
 
-    /** 批量删除后按名称缓存不再命中对应域名。 */
+    /** After batch delete, the by-name cache no longer hits the deleted domains. */
     @Test
     fun batchDelete_syncCache() {
         domainByNameCache.reloadAll(clear = true)
@@ -170,7 +170,7 @@ class SysDomainServiceTest : RdbAndRedisCacheTestBase() {
         assertNull(sysDomainService.getDomainFromCache(name2))
     }
 
-    /** 新增启用域名后可从按名称缓存读到；按 id 删除后缓存侧应不再命中。 */
+    /** After inserting an active domain, it is readable from the by-name cache; after deleting by id, the cache no longer hits. */
     @Test
     fun insert_and_deleteById_syncCache() {
         domainByNameCache.reloadAll(clear = true)

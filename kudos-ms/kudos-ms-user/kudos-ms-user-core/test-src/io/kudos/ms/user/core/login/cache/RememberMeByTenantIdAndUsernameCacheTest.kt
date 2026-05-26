@@ -17,7 +17,7 @@ import kotlin.test.assertNull
 /**
  * junit test for RememberMeByTenantIdAndUsernameCacheHandler
  *
- * 测试数据来源：`RememberMeByTenantIdAndUsernameCacheTest.sql`
+ * Test data source: `RememberMeByTenantIdAndUsernameCacheTest.sql`
  *
  * @author K
  * @author AI: Codex

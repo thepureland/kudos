@@ -3,10 +3,10 @@ package io.kudos.test.rdb
 import io.kudos.context.kit.SpringKit
 
 /**
- * 为缓存相关集成测试提供统一的“测试数据落库后缓存重置”能力。
+ * Provides a unified "reset caches after test data is persisted" capability for cache-related integration tests.
  *
- * 这里故意通过反射访问缓存组件，而不是给 `kudos-test-rdb` 直接增加业务缓存模块依赖。
- * 这样测试基础设施仍然保持在公共测试层，不会反向耦合到具体业务模块。
+ * Cache components are intentionally accessed via reflection instead of adding direct dependencies on business cache modules to `kudos-test-rdb`.
+ * This keeps the test infrastructure in the common test layer without coupling it backward to concrete business modules.
  *
  * @author K
  * @author AI: Codex
@@ -20,12 +20,12 @@ internal object CacheTestResetSupport {
     private const val HASH_CACHE_KIT_CLASS = "io.kudos.ability.cache.common.kit.HashCacheKit"
 
     /**
-     * 将共享 Redis 容器和当前 Spring Context 中的缓存状态重置到“当前测试 SQL”对应的快照。
+     * Resets the shared Redis container and the cache state of the current Spring context to the snapshot corresponding to the "current test SQL".
      *
-     * 步骤是：
-     * 1. 先清空 Redis，去掉跨测试类残留的远端缓存。
-     * 2. 读取当前数据库中的缓存配置。
-     * 3. 按缓存类型分别执行 clear + reload，恢复本地/远端缓存内容。
+     * Steps:
+     * 1. Flush Redis to remove remote cache entries left over from other test classes.
+     * 2. Read the current cache configuration from the database.
+     * 3. Perform clear + reload per cache type to restore local/remote cache contents.
      */
     fun resetRedisAndApplicationCaches() {
         flushRedis()
@@ -36,9 +36,9 @@ internal object CacheTestResetSupport {
     }
 
     /**
-     * 直接清空当前测试 Redis DB。
+     * Flushes the current test Redis DB.
      *
-     * 测试容器是复用的；如果不先 flush，前一个测试类遗留的 key 会污染后续断言。
+     * The test container is reused; without an initial flush, keys left by a previous test class would pollute subsequent assertions.
      */
     private fun flushRedis() {
         val redisTemplates = getBeanByClassName(REDIS_TEMPLATES_CLASS) ?: return
@@ -54,7 +54,7 @@ internal object CacheTestResetSupport {
     }
 
     /**
-     * 根据 `sys_cache` 配置区分普通缓存和 hash 缓存，并分别执行清理与重载。
+     * Separates plain caches from hash caches based on `sys_cache` configuration and clears/reloads each set.
      */
     private fun resetCaches(allConfigs: Map<*, *>) {
         val keyValueCacheNames = allConfigs.filterCacheNames(expectHash = false)
@@ -68,7 +68,7 @@ internal object CacheTestResetSupport {
     }
 
     /**
-     * 从缓存配置中筛出指定类型的缓存名。
+     * Filters cache names of the specified type from the cache configuration.
      */
     private fun Map<*, *>.filterCacheNames(expectHash: Boolean): List<String> {
         return entries
@@ -77,21 +77,21 @@ internal object CacheTestResetSupport {
     }
 
     /**
-     * 调用缓存工具类的 `doClear`，统一清空目标缓存。
+     * Invokes the cache kit's `doClear` to uniformly clear the target caches.
      */
     private fun clearCaches(kitClassName: String, cacheNames: List<String>) {
         cacheNames.forEach { invokeStatic(kitClassName, "doClear", it) }
     }
 
     /**
-     * 调用缓存工具类的 `reloadAll`，把缓存恢复到当前数据库数据对应的状态。
+     * Invokes the cache kit's `reloadAll` to restore caches to the state corresponding to current database data.
      */
     private fun reloadCaches(kitClassName: String, cacheNames: List<String>) {
         cacheNames.forEach { invokeStatic(kitClassName, "reloadAll", it) }
     }
 
     /**
-     * 从缓存配置对象里读取 `hash` 标记；读取失败时按普通缓存处理。
+     * Reads the `hash` flag from the cache config object; on failure, treats it as a plain cache.
      */
     private fun readHashFlag(config: Any?): Boolean {
         if (config == null) return false
@@ -99,9 +99,9 @@ internal object CacheTestResetSupport {
     }
 
     /**
-     * 通过类名从 Spring 容器中取 Bean。
+     * Fetches a bean from the Spring container by class name.
      *
-     * 返回 null 表示当前测试上下文没有这类组件，调用方按“无需重置该部分能力”处理。
+     * Returning null means the current test context has no such component; callers should treat it as "no reset needed for this capability".
      */
     private fun getBeanByClassName(className: String): Any? {
         val beanClass = runCatching { Class.forName(className) }.getOrNull() ?: return null
@@ -110,7 +110,7 @@ internal object CacheTestResetSupport {
     }
 
     /**
-     * 以 JavaBean getter 约定读取属性，避免直接依赖目标类型。
+     * Reads a property using the JavaBean getter convention to avoid depending on the target type directly.
      */
     private fun invokeGetter(target: Any, propertyName: String): Any? {
         val getterName = "get${propertyName.replaceFirstChar { it.uppercase() }}"
@@ -118,9 +118,9 @@ internal object CacheTestResetSupport {
     }
 
     /**
-     * 通过宽松的参数匹配执行实例方法。
+     * Invokes an instance method using loose parameter matching.
      *
-     * 这里的目标是测试基础设施的兼容性，不追求强类型；只要运行时能找到可赋值的方法签名即可。
+     * The goal here is test-infrastructure compatibility, not strict typing; any runtime-assignable method signature is acceptable.
      */
     private fun invoke(target: Any, methodName: String, vararg args: Any?): Any? {
         val parameterTypes = args.map { it?.javaClass ?: Any::class.java }.toTypedArray()
@@ -136,7 +136,7 @@ internal object CacheTestResetSupport {
     }
 
     /**
-     * 调用 Kotlin `object` 单例上的方法。
+     * Invokes a method on a Kotlin `object` singleton.
      */
     private fun invokeStatic(className: String, methodName: String, vararg args: Any?) {
         val clazz = runCatching { Class.forName(className) }.getOrNull() ?: return

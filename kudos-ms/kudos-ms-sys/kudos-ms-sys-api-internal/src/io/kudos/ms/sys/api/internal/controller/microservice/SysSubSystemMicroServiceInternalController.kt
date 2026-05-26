@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 子系统-微服务 关联 内部 RPC 控制器。路径继承自 [ISysSubSystemMicroServiceApi] 方法级注解。
+ * Sub-system to microservice association internal RPC controller. Paths are inherited from method-level annotations on [ISysSubSystemMicroServiceApi].
  *
  * @author K
  * @since 1.0.0

@@ -16,13 +16,13 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * [SysCacheHashCache] 单元测试（Hash 缓存，按 id / name / atomicServiceCode）。
+ * Unit tests for [SysCacheHashCache] (Hash cache, keyed by id / name / atomicServiceCode).
  *
- * 覆盖：按 id 单条/批量、按 name 单条、按 atomicServiceCode 列表、全量刷新、新增/更新/删除后同步；
- * 本地缓存开启时二次取为同一对象引用。
+ * Covers: single/batch fetch by id, single fetch by name, list by atomicServiceCode, full reload, sync after insert/update/delete;
+ * when local cache is enabled, the second fetch returns the same object reference.
  *
- * 测试数据：`SysCacheHashCacheTest.sql`。
- * 需 Docker 运行 Redis，且 sys_cache 中已配置 SYS_CACHE__HASH（hash=true）。
+ * Test data: `SysCacheHashCacheTest.sql`.
+ * Requires Docker-hosted Redis and a SYS_CACHE__HASH (hash=true) row configured in sys_cache.
  *
  * @author K
  * @since 1.0.0
@@ -45,7 +45,7 @@ class SysCacheHashCacheTest : RdbAndRedisCacheTestBase() {
     private val atomicServiceCode = "ams-sys-hash-test"
     private val newName = "SYS_CACHE_HASH_TEST_1_UPD"
 
-    // ---------- 按主键 id ----------
+    // ---------- By primary key id ----------
 
     @Test
     fun getCacheById() {
@@ -77,7 +77,7 @@ class SysCacheHashCacheTest : RdbAndRedisCacheTestBase() {
         assertTrue(cacheHandler.getCachesByIds(emptySet()).isEmpty())
     }
 
-    // ---------- 按 atomicServiceCode + name ----------
+    // ---------- By atomicServiceCode + name ----------
 
     @Test
     fun getCache() {
@@ -92,7 +92,7 @@ class SysCacheHashCacheTest : RdbAndRedisCacheTestBase() {
         assertNull(cacheHandler.getCache(atomicServiceCode, "no_exist_name"))
     }
 
-    // ---------- 按 atomicServiceCode ----------
+    // ---------- By atomicServiceCode ----------
 
     @Test
     fun getCaches() {
@@ -107,7 +107,7 @@ class SysCacheHashCacheTest : RdbAndRedisCacheTestBase() {
         }
     }
 
-    // ---------- 全量刷新 ----------
+    // ---------- Full reload ----------
 
     @Test
     fun reloadAll() {
@@ -129,7 +129,7 @@ class SysCacheHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals(newName, cacheHandler.getCacheById(id2)?.name)
     }
 
-    // ---------- 同步 ----------
+    // ---------- Sync ----------
 
     @Test
     fun syncOnInsert() {

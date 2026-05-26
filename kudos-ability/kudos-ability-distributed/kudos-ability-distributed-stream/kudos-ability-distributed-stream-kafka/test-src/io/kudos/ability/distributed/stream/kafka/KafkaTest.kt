@@ -25,7 +25,7 @@ import kotlin.test.Test
 
 
 /**
- * kafka测试用例
+ * Kafka test cases.
  *
  * @author shane
  * @author K
@@ -54,7 +54,7 @@ open class KafkaTest {
 
 
     /**
-     * 发送与接收测试
+     * Send and receive test.
      */
     @Test
     fun sendAndReceiveMessageTest() {
@@ -63,14 +63,14 @@ open class KafkaTest {
         try {
             future.get(5, TimeUnit.SECONDS)
         } catch (e: TimeoutException) {
-            throw RuntimeException("等待时间超过5秒，mq接收异常", e)
+            throw RuntimeException("Wait exceeded 5 seconds; mq receive failed", e)
         } finally {
             future.cancel(true)
         }
     }
 
     /**
-     * 消费信息异常测试
+     * Consumer exception test.
      */
     @Test
     fun streamExceptionTest() {
@@ -79,7 +79,7 @@ open class KafkaTest {
         try {
             future.get(5, TimeUnit.SECONDS)
         } catch (_: TimeoutException) {
-            println("消费信息时异常，造成获取结果超时！")
+            println("Exception during message consumption caused a timeout while fetching the result!")
         } finally {
             future.cancel(true)
         }

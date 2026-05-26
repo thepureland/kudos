@@ -16,8 +16,9 @@ import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.*
 
 /**
- * 基于 Hash 存储结构的本地（Caffeine）缓存测试用例。
- * 通过 [HashCacheKit.getHashCache] 获取 "testHash" 缓存，覆盖 save/getById/deleteById/listAll/findByIds/listBySetIndex/listPageByZSetIndex/list/refreshAll 等。
+ * Local (Caffeine) cache test cases backed by the Hash storage structure.
+ * Retrieves the "testHash" cache via [HashCacheKit.getHashCache] and covers
+ * save/getById/deleteById/listAll/findByIds/listBySetIndex/listPageByZSetIndex/list/refreshAll, etc.
  *
  * @author K
  * @author AI: Codex
@@ -64,7 +65,7 @@ internal class LocalHashCacheTest {
         assertEquals("Alice", found?.name)
         assertEquals(1, found?.type)
         val foundAgain = cache.getById(cacheName, "u1", TestRow::class)
-        assertSame(found, foundAgain, "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(found, foundAgain, "Under SINGLE_LOCAL, fetching the same id again from cache should return the same object reference")
     }
 
     @Test
@@ -81,7 +82,7 @@ internal class LocalHashCacheTest {
         val fromCache = hashCacheableTestService.getTestRowById("u1")
         assertEquals("Alice", fromCache?.name)
         val fromCacheAgain = hashCacheableTestService.getTestRowById("u1")
-        assertSame(fromCache, fromCacheAgain, "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(fromCache, fromCacheAgain, "Under SINGLE_LOCAL, fetching the same id again from cache should return the same object reference")
     }
 
     @Test
@@ -94,7 +95,7 @@ internal class LocalHashCacheTest {
         assertEquals("s1", byType1.first().id)
         assertEquals("SetOne", byType1.first().name)
         val byType1Again = cache.listBySetIndex(cacheName, TestRow::class, "type", 1)
-        assertSame(byType1.first(), byType1Again.first(), "SINGLE_LOCAL 下同一维度再次从缓存获取应返回同一对象引用")
+        assertSame(byType1.first(), byType1Again.first(), "Under SINGLE_LOCAL, fetching the same dimension again from cache should return the same object reference")
     }
 
     @Test
@@ -125,8 +126,8 @@ internal class LocalHashCacheTest {
         val e3 = list.find { it.id == "u3" }!!
         val e1Again = listAgain.find { it.id == "u1" }!!
         val e3Again = listAgain.find { it.id == "u3" }!!
-        assertSame(e1, e1Again, "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
-        assertSame(e3, e3Again, "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(e1, e1Again, "Under SINGLE_LOCAL, fetching the same id again from cache should return the same object reference")
+        assertSame(e3, e3Again, "Under SINGLE_LOCAL, fetching the same id again from cache should return the same object reference")
     }
 
     @Test
@@ -146,7 +147,7 @@ internal class LocalHashCacheTest {
         assertTrue(all.any { it.id == "u1" })
         assertTrue(all.any { it.id == "u2" })
         val allAgain = cache.listAll(cacheName, TestRow::class)
-        assertSame(all.find { it.id == "u1" }, allAgain.find { it.id == "u1" }, "SINGLE_LOCAL 下再次 listAll 应返回同一对象引用")
+        assertSame(all.find { it.id == "u1" }, allAgain.find { it.id == "u1" }, "Under SINGLE_LOCAL, calling listAll again should return the same object reference")
     }
 
     @Test
@@ -256,12 +257,12 @@ internal class LocalHashCacheTest {
         assertEquals(2, type1.size)
         assertTrue(type1.all { it.type == 1 })
         val type1Again = cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 1)
-        assertSame(type1.first(), type1Again.first(), "SINGLE_LOCAL 下同一维度再次从缓存获取应返回同一对象引用")
+        assertSame(type1.first(), type1Again.first(), "Under SINGLE_LOCAL, fetching the same dimension again from cache should return the same object reference")
         val type2 = cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 2)
         assertEquals(1, type2.size)
         assertEquals("3", type2.first().id)
         val type2Again = cache.listBySetIndex(cacheName, TestRowWithTime::class, "type", 2)
-        assertSame(type2.first(), type2Again.first(), "SINGLE_LOCAL 下同一维度再次从缓存获取应返回同一对象引用")
+        assertSame(type2.first(), type2Again.first(), "Under SINGLE_LOCAL, fetching the same dimension again from cache should return the same object reference")
     }
 
     @Test
@@ -320,7 +321,7 @@ internal class LocalHashCacheTest {
         assertEquals("c", page2[0].id)
     }
 
-    // ---------- 通过 Service 模拟二级索引/排序/分页，与缓存结果对比 ----------
+    // ---------- Drive secondary indexes / ordering / paging through the Service and compare against cache results ----------
 
     @Test
     fun serviceListByTypeMatchesCacheSetIndex() {
@@ -395,7 +396,7 @@ internal class LocalHashCacheTest {
 }
 
 /**
- * 简单测试实体。
+ * Simple test entity.
  *
  * @author K
  * @author AI: Codex
@@ -409,7 +410,7 @@ data class TestRow(
 ) : IIdEntity<String>
 
 /**
- * 带 type 与 sortScore 的实体，用于二级索引测试。
+ * Entity with `type` and `sortScore`, used for secondary-index tests.
  *
  * @author K
  * @author AI: Codex

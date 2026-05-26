@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 租户-语言 关联 内部 RPC 控制器。路径继承自 [ISysTenantLocaleApi] 方法级注解。
+ * Tenant-locale association internal RPC controller. Paths are inherited from method-level annotations on [ISysTenantLocaleApi].
  *
  * @author K
  * @since 1.0.0

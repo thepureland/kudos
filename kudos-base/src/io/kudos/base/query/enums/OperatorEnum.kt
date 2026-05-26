@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 
 /**
- * 查询逻辑操作符枚举
+ * Enum of logical query operators.
  *
  * @author K
  * @since 1.0.0
@@ -17,206 +17,206 @@ import java.util.concurrent.ConcurrentHashMap
 enum class OperatorEnum(
     override val code: String,
     override val displayText: String,
-    val acceptNull: Boolean = false, // 值是否可接受null
-    val stringOnly: Boolean = false  // 操作值只接收字符串类型
+    val acceptNull: Boolean = false, // Whether the value may be null.
+    val stringOnly: Boolean = false  // Whether the operand only accepts String type.
 ) : IDictEnum {
 
     /**
-     * 等于
+     * Equal to.
      */
-    EQ("=", "等于"),
+    EQ("=", "Equal to"),
 
     /**
-     * 忽略大小写等于
+     * Equal to (case-insensitive).
      */
-    IEQ("I=", "忽略大小写等于", false, true),
+    IEQ("I=", "Equal to (case-insensitive)", false, true),
 
     /**
-     * 不等于
+     * Not equal to.
      */
-    NE("!=", "不等于", false, false),
+    NE("!=", "Not equal to", false, false),
 
     /**
-     * 小于大于(不等于)
+     * Less-than greater-than (not equal to).
      */
-    LG("<>", "小于大于(不等于)"),
+    LG("<>", "Less-than greater-than (not equal to)"),
 
     /**
-     * 大于等于
+     * Greater than or equal to.
      */
-    GE(">=", "大于等于"),
+    GE(">=", "Greater than or equal to"),
 
     /**
-     * 小于等于
+     * Less than or equal to.
      */
-    LE("<=", "小于等于"),
+    LE("<=", "Less than or equal to"),
 
     /**
-     * 大于
+     * Greater than.
      */
-    GT(">", "大于"),
+    GT(">", "Greater than"),
 
     /**
-     * 小于
+     * Less than.
      */
-    LT("<", "小于"),
+    LT("<", "Less than"),
 
     /**
-     * 等于属性
+     * Equal to another property.
      */
-    EQ_P("P=", "等于属性", false, false),
+    EQ_P("P=", "Equal to property", false, false),
 
     /**
-     * 不等于属性
+     * Not equal to another property.
      */
-    NE_P("P!=", "不等于属性", false, false),
+    NE_P("P!=", "Not equal to property", false, false),
 
     /**
-     * 大于等于属性
+     * Greater than or equal to another property.
      */
-    GE_P("P>=", "大于等于属性", false, false),
+    GE_P("P>=", "Greater than or equal to property", false, false),
 
     /**
-     * 小于等于属性
+     * Less than or equal to another property.
      */
-    LE_P("P<=", "小于等于属性", false, false),
+    LE_P("P<=", "Less than or equal to property", false, false),
 
     /**
-     * 大于属性
+     * Greater than another property.
      */
-    GT_P("P>", "大于属性", false, false),
+    GT_P("P>", "Greater than property", false, false),
 
     /**
-     * 小于属性
+     * Less than another property.
      */
-    LT_P("P<", "小于属性", false, false),
+    LT_P("P<", "Less than property", false, false),
 
     /**
-     * 匹配字符串任意位置
+     * Matches anywhere in the string.
      */
-    LIKE("LIKE", "任意位置匹配", false, true),
+    LIKE("LIKE", "Match anywhere", false, true),
 
     /**
-     * 匹配字符串前面
+     * Matches at the start of the string.
      */
-    LIKE_S("LIKE_S", "匹配前面", false, true),
+    LIKE_S("LIKE_S", "Match start", false, true),
 
     /**
-     * 匹配字符串后面
+     * Matches at the end of the string.
      */
-    LIKE_E("LIKE_E", "匹配后面", false, true),
+    LIKE_E("LIKE_E", "Match end", false, true),
 
     /**
-     * 忽略大小写匹配字符串任意位置
+     * Matches anywhere in the string (case-insensitive).
      */
-    ILIKE("ILIKE", "忽略大小写任意位置匹配", false, true),
+    ILIKE("ILIKE", "Match anywhere (case-insensitive)", false, true),
 
     /**
-     * 忽略大小写匹配字符串前面
+     * Matches at the start of the string (case-insensitive).
      */
-    ILIKE_S("ILIKE_S", "忽略大小写匹配前面", false, true),
+    ILIKE_S("ILIKE_S", "Match start (case-insensitive)", false, true),
 
     /**
-     * 忽略大小写匹配字符串后面
+     * Matches at the end of the string (case-insensitive).
      */
-    ILIKE_E("ILIKE_E", "忽略大小写匹配后面", false, true),
+    ILIKE_E("ILIKE_E", "Match end (case-insensitive)", false, true),
 
     /**
-     * in查询
+     * IN query.
      */
-    IN("IN", "in查询"),
+    IN("IN", "IN query"),
 
     /**
-     * not in查询
+     * NOT IN query.
      */
-    NOT_IN("NOT IN", "not in查询"),
+    NOT_IN("NOT IN", "NOT IN query"),
 
     /**
-     * 是否为null
+     * Is null.
      */
-    IS_NULL("IS NULL", "判空", true, false),
+    IS_NULL("IS NULL", "Is null", true, false),
 
     /**
-     * 是否不为null
+     * Is not null.
      */
-    IS_NOT_NULL("IS NOT NULL", "非空", true, false),
+    IS_NOT_NULL("IS NOT NULL", "Is not null", true, false),
 
     /**
-     * 是否为空
-     * 字符串判断是否为空串，数组、集合、Map判断是否为空，其他对象toString()后判断是否为空串
+     * Is empty.
+     * Strings: empty string; arrays/collections/maps: empty; other objects: toString() returns empty.
      */
-    IS_EMPTY("=''", "等于空串", true, true),
+    IS_EMPTY("=''", "Equals empty string", true, true),
 
     /**
-     * 是否不为空串
+     * Is non-empty string.
      */
-    IS_NOT_EMPTY("!=''", "不等于空串", true, true),
+    IS_NOT_EMPTY("!=''", "Not equal to empty string", true, true),
 
     /**
-     * 在两者间
+     * Between two values.
      */
-    BETWEEN("BETWEEN", "在两者间", false, false),
+    BETWEEN("BETWEEN", "Between two values", false, false),
 
     /**
-     * 不在两者间
+     * Not between two values.
      */
-    NOT_BETWEEN("NOT BETWEEN", "不在两者间", false, false);
+    NOT_BETWEEN("NOT BETWEEN", "Not between two values", false, false);
 
     /**
-     * 根据当前操作符比较两个值
-     * 
-     * 根据操作符类型执行相应的比较逻辑，支持多种数据类型和比较方式。
-     * 
-     * 支持的操作符：
-     * 1. 相等比较：
-     *    - EQ：严格相等（==）
-     *    - IEQ：忽略大小写相等（仅字符串）
-     *    - NE/LG：不相等（!=）
-     * 2. 大小比较：
-     *    - GE：大于等于（>=）
-     *    - LE：小于等于（<=）
-     *    - GT：大于（>）
-     *    - LT：小于（<）
-     * 3. 字符串匹配：
-     *    - LIKE：包含（contains）
-     *    - LIKE_S：以...开始（startsWith）
-     *    - LIKE_E：以...结束（endsWith）
-     *    - ILIKE：忽略大小写包含
-     *    - ILIKE_S：忽略大小写开始
-     *    - ILIKE_E：忽略大小写结束
-     * 4. 集合操作：
-     *    - IN：包含在集合中
-     *    - NOT_IN：不包含在集合中
-     * 5. 空值判断：
-     *    - IS_NULL：为null
-     *    - IS_NOT_NULL：不为null
-     *    - IS_EMPTY：为空（字符串、集合、数组、Map）
-     *    - IS_NOT_EMPTY：不为空
-     * 6. 范围判断：
-     *    - BETWEEN：在范围内
-     *    - NOT_BETWEEN：不在范围内
-     * 
-     * 类型处理：
-     * - 比较操作符要求值实现Comparable接口
-     * - 字符串匹配操作符只支持String类型
-     * - 空值判断操作符支持多种类型（String、Array、Collection、Map）
-     * - IN操作符支持多种类型转换
-     * 
-     * 空值处理：
-     * - 对于EQ/IEQ：null == null 返回true
-     * - 对于NE：null != null 返回false
-     * - 对于大小比较：null值通常返回false
-     * - 对于IS_EMPTY：null返回false（IS_NOT_EMPTY返回true）
-     * 
-     * 注意事项：
-     * - 类型不匹配时通常返回false
-     * - 使用类型转换（as）可能抛出ClassCastException
-     * - 字符串匹配会去除首尾空白字符
-     * - ILIKE系列操作符会转换为小写进行比较
-     * 
-     * @param v1 左值，待比较的值
-     * @param v2 右值，比较的目标值（对于IS_NULL等操作符无意义）
-     * @return true表示满足逻辑关系，false表示不满足
+     * Compares two values using the current operator.
+     *
+     * Performs the appropriate comparison logic for the operator, supporting multiple data types and comparison modes.
+     *
+     * Supported operators:
+     * 1. Equality:
+     *    - EQ: strict equality (==).
+     *    - IEQ: case-insensitive equality (strings only).
+     *    - NE/LG: not equal (!=).
+     * 2. Ordering:
+     *    - GE: greater than or equal (>=).
+     *    - LE: less than or equal (<=).
+     *    - GT: greater than (>).
+     *    - LT: less than (<).
+     * 3. String matching:
+     *    - LIKE: contains.
+     *    - LIKE_S: startsWith.
+     *    - LIKE_E: endsWith.
+     *    - ILIKE: case-insensitive contains.
+     *    - ILIKE_S: case-insensitive startsWith.
+     *    - ILIKE_E: case-insensitive endsWith.
+     * 4. Collection operations:
+     *    - IN: contained in the collection.
+     *    - NOT_IN: not contained in the collection.
+     * 5. Null checks:
+     *    - IS_NULL: is null.
+     *    - IS_NOT_NULL: is not null.
+     *    - IS_EMPTY: empty (strings, collections, arrays, maps).
+     *    - IS_NOT_EMPTY: not empty.
+     * 6. Range checks:
+     *    - BETWEEN: within range.
+     *    - NOT_BETWEEN: outside range.
+     *
+     * Type handling:
+     * - Comparison operators require the value to implement Comparable.
+     * - String-matching operators support only String type.
+     * - Null-check operators support multiple types (String, Array, Collection, Map).
+     * - IN supports multiple type conversions.
+     *
+     * Null handling:
+     * - EQ/IEQ: null == null returns true.
+     * - NE: null != null returns false.
+     * - Ordering operators: null values typically return false.
+     * - IS_EMPTY: null returns false (IS_NOT_EMPTY returns true).
+     *
+     * Notes:
+     * - Type mismatches usually return false.
+     * - Type casts (as) may throw ClassCastException.
+     * - String matching trims leading/trailing whitespace.
+     * - ILIKE-family operators compare in lower case.
+     *
+     * @param v1 left-hand value to compare
+     * @param v2 right-hand target value (meaningless for IS_NULL etc.)
+     * @return true if the logical relation holds, false otherwise
      */
     fun compare(v1: Any?, v2: Any?): Boolean {
         return when (this) {
@@ -359,12 +359,13 @@ enum class OperatorEnum(
     }
 
     /**
-     * 通用比较：对常见基础类型（Number、String、Char、Boolean）走专用路径，
-     * 其余按反射查找目标类型可接受 right 的 `compareTo` 方法。
+     * General-purpose comparison: common primitive types (Number, String, Char, Boolean) take dedicated
+     * paths; for other types, a `compareTo` method on the left-hand type that accepts the right-hand
+     * type is located via reflection.
      *
-     * @param left 左值，null 时直接返回 null
-     * @param right 右值，null 时直接返回 null
-     * @return 标准比较结果（负数/0/正数），无法比较返回 null
+     * @param left left value; returns null immediately when null
+     * @param right right value; returns null immediately when null
+     * @return standard comparison result (negative / zero / positive); null when not comparable
      * @author K
      * @since 1.0.0
      */
@@ -389,12 +390,12 @@ enum class OperatorEnum(
     }
 
     /**
-     * 反射查找 `leftClass` 上能接受 `rightClass` 作为参数的 `compareTo` 方法。
-     * 结果按 (leftClass, rightClass) 进缓存，避免每次比较都遍历方法表。
+     * Reflectively locates a `compareTo` method on `leftClass` that accepts `rightClass` as a parameter.
+     * The result is cached by (leftClass, rightClass) so each comparison does not re-scan the method table.
      *
-     * @param leftClass 左值类型
-     * @param rightClass 右值类型
-     * @return 找到的方法；找不到返回 null
+     * @param leftClass left-value type
+     * @param rightClass right-value type
+     * @return the located method, or null when none is found
      * @author K
      * @since 1.0.0
      */
@@ -411,11 +412,12 @@ enum class OperatorEnum(
     }
 
     /**
-     * 数值比较：同类型直接走原生 compareTo，异类型统一升到 [BigDecimal] 比较以避免精度丢失。
+     * Numeric comparison: same-type operands use native compareTo; cross-type operands are promoted to
+     * [BigDecimal] to avoid precision loss.
      *
-     * @param left 左数
-     * @param right 右数
-     * @return 标准比较结果；[BigDecimal] 解析失败时返回 null
+     * @param left left operand
+     * @param right right operand
+     * @return standard comparison result; null when [BigDecimal] parsing fails
      * @author K
      * @since 1.0.0
      */
@@ -434,47 +436,47 @@ enum class OperatorEnum(
     }
 
     /**
-     * 执行IN操作符的比较逻辑
-     * 
-     * 判断左值是否包含在右值集合中，支持多种数据类型的转换和比较。
-     * 
-     * 工作流程：
-     * 1. 字符串处理：如果两个值都是String，将右值按逗号分割后判断
-     * 2. 数组转换：将Array转换为List，统一处理
-     * 3. 集合判断：
-     *    - 如果右值是Collection：
-     *      * 如果左值也是Collection：判断右值是否包含左值的所有元素（containsAll）
-     *      * 如果左值不是Collection：判断右值是否包含左值（contains）
-     * 4. Map判断：如果两个值都是Map，判断右值是否包含左值的所有键值对
-     * 5. 其他情况：返回false
-     * 
-     * 字符串分割：
-     * - 如果两个值都是String，将右值按逗号分割
-     * - 例如："a,b,c"会被分割为["a", "b", "c"]
-     * - 判断左值是否在这个数组中
-     * 
-     * 集合包含判断：
-     * - 单值判断：使用contains方法
-     * - 集合判断：使用containsAll方法（子集判断）
-     * - 支持任意Collection类型
-     * 
-     * Map包含判断：
-     * - 使用containsAll方法判断键值对
-     * - 要求右值Map包含左值Map的所有键值对
-     * 
-     * 类型转换：
-     * - Array会自动转换为List，便于统一处理
-     * - 转换后的值用于后续判断
-     * 
-     * 注意事项：
-     * - 字符串分割使用逗号作为分隔符
-     * - 集合判断使用contains/containsAll方法
-     * - 如果类型不匹配，返回false
-     * - Map的containsAll判断键值对，不是键
-     * 
-     * @param v1 左值，待判断的值
-     * @param v2 右值，集合或Map
-     * @return true表示左值在右值中，false表示不在
+     * Comparison logic for the IN operator.
+     *
+     * Determines whether the left value is contained in the right value, with type conversion across multiple data types.
+     *
+     * Workflow:
+     * 1. String handling: when both values are String, split the right value on commas before testing.
+     * 2. Array conversion: convert Array to List so the rest of the logic is uniform.
+     * 3. Collection check:
+     *    - If the right value is a Collection:
+     *      * If the left value is also a Collection: test whether the right collection contains every element of the left (containsAll).
+     *      * Otherwise: test whether the right collection contains the left value (contains).
+     * 4. Map check: when both values are Maps, test whether the right Map contains every entry of the left Map.
+     * 5. Otherwise: return false.
+     *
+     * String splitting:
+     * - When both values are String, the right value is split on commas.
+     * - For example, "a,b,c" becomes ["a", "b", "c"].
+     * - The left value is then tested for membership in the resulting array.
+     *
+     * Collection containment:
+     * - Single-value: uses contains.
+     * - Collection-vs-collection: uses containsAll (subset test).
+     * - Works with any Collection type.
+     *
+     * Map containment:
+     * - Uses containsAll to test entries.
+     * - Requires the right Map to contain every entry of the left Map.
+     *
+     * Type conversion:
+     * - Array is converted to List for uniform handling.
+     * - The converted values are used in the subsequent checks.
+     *
+     * Notes:
+     * - String splitting uses comma as the delimiter.
+     * - Collection checks rely on contains/containsAll.
+     * - Type mismatches return false.
+     * - Map containsAll compares entries, not keys.
+     *
+     * @param v1 left value to test
+     * @param v2 right value: a collection or map
+     * @return true when v1 is contained in v2, otherwise false
      */
     private fun inOperation(v1: Any?, v2: Any?): Boolean {
         var value1 = v1
@@ -502,17 +504,17 @@ enum class OperatorEnum(
     }
 
     companion object Companion {
-        /** 缓存 `compareTo` 方法时使用的 (leftClass, rightClass) 复合键 */
+        /** Composite cache key (leftClass, rightClass) used when caching `compareTo` methods. */
         private data class MethodCacheKey(val leftClass: Class<*>, val rightClass: Class<*>)
-        /** 反射查找到的 `compareTo` 方法缓存 */
+        /** Cache of reflectively resolved `compareTo` methods. */
         private val compareToMethodCache = ConcurrentHashMap<MethodCacheKey, Method>()
 
         /**
-         * 按操作符 code 解析为枚举（大小写不敏感）。
+         * Resolves the enum from an operator code (case-insensitive).
          *
-         * @param code 操作符 code，如 `=`、`>=`、`LIKE`
-         * @return 匹配的枚举
-         * @throws IllegalStateException 当 code 不合法时
+         * @param code operator code, such as `=`, `>=`, `LIKE`
+         * @return the matching enum
+         * @throws IllegalStateException when the code is invalid
          * @author K
          * @since 1.0.0
          */
@@ -521,7 +523,7 @@ enum class OperatorEnum(
             if (operatorCode.isNotBlank()) {
                 operatorCode = operatorCode.uppercase()
             }
-            return EnumKit.enumOf(OperatorEnum::class, operatorCode) ?: error("非法的Operator code: $operatorCode")
+            return EnumKit.enumOf(OperatorEnum::class, operatorCode) ?: error("Illegal Operator code: $operatorCode")
         }
     }
 }

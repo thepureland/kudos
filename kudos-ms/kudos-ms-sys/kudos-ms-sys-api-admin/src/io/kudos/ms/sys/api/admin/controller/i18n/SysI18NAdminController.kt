@@ -12,7 +12,7 @@ import io.kudos.ms.sys.core.i18n.service.iservice.ISysI18nService
 import org.springframework.web.bind.annotation.*
 
 /**
- * 国际化管理控制器
+ * Internationalization management controller.
  *
  * @author K
  * @since 1.0.0
@@ -23,13 +23,13 @@ class SysI18NAdminController :
     BaseCrudController<String, ISysI18nService, SysI18nQuery, SysI18nRow, SysI18nDetail, SysI18nEdit, SysI18nFormCreate, SysI18nFormUpdate>() {
 
     /**
-     * 获取国际化信息
+     * Get internationalization information.
      *
-     * @param locale 语言地区
-     * @param i18nTypeDictCode 国际化类型字典代码
-     * @param namespace 范围
-     * @param atomicServiceCode 原子服务编码
-     * @return Map<国际化key, 译文>
+     * @param locale language/region
+     * @param i18nTypeDictCode i18n type dictionary code
+     * @param namespace namespace
+     * @param atomicServiceCode atomic service code
+     * @return Map<i18n key, translation>
      */
     @GetMapping("/getI18ns")
     fun getI18ns(
@@ -42,10 +42,10 @@ class SysI18NAdminController :
     }
 
     /**
-     * 批量获取国际化信息
+     * Batch get internationalization information.
      *
-     * @param payload 批量i18n信息的请求载体
-     * @return Map<国际化类型字典代码，Map<命名空间，Map<国际化key, 译文>>>
+     * @param payload request container for batch i18n information
+     * @return Map<i18n type dictionary code, Map<namespace, Map<i18n key, translation>>>
      */
     @PostMapping("/batchGetI18ns")
     @ResponseBody
@@ -61,11 +61,11 @@ class SysI18NAdminController :
     }
 
     /**
-     * 更新active状态
+     * Update the active status.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     @PutMapping("/updateActive")
     fun updateActive(id: String, active: Boolean): Boolean {

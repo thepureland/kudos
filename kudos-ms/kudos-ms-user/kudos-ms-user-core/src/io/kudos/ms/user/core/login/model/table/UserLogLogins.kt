@@ -8,7 +8,7 @@ import org.ktorm.schema.long
 import org.ktorm.schema.varchar
 
 /**
- * 登录日志数据库表-实体关联对象
+ * Login log table-entity binding.
  *
  * @author K
  * @author AI: Cursor
@@ -16,49 +16,49 @@ import org.ktorm.schema.varchar
  */
 object UserLogLogins : StringIdTable<UserLogLogin>("user_log_login") {
 
-    /** 用户ID */
+    /** User id */
     var userId = varchar("user_id").bindTo { it.userId }
 
-    /** 用户名 */
+    /** Username */
     var username = varchar("username").bindTo { it.username }
 
-    /** 租户ID */
+    /** Tenant id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
-    /** 登录时间 */
+    /** Login time */
     var loginTime = datetime("login_time").bindTo { it.loginTime }
 
-    /** 登录IP */
+    /** Login IP */
     var loginIp = long("login_ip").bindTo { it.loginIp }
 
-    /** 登录地点 */
+    /** Login location */
     var loginLocation = varchar("login_location").bindTo { it.loginLocation }
 
-    /** 登录设备 */
+    /** Login device */
     var loginDevice = varchar("login_device").bindTo { it.loginDevice }
 
-    /** 浏览器 */
+    /** Browser */
     var loginBrowser = varchar("login_browser").bindTo { it.loginBrowser }
 
-    /** 操作系统 */
+    /** Operating system */
     var loginOs = varchar("login_os").bindTo { it.loginOs }
 
-    /** 用户代理字符串 */
+    /** User agent string */
     var userAgent = varchar("user_agent").bindTo { it.userAgent }
 
-    /** 是否登录成功 */
+    /** Whether the login succeeded */
     var loginSuccess = boolean("login_success").bindTo { it.loginSuccess }
 
-    /** 失败原因 */
+    /** Failure reason */
     var failureReason = varchar("failure_reason").bindTo { it.failureReason }
 
-    /** 会话ID */
+    /** Session id */
     var sessionId = varchar("session_id").bindTo { it.sessionId }
 
-    /** 备注 */
+    /** Remark */
     var remark = varchar("remark").bindTo { it.remark }
 
-    /** 创建时间 */
+    /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
 

@@ -16,15 +16,17 @@ import java.util.Properties
 
 
 /**
- * 邮件发送处理器。
+ * Email send handler.
  *
- * 单一职责：把 [EmailRequest] 翻译成 JavaMail 的 `MimeMessage` + `JavaMailSenderImpl` 并执行发送，
- * 不论成功 / 部分成功 / 失败都通过 [callback] 异步通知调用方（业务侧典型用法是写"邮件发送记录"表）。
+ * Single responsibility: translate [EmailRequest] into JavaMail's `MimeMessage` + `JavaMailSenderImpl`
+ * and execute the send. Regardless of success / partial success / failure, the caller is notified
+ * asynchronously via [callback] (a typical business usage is writing to an "email send record" table).
  *
- * 发送在虚拟线程上跑——避免阻塞调用线程；要求 JDK 21+。
+ * The send runs on a virtual thread to avoid blocking the calling thread; requires JDK 21+.
  *
- * **已知限制**：每次发送都现建 `JavaMailSenderImpl`，SMTP 连接不复用；高并发场景需要业务方
- * 自行 pool 化或换专业邮件队列。
+ * **Known limitation**: each send creates a fresh `JavaMailSenderImpl`, so SMTP connections are not
+ * reused. High-concurrency scenarios require the business side to pool them or switch to a dedicated
+ * email queue.
  *
  * @author paul
  * @author K
@@ -33,12 +35,15 @@ import java.util.Properties
 @Component
 class EmailHandler {
     /**
-     * 异步发送邮件——立即在虚拟线程上启动 [doSend]，本方法不阻塞。
+     * Asynchronously send an email - immediately starts [doSend] on a virtual thread; this method
+     * does not block.
      *
-     * @param emailRequest 邮件请求；缺关键字段（账号 / 密码 / 服务器 / 收件人）会在内部
-     *   `checkParams` 拦截，回调拿到 [EmailStatusEnum.FAIL]
-     * @param callback 发送结束后的回调（成功 / 部分成功 / 失败都会调），在虚拟线程上执行，
-     *   业务侧 callback 中**不要做长耗时同步操作**，会拖住虚拟线程的复用
+     * @param emailRequest the email request; missing critical fields (account / password / server /
+     *   recipients) are intercepted internally by `checkParams`, and the callback receives
+     *   [EmailStatusEnum.FAIL]
+     * @param callback callback invoked after the send completes (called for success / partial success /
+     *   failure), executed on a virtual thread. **Do not perform long-running synchronous operations**
+     *   inside the callback - it will tie up virtual thread reuse.
      */
     fun send(emailRequest: EmailRequest, callback: (EmailCallBackParam) -> Unit) {
         Thread.ofVirtual().start { doSend(emailRequest, callback) }
@@ -47,7 +52,7 @@ class EmailHandler {
     private fun doSend(emailRequest: EmailRequest, callback: (EmailCallBackParam) -> Unit) {
         val emailCallBackParam = EmailCallBackParam()
         try {
-            //验证参数
+            // Validate parameters
             if (!checkParams(emailRequest)) {
                 emailCallBackParam.status = EmailStatusEnum.FAIL
                 emailCallBackParam.failEmails = emailRequest.receivers
@@ -56,7 +61,7 @@ class EmailHandler {
 
             val sender = JavaMailSenderImpl()
 
-            //设置邮件服务器信息
+            // Configure mail server information
             sender.host = emailRequest.serverHost
             sender.port = requireNotNull(emailRequest.serverPort) { "serverPort is required" }
             sender.username = emailRequest.senderAccount
@@ -72,16 +77,19 @@ class EmailHandler {
                 extra["mail.smtp.starttls.enable"] = "true"
             }
             extra["mail.user"] = emailRequest.senderAccount
-            // 注：不再把 senderPassword 塞到 mail.password —— sender.password 已经设了，
-            // 重复一份会让密码长期留在 javaMailProperties 里，被 toString / actuator 等意外泄漏。
+            // Note: no longer stuffing senderPassword into mail.password - sender.password is already set,
+            // and duplicating it would leave the password lingering in javaMailProperties, where it
+            // could leak via toString / actuator and similar paths.
             extra["mail.smtp.host"] = emailRequest.serverHost
             extra["mail.smtp.sendpartial"] = emailRequest.sendpartial.toString()
-            // SMTP 三个超时：缺省 JavaMail 无限等待。这里给保守默认（10s / 30s / 30s），
-            // 避免 SMTP 服务器吊死虚拟线程；业务侧可通过 emailRequest.extra 覆盖。
+            // Three SMTP timeouts: by default JavaMail waits indefinitely. Set conservative defaults
+            // here (10s / 30s / 30s) to prevent the SMTP server from hanging virtual threads; the
+            // business side can override via emailRequest.extra.
             extra["mail.smtp.connectiontimeout"] = DEFAULT_CONNECT_TIMEOUT_MS.toString()
             extra["mail.smtp.timeout"] = DEFAULT_READ_TIMEOUT_MS.toString()
             extra["mail.smtp.writetimeout"] = DEFAULT_WRITE_TIMEOUT_MS.toString()
-            // SSL 通道对应的 socket 属性别名（不同 JavaMail 版本对哪个键有效不一致，两边都设）
+            // Socket property aliases for the SSL channel (different JavaMail versions disagree on
+            // which key is effective, so set both).
             extra["mail.smtps.connectiontimeout"] = DEFAULT_CONNECT_TIMEOUT_MS.toString()
             extra["mail.smtps.timeout"] = DEFAULT_READ_TIMEOUT_MS.toString()
             extra["mail.smtps.writetimeout"] = DEFAULT_WRITE_TIMEOUT_MS.toString()
@@ -90,11 +98,11 @@ class EmailHandler {
             properties.putAll(extra)
             sender.javaMailProperties = properties
 
-            //建立邮件讯息
+            // Build the email message
             val mailMessage: MimeMessage = sender.createMimeMessage()
             val messageHelper = MimeMessageHelper(mailMessage)
 
-            //设置收件人、寄件人、主题与正文
+            // Set recipients, sender, subject, and body
             val receivers = emailRequest.receivers.toTypedArray()
             messageHelper.setTo(receivers)
             val from = emailRequest.fromMailAddress?.takeIf { it.isNotBlank() }
@@ -103,23 +111,23 @@ class EmailHandler {
             messageHelper.setSubject(requireNotNull(emailRequest.subject) { "subject is required" })
             messageHelper.setText(requireNotNull(emailRequest.body) { "body is required" }, emailRequest.htmlFormat)
 
-            //发送邮件
-            log.info("开始发送邮件...")
+            // Send the email
+            log.info("Starting to send email...")
             sender.send(mailMessage)
 
-            //设置回调状态
+            // Set callback status
             emailCallBackParam.status = EmailStatusEnum.SUCCESS
             emailCallBackParam.successEmails = emailRequest.receivers
 
-            log.info("发送邮件成功")
+            log.info("Email sent successfully")
         } catch (e: MailSendException) {
-            log.error(e, "邮件发送出错,可能只是部分邮箱帐号不可用导致的,这种情况下是部分发送失败,部分发送成功")
+            log.error(e, "Email send error, possibly caused by some mailbox accounts being unavailable; in this case some recipients fail and some succeed")
 
-            //设置回调状态
+            // Set callback status
             for (messageException in e.messageExceptions) {
                 if (messageException is SendFailedException) {
                     log.error(
-                        "邮件发送情况,成功:{0},失败:{1},非法:{2}",
+                        "Email send result, success: {0}, failed: {1}, invalid: {2}",
                         messageException.validSentAddresses.contentToString(),
                         messageException.validUnsentAddresses.contentToString(),
                         messageException.invalidAddresses.contentToString()
@@ -144,26 +152,26 @@ class EmailHandler {
                 emailCallBackParam.failEmails = emailRequest.receivers
             }
         } catch (e: Exception) {
-            log.error(e, "邮件发送出错")
+            log.error(e, "Email send error")
 
-            //设置回调状态
+            // Set callback status
             emailCallBackParam.status = EmailStatusEnum.FAIL
             emailCallBackParam.failEmails = emailRequest.receivers
         } finally {
-            //执行回调
+            // Execute the callback
             callback.invoke(emailCallBackParam)
         }
     }
 
     /**
-     * 验证参数
+     * Validate parameters.
      *
      * @param mail
      */
     private fun checkParams(mail: EmailRequest): Boolean {
         val valid = !mail.senderAccount.isNullOrBlank() && !mail.senderPassword.isNullOrBlank() &&
             !mail.serverHost.isNullOrBlank() && mail.receivers.isNotEmpty()
-        if (!valid) log.error("发送者邮箱账号、发送者邮箱密码、发件人邮箱服务器地址、接收者邮箱账号之一为空！")
+        if (!valid) log.error("One of sender email account, sender email password, sender mail server address, or recipient email account is empty!")
         return valid
     }
 
@@ -174,13 +182,13 @@ class EmailHandler {
     private val log = LogFactory.getLog(this::class)
 
     companion object {
-        /** SMTP 建连超时（毫秒）。JavaMail 默认无限等待，必须显式设上限避免吊死虚拟线程。 */
+        /** SMTP connect timeout (milliseconds). JavaMail waits indefinitely by default, so an explicit upper bound is required to prevent virtual threads from hanging. */
         private const val DEFAULT_CONNECT_TIMEOUT_MS = 10_000L
 
-        /** SMTP 读超时（毫秒）。 */
+        /** SMTP read timeout (milliseconds). */
         private const val DEFAULT_READ_TIMEOUT_MS = 30_000L
 
-        /** SMTP 写超时（毫秒）；大附件场景可适当调大。 */
+        /** SMTP write timeout (milliseconds); may be increased for large attachment scenarios. */
         private const val DEFAULT_WRITE_TIMEOUT_MS = 30_000L
     }
 

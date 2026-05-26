@@ -6,32 +6,32 @@ import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
 
 /**
- * 系统表单基础字段（新建 / 更新共用）
+ * System form base fields (shared by create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface ISysSystemFormBase {
 
-    /** 编码 */
+    /** Code */
     @get:NotBlank
     @get:MaxLength(32)
     @get:Matches(RegExpEnum.RELAXED_VAR_NAME)
     val code: String
 
-    /** 名称 */
+    /** Name */
     @get:NotBlank
     @get:MaxLength(128)
     val name: String
 
-    /** 是否子系统 */
+    /** Whether it is a subsystem */
     val subSystem: Boolean
 
-    /** 父系统编号 */
+    /** Parent system code */
     @get:MaxLength(32)
     val parentCode: String?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

@@ -16,13 +16,15 @@ import java.io.ByteArrayInputStream
 
 
 /**
- * MinIO（S3 兼容）文件上传服务。
+ * MinIO (S3-compatible) file upload service.
  *
- * 客户端选取策略：[UploadFileModel.authServerParam] 为空时复用配置文件装的静态 `minioClient` bean；
- * 非空时通过 [MinioClientBuilderFactory] 按认证类型（AK/SK 或 OAuth token）现场构造客户端。
+ * Client selection strategy: when [UploadFileModel.authServerParam] is empty, reuses the static `minioClient`
+ * bean assembled from configuration; when non-empty, constructs a client on the fly via
+ * [MinioClientBuilderFactory] based on the authentication type (AK/SK or OAuth token).
  *
- * 上传前会调用 [createBucket] 自动建桶——仅在静态客户端模式下；动态认证模式下假定 bucket 已存在
- * （动态权限多半没有 `s3:CreateBucket` 权限，访问 `bucketExists` 也可能 403）。
+ * Before uploading, [createBucket] is invoked to auto-create the bucket - only in static client mode; in
+ * dynamic auth mode the bucket is assumed to already exist (dynamic credentials usually lack the
+ * `s3:CreateBucket` permission, and even `bucketExists` may return 403).
  *
  * @author K
  * @author AI: Codex
@@ -30,24 +32,24 @@ import java.io.ByteArrayInputStream
  */
 open class MinioUploadService : AbstractUploadService() {
 
-    /** MinIO 配置（endpoint / accessKey / secretKey / publicEndpoint 等） */
+    /** MinIO configuration (endpoint / accessKey / secretKey / publicEndpoint, etc.). */
     @Autowired
     private lateinit var properties: MinioProperties
 
-    /** 动态认证场景下用来构造对应类型的 MinioClient builder */
+    /** Used in dynamic authentication scenarios to construct the corresponding type of MinioClient builder. */
     @Autowired
     private lateinit var minioClientBuilderFactory: MinioClientBuilderFactory
 
-    /** 静态客户端：来自 `kudos.ability.file.minio.{endpoint,accessKey,secretKey}` 装配。 */
+    /** Static client: assembled from `kudos.ability.file.minio.{endpoint,accessKey,secretKey}`. */
     @Autowired
     @Qualifier("minioClient")
     private lateinit var minioClientDefault: MinioClient
 
     /**
-     * 按 [UploadFileModel.authServerParam] 决定使用静态 / 动态客户端。
+     * Decides whether to use the static / dynamic client based on [UploadFileModel.authServerParam].
      *
-     * @param model 上传请求；`authServerParam` 为空时用默认静态客户端
-     * @throws IllegalArgumentException 找不到对应认证类型的 builder
+     * @param model upload request; when `authServerParam` is empty, the default static client is used
+     * @throws IllegalArgumentException when no builder is found for the corresponding authentication type
      */
     protected fun getMinioClient(model: UploadFileModel<*>): MinioClient {
         val auth = model.authServerParam ?: return minioClientDefault
@@ -56,16 +58,18 @@ open class MinioUploadService : AbstractUploadService() {
     }
 
     /**
-     * 桶不存在则创建（仅静态客户端模式）。
+     * Creates the bucket if it does not exist (static client mode only).
      *
-     * 动态认证场景下直接返回——动态颁发的 token 通常没有 `s3:CreateBucket` 权限，连
-     * `bucketExists` 都可能 403。**这要求业务侧提前在 MinIO 控制台预创建所有用到的 bucket**，
-     * 否则后续 `putObject` 会拿到 `NoSuchBucket` 错误。
+     * In dynamic auth scenarios, returns directly - dynamically issued tokens usually lack the
+     * `s3:CreateBucket` permission, and even `bucketExists` may return 403. **This requires the business
+     * side to pre-create all used buckets in the MinIO console in advance**, otherwise subsequent
+     * `putObject` calls will get a `NoSuchBucket` error.
      *
-     * 注：旧实现这里有一段 `setPolicy(...)` 配置匿名读策略的代码，但其 `Version` 字段写成了
-     * `"2025-07-02"`（标准应当是 AWS IAM 的 `"2012-10-17"`），MinIO / S3 会拒收；另外开匿名
-     * 读不是所有部署都接受。该死代码已移除——bucket policy 应通过 MinIO 控制台 / mc 命令
-     * 显式配置，避免应用层悄悄开放公网读。
+     * Note: the old implementation had a `setPolicy(...)` block here that configured an anonymous read
+     * policy, but its `Version` field was written as `"2025-07-02"` (the standard should be the AWS IAM
+     * `"2012-10-17"`); MinIO / S3 would reject it. Also, enabling anonymous read is not acceptable for all
+     * deployments. This dead code has been removed - bucket policy should be configured explicitly via the
+     * MinIO console / `mc` command, avoiding the application layer silently opening public read access.
      */
     protected fun createBucket(minioClient: MinioClient, model: UploadFileModel<*>) {
         if (model.authServerParam != null) {
@@ -81,19 +85,20 @@ open class MinioUploadService : AbstractUploadService() {
     }
 
     /**
-     * 上传文件到 MinIO/S3。
+     * Uploads a file to MinIO/S3.
      *
-     * 流程：选择客户端 → 必要时建桶 → 走压缩管道 → `putObject`。
-     * 流大小传 -1 表示未知，由 SDK 内部按 [MinioProperties.partSize] 切片上传；
-     * 这是 MinIO 客户端处理"未知大小流"的标准用法。
-     * 返回的路径包含 bucketName，便于业务侧直接存库后由前端拼 publicEndpoint 形成完整 URL。
+     * Flow: select client -> create bucket if needed -> run compression pipeline -> `putObject`.
+     * Passing -1 for the stream size means unknown; the SDK internally uploads in chunks based on
+     * [MinioProperties.partSize] - this is the standard MinIO client usage for handling "streams of
+     * unknown size". The returned path includes the bucketName so the business side can store it directly,
+     * and the frontend can concatenate publicEndpoint to form a complete URL.
      *
-     * @param model 上传请求
-     * @param fileDir [AbstractUploadService.dispatchFileDir] 分配出来的相对目录
-     * @return `/{bucket}/{objectKey}` 形态的路径
-     * @throws ServiceException 失败时按错误类型分两个错误码：
-     *   - [FileErrorCode.FILE_ACCESS_DENY]：[io.minio.errors.ErrorResponseException]（鉴权/权限/桶不存在等）
-     *   - [FileErrorCode.FILE_ACCESS_ERROR]：其它本地或网络异常
+     * @param model upload request
+     * @param fileDir relative directory allocated by [AbstractUploadService.dispatchFileDir]
+     * @return path in the form of `/{bucket}/{objectKey}`
+     * @throws ServiceException on failure, split into two error codes by error type:
+     *   - [FileErrorCode.FILE_ACCESS_DENY]: [io.minio.errors.ErrorResponseException] (auth/permission/bucket-not-exists, etc.)
+     *   - [FileErrorCode.FILE_ACCESS_ERROR]: other local or network exceptions
      * @author K
      * @author AI: Codex
      * @since 1.0.0
@@ -117,7 +122,7 @@ open class MinioUploadService : AbstractUploadService() {
                 .contentType(result.mimeType).build()
 
             val rs = minioClient.putObject(putArgs)
-            //访问路径包含: bucketName,方便业务直接存储,前端拼接绝对http地址
+            // access path includes bucketName, convenient for the business to store directly and the frontend to concatenate the absolute http address
             return "/${rs.bucket()}/${rs.`object`()}"
         } catch (e: io.minio.errors.ErrorResponseException) {
             throw ServiceException(FileErrorCode.FILE_ACCESS_DENY, e)
@@ -127,17 +132,18 @@ open class MinioUploadService : AbstractUploadService() {
     }
 
     /**
-     * 返回 MinIO 公网域名，前端把它拼到 [saveFile] 的相对路径前形成完整 URL。
+     * Returns the MinIO public domain; the frontend concatenates it before the relative path from
+     * [saveFile] to form a complete URL.
      *
      * @return [MinioProperties.publicEndpoint]
-     * @throws IllegalArgumentException 当配置中未指定 publicEndpoint 时
+     * @throws IllegalArgumentException when publicEndpoint is not specified in the configuration
      * @author K
      * @since 1.0.0
      */
     override fun pathPrefix(): String =
         requireNotNull(properties.publicEndpoint) { "publicEndpoint is null" }
 
-    /** 日志器 */
+    /** Logger. */
     private val LOG = LogFactory.getLog(this::class)
 
 }

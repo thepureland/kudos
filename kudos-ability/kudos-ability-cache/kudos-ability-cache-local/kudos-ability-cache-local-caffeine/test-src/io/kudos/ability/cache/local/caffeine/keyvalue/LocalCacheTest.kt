@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
 
 
 /**
- * 本地缓存测试用例
+ * Local cache test cases.
  *
  * @author K
  * @author AI: Codex

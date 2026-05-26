@@ -9,7 +9,7 @@ import org.testcontainers.containers.GenericContainer
 import org.testcontainers.utility.DockerImageName
 
 /**
- * redis测试容器
+ * redis test container.
  *
  * @author K
  * @since 1.0.0
@@ -25,16 +25,16 @@ object RedisTestContainer {
         .withLabel(TestContainerKit.LABEL_KEY, LABEL)
 
     /**
-     * 启动容器(若需要)
+     * Starts the container (if needed).
      *
-     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
-     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
-     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
-     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
-     * 当docker没安装时想忽略测试用例，可以用@EnabledIfDockerInstalled
+     * Ensures a single container is shared across a batch of tests, avoiding the time wasted starting/stopping containers repeatedly.
+     * Alternatively, you can run this class's main method manually to start the container and share it while running tests.
+     * Registers a JVM shutdown hook to automatically stop the container when the batch finishes,
+     * rather than stopping after each test — provided the @Testcontainers annotation is not used.
+     * To skip tests when Docker is not installed, use @EnabledIfDockerInstalled.
      *
-     * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
-     * @return 运行中的容器对象
+     * @param registry Spring's dynamic property registry, used to register or override already-registered properties
+     * @return the running container instance
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
         return TestContainerCrossProcessLock.run(RedisTestContainer::class.java, "redis") {
@@ -47,14 +47,14 @@ object RedisTestContainer {
     }
 
     /**
-     * 把 Redis 容器实际 host/port 注册到两组属性：
-     * 1. `kudos.ability.data.redis.redis-map.*` —— kudos 自家 Redis 抽象层走的配置
-     * 2. `spring.data.redis.*` —— Spring Data Redis（被 NettyWebSocketDistributedTest 这类底层组件直接读）
+     * Registers the actual Redis container host/port to two property groups:
+     * 1. `kudos.ability.data.redis.redis-map.*` — config used by kudos' own Redis abstraction layer
+     * 2. `spring.data.redis.*` — Spring Data Redis (read directly by low-level components such as NettyWebSocketDistributedTest)
      *
-     * 两组都要写——只写 (1) 会导致 NettyWebSocketDistributedTest 走原始 spring 配置读到错误地址。
+     * Both groups must be set — writing only (1) causes NettyWebSocketDistributedTest to read the wrong address via the original spring config.
      *
-     * @param registry Spring 动态属性注册表
-     * @param runningContainer 运行中的容器
+     * @param registry the Spring dynamic property registry
+     * @param runningContainer the running container
      * @author K
      * @since 1.0.0
      */
@@ -66,15 +66,15 @@ object RedisTestContainer {
         registry.add("kudos.ability.data.redis.redis-map.data.host") { host }
         registry.add("kudos.ability.data.redis.redis-map.data.port") { port }
 
-        //waring: 以下没有重置的话,NettyWebSocketDistributedTest测试不通过
+        // warning: without resetting the following, NettyWebSocketDistributedTest will fail
         registry.add("spring.data.redis.host") { host }
         registry.add("spring.data.redis.port") { port }
     }
 
     /**
-     * 返回运行中的容器对象
+     * Returns the running container instance.
      *
-     * @return 容器对象，如果没有返回null
+     * @return the container instance, or null if none is running
      */
     fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
 

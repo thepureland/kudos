@@ -5,7 +5,7 @@ import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 
 /**
- * Spring上下文初始化器
+ * Spring application context initializer.
  *
  * @author K
  * @since 1.0.0
@@ -13,13 +13,15 @@ import org.springframework.context.ConfigurableApplicationContext
 class SpringContextInitializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
 
     /**
-     * 把 Spring 启动注入进来的 [ConfigurableApplicationContext] 注册到 [SpringKit]，
-     * 后续 [SpringKit.getBean] / [SpringKit.getBeansOfType] 等门面才能在静态上下文里取到 bean。
+     * Registers the [ConfigurableApplicationContext] injected by Spring on startup into [SpringKit],
+     * so that facades like [SpringKit.getBean] / [SpringKit.getBeansOfType] can retrieve beans from the
+     * static context.
      *
-     * 注：本初始化器需在 META-INF/spring.factories 或 SpringApplication.addInitializers 中显式注册；
-     * 必须先于任何依赖 [SpringKit] 的 `by lazy` / `object init` 代码被触发。
+     * Note: this initializer must be registered explicitly in META-INF/spring.factories or via
+     * SpringApplication.addInitializers, and must run before any `by lazy` / `object init` code that
+     * depends on [SpringKit].
      *
-     * @param applicationContext Spring 提供的可配置上下文
+     * @param applicationContext the configurable context provided by Spring
      * @author K
      * @since 1.0.0
      */

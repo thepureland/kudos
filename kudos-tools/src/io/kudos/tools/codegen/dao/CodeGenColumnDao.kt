@@ -9,7 +9,7 @@ import org.ktorm.entity.removeIf
 import org.springframework.stereotype.Repository
 
 /**
- * 代码生成-列信息数据访问对象
+ * Code generation - column info data access object.
  *
  * @author K
  * @since 1.0.0

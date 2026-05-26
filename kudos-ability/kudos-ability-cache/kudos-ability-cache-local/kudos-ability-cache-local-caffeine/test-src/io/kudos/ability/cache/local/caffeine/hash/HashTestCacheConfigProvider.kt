@@ -7,8 +7,8 @@ import io.kudos.ability.cache.local.caffeine.keyvalue.TestCacheConfigProvider
 import org.springframework.context.annotation.Primary
 
 /**
- * 为 Hash 缓存测试提供配置：在 [TestCacheConfigProvider] 基础上增加 hash 缓存 "testHash"。
- * 使用 @Primary 确保 CacheKit / MixHashCacheManager 在测试中均使用本配置（含 active、writeInTime）。
+ * Provides config for Hash cache tests: extends [TestCacheConfigProvider] with the hash cache "testHash".
+ * Marked @Primary so CacheKit / MixHashCacheManager use this config in tests (including active and writeInTime).
  *
  * @author K
  * @author AI: Codex

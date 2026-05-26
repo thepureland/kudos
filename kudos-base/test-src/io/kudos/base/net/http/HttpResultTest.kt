@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * HttpResult测试用例
+ * Test cases for HttpResult.
  *
  * @author AI: cursor
  * @author K
@@ -30,35 +30,35 @@ internal class HttpResultTest {
 
     @Test
     fun testOkFactoryMethod() {
-        val result = HttpResult.ok("操作成功")
+        val result = HttpResult.ok("operation succeeded")
         assertEquals(200, result.status)
-        assertEquals("操作成功", result.msg)
+        assertEquals("operation succeeded", result.msg)
         assertEquals(null, result.data)
     }
 
     @Test
     fun testOkFactoryMethodWithData() {
         val data = mapOf("id" to 1, "name" to "test")
-        val result = HttpResult.ok("操作成功", data)
+        val result = HttpResult.ok("operation succeeded", data)
         assertEquals(200, result.status)
-        assertEquals("操作成功", result.msg)
+        assertEquals("operation succeeded", result.msg)
         assertEquals(data, result.data)
     }
 
     @Test
     fun testErrorFactoryMethod() {
-        val result = HttpResult.error("操作失败")
+        val result = HttpResult.error("operation failed")
         assertEquals(500, result.status)
-        assertEquals("操作失败", result.msg)
+        assertEquals("operation failed", result.msg)
         assertEquals(null, result.data)
     }
 
     @Test
     fun testErrorFactoryMethodWithData() {
-        val errorInfo = mapOf("code" to "E001", "message" to "系统错误")
-        val result = HttpResult.error("操作失败", errorInfo)
+        val errorInfo = mapOf("code" to "E001", "message" to "system error")
+        val result = HttpResult.error("operation failed", errorInfo)
         assertEquals(500, result.status)
-        assertEquals("操作失败", result.msg)
+        assertEquals("operation failed", result.msg)
         assertEquals(errorInfo, result.data)
     }
 

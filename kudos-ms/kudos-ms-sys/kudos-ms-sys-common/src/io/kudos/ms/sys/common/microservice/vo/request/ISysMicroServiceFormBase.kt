@@ -7,38 +7,38 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
 /**
- * 微服务表单基础字段（新建 / 更新共用）
+ * Base fields shared by microservice forms (create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface ISysMicroServiceFormBase {
 
-    /** 编码 */
+    /** Code */
     @get:NotBlank
     @get:MaxLength(32)
     @get:Matches(RegExpEnum.RELAXED_VAR_NAME)
     val code: String
 
-    /** 名称 */
+    /** Name */
     @get:NotBlank
     @get:MaxLength(128)
     val name: String
 
-    /** 上下文 */
+    /** Context */
     @get:NotBlank
     @get:Matches(RegExpEnum.CONTEXT)
     val context: String
 
-    /** 是否为原子服务 */
+    /** Whether atomic service */
     val atomicService: Boolean
 
-    /** 父服务编码 */
+    /** Parent service code */
     @get:MaxLength(32)
     @get:Matches(RegExpEnum.VAR_NAME)
     val parentCode: String?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 
 
 /**
- * 代码生成-文件信息数据库实体
+ * Code generation - file info database entity.
  *
  * @author K
  * @since 1.0.0
@@ -16,10 +16,10 @@ interface CodeGenFile : IDbEntity<String, CodeGenFile> {
 
     companion object : DbEntityFactory<CodeGenFile>()
 
-    /** 文件名 */
+    /** File name */
     var filename: String
 
-    /** 对象名 */
+    /** Object name */
     var objectName: String
 
 

@@ -5,56 +5,56 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户联系方式详情响应VO
+ * User contact way detail response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserContactWayDetail (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 用户ID */
+    /** User ID */
     val userId: String? = null,
 
-    /** 联系方式字典码 */
+    /** Contact way dict code */
     val contactWayDictCode: String? = null,
 
-    /** 联系方式值 */
+    /** Contact way value */
     val contactWayValue: String? = null,
 
-    /** 联系方式状态字典码 */
+    /** Contact way status dict code */
     val contactWayStatusDictCode: String? = null,
 
-    /** 优先级 */
+    /** Priority */
     val priority: Short? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean? = null,
 
-    /** 创建者ID */
+    /** Creator ID */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者ID */
+    /** Updater ID */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

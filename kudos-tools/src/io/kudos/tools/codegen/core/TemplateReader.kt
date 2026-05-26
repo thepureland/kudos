@@ -10,7 +10,7 @@ import java.net.URL
 
 
 /**
- * 模板内容读取器
+ * Template content reader.
  *
  * @author K
  * @since 1.0.0
@@ -18,10 +18,11 @@ import java.net.URL
 class TemplateReader {
 
     /**
-     * 读取模板根目录下的指定模板文件并返回 Freemarker [Template]，输出编码强制 UTF-8。
+     * Reads the specified template under the template root directory and returns a Freemarker [Template];
+     * output encoding is forced to UTF-8.
      *
-     * @param templateFileRelativePath 模板文件相对路径（相对于模板根目录）
-     * @return 加载好的 Freemarker [Template]
+     * @param templateFileRelativePath template path relative to the template root directory
+     * @return the loaded Freemarker [Template]
      * @author K
      * @since 1.0.0
      */
@@ -31,13 +32,14 @@ class TemplateReader {
         }
 
     /**
-     * 构造一个 Freemarker [Configuration]，同时支持"文件系统模板"与"classpath 模板"两种来源：
-     * - [URLTemplateLoader]：让用户能在外部目录改模板而无需重新打包；
-     * - `setClassForTemplateLoading`：兜底加载打包进 jar 的内置模板。
+     * Builds a Freemarker [Configuration] supporting both "filesystem templates" and "classpath templates":
+     * - [URLTemplateLoader]: lets users edit templates in an external directory without rebuilding.
+     * - `setClassForTemplateLoading`: fallback for built-in templates packaged inside the jar.
      *
-     * 另外把 `macro.include`（若存在）注册为 auto-include，让模板里无需手动 `<#include>` 公共宏。
+     * Also registers `macro.include` (if present) as an auto-include so templates do not need a manual
+     * `<#include>` for shared macros.
      *
-     * @return 初始化好的 Freemarker 配置实例
+     * @return an initialized Freemarker configuration
      * @author K
      * @since 1.0.0
      */
@@ -65,7 +67,7 @@ class TemplateReader {
         }
     }
 
-    /** 日志器，仅用于打印 auto-include 解析结果 */
+    /** Logger; used only to print the auto-include resolution result */
     private val log = LogFactory.getLog(this::class)
 
 }

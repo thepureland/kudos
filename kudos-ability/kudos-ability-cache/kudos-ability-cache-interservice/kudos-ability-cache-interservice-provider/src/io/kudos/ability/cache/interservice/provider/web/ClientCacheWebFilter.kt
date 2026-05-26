@@ -9,8 +9,8 @@ import jakarta.servlet.http.HttpServletResponse
 import io.kudos.ability.cache.interservice.common.ClientCacheKey
 
 /**
- * 客户端缓存Web过滤器
- * 包装HTTP请求为CacheClientRequest，支持服务间缓存的请求处理
+ * Client cache web filter.
+ * Wraps the HTTP request as a CacheClientRequest to support request handling for inter-service caching.
  *
  * @author K
  * @author AI: Codex

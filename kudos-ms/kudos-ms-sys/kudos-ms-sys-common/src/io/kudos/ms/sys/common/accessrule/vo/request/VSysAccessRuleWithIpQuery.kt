@@ -4,7 +4,8 @@ import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.sys.common.accessrule.vo.response.VSysAccessRuleWithIpRow
 
 /**
- * 列表/分页查询条件载体，对应视图 `v_sys_access_rule_with_ip`，返回行类型为 [VSysAccessRuleWithIpRow]。
+ * List/paginated query criteria payload, corresponding to view `v_sys_access_rule_with_ip`,
+ * returning row type [VSysAccessRuleWithIpRow].
  *
  * @author K
  * @author AI: Cursor
@@ -12,41 +13,42 @@ import io.kudos.ms.sys.common.accessrule.vo.response.VSysAccessRuleWithIpRow
  */
 data class VSysAccessRuleWithIpQuery(
 
-    /** 视图行主键，语义为 `COALESCE(ip.id, ar.id)` */
+    /** View row primary key, semantically `COALESCE(ip.id, ar.id)` */
     val id: String? = null,
 
-    /** 父访问规则主键 `sys_access_rule.id` */
+    /** Parent access rule primary key `sys_access_rule.id` */
     val parentId: String? = null,
 
-    /** 父规则租户 id；配合 [explicitNullProperties] 可显式查询 NULL */
+    /** Parent rule tenant id; combine with [explicitNullProperties] to explicitly query NULL */
     val tenantId: String? = null,
 
-    /** 父规则系统编码 */
+    /** Parent rule system code */
     val systemCode: String? = null,
 
-    /** 父规则规则类型字典码 */
+    /** Parent rule type dict code */
     val accessRuleTypeDictCode: String? = null,
 
-    /** 父规则是否启用 */
+    /** Whether the parent rule is active */
     val parentActive: Boolean? = null,
 
-    /** 父规则是否内置 */
+    /** Whether the parent rule is built-in */
     val parentBuiltIn: Boolean? = null,
 
-    /** IP 子表主键 `sys_access_rule_ip.id` */
+    /** IP child table primary key `sys_access_rule_ip.id` */
     val ipId: String? = null,
 
-    /** ip 起（字符串表示） */
+    /** IP start (string form) */
     val ipStartStr: String? = null,
 
-    /** ip 止（字符串表示）*/
+    /** IP end (string form) */
     val ipEndStr: String? = null,
 
-    /** IP 类型字典码 */
+    /** IP type dict code */
     val ipTypeDictCode: String? = null,
 
     /**
-     * 需要按「属性为 NULL」参与 WHERE 的字段名（如仅含 `tenantId` 时表示父规则 `tenant_id IS NULL`）。
+     * Field names that should participate in WHERE as "property IS NULL"
+     * (e.g. when only containing `tenantId` it means parent rule `tenant_id IS NULL`).
      */
     val explicitNullProperties: List<String>? = null,
 

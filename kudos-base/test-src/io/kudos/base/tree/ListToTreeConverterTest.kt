@@ -8,7 +8,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * ListToTreeConverter测试用例
+ * Test cases for ListToTreeConverter.
  *
  * @author AI: cursor
  * @author K
@@ -19,11 +19,11 @@ internal class ListToTreeConverterTest {
     @Test
     fun testConvert() {
         val list = listOf(
-            TestTreeNode("10", null, "根结点10"),
-            TestTreeNode("11", "10", "10的子结点11"),
-            TestTreeNode("12", "10", "10的子结点12"),
-            TestTreeNode("20", null, "根结点20"),
-            TestTreeNode("21", "20", "20的子结点21")
+            TestTreeNode("10", null, "root node 10"),
+            TestTreeNode("11", "10", "child of 10: 11"),
+            TestTreeNode("12", "10", "child of 10: 12"),
+            TestTreeNode("20", null, "root node 20"),
+            TestTreeNode("21", "20", "child of 20: 21")
         )
         val treeList = ListToTreeConverter.convert(list)
         var result = treeList.size == 2
@@ -102,11 +102,11 @@ internal class ListToTreeConverterTest {
     fun testConvertWithMissingParent() {
         val nodes = listOf(
             TestTreeNode("1", null, "Root"),
-            TestTreeNode("2", "999", "Orphan") // 父节点不存在
+            TestTreeNode("2", "999", "Orphan") // parent does not exist
         )
         val tree = ListToTreeConverter.convert(nodes)
         assertEquals(1, tree.size)
-        // 孤儿节点应该被忽略
+        // Orphan nodes should be ignored
         assertTrue(tree[0]._getChildren().isEmpty())
     }
 
@@ -119,15 +119,15 @@ internal class ListToTreeConverterTest {
         val outcome = runCatching { ListToTreeConverter.convert(nodes, strict = true) }
         assertTrue(outcome.isFailure)
         val ex = outcome.exceptionOrNull()
-        assertTrue(ex is IllegalArgumentException, "应抛 IllegalArgumentException，实际：$ex")
+        assertTrue(ex is IllegalArgumentException, "expected IllegalArgumentException, actually: $ex")
         val msg = ex.message ?: ""
-        assertTrue(msg.contains("2"), "异常消息应包含孤儿结点 id：$msg")
-        assertTrue(msg.contains("999"), "异常消息应包含缺失父 id：$msg")
+        assertTrue(msg.contains("2"), "exception message should contain the orphan node id: $msg")
+        assertTrue(msg.contains("999"), "exception message should contain the missing parent id: $msg")
     }
 
     @Test
     fun testConvertStrictModeAllowsCompleteTree() {
-        // strict=true 不影响数据完整的输入
+        // strict=true does not affect complete input data
         val nodes = listOf(
             TestTreeNode("1", null, "Root"),
             TestTreeNode("2", "1", "Child"),

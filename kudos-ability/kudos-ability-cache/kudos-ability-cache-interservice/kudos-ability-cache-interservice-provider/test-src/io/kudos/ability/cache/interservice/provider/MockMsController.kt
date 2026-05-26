@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 模拟微服务的Controller
+ * Mock microservice Controller.
  *
  * @author K
  * @since 1.0.0
@@ -23,7 +23,7 @@ open class MockMsController {
     }
 
 
-    //没加@ClientCacheable
+    // No @ClientCacheable applied
     @RequestMapping("/different1")
     open fun different1(): RequestResult {
         return RequestResult(1, "one")

@@ -10,11 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.io.File
 
 /**
- * 本地磁盘文件删除服务。
+ * Local disk file deletion service.
  *
- * 双重防穿越：先走 [IDeleteService.isValid] 的字符串包含 `..` 粗筛，再做
- * `Path.normalize() + startsWith(basePath)` 强校验——后者命中穿越时直接返回 false，
- * 不会真正落到 `file.delete()`。拒绝删目录（只支持文件级别）。
+ * Double traversal protection: first goes through [IDeleteService.isValid] for the coarse string `..` contains
+ * check, then performs strict `Path.normalize() + startsWith(basePath)` validation - the latter directly returns
+ * false when traversal is detected, and never actually invokes `file.delete()`. Refuses to delete directories
+ * (only file-level deletion is supported).
  *
  * @author K
  * @author AI: Codex
@@ -35,7 +36,7 @@ class LocalDeleteService : IDeleteService {
         val rawPath = listOf(base, model.bucketName, model.filePath).joinToString(File.separator)
         val resolved = File(rawPath).toPath().toAbsolutePath().normalize()
         if (!resolved.startsWith(baseDir)) {
-            log.warn("拒绝删除：路径穿越企图 path={0}", rawPath)
+            log.warn("delete refused: path traversal attempt path={0}", rawPath)
             return false
         }
         val file = resolved.toFile()

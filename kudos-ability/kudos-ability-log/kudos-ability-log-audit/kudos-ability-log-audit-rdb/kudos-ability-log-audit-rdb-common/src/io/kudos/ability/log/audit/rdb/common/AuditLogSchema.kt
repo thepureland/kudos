@@ -1,14 +1,15 @@
 package io.kudos.ability.log.audit.rdb.common
 
 /**
- * 审计日志 RDB 存储的表名 / 列名常量。
+ * Table-name / column-name constants for the RDB storage of audit logs.
  *
- * 抽到 `rdb-common` 是为了让多种 ORM 实现（当前 Ktorm，未来可能的 JPA / MyBatis）
- * 共享同一份"DDL 标识"——业务侧若改表名或列名，只需要在这一处改，所有 ORM 适配跟着走。
+ * Extracted into `rdb-common` so that multiple ORM implementations (currently Ktorm, possibly JPA / MyBatis in the
+ * future) share the same "DDL identifiers" — if the business side changes a table or column name, only this one place
+ * needs editing and all ORM adapters follow along.
  *
- * DDL 本身见 `resources/db/migration/V20260519__create_sys_audit_log.sql`——
- * 走 flyway 的部署只需把本模块 classpath 加进 flyway scanner 的搜索路径
- * （`spring.flyway.locations` 默认包含 `classpath:db/migration`）。
+ * The DDL itself lives in `resources/db/migration/V20260519__create_sys_audit_log.sql` — a flyway-based deployment
+ * only needs to add this module's classpath to the flyway scanner's search path
+ * (`spring.flyway.locations` includes `classpath:db/migration` by default).
  *
  * @author K
  * @author AI: Codex
@@ -16,13 +17,13 @@ package io.kudos.ability.log.audit.rdb.common
  */
 object AuditLogSchema {
 
-    /** 主表：一条审计动作记录。 */
+    /** Main table: one record per audit action. */
     const val TABLE_AUDIT_LOG: String = "sys_audit_log"
 
-    /** 详情表：一条 [TABLE_AUDIT_LOG] 记录对应 0..1 条详情（URL / 参数 / 描述）。 */
+    /** Detail table: each [TABLE_AUDIT_LOG] record corresponds to 0..1 detail rows (URL / params / description). */
     const val TABLE_AUDIT_DETAIL_LOG: String = "sys_audit_detail_log"
 
-    /** [TABLE_AUDIT_LOG] 列名。 */
+    /** Column names of [TABLE_AUDIT_LOG]. */
     object AuditLogColumn {
         const val ID = "id"
         const val ENTITY_ID = "entity_id"
@@ -46,7 +47,7 @@ object AuditLogSchema {
         const val REQUEST_TYPE = "request_type"
     }
 
-    /** [TABLE_AUDIT_DETAIL_LOG] 列名。 */
+    /** Column names of [TABLE_AUDIT_DETAIL_LOG]. */
     object AuditDetailLogColumn {
         const val ID = "id"
         const val AUDIT_ID = "audit_id"

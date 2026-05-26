@@ -12,7 +12,7 @@ import java.time.Duration
 
 
 /**
- * minio测试容器
+ * MinIO test container.
  *
  * @author K
  * @since 1.0.0
@@ -34,7 +34,7 @@ object MinioTestContainer {
             MountableFile.forClasspathResource("minio/minio.png"),
             "/docs/0/minio.png"
         )
-        // 等待 HTTP 200 响应，路径可选 /minio/health/ready 或 /minio/health/live
+        // Wait for HTTP 200; the path may be /minio/health/ready or /minio/health/live
         waitingFor(
             Wait.forHttp("/minio/health/ready")
                 .forPort(PORT)
@@ -45,16 +45,17 @@ object MinioTestContainer {
     }
 
     /**
-     * 启动容器(若需要)
+     * Start the container if needed.
      *
-     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
-     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
-     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
-     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
-     * 当docker没安装时想忽略测试用例，可以用@EnabledIfDockerInstalled
+     * Ensures a single container is shared across batch tests, avoiding the time wasted on repeated
+     * starts and stops. The main method of this class can also be run manually to start the container
+     * so test cases can share it. A JVM shutdown hook is registered so the container is stopped
+     * automatically when the batch test ends rather than after each test case, provided the
+     * @Testcontainers annotation is not used. Use @EnabledIfDockerInstalled to skip test cases when
+     * Docker is not installed.
      *
-     * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
-     * @return 运行中的容器对象
+     * @param registry Spring's dynamic property registry, used to register or override registered properties
+     * @return the running container
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
         return TestContainerCrossProcessLock.run(MinioTestContainer::class.java, "minio") {
@@ -67,11 +68,12 @@ object MinioTestContainer {
     }
 
     /**
-     * 注册 MinIO endpoint 到 Spring 动态属性。内/外部 endpoint 都指向同一 URL——
-     * 测试环境下 Docker host 可达，不需要区分公网/内网。
+     * Registers the MinIO endpoint into Spring dynamic properties. Internal and external endpoints
+     * both point to the same URL — under test, the Docker host is reachable and there is no need to
+     * distinguish public vs. internal networks.
      *
-     * @param registry Spring 动态属性注册表
-     * @param runningContainer 运行中的容器
+     * @param registry Spring's dynamic property registry
+     * @param runningContainer the running container
      * @author K
      * @since 1.0.0
      */
@@ -85,9 +87,9 @@ object MinioTestContainer {
     }
 
     /**
-     * 返回运行中的容器对象
+     * Returns the running container.
      *
-     * @return 容器对象，如果没有返回null
+     * @return the container, or null if none is running
      */
     fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
 

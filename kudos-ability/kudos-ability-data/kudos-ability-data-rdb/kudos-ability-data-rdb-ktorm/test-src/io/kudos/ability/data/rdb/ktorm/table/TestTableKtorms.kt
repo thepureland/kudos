@@ -4,7 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IntIdTable
 import org.ktorm.schema.*
 
 /**
- * 测试表数据库表-实体关联对象
+ * Table-to-entity binding object for the test table.
  *
  * @author K
  * @author AI: Codex
@@ -12,19 +12,19 @@ import org.ktorm.schema.*
  */
 internal object TestTableKtorms : IntIdTable<TestTableKtorm>("test_table_ktorm") {
 
-    /** 名字 */
+    /** Name */
     var name = varchar("name").bindTo { it.name }
 
-    /** 生日 */
+    /** Birthday */
     var birthday = datetime("birthday").bindTo { it.birthday }
 
-    /** 是否生效 */
+    /** Whether active */
     var active = boolean("active").bindTo { it.active }
 
-    /** 体重 */
+    /** Weight */
     var weight = double("weight").bindTo { it.weight }
 
-    /** 身高 */
+    /** Height */
     var height = int("height").bindTo { it.height }
 
 

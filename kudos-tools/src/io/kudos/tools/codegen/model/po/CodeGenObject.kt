@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 代码生成-对象信息数据库实体
+ * Code generation - object info database entity.
  *
  * @author K
  * @since 1.0.0
@@ -17,25 +17,25 @@ interface CodeGenObject : IDbEntity<String, CodeGenObject> {
 
     companion object : DbEntityFactory<CodeGenObject>()
 
-    /** 对象名称 */
+    /** Object name */
     var name: String
 
-    /** 注释 */
+    /** Comment */
     var comment: String?
 
-    /** 创建时间 */
+    /** Create time */
     var createTime: LocalDateTime
 
-    /** 创建用户 */
+    /** Create user */
     var createUser: String
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime: LocalDateTime?
 
-    /** 更新用户 */
+    /** Update user */
     var updateUser: String?
 
-    /** 生成次数 */
+    /** Generation count */
     var genCount: Int
 
 

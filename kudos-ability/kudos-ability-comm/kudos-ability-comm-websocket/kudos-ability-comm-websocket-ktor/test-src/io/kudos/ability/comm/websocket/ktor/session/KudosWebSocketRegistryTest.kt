@@ -9,10 +9,10 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * [KudosWebSocketRegistry] 三套索引（id / userId / tenantId）的注册 / 注销单测。
+ * Unit tests for the three [KudosWebSocketRegistry] indexes (id / userId / tenantId) — register / unregister.
  *
- * 使用 [StubSessionRef] 而非真正的 [KudosWebSocketSession]——registry 只读取元数据字段，
- * 用 stub 避开 Ktor 依赖。
+ * Uses [StubSessionRef] instead of a real [KudosWebSocketSession] — the registry only reads metadata fields,
+ * so the stub avoids the Ktor dependency.
  */
 internal class KudosWebSocketRegistryTest {
 
@@ -37,7 +37,7 @@ internal class KudosWebSocketRegistryTest {
         r.register(s)
 
         assertSame(s, r.findById("s1"))
-        // 匿名 session 不应进 user / tenant 索引——同名查不到任何东西
+        // Anonymous sessions should not be added to the user / tenant indexes — empty-key lookups find nothing
         assertEquals(emptyList(), r.findByUserId(""))
         assertEquals(emptyList(), r.findByTenantId(""))
     }
@@ -54,7 +54,7 @@ internal class KudosWebSocketRegistryTest {
         r.register(s3)
 
         val byUser = r.findByUserId("u1").map { it.sessionId }.toSet()
-        assertEquals(setOf("s1", "s2", "s3"), byUser, "同一用户多端在线全部列出")
+        assertEquals(setOf("s1", "s2", "s3"), byUser, "All sessions of the same user across devices should be listed")
         assertEquals(setOf("s1", "s2"), r.findByTenantId("t1").map { it.sessionId }.toSet())
         assertEquals(setOf("s3"), r.findByTenantId("t2").map { it.sessionId }.toSet())
     }
@@ -80,7 +80,7 @@ internal class KudosWebSocketRegistryTest {
 
         r.unregister("nope")
 
-        assertEquals(1, r.size, "未知 sessionId 不应影响已有会话")
+        assertEquals(1, r.size, "An unknown sessionId should not affect existing sessions")
     }
 
     @Test
@@ -92,7 +92,7 @@ internal class KudosWebSocketRegistryTest {
         r.unregister("s1")
 
         val byUser = r.findByUserId("u1").map { it.sessionId }.toSet()
-        assertEquals(setOf("s2"), byUser, "应保留 u1 名下的其他会话")
+        assertEquals(setOf("s2"), byUser, "Other sessions of u1 should be retained")
     }
 
     @Test
@@ -102,7 +102,7 @@ internal class KudosWebSocketRegistryTest {
 
         r.unregister("s1")
 
-        // 最后一个被剔后，user / tenant 桶应该被整体丢掉（README 段说明的"if isNullOrEmpty -> null"）
+        // After the last one is removed, the user / tenant bucket should be dropped entirely (the "if isNullOrEmpty -> null" rule stated in the README).
         assertEquals(emptyList(), r.findByUserId("u1"))
     }
 
@@ -115,7 +115,7 @@ internal class KudosWebSocketRegistryTest {
 
         r.unregister("s1")
 
-        assertEquals(2, snapshot.size, "all() 应返回快照，不随后续注销变化")
+        assertEquals(2, snapshot.size, "all() should return a snapshot that does not change with subsequent unregisters")
         assertEquals(1, r.size)
     }
 
@@ -128,14 +128,14 @@ internal class KudosWebSocketRegistryTest {
         r.register(first)
         r.register(second)
 
-        // 主索引覆盖
+        // Primary index is overwritten
         assertSame(second, r.findById("s1"))
-        // 二级索引：原 u1 桶不会被清——README 已声明"不强制 sessionId 唯一，业务侧自保"
+        // Secondary indexes: the original u1 bucket is not cleared — the README states "sessionId uniqueness is not enforced, the business side is responsible for it"
         assertTrue(r.findByUserId("u1").any { it.sessionId == "s1" })
         assertTrue(r.findByUserId("u2").any { it.sessionId == "s1" })
     }
 
-    /** 无 Ktor 依赖的纯数据 ref，用于测试。 */
+    /** Plain-data ref with no Ktor dependency, used for testing. */
     private class StubSessionRef(
         override val sessionId: String,
         override val userId: String? = null,

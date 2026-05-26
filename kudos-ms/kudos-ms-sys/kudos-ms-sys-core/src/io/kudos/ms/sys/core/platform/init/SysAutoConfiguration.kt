@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * sys原子服务自动配置类
+ * Auto-configuration class for the sys atomic service.
  *
  * @author K
  * @since 1.0.0

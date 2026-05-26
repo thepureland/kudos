@@ -6,60 +6,60 @@ import org.springframework.cache.Cache
 import kotlin.reflect.KClass
 
 /**
- * 租户缓存工具类
- * 
- * 提供多租户环境下的缓存操作工具方法，支持租户级别的缓存隔离。
- * 
- * 核心功能：
- * 1. 租户键生成：自动在缓存key前添加租户ID，格式为"租户ID::原始key"
- * 2. 缓存隔离：通过租户键确保不同租户的缓存数据相互隔离
- * 3. 缓存操作：提供完整的缓存操作接口（get、put、evict、clear等）
- * 4. 模式删除：支持按模式删除缓存，自动添加租户前缀
- * 
- * 租户键机制：
- * - 所有缓存操作都会自动从KudosContext中获取当前租户ID
- * - 在原始key前添加"租户ID::"前缀，形成租户隔离的key
- * - 例如：租户ID为"1001"，原始key为"user:123"，实际key为"1001::user:123"
- * 
- * 使用场景：
- * - 多租户SaaS应用，需要确保不同租户的数据隔离
- * - 共享缓存存储，但需要按租户隔离数据
- * - 避免租户间的缓存数据相互干扰
- * 
- * 注意事项：
- * - 依赖KudosContext中的tenantId，如果tenantId为空可能导致缓存key异常
- * - 所有缓存操作都会自动应用租户隔离，无需手动添加租户前缀
- * - 清空缓存操作（clear）会清除所有租户的缓存，需谨慎使用
+ * Tenant cache tool.
+ *
+ * Provides cache utilities for multi-tenant environments, supporting tenant-level cache isolation.
+ *
+ * Core capabilities:
+ * 1. Tenant key generation: automatically prefixes cache keys with the tenant id, in the form "tenantId::originalKey".
+ * 2. Cache isolation: ensures different tenants' cached data are isolated from each other via tenant keys.
+ * 3. Cache operations: provides a complete cache operation interface (get, put, evict, clear, etc.).
+ * 4. Pattern eviction: supports deleting cache entries by pattern, automatically prepending the tenant prefix.
+ *
+ * Tenant key mechanism:
+ * - All cache operations automatically read the current tenant id from KudosContext.
+ * - A "tenantId::" prefix is prepended to the original key, producing a tenant-isolated key.
+ * - Example: tenant id "1001", original key "user:123", actual key "1001::user:123".
+ *
+ * Use cases:
+ * - Multi-tenant SaaS applications that require data isolation between tenants.
+ * - Shared cache storage that still needs per-tenant data isolation.
+ * - Avoiding cross-tenant cache interference.
+ *
+ * Caveats:
+ * - Depends on tenantId from KudosContext; an empty tenantId may produce an unexpected cache key.
+ * - All cache operations apply tenant isolation automatically — do not add the tenant prefix manually.
+ * - The clear-all operation removes data for all tenants — use with care.
  */
 object TenantCacheTool {
 
     /**
-     * 是否开启缓存。必须是全局开关和指定的缓存开关都开启，才算开启
+     * Whether caching is enabled. Both the global switch and the cache-specific switch must be on.
      *
-     * @param cacheName 缓存名称
-     * @return true: 开启缓存，false：未开启缓存
+     * @param cacheName cache name
+     * @return true: enabled; false: disabled
      * @author K
      * @since 1.0.0
      */
     fun isCacheActive(cacheName: String): Boolean = KeyValueCacheKit.isCacheActive(cacheName)
 
     /**
-     * 根据名称获取缓存
+     * Returns the cache by name.
      *
-     * @param name 缓存名称
-     * @return 缓存对象
+     * @param name cache name
+     * @return the cache object
      * @author K
      * @since 1.0.0
      */
     fun getCache(name: String): Cache? = KeyValueCacheKit.getCache(name)
 
     /**
-     * 获取缓存中指定key的值
+     * Returns the value of the given key in the specified cache.
      *
-     * @param cacheName  缓存名称
-     * @param key        缓存key
-     * @param valueClass 缓存key对应的值的类型
-     * @return 缓存key对应的值
+     * @param cacheName  cache name
+     * @param key        cache key
+     * @param valueClass type of the value for the cache key
+     * @return the value associated with the cache key
      * @author K
      * @since 1.0.0
      */
@@ -67,11 +67,11 @@ object TenantCacheTool {
         KeyValueCacheKit.getValue(cacheName, getTenantKey(key), valueClass)
 
     /**
-     * 获取缓存中指定key的值
+     * Returns the value of the given key in the specified cache.
      *
-     * @param cacheName 缓存名称
-     * @param key       缓存key
-     * @return 缓存key对应的值
+     * @param cacheName cache name
+     * @param key       cache key
+     * @return the value associated with the cache key
      * @author K
      * @since 1.0.0
      */
@@ -79,11 +79,11 @@ object TenantCacheTool {
         KeyValueCacheKit.getValue(cacheName, getTenantKey(key))
 
     /**
-     * 写入缓存
+     * Writes a value to the cache.
      *
-     * @param cacheName 缓存名称
-     * @param key       缓存key
-     * @param value     要缓存的值
+     * @param cacheName cache name
+     * @param key       cache key
+     * @param value     value to cache
      * @author K
      * @since 1.0.0
      */
@@ -92,11 +92,11 @@ object TenantCacheTool {
     }
 
     /**
-     * 如果不存在，就写入缓存
+     * Writes a value to the cache if it does not already exist.
      *
-     * @param cacheName 缓存名称
-     * @param key       缓存key
-     * @param value     要缓存的值
+     * @param cacheName cache name
+     * @param key       cache key
+     * @param value     value to cache
      * @author K
      * @since 1.0.0
      */
@@ -105,10 +105,10 @@ object TenantCacheTool {
     }
 
     /**
-     * 踢除缓存依赖消息通知
+     * Evicts a cache entry and triggers a dependency notification.
      *
-     * @param cacheName 缓存名称
-     * @param key       缓存key
+     * @param cacheName cache name
+     * @param key       cache key
      * @author K
      * @since 1.0.0
      */
@@ -117,10 +117,10 @@ object TenantCacheTool {
     }
 
     /**
-     * 踢除缓存
+     * Evicts a cache entry.
      *
-     * @param cacheName 缓存名称
-     * @param key       缓存key
+     * @param cacheName cache name
+     * @param key       cache key
      * @author K
      * @since 1.0.0
      */
@@ -129,13 +129,14 @@ object TenantCacheTool {
     }
 
     /**
-     * 清空**当前租户**在指定缓存下的所有 key（通过 `{tenantId}::*` 模式清除）。
+     * Clears all keys for the **current tenant** under the given cache (via the `{tenantId}::*` pattern).
      *
-     * 旧实现直接调 [KeyValueCacheKit.clear]，会清掉所有租户的数据——名字带 "Tenant" 但语义反而是
-     * 跨租户的全清，是真实事故源。当前方法收敛到只清当前租户；要做真正的全租户清除，请显式调
-     * [clearAllTenants]。
+     * The old implementation called [KeyValueCacheKit.clear] directly, wiping data for all tenants — despite
+     * having "Tenant" in its name, the semantics were cross-tenant, and this was an actual incident source.
+     * The current implementation is narrowed to the current tenant only; to truly clear across all tenants,
+     * call [clearAllTenants] explicitly.
      *
-     * @param cacheName 缓存名称
+     * @param cacheName cache name
      */
     fun clear(cacheName: String) {
         if (!isCacheActive(cacheName)) return
@@ -143,9 +144,10 @@ object TenantCacheTool {
     }
 
     /**
-     * 清空**当前租户**在指定缓存下的所有 key（不发通知）。语义与 [clear] 一致，仅"是否广播"维度不同。
+     * Clears all keys for the **current tenant** under the given cache (without notification).
+     * Semantically equivalent to [clear]; differs only in whether the eviction is broadcast.
      *
-     * @param cacheName 缓存名称
+     * @param cacheName cache name
      */
     fun doClear(cacheName: String) {
         if (!isCacheActive(cacheName)) return
@@ -153,39 +155,40 @@ object TenantCacheTool {
     }
 
     /**
-     * 清除该缓存下**所有租户**的全部数据。明确语义、避免 [clear] 被误用为全清。
-     * 仅当业务确实需要跨租户清空（如缓存结构升级、配置回滚等）时使用。
+     * Clears all data for **all tenants** under the given cache. Makes the semantics explicit so that
+     * [clear] is not mistakenly used as a cross-tenant clear.
+     * Use only when a cross-tenant clear is truly required (e.g. cache schema upgrades, config rollbacks).
      *
-     * @param cacheName 缓存名称
+     * @param cacheName cache name
      */
     fun clearAllTenants(cacheName: String) {
         KeyValueCacheKit.clear(cacheName)
     }
 
     /**
-     * 是否在新增或更新后，立即回写缓存
+     * Whether the cache is written back immediately after an insert or update.
      *
-     * @param cacheName 缓存名称
-     * @return true: 立即回写缓存, 反之为false。缓存不存在也返回false
+     * @param cacheName cache name
+     * @return true: write back immediately; otherwise false. Returns false when the cache does not exist.
      * @author K
      * @since 1.0.0
      */
     fun isWriteInTime(cacheName: String): Boolean = KeyValueCacheKit.isWriteInTime(cacheName)
 
     /**
-     * 返回指定名称的缓存配置信息
+     * Returns the configuration of the cache with the given name.
      *
-     * @param cacheName 缓存名称
-     * @return 缓存配置信息。找不到返回null
+     * @param cacheName cache name
+     * @return the cache configuration; null if not found
      * @author K
      * @since 1.0.0
      */
     fun getCacheConfig(cacheName: String): CacheConfig? = KeyValueCacheKit.getCacheConfig(cacheName)
 
     /**
-     * 重新加载缓存
+     * Reloads a cache entry.
      *
-     * @param cacheName 缓存名
+     * @param cacheName cache name
      * @param key       key
      */
     fun reload(cacheName: String, key: String) {
@@ -193,9 +196,9 @@ object TenantCacheTool {
     }
 
     /**
-     * 清理缓存开头的key
-     * @param cacheName 缓存name
-     * @param keyPattern key开头
+     * Evicts cache entries whose keys start with the given prefix.
+     * @param cacheName cache name
+     * @param keyPattern key prefix
      */
     fun evictByPattern(cacheName: String, keyPattern: String) {
         if (!isCacheActive(cacheName)) return
@@ -203,40 +206,40 @@ object TenantCacheTool {
     }
 
     /**
-     * 重新加载所有缓存
+     * Reloads all entries in the given cache.
      *
-     * @param cacheName 缓存名
+     * @param cacheName cache name
      */
     fun reloadAll(cacheName: String) {
         KeyValueCacheKit.reloadAll(cacheName)
     }
 
     /**
-     * 生成租户隔离的缓存key
-     * 
-     * 在原始key前添加租户ID前缀，实现多租户环境下的缓存隔离。
-     * 
-     * 工作流程：
-     * 1. 获取租户ID：从KudosContext中获取当前线程的租户ID
-     * 2. 拼接key：使用"租户ID::原始key"格式拼接
-     * 3. 返回结果：返回租户隔离后的key
-     * 
-     * Key格式：
-     * - 格式："{tenantId}::{originalKey}"
-     * - 例如：租户ID为"1001"，原始key为"user:123"，结果为"1001::user:123"
-     * 
-     * 租户隔离：
-     * - 不同租户的相同key会生成不同的缓存key
-     * - 确保不同租户的缓存数据相互隔离
-     * - 避免租户间的缓存数据相互干扰
-     * 
-     * 注意事项：
-     * - 如果tenantId为null，会使用"null"作为前缀
-     * - 分隔符"::"用于区分租户ID和原始key
-     * - 所有缓存操作都会自动应用此方法
-     * 
-     * @param key 原始的缓存key
-     * @return 添加租户ID前缀后的缓存key
+     * Builds a tenant-isolated cache key.
+     *
+     * Prepends the tenant id to the original key, providing cache isolation in multi-tenant environments.
+     *
+     * Workflow:
+     * 1. Acquire the tenant id: read the current thread's tenant id from KudosContext.
+     * 2. Concatenate the key: build a "tenantId::originalKey" string.
+     * 3. Return the result: return the tenant-isolated key.
+     *
+     * Key format:
+     * - Format: "{tenantId}::{originalKey}"
+     * - Example: tenant id "1001", original key "user:123", result "1001::user:123"
+     *
+     * Tenant isolation:
+     * - The same key under different tenants resolves to different cache keys.
+     * - Ensures cached data from different tenants is isolated.
+     * - Prevents cross-tenant cache interference.
+     *
+     * Caveats:
+     * - When tenantId is null, "null" is used as the prefix.
+     * - The "::" separator distinguishes the tenant id from the original key.
+     * - All cache operations apply this method automatically.
+     *
+     * @param key original cache key
+     * @return the cache key prefixed with the tenant id
      */
     private fun getTenantKey(key: Any): String {
         val tenantId = KudosContextHolder.get().tenantId

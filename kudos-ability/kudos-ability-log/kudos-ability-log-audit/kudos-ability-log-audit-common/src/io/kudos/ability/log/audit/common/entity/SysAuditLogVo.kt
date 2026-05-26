@@ -5,11 +5,13 @@ import java.io.Serializable
 import java.util.Date
 
 /**
- * 系统审计日志表实体——对应 audit 落地存储（DB / MQ / 其他后端）的"主表"投影。
+ * System audit-log entity — the "main table" projection corresponding to audit persistence
+ * (DB / MQ / other backends).
  *
- * 配合 [SysAuditDetailLogVo]：本类一条记录关联一条详情记录（一对一通过 [SysAuditDetailLogVo.auditId]
- * 指向 [SysAuditLogVo.id]）。具体存储由下游模块负责
- * （`kudos-ability-log-audit-rdb-ktorm` / `kudos-ability-log-audit-mq` 等）。
+ * Pairs with [SysAuditDetailLogVo]: each record of this class is linked one-to-one with a detail
+ * record via [SysAuditDetailLogVo.auditId] referencing [SysAuditLogVo.id]. Concrete storage is
+ * implemented by downstream modules (`kudos-ability-log-audit-rdb-ktorm` /
+ * `kudos-ability-log-audit-mq`, etc.).
  *
  * @author K
  * @author AI: Codex
@@ -17,93 +19,93 @@ import java.util.Date
  */
 class SysAuditLogVo : Serializable {
     /**
-     * 主键
+     * Primary key
      */
     var id: String? = null
 
     /**
-     * 业务实体id(被操作对象id)
+     * Business entity id (the id of the affected object)
      */
     var entityId: String? = null
 
     /**
-     * 操作类型(ID)
+     * Operation type (ID)
      */
     var operateTypeId: Int? = null
 
     /**
-     * 操作类型
+     * Operation type
      */
     var operateType: String? = null
 
     /**
-     * 模块名(多层级)
+     * Module name (multi-level)
      */
     var moduleName: String? = null
 
     /**
-     * 模型类型
+     * Module type
      */
     var moduleCode: String? = null
 
     /**
-     * 操作描述
+     * Operation description
      */
     var description: String? = null
 
     /**
-     * 操作员
+     * Operator
      */
     var operator: String? = null
 
     /**
-     * 租户ID
+     * Tenant id
      */
     var tenantId: String? = null
     var sourceTenantId: String? = null
 
     /**
-     * 子系统code
+     * Subsystem code
      */
     var subSysCode: String? = null
 
     /**
-     * 操作时间
+     * Operation time
      */
     var operateTime: Date? = null
 
     /**
-     * 操作(客户端)IP
+     * Operation (client) IP
      */
     var operateIp: Long? = null
 
     /**
-     * 操作者IP地区字典代码
+     * Operator IP region dictionary code
      */
     var operateIpDictCode: String? = null
 
     /**
-     * 操作员id
+     * Operator id
      */
     var operatorId: String? = null
 
     /**
-     * 用户类型(参观:sys_user)
+     * User type (reference: sys_user)
      */
     var operatorUserType: String? = null
 
     /**
-     * 客户端操作系统
+     * Client OS
      */
     var clientOs: String? = null
 
     /**
-     * 客户端浏览器
+     * Client browser
      */
     var clientBrowser: String? = null
 
     /**
-     * 请求类型（GET|POST）
+     * Request type (GET|POST)
      */
     var requestType: String? = null
     var moduleId: Int? = null

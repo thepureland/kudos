@@ -8,21 +8,23 @@ import javax.sql.DataSource
 
 
 /**
- * 返回当前线程关联的数据源，如果没有，取默认数据源，并将其与当前线程关联。
+ * Returns the DataSource bound to the current thread; if none is bound, fetches the default
+ * DataSource and binds it to the current thread.
  *
- * **不再在此处对 DataSource 手动套一层 Seata proxy**。原实现通过
- * `IDataSourceProxy.proxyDatasource(beanDs)` 二次包装；问题：
- * - Spring TransactionManager 直接使用 bean `dataSource` 实例
- * - Ktorm 通过本函数拿到的是再包一层的 wrapper —— 与 Spring TX 不是同一实例
- * - 结果：`@Transactional` 打开的连接 与 Ktorm SQL 执行的连接互不相通；
- *   Seata server 收不到 BranchRegister；Ktorm 写下的数据所在的孤儿连接被
- *   Hikari 还池时回滚（`is-auto-commit=false`），所以业务数据消失。
+ * **No manual Seata proxy wrapping of the DataSource happens here anymore.** The previous
+ * implementation wrapped via `IDataSourceProxy.proxyDatasource(beanDs)`; the problem was:
+ * - Spring's TransactionManager uses the bean `dataSource` instance directly.
+ * - Ktorm obtained a doubly-wrapped wrapper from this function — not the same instance Spring TX saw.
+ * - Result: connections opened by `@Transactional` and connections used by Ktorm SQL were disjoint;
+ *   the Seata server never received BranchRegister; the orphan connection holding Ktorm-written
+ *   data was rolled back by Hikari on return-to-pool (`is-auto-commit=false`), so business data
+ *   disappeared.
  *
- * 推荐由 `spring.datasource.dynamic.seata=true` 让 baomidou dynamic-datasource
- * 在 bean 层就装好 Seata 代理。这样 Spring TX 和 Ktorm 共享同一个 DataSource
- * 实例 / 同一个连接 / 同一次 commit 拦截。
+ * Recommendation: set `spring.datasource.dynamic.seata=true` so baomidou dynamic-datasource installs
+ * the Seata proxy at the bean layer. Spring TX and Ktorm then share the same DataSource instance,
+ * the same connection, and the same commit interception.
  *
- * @return 当前线程关联的数据源
+ * @return DataSource bound to the current thread
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -36,9 +38,10 @@ fun KudosContextHolder.currentDataSource(): DataSource {
 }
 
 /**
- * 返回当前线程关联的数据库，如果没有，则用默认数据源创建一个，并将其与当前线程关联
+ * Returns the Database bound to the current thread; if none is bound, creates one from the default
+ * DataSource and binds it to the current thread.
  *
- * @return 当前线程关联的数据库
+ * @return Database bound to the current thread
  * @author K
  * @since 1.0.0
  */

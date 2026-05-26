@@ -8,7 +8,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 消息发送数据库表-实体关联对象
+ * Message send database table-entity binding object.
  *
  * @author K
  * @author AI: Codex
@@ -16,40 +16,40 @@ import org.ktorm.schema.varchar
  */
 object MsgSends : StringIdTable<MsgSend>("msg_send") {
 
-    /** 接收者群组类型字典码 */
+    /** Receiver group type dictionary code */
     var receiverGroupTypeDictCode = varchar("receiver_group_type_dict_code").bindTo { it.receiverGroupTypeDictCode }
 
-    /** 接收者群组ID */
+    /** Receiver group ID */
     var receiverGroupId = varchar("receiver_group_id").bindTo { it.receiverGroupId }
 
-    /** 消息实例ID */
+    /** Message instance ID */
     var instanceId = varchar("instance_id").bindTo { it.instanceId }
 
-    /** 消息类型字典码 */
+    /** Message type dictionary code */
     var msgTypeDictCode = varchar("msg_type_dict_code").bindTo { it.msgTypeDictCode }
 
-    /** 国家-语言字典码 */
+    /** Country-language dictionary code */
     var localeDictCode = varchar("locale_dict_code").bindTo { it.localeDictCode }
 
-    /** 发送状态字典码 */
+    /** Send status dictionary code */
     var sendStatusDictCode = varchar("send_status_dict_code").bindTo { it.sendStatusDictCode }
 
-    /** 创建时间 */
+    /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
-    /** 发送成功数量 */
+    /** Send success count */
     var successCount = int("success_count").bindTo { it.successCount }
 
-    /** 发送失败数量 */
+    /** Send fail count */
     var failCount = int("fail_count").bindTo { it.failCount }
 
-    /** 定时任务ID */
+    /** Scheduled job ID */
     var jobId = varchar("job_id").bindTo { it.jobId }
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
 

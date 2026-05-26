@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 
 
 /**
- * XMap测试用例
+ * XMap test cases.
  *
  * @author K
  * @since 1.0.0

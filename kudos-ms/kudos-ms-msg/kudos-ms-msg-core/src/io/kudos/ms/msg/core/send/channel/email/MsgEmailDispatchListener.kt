@@ -25,24 +25,24 @@ import java.time.LocalDateTime
 
 
 /**
- * Email 渠道 dispatch listener。
+ * Email channel dispatch listener.
  *
- * 触发：[NotifyMessageVo.notifyType] = [MsgPublishMethodEnum.EMAIL].listenerType = `"msg.dispatch.email"`。
+ * Trigger: [NotifyMessageVo.notifyType] = [MsgPublishMethodEnum.EMAIL].listenerType = `"msg.dispatch.email"`.
  *
- * 流程：
- *   1. 反序列化 [MsgDispatchEvent]（payload 是 fastjson 的 JSONObject，因为 NotifyMqAutoConfiguration
- *      统一这么收的）。
- *   2. 按 receiverIds 批量查邮箱 (contact_way dict code `"201"` = email)。
- *   3. 没邮箱的当成失败计数。
- *   4. EmailHandler.send 走异步 + 回调：
- *      - 成功 → 给所有匹配上邮箱的 receiver 各写一条 MsgReceive，状态 RECEIVED；累加 successCount。
- *      - 部分成功 → 区分 successEmails / failEmails，分别写 RECEIVED / 失败计数。
- *      - 全失败 → 失败计数 += 接收者数。
- *   5. 最终 status：全部成功 → SUCCESS；部分失败 → SUCCESS_PARTIAL；全失败 → FAILED_FINAL。
+ * Flow:
+ *   1. Deserialize [MsgDispatchEvent] (the payload is a fastjson JSONObject, because
+ *      NotifyMqAutoConfiguration uniformly receives it as such).
+ *   2. Batch look up email addresses by receiverIds (contact_way dict code `"201"` = email).
+ *   3. Treat receivers without an email as failure count.
+ *   4. EmailHandler.send is asynchronous + callback-driven:
+ *      - All success → write one MsgReceive row per matched receiver, status RECEIVED; increment successCount.
+ *      - Partial success → split successEmails / failEmails, write RECEIVED / failure count respectively.
+ *      - All failed → failure count += number of receivers.
+ *   5. Final status: all success → SUCCESS; partial failure → SUCCESS_PARTIAL; all failed → FAILED_FINAL.
  *
- * **只在 `kudos.msg.email.server-host` 配置后才生效**（[ConditionalOnProperty]）。否则不
- * 注册 bean，发到 email topic 的事件会被 [io.kudos.ability.distributed.notify.mq.init.NotifyMqAutoConfiguration]
- * 记录为 "无 listener 配置"。
+ * **Only takes effect after `kudos.msg.email.server-host` is configured** ([ConditionalOnProperty]).
+ * Otherwise the bean is not registered, and events sent to the email topic will be logged as
+ * "no listener configured" by [io.kudos.ability.distributed.notify.mq.init.NotifyMqAutoConfiguration].
  *
  * @author K
  * @since 1.0.0
@@ -66,23 +66,23 @@ open class MsgEmailDispatchListener(
     override fun notifyProcess(notifyMessageVo: NotifyMessageVo<out Serializable>) {
         val event = decodePayload(notifyMessageVo.messageBody) ?: return
 
-        // 把 sendId 状态推进到 CONSUMED_FROM_MQ，标记 listener 已拉到
+        // Advance sendId status to CONSUMED_FROM_MQ to mark that the listener has pulled it
         msgSendService.updateSendStatus(event.sendId, MsgSendStatusEnum.CONSUMED_FROM_MQ.dictCode)
 
         if (event.receiverIds.isEmpty()) {
-            log.warn("event {0} receiverIds 为空，标记 FAILED_FINAL", event.sendId)
+            log.warn("event {0} receiverIds is empty, marking FAILED_FINAL", event.sendId)
             msgSendService.finishSend(event.sendId, 0, 0, MsgSendStatusEnum.FAILED_FINAL.dictCode)
             return
         }
 
-        // 批量查邮箱
+        // Batch query email addresses
         val emailByUserId = userContactWayService.getActiveContactValuesByUserIds(
             event.receiverIds, CONTACT_WAY_EMAIL,
         )
         val noEmailUserIds = event.receiverIds - emailByUserId.keys
         if (noEmailUserIds.isNotEmpty()) {
-            log.warn("event {0} 有 {1} 个接收者无 email 联系方式，跳过", event.sendId, noEmailUserIds.size)
-            // 失败追踪：没邮箱的接收者直接登记成未送达
+            log.warn("event {0} has {1} receivers without an email contact, skipping", event.sendId, noEmailUserIds.size)
+            // Failure tracking: receivers without an email are directly registered as undelivered
             msgUnreceivedService.recordFailures(
                 sendId = event.sendId,
                 receiverIds = noEmailUserIds,
@@ -105,19 +105,21 @@ open class MsgEmailDispatchListener(
     }
 
     /**
-     * 邮件发送回调处理：把 SMTP 层的"成功/失败邮箱列表"翻成 userId 维度的统计 + 落库。
+     * Email send callback processing: translates the SMTP layer's "success/fail email lists"
+     * into userId-level statistics and persists them.
      *
-     * 三段：
-     * 1. 成功 userId → `MsgReceive` 行（每条 runCatching 避免单条失败拖崩整批）
-     * 2. 失败 userId → `MsgUnreceived.recordFailures` （和 `notifyProcess` 里写的 NO_CONTACT 那批不重复）
-     * 3. 汇总 status：全失败 → FAILED_FINAL；全成功 → SUCCESS；混合 → SUCCESS_PARTIAL
+     * Three steps:
+     * 1. Successful userIds → `MsgReceive` rows (each wrapped in runCatching to avoid a single failure dragging down the batch).
+     * 2. Failed userIds → `MsgUnreceived.recordFailures` (does not overlap with the NO_CONTACT batch written in `notifyProcess`).
+     * 3. Aggregate status: all failed → FAILED_FINAL; all success → SUCCESS; mixed → SUCCESS_PARTIAL.
      *
-     * `unreachableCount` 计入 failCount 但**不**回写 MsgUnreceived（上游 notifyProcess 已写过）。
+     * `unreachableCount` is included in failCount but is **not** written back to MsgUnreceived
+     * (already written upstream in notifyProcess).
      *
-     * @param event 调度事件（含 sendId / tenantId / 模板渲染结果）
-     * @param cb SMTP 层回调（成功/失败邮箱列表）
-     * @param emailToUserId 邮箱 → userId 的反查表（用于把 SMTP 邮箱粒度的成败映回业务用户）
-     * @param unreachableCount NO_CONTACT 的接收者数（上游已写 MsgUnreceived，只参与 failCount 统计）
+     * @param event dispatch event (contains sendId / tenantId / template render result)
+     * @param cb SMTP-layer callback (success/fail email lists)
+     * @param emailToUserId reverse map of email → userId (for mapping SMTP-email-level success/failure back to business users)
+     * @param unreachableCount number of NO_CONTACT receivers (already written to MsgUnreceived upstream, only participates in the failCount tally)
      * @author K
      * @since 1.0.0
      */
@@ -132,8 +134,8 @@ open class MsgEmailDispatchListener(
         val successUserIds = successEmails.mapNotNull { emailToUserId[it] }
         val failUserIds = failEmails.mapNotNull { emailToUserId[it] }
 
-        // 写收件人记录：仅对成功的写入；失败的不写 MsgReceive，但通过 failCount 体现，
-        // Batch 4 的 MsgUnreceived 会接管"失败接收者"的持久化。
+        // Write receive records: only insert for successes; failures are not written to MsgReceive
+        // but reflected via failCount. Batch 4's MsgUnreceived takes over persistence of "failed receivers".
         val now = LocalDateTime.now()
         successUserIds.forEach { userId ->
             val r = MsgReceive().apply {
@@ -145,10 +147,10 @@ open class MsgEmailDispatchListener(
                 tenantId = event.tenantId
             }
             runCatching { msgReceiveService.insert(r) }
-                .onFailure { log.error(it, "落库 MsgReceive 失败：userId={0}, sendId={1}", userId, event.sendId) }
+                .onFailure { log.error(it, "Failed to persist MsgReceive: userId={0}, sendId={1}", userId, event.sendId) }
         }
 
-        // SMTP 拒收的接收者也登记成未送达（不与 NO_CONTACT 那批重复 —— 那批已经在 notifyProcess 写过）
+        // Receivers rejected by SMTP are also registered as undelivered (does not overlap with the NO_CONTACT batch — that batch was already written in notifyProcess)
         if (failUserIds.isNotEmpty()) {
             msgUnreceivedService.recordFailures(
                 sendId = event.sendId,
@@ -168,18 +170,19 @@ open class MsgEmailDispatchListener(
         }
         msgSendService.finishSend(event.sendId, successCount, failCount, status.dictCode)
         log.info(
-            "Email dispatch 完成: sendId={0}, success={1}, fail={2}, status={3}",
+            "Email dispatch finished: sendId={0}, success={1}, fail={2}, status={3}",
             event.sendId, successCount, failCount, status,
         )
     }
 
     /**
-     * 把模板渲染结果 + SMTP 服务器配置拼成 [EmailRequest]。
-     * `receivers` 用 toMutableSet 拷贝，避免下游 [EmailHandler] 直接持有调用方的不可变集合后再尝试修改。
+     * Assembles the template render result + SMTP server config into an [EmailRequest].
+     * `receivers` is copied via toMutableSet to avoid the downstream [EmailHandler] directly holding
+     * the caller's immutable collection and then attempting to modify it.
      *
-     * @param toAddresses 收件邮箱集合
-     * @param event 调度事件（含渲染后的 subject/body/tenantId）
-     * @return 可直接交给 [EmailHandler.send] 的请求对象
+     * @param toAddresses set of recipient email addresses
+     * @param event dispatch event (contains rendered subject/body/tenantId)
+     * @return a request object that can be passed directly to [EmailHandler.send]
      * @author K
      * @since 1.0.0
      */
@@ -202,12 +205,13 @@ open class MsgEmailDispatchListener(
         }
 
     /**
-     * NotifyMqAutoConfiguration 把 messageBody 反序列化成 JSONObject 后转传过来，
-     * 这里再转回 [MsgDispatchEvent]。直接 cast 也行但脆 —— 走 fastjson 一次更稳。
+     * NotifyMqAutoConfiguration deserializes messageBody into a JSONObject and forwards it here;
+     * this method converts it back to [MsgDispatchEvent]. A direct cast would work but is fragile —
+     * going through fastjson once is more robust.
      */
     private fun decodePayload(body: Serializable?): MsgDispatchEvent? {
         if (body == null) {
-            log.warn("notify body 为空")
+            log.warn("notify body is empty")
             return null
         }
         return runCatching {
@@ -216,13 +220,13 @@ open class MsgEmailDispatchListener(
                 else -> JSON.parseObject(JSON.toJSONString(body), MsgDispatchEvent::class.java)
             }
         }.getOrElse {
-            log.error(it, "MsgDispatchEvent 反序列化失败，payload type: ${body.javaClass.name}")
+            log.error(it, "MsgDispatchEvent deserialization failed, payload type: ${body.javaClass.name}")
             null
         }
     }
 
     companion object {
-        /** `contact_way` 字典中 email 对应的 itemCode（见 V1.0.0.2__insert_sys_dict_item.sql） */
+        /** The itemCode for email in the `contact_way` dictionary (see V1.0.0.2__insert_sys_dict_item.sql) */
         private const val CONTACT_WAY_EMAIL = "201"
     }
 }

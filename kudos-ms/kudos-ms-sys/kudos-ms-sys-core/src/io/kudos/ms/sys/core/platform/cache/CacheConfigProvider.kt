@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 缓存配置提供者
+ * Cache configuration provider.
  *
  * @author K
  * @since 1.0.0
@@ -23,17 +23,18 @@ import org.springframework.stereotype.Component
 open class CacheConfigProvider : ICacheConfigProvider {
 
     @Autowired
-    private lateinit var sysCacheDao: SysCacheDao // 用ISysCacheBiz会级联引起CacheConfigCacheManager Bean的注册早于@Cacheable的扫描，造成该缓存失效！！！
+    private lateinit var sysCacheDao: SysCacheDao // Using ISysCacheBiz would cascade the CacheConfigCacheManager bean to register before @Cacheable scanning, causing this cache to be disabled!!!
 
     private var cacheConfigs: List<CacheConfig>? = null
 
     /**
-     * 懒加载并内存缓存当前生效（`active=true`）的缓存配置列表。
+     * Lazily load and in-memory cache the currently active (`active=true`) cache configuration list.
      *
-     * **不是线程安全的 double-check**——首次并发时可能多次跑 DB，但结果幂等，可接受。
-     * 设计上只在启动阶段被调用，运行期不会高频触发，所以未做 synchronized。
+     * **This is not a thread-safe double-check** — initial concurrent calls may hit the DB multiple times,
+     * but the result is idempotent, which is acceptable.
+     * By design, this is only called during startup and never on hot paths, so synchronization is omitted.
      *
-     * @return 生效的 [CacheConfig] 列表（永远非 null，DB 无记录时返回空 list）
+     * @return list of active [CacheConfig] (never null; returns empty list when DB has no records)
      * @author K
      * @since 1.0.0
      */

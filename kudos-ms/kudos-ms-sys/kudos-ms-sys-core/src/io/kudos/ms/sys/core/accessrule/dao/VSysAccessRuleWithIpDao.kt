@@ -11,7 +11,7 @@ import io.kudos.ms.sys.core.accessrule.model.table.VSysAccessRuleWithIps
 import org.springframework.stereotype.Repository
 
 /**
- * 只读 DAO，映射视图 `v_sys_access_rule_with_ip`。
+ * Read-only DAO mapped to the view `v_sys_access_rule_with_ip`.
  *
  * @author K
  * @author AI: Cursor
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Repository
 open class VSysAccessRuleWithIpDao : BaseReadOnlyDao<String, VSysAccessRuleWithIp, VSysAccessRuleWithIps>() {
 
     /**
-     * 按父规则主键查询，结果映射为 [VSysAccessRuleWithIpRow]，按 `ipStart` 升序。
+     * Query by parent rule primary key; results map to [VSysAccessRuleWithIpRow] ordered by `ipStart` ascending.
      */
     open fun searchByParentId(parentId: String): List<VSysAccessRuleWithIpRow> {
         val criteria = Criteria.and(VSysAccessRuleWithIp::parentId eq parentId)
@@ -29,7 +29,7 @@ open class VSysAccessRuleWithIpDao : BaseReadOnlyDao<String, VSysAccessRuleWithI
     }
 
     /**
-     * 按系统编码与租户维度查询；`tenantId == null` 时使用 `tenant_id IS NULL` 条件。
+     * Query by system code and tenant dimension; uses `tenant_id IS NULL` when `tenantId == null`.
      */
     open fun searchBySystemCodeAndTenantId(systemCode: String, tenantId: String?): List<VSysAccessRuleWithIpRow> {
         val tenantCriterion = if (tenantId == null) {

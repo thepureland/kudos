@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 记住我登录数据库实体
+ * Remember-me login database entity
  *
  * @author K
  * @author AI: Codex
@@ -15,19 +15,19 @@ interface UserLoginRememberMe : IDbEntity<String, UserLoginRememberMe> {
 
     companion object : DbEntityFactory<UserLoginRememberMe>()
 
-    /** 用户ID */
+    /** User ID */
     var userId: String
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId: String
 
-    /** 用户名 */
+    /** Username */
     var username: String
 
-    /** 令牌 */
+    /** Token */
     var token: String?
 
-    /** 最后使用时间 */
+    /** Last used time */
     var lastUsed: LocalDateTime?
 
 

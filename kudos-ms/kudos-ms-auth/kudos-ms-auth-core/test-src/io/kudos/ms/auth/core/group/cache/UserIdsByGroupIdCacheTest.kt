@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for UserIdsByGroupIdCacheHandler
  *
- * 测试数据来源：`UserIdsByGroupIdCacheTest.sql`
+ * Test data source: `UserIdsByGroupIdCacheTest.sql`
  *
  * @author K
  * @author AI: Codex
@@ -31,40 +31,40 @@ class UserIdsByGroupIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getUserIds() {
-        // 存在的用户组ID，有多个用户
+        // Existing group ID, has multiple users
         var groupId = "6e90ce80-1111-1111-1111-111111111111"
         val userIds1 = cacheHandler.getUserIds(groupId)
         val userIds2 = cacheHandler.getUserIds(groupId)
-        assertTrue(userIds1.isNotEmpty(), "用户组${groupId}应该有用户ID列表")
-        assertEquals(userIds1, userIds2, "两次调用应该返回相同的结果（缓存验证）")
-        // 验证用户ID：用户组GROUP_ADMIN有用户admin和zhangsan
-        assertEquals(2, userIds1.size, "用户组${groupId}应该有2个用户ID")
-        assertTrue(userIds1.contains("5e90ce80-1111-1111-1111-111111111111"), "应该包含admin的用户ID，实际返回：${userIds1}")
-        assertTrue(userIds1.contains("5e90ce80-2222-2222-2222-222222222222"), "应该包含zhangsan的用户ID，实际返回：${userIds1}")
+        assertTrue(userIds1.isNotEmpty(), "Group ${groupId} should have a list of user IDs")
+        assertEquals(userIds1, userIds2, "Two calls should return the same result (cache verification)")
+        // Verify user IDs: group GROUP_ADMIN has users admin and zhangsan
+        assertEquals(2, userIds1.size, "Group ${groupId} should have 2 user IDs")
+        assertTrue(userIds1.contains("5e90ce80-1111-1111-1111-111111111111"), "Should contain user ID of admin; actual returned: ${userIds1}")
+        assertTrue(userIds1.contains("5e90ce80-2222-2222-2222-222222222222"), "Should contain user ID of zhangsan; actual returned: ${userIds1}")
 
-        // 存在的用户组ID，有一个用户
+        // Existing group ID, has one user
         groupId = "6e90ce80-2222-2222-2222-222222222222"
         val userIds3 = cacheHandler.getUserIds(groupId)
         val userIds4 = cacheHandler.getUserIds(groupId)
-        assertTrue(userIds3.isNotEmpty(), "用户组${groupId}应该有用户ID列表")
-        assertEquals(userIds3, userIds4, "两次调用应该返回相同的结果（缓存验证）")
-        // 用户组GROUP_USER只有用户zhangsan
+        assertTrue(userIds3.isNotEmpty(), "Group ${groupId} should have a list of user IDs")
+        assertEquals(userIds3, userIds4, "Two calls should return the same result (cache verification)")
+        // Group GROUP_USER has only user zhangsan
         assertEquals(
             1,
             userIds3.size,
-            "用户组${groupId}应该有1个用户ID，实际返回：${userIds3}"
+            "Group ${groupId} should have 1 user ID; actual returned: ${userIds3}"
         )
-        assertTrue(userIds3.contains("5e90ce80-2222-2222-2222-222222222222"), "应该包含zhangsan的用户ID")
+        assertTrue(userIds3.contains("5e90ce80-2222-2222-2222-222222222222"), "Should contain user ID of zhangsan")
 
-        // 存在的用户组ID，但没有用户
+        // Existing group ID, but no users
         groupId = "6e90ce80-3333-3333-3333-333333333333"
         val userIds5 = cacheHandler.getUserIds(groupId)
-        assertTrue(userIds5.isEmpty(), "用户组${groupId}没有用户，应该返回空列表")
+        assertTrue(userIds5.isEmpty(), "Group ${groupId} has no users, should return empty list")
 
-        // 不存在的用户组ID
+        // Non-existent group ID
         groupId = "no_exist_group_id"
         val userIds6 = cacheHandler.getUserIds(groupId)
-        assertTrue(userIds6.isEmpty(), "不存在的用户组ID应该返回空列表")
+        assertTrue(userIds6.isEmpty(), "Non-existent group ID should return empty list")
     }
 
     @Test
@@ -72,26 +72,26 @@ class UserIdsByGroupIdCacheTest : RdbAndRedisCacheTestBase() {
         val groupId = "6e90ce80-3333-3333-3333-333333333333"
         val userId = "5e90ce80-3333-3333-3333-333333333333"
 
-        // 先获取一次，记录初始用户数量
+        // Fetch once to record the initial user count
         val userIdsBefore = cacheHandler.getUserIds(groupId)
         val beforeSize = userIdsBefore.size
 
-        // 插入一条新的用户组-用户关系记录
+        // Insert a new group-user relation record
         val authGroupUser = AuthGroupUser.Companion().apply {
             this.groupId = groupId
             this.userId = userId
         }
         val id = authGroupUserDao.insert(authGroupUser)
 
-        // 同步缓存（模拟用户组-用户关系变更）
+        // Sync cache (simulating group-user relation change)
         cacheHandler.syncOnGroupUserChange(groupId)
 
-        // 验证缓存已被清除并重新加载，应该包含新插入的用户
+        // Verify cache has been cleared and reloaded; should contain the newly inserted user
         val userIdsAfter = cacheHandler.getUserIds(groupId)
-        assertTrue(userIdsAfter.size > beforeSize, "同步后应该包含新插入的用户ID")
-        assertTrue(userIdsAfter.contains(userId), "应该包含新插入的用户ID")
+        assertTrue(userIdsAfter.size > beforeSize, "After sync, should contain the newly inserted user ID")
+        assertTrue(userIdsAfter.contains(userId), "Should contain the newly inserted user ID")
 
-        // 清理测试数据
+        // Clean up test data
         authGroupUserDao.deleteById(id)
     }
 
@@ -103,11 +103,11 @@ class UserIdsByGroupIdCacheTest : RdbAndRedisCacheTestBase() {
         val userId2 = "5e90ce80-2222-2222-2222-222222222222"
         val groupIds = listOf(groupId1, groupId2)
 
-        // 先获取一次，记录初始用户数量
+        // Fetch once to record the initial user count
         val userIds1Before = cacheHandler.getUserIds(groupId1)
         val beforeSize = userIds1Before.size
 
-        // 批量插入用户组-用户关系记录
+        // Batch insert group-user relation records
         val authGroupUser1 = AuthGroupUser.Companion().apply {
             this.groupId = groupId1
             this.userId = userId1
@@ -120,14 +120,14 @@ class UserIdsByGroupIdCacheTest : RdbAndRedisCacheTestBase() {
         }
         val id2 = authGroupUserDao.insert(authGroupUser2)
 
-        // 批量同步缓存（模拟批量用户组-用户关系变更）
+        // Batch sync cache (simulating batch group-user relation changes)
         cacheHandler.syncOnBatchGroupUserChange(groupIds)
 
-        // 验证缓存已被清除并重新加载，应该包含新插入的用户
+        // Verify cache has been cleared and reloaded; should contain newly inserted users
         val userIds1After = cacheHandler.getUserIds(groupId1)
-        assertTrue(userIds1After.size > beforeSize, "同步后应该包含新插入的用户ID")
+        assertTrue(userIds1After.size > beforeSize, "After sync, should contain the newly inserted user ID")
 
-        // 清理测试数据
+        // Clean up test data
         authGroupUserDao.deleteById(id1)
         authGroupUserDao.deleteById(id2)
     }
@@ -137,30 +137,30 @@ class UserIdsByGroupIdCacheTest : RdbAndRedisCacheTestBase() {
         val groupId = "6e90ce80-3333-3333-3333-333333333333"
         val userId = "5e90ce80-1111-1111-1111-111111111111"
 
-        // 先插入一条用户组-用户关系记录
+        // First insert a group-user relation record
         val authGroupUser = AuthGroupUser.Companion().apply {
             this.groupId = groupId
             this.userId = userId
         }
         val id = authGroupUserDao.insert(authGroupUser)
 
-        // 先同步缓存，确保缓存中有新插入的数据
+        // Sync cache first to ensure the newly inserted data is in the cache
         cacheHandler.syncOnGroupUserChange(groupId)
 
-        // 获取一次，确保缓存中有数据
+        // Fetch once to ensure data is in the cache
         val userIdsBefore = cacheHandler.getUserIds(groupId)
-        assertTrue(userIdsBefore.contains(userId), "新插入的用户关系应该在缓存中")
+        assertTrue(userIdsBefore.contains(userId), "The newly inserted user relation should be in the cache")
 
-        // 删除数据库记录（模拟用户组删除或用户组-用户关系删除）
+        // Delete the database record (simulating group deletion or group-user relation deletion)
         val deleteSuccess = authGroupUserDao.deleteById(id)
-        assertTrue(deleteSuccess, "删除应该成功")
+        assertTrue(deleteSuccess, "Deletion should succeed")
 
-        // 直接驱动事件 listener（AFTER_COMMIT 在 @Transactional 测试中不会触发，故直接调用 on(...)）
+        // Directly drive the event listener (AFTER_COMMIT does not fire in @Transactional tests, so invoke on(...) directly)
         cacheHandler.on(AuthGroupDeleted(groupId, tenantId = "tenant-x", code = "code-x"))
 
-        // 验证缓存已被清除，重新获取应该不包含已删除的用户
+        // Verify cache has been cleared; fetching again should not contain the deleted user
         val userIdsAfter = cacheHandler.getUserIds(groupId)
-        assertTrue(!userIdsAfter.contains(userId), "删除后，缓存应该被清除，不应该包含已删除的用户ID")
+        assertTrue(!userIdsAfter.contains(userId), "After deletion, the cache should be cleared and should not contain the deleted user ID")
     }
 
 }

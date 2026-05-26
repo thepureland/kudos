@@ -4,7 +4,7 @@ import org.springframework.context.ApplicationContext
 import kotlin.reflect.KClass
 
 /**
- * spring工具类
+ * Spring utility.
  *
  * @author K
  * @since 1.0.0
@@ -12,67 +12,67 @@ import kotlin.reflect.KClass
 object SpringKit {
 
     /**
-     * Spring 应用上下文。由 [io.kudos.context.spring.SpringContextInitializer] 在 Spring
-     * 启动期注入。
+     * Spring application context. Injected by [io.kudos.context.spring.SpringContextInitializer]
+     * during Spring startup.
      *
-     * 标 `@Volatile`：写发生在主线程（Spring 启动期），读可能来自任意业务线程。
-     * 不加 volatile 时跨线程读不保证看到写——尤其是某些 `object` 的 lazy init 在不同线程
-     * 第一次访问会出现"明明已 init 完成、却读到 null"的诡异现象。
+     * Marked `@Volatile`: writes happen on the main thread (during Spring startup), while reads may come from any business thread.
+     * Without volatile, cross-thread reads are not guaranteed to see the write — especially the lazy init of some `object`s in different threads,
+     * where the first access can read null even though init has already completed.
      */
     @Volatile
     var applicationContext: ApplicationContext? = null
         get() = field ?: error("Spring applicationContext is not initialized yet!")
 
-    // 走 [applicationContext] 的 getter（其会在 null 时抛错），把 `!!` 收口到一处
+    // Use the [applicationContext] getter (which throws when null) to confine `!!` to one place
     private val ctx: ApplicationContext get() = applicationContext!!
 
     /**
-     * 返回指定名称的Spring Bean对象，不存在会抛BeansException异常
+     * Returns the Spring bean with the given name; throws BeansException if it does not exist.
      *
-     * @param beanName bean名称
-     * @return Spring Bean对象
+     * @param beanName the bean name
+     * @return the Spring bean
      * @author K
      * @since 1.0.0
      */
     fun getBean(beanName: String): Any = ctx.getBean(beanName)
 
     /**
-     * 返回指定名称的Spring Bean对象，不存在返回null
+     * Returns the Spring bean with the given name, or null if it does not exist.
      *
-     * @param beanName bean名称
-     * @return Spring Bean对象
+     * @param beanName the bean name
+     * @return the Spring bean
      * @author K
      * @since 1.0.0
      */
     fun getBeanOrNull(beanName: String): Any? = if (ctx.containsBean(beanName)) ctx.getBean(beanName) else null
 
     /**
-     * 返回指定类的Spring Bean对象，不存在会抛BeansException异常
+     * Returns the Spring bean of the given class; throws BeansException if it does not exist.
      *
-     * @param T bean类型
-     * @param beanClass bean类
-     * @return Spring Bean对象
+     * @param T the bean type
+     * @param beanClass the bean class
+     * @return the Spring bean
      * @author K
      * @since 1.0.0
      */
     fun <T : Any> getBean(beanClass: KClass<T>): T = ctx.getBean(beanClass.java)
 
     /**
-     * 返回指定泛型类型的Spring Bean对象，不存在会抛BeansException异常
+     * Returns the Spring bean of the given generic type; throws BeansException if it does not exist.
      *
-     * @param T bean类型
-     * @return Spring Bean对象
+     * @param T the bean type
+     * @return the Spring bean
      * @author K
      * @since 1.0.0
      */
     inline fun <reified T : Any> getBean(): T = getBean(T::class)
 
     /**
-     * 返回指定类的Spring Bean对象，不存在返回null
+     * Returns the Spring bean of the given class, or null if it does not exist.
      *
-     * @param T bean类型
-     * @param beanClass bean类
-     * @return Spring Bean对象
+     * @param T the bean type
+     * @param beanClass the bean class
+     * @return the Spring bean
      * @author K
      * @since 1.0.0
      */
@@ -80,30 +80,30 @@ object SpringKit {
         if (ctx.getBeanNamesForType(beanClass.java).isNotEmpty()) ctx.getBean(beanClass.java) else null
 
     /**
-     * 返回指定名称的属性值
+     * Returns the value of the property with the given name.
      *
-     * @param propertyName 属性名
-     * @return 属性值
+     * @param propertyName the property name
+     * @return the property value
      * @author K
      * @since 1.0.0
      */
     fun getProperty(propertyName: String): String? = ctx.environment.getProperty(propertyName)
 
     /**
-     * 返回指定类型的所有实现bean实例（包括子类）
+     * Returns all implementing bean instances of the given type (including subclasses).
      *
-     * @param clazz 类或接口
-     * @return Map(bean名称, bean实例)
+     * @param clazz the class or interface
+     * @return Map(bean name, bean instance)
      * @author K
      * @since 1.0.0
      */
     fun <T : Any> getBeansOfType(clazz: KClass<T>): Map<String, T> = ctx.getBeansOfType(clazz.java)
 
     /**
-     * 返回指定类型的所有实现bean实例（包括子类）
+     * Returns all implementing bean instances of the given type (including subclasses).
      *
-     * @param T 类或接口
-     * @return Map(bean名称, bean实例)
+     * @param T the class or interface
+     * @return Map(bean name, bean instance)
      * @author K
      * @since 1.0.0
      */

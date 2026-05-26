@@ -3,7 +3,7 @@ package io.kudos.ability.file.common.compress.support
 import java.io.Serializable
 
 /**
- * 玩家端传入的压缩配置信息
+ * Compression configuration passed in from the client side.
  *
  * @author K
  * @author AI: Codex
@@ -12,27 +12,27 @@ import java.io.Serializable
 class CompressionConfig : Serializable {
 
     /**
-     * 是否開啓壓縮
+     * Whether compression is enabled.
      */
     var enabled: Boolean = false
 
     /**
-     * 是否轉換為webp格式
+     * Whether to convert to WebP format.
      */
     var webp: Boolean = false
 
     /**
-     * 非webp模式下生效
+     * Effective only in non-WebP mode.
      */
     var width: Int = 0
 
     /**
-     * 非webp模式下生效
+     * Effective only in non-WebP mode.
      */
     var height: Int = 0
 
     /**
-     * 非webp模式下生效
+     * Effective only in non-WebP mode.
      */
     var quality: Float = 1f
         set(quality) {

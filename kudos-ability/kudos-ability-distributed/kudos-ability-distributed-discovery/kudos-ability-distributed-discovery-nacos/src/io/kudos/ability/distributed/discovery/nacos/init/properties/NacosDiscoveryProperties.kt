@@ -3,7 +3,7 @@ package io.kudos.ability.distributed.discovery.nacos.init.properties
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 
 /**
- * kudos Nacos discovery 扩展配置。
+ * Kudos Nacos discovery extension properties.
  *
  * @author K
  * @author AI: Codex
@@ -13,7 +13,7 @@ class NacosDiscoveryProperties {
     var feignContextFilter: FeignContextFilter = FeignContextFilter()
 
     /**
-     * Feign 上下文 filter 配置。
+     * Feign context filter configuration.
      *
      * @author K
      * @author AI: Codex
@@ -21,8 +21,9 @@ class NacosDiscoveryProperties {
      */
     class FeignContextFilter {
         /**
-         * 是否允许未携带 FEIGN_REQUEST / NOTIFY_REQUEST 标记的请求也按 header 写入 KudosContext。
-         * 默认 false，避免外部请求伪造上下文；开发调试可显式打开。
+         * Whether to allow requests without the FEIGN_REQUEST / NOTIFY_REQUEST marker to also
+         * populate KudosContext from headers. Defaults to false to prevent external requests from
+         * forging context; may be enabled explicitly for development/debugging.
          */
         var allowUnmarkedContextHeaders: Boolean = false
     }

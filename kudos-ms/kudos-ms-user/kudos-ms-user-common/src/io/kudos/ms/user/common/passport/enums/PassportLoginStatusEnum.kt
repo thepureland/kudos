@@ -1,42 +1,42 @@
 package io.kudos.ms.user.common.passport.enums
 
 /**
- * 登录尝试的结果状态。
+ * Result status of a login attempt.
  *
- * 与 HTTP 状态码解耦：所有失败也走 HTTP 200，由本枚举区分原因，便于前端做差异化提示。
+ * Decoupled from HTTP status codes: all failures also return HTTP 200, with this enum distinguishing the reason, allowing the frontend to give differentiated prompts.
  *
  * @author K
  * @since 1.0.0
  */
 enum class PassportLoginStatusEnum {
 
-    /** 登录成功 */
+    /** Login succeeded */
     SUCCESS,
 
-    /** 用户名/租户不存在或被删除 */
+    /** Username/tenant not found or has been deleted */
     USER_NOT_FOUND,
 
-    /** 密码错误（[PassportLoginResult.loginErrorTimes] 携带累计错误次数） */
+    /** Wrong password ([PassportLoginResult.loginErrorTimes] carries the cumulative error count) */
     WRONG_PASSWORD,
 
-    /** 账号已禁用（active=false） */
+    /** Account is disabled (active=false) */
     INACTIVE,
 
-    /** 账号已被锁定（错误次数超限）—— 当前实现下尚未细分，保留枚举位 */
+    /** Account is locked (error count exceeded) — currently not further differentiated; reserved enum value */
     LOCKED,
 
     /**
-     * 密码正确但用户已启用 OTP，请求中未携带 [PassportLoginRequest.authCode]。
-     * 前端拿到此状态后应弹出 OTP 输入界面，再带 authCode 二次提交。
+     * Password is correct but the user has OTP enabled, and the request did not carry [PassportLoginRequest.authCode].
+     * After receiving this status, the frontend should display the OTP input UI and resubmit with authCode.
      */
     OTP_REQUIRED,
 
-    /** 密码正确，但 OTP 验证码错误（视为密码错的同等失败，错误计数已 +1） */
+    /** Password is correct but the OTP code is wrong (treated as the same failure as wrong password; error count is already +1) */
     OTP_WRONG,
 
     /**
-     * 账号被冻结（freeze_type 非空且当前时刻处于 [freeze_start_time, freeze_end_time) 内）。
-     * [PassportLoginResult.message] 携带冻结原因标题。
+     * Account is frozen (freeze_type is non-null and the current time falls within [freeze_start_time, freeze_end_time)).
+     * [PassportLoginResult.message] carries the freeze reason title.
      */
     ACCOUNT_FROZEN,
 }

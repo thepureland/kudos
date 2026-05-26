@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 国际化 内部 RPC 控制器。路径继承自 [ISysI18nApi] 方法级注解。
+ * Internationalization internal RPC controller. Paths are inherited from method-level annotations on [ISysI18nApi].
  *
  * @author K
  * @since 1.0.0

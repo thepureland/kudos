@@ -8,16 +8,19 @@ import org.springframework.core.env.PropertySource
 import java.util.ServiceLoader
 
 /**
- * 把 Spring Cloud Alibaba 的 [NacosPropertySourceRepository] 适配成 kudos 的 [IConfigDataFinder] SPI。
+ * Adapts Spring Cloud Alibaba's [NacosPropertySourceRepository] to kudos's [IConfigDataFinder] SPI.
  *
- * `kudos-context` 的 `YamlPropertySourceFactory` 通过 `ServiceLoader.load(IConfigDataFinder::class.java)`
- * 找配置查询器；本类按 `dataId == name` 在 Nacos 已加载的 PropertySource 中查。
+ * `kudos-context`'s `YamlPropertySourceFactory` discovers config finders via
+ * `ServiceLoader.load(IConfigDataFinder::class.java)`; this class looks up entries in Nacos's
+ * already-loaded PropertySources by `dataId == name`.
  *
- * **已通过 `resources/META-INF/services/io.kudos.context.config.IConfigDataFinder` 注册**——
- * 只要本模块在 classpath 且 spring-cloud-alibaba Nacos 客户端已拉到 PropertySource，
- * `YamlPropertySourceFactory.loadFromConfigCenter` 就会优先用 Nacos 的内容覆盖本地 yml。
+ * **Already registered via `resources/META-INF/services/io.kudos.context.config.IConfigDataFinder`** —
+ * as long as this module is on the classpath and the spring-cloud-alibaba Nacos client has pulled
+ * a PropertySource, `YamlPropertySourceFactory.loadFromConfigCenter` will prefer Nacos content
+ * over local yml.
  *
- * 想退出该行为可以在业务侧覆写 SPI（更高 ServiceLoader 优先级的 jar）或者干脆排除本模块。
+ * To opt out, application code can override the SPI (a jar with higher ServiceLoader priority) or
+ * exclude this module entirely.
  *
  * @author hanson
  * @author K

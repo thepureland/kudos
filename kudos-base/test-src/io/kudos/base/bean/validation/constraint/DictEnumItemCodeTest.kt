@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 
 /**
- * DictEnumItemCode测试用例
+ * Test cases for DictEnumItemCode.
  *
  * @author K
  * @since 1.0.0
@@ -25,16 +25,16 @@ internal class DictEnumItemCodeTest {
 
     internal data class TestDictEnumCodeBean(
 
-        @get:DictEnumItemCode(enumClass = TestEnum::class, message = "值必须在枚举TestEnum的代码中")
+        @get:DictEnumItemCode(enumClass = TestEnum::class, message = "value must be one of the codes defined in TestEnum")
         val elemCode: String?
 
     )
 
     internal enum class TestEnum(override val code: String, override var displayText: String): IDictEnum {
 
-        ELEM1("1", "元素1"),
-        ELEM2("2", "元素2"),
-        ELEM3("3", "元素3")
+        ELEM1("1", "Element 1"),
+        ELEM2("2", "Element 2"),
+        ELEM3("3", "Element 3")
 
     }
 

@@ -14,23 +14,28 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * Nacos 服务发现装配入口。
+ * Nacos service-discovery assembly entry point.
  *
- * 真正的 Nacos discovery 客户端装配交给 `alibaba.cloud.nacos.discovery` starter；
- * 本类只补充 kudos 自有的两件事：
+ * The actual Nacos discovery client wiring is delegated to the `alibaba.cloud.nacos.discovery`
+ * starter; this class only adds two kudos-specific pieces:
  *
- *  1. 通过 [getComponentName] 把本模块挂到 kudos 自定义 SPI 调度器 `ComponentInitializerSelector`
- *  2. 注册 [FeignContextWebFilter]——Feign client 透传过来的 `TENANT_ID` / `TRACE_KEY` /
- *     `DATASOURCE_ID` 等 header **写回 provider 进程 `KudosContext`** 的唯一入口
+ *  1. Via [getComponentName] hooks this module into the kudos-custom SPI dispatcher
+ *     `ComponentInitializerSelector`.
+ *  2. Registers [FeignContextWebFilter] — the sole entry point that **writes headers propagated
+ *     by Feign clients (`TENANT_ID` / `TRACE_KEY` / `DATASOURCE_ID` etc.) back into the
+ *     `KudosContext` on the provider side**.
  *
- * Filter 注册细节：
- *  - 仅在 `FilterRegistrationBean` 可用时装配（[ConditionalOnClass]），不影响非 servlet 应用
- *  - 排除开关 `kudos.ability.distributed.discovery.nacos.feign-context-filter.enabled=false`，
- *    供 dev 调试或对接非 kudos client 的过渡场景使用
- *  - order 设到尽量靠前（[FilterRegistrationBean.HIGHEST_PRECEDENCE] + 1）——上下文必须先于
- *    业务 filter / interceptor 就绪，否则下游拿到的 `KudosContextHolder` 内容是空的
- *  - urlPatterns 全路径（`/&#42;`）——filter 内部已用 `FEIGN_REQUEST` / `NOTIFY_REQUEST` 显式标记
- *    把普通浏览器 / curl 请求挡掉，不需要在注册侧再做路径白名单
+ * Filter registration details:
+ *  - Only assembled when `FilterRegistrationBean` is available ([ConditionalOnClass]); does not
+ *    affect non-servlet applications.
+ *  - Kill switch `kudos.ability.distributed.discovery.nacos.feign-context-filter.enabled=false`
+ *    for dev debugging or transitional scenarios that integrate non-kudos clients.
+ *  - Order set as early as possible ([FilterRegistrationBean.HIGHEST_PRECEDENCE] + 1) — the
+ *    context must be ready before business filters / interceptors, otherwise downstream code
+ *    sees an empty `KudosContextHolder`.
+ *  - urlPatterns covers all paths (`/&#42;`) — the filter internally uses explicit
+ *    `FEIGN_REQUEST` / `NOTIFY_REQUEST` markers to block regular browser / curl requests, so no
+ *    path whitelisting is needed at the registration layer.
  *
  * @author K
  * @author AI: Codex

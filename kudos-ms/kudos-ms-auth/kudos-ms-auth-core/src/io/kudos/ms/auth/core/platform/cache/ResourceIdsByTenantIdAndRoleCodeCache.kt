@@ -20,12 +20,12 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 资源ID列表（by tenant & role code）缓存处理器
+ * Cache handler for the list of resource IDs keyed by (tenantId, roleCode).
  *
- * 1.数据来源表：auth_role + auth_role_resource
- * 2.缓存各租户下指定角色的资源ID列表
- * 3.缓存的key为：tenantId::roleCode
- * 4.缓存的value为：资源ID列表（List<String>）
+ * 1. Source tables: auth_role + auth_role_resource.
+ * 2. Caches the resource ID list of the specified role per tenant.
+ * 3. Cache key: tenantId::roleCode.
+ * 4. Cache value: list of resource IDs (List<String>).
  *
  * @author K
  * @author AI: Cursor
@@ -51,7 +51,7 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
 
     override fun doReload(key: String): List<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
-            "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}角色编码"
+            "Cache ${CACHE_NAME} key format must be tenantId${Consts.CACHE_KEY_DEFAULT_DELIMITER}roleCode"
         }
         val tenantAndRoleCode = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
         return getSelf<ResourceIdsByTenantIdAndRoleCodeCache>().getResourceIds(
@@ -61,44 +61,44 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有角色的资源ID！")
+            log.info("Cache disabled; not loading or caching resource ids for all roles!")
             return
         }
 
-        // 加载所有active=true的角色
+        // Load all roles with active=true.
         val roleCriteria = Criteria(AuthRole::active.name, OperatorEnum.EQ, true)
 
         val roles = authRoleDao.search(roleCriteria)
 
-        // 加载所有角色-资源关系
+        // Load all role-resource associations.
         val allRoleResources = authRoleResourceDao.allSearch()
         val roleIdToResourceIdsMap = allRoleResources
             .groupBy { it.roleId }
             .mapValues { entry -> entry.value.map { it.resourceId.trim() } }
 
-        log.debug("从数据库加载了${roles.size}条角色和${allRoleResources.size}条角色-资源关系。")
+        log.debug("Loaded ${roles.size} roles and ${allRoleResources.size} role-resource associations from DB.")
 
-        // 清除缓存
+        // Clear the cache.
         if (clear) {
             clear()
         }
 
-        // 缓存资源ID列表
+        // Cache the resource id lists.
         roles.forEach { role ->
             val roleId = role.id
             if (roleId.isBlank()) return@forEach
             val resourceIds = roleIdToResourceIdsMap[roleId] ?: emptyList()
             KeyValueCacheKit.put(CACHE_NAME, getKey(role.tenantId, role.code), resourceIds)
-            log.debug("缓存了租户${role.tenantId}角色${role.code}的${resourceIds.size}条资源ID。")
+            log.debug("Cached ${resourceIds.size} resource ids for tenant=${role.tenantId} role=${role.code}.")
         }
     }
 
     /**
-     * 根据租户ID和角色编码从缓存中获取该角色拥有的所有资源ID，如果缓存中不存在，则从数据库中加载，并回写缓存
+     * Get all resource ids owned by a role keyed by (tenantId, roleCode); on cache miss, load from DB and write back.
      *
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
-     * @return List<资源ID>
+     * @param tenantId tenant id
+     * @param roleCode role code
+     * @return List<resourceId>
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -107,96 +107,96 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
     )
     open fun getResourceIds(tenantId: String, roleCode: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在租户${tenantId}角色${roleCode}的资源ID，从数据库中加载...")
+            log.debug("Resource ids for tenant=${tenantId} role=${roleCode} not in cache; loading from DB...")
         }
 
-        // 1. 从缓存中获取角色ID（避免查询数据库）
+        // 1. Look up the role id from the cache (avoid hitting the DB).
         val roleId = authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
 
         if (roleId == null) {
-            log.debug("找不到租户${tenantId}的角色${roleCode}。")
+            log.debug("Role not found for tenant=${tenantId} code=${roleCode}.")
             return emptyList()
         }
 
-        // 2. 根据角色ID查询资源ID列表
+        // 2. Query resource ids by role id.
         val resourceCriteria = Criteria(AuthRoleResource::roleId.name, OperatorEnum.EQ, roleId)
         val resourceIds = authRoleResourceDao.searchProperty(resourceCriteria, AuthRoleResource::resourceId)
 
-        log.debug("从数据库加载了租户${tenantId}角色${roleCode}的${resourceIds.size}条资源ID。")
+        log.debug("Loaded ${resourceIds.size} resource ids from DB for tenant=${tenantId} role=${roleCode}.")
         return resourceIds.filterNotNull().map { it.trim() }
     }
 
     /**
-     * 角色-资源关系插入后同步缓存
+     * Sync the cache after a role-resource association is inserted.
      *
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
+     * @param tenantId tenant id
+     * @param roleCode role code
      */
     open fun syncOnRoleResourceInsert(tenantId: String, roleCode: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("新增租户${tenantId}角色${roleCode}的资源关系后，同步${CACHE_NAME}缓存...")
+            log.debug("After inserting role-resource association tenant=${tenantId} role=${roleCode}, syncing ${CACHE_NAME} cache...")
             evict(getKey(tenantId, roleCode))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<ResourceIdsByTenantIdAndRoleCodeCache>().getResourceIds(tenantId, roleCode)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 角色-资源关系删除后同步缓存
+     * Sync the cache after a role-resource association is deleted.
      *
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
+     * @param tenantId tenant id
+     * @param roleCode role code
      */
     open fun syncOnRoleResourceDelete(tenantId: String, roleCode: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}角色${roleCode}的资源关系后，同步${CACHE_NAME}缓存...")
+            log.debug("After deleting role-resource association tenant=${tenantId} role=${roleCode}, syncing ${CACHE_NAME} cache...")
             evict(getKey(tenantId, roleCode))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<ResourceIdsByTenantIdAndRoleCodeCache>().getResourceIds(tenantId, roleCode)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 角色信息更新后同步缓存（角色编码或状态变更）
+     * Sync the cache after role info is updated (role code or active flag changed).
      *
-     * @param oldTenantId 旧租户ID
-     * @param oldRoleCode 旧角色编码
-     * @param newTenantId 新租户ID（如果未变更则与旧值相同）
-     * @param newRoleCode 新角色编码（如果未变更则与旧值相同）
+     * @param oldTenantId previous tenant id
+     * @param oldRoleCode previous role code
+     * @param newTenantId new tenant id (equal to the old one if unchanged)
+     * @param newRoleCode new role code (equal to the old one if unchanged)
      */
     open fun syncOnRoleUpdate(oldTenantId: String, oldRoleCode: String, newTenantId: String, newRoleCode: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("角色信息更新后，同步${CACHE_NAME}缓存...")
+            log.debug("After role info update, syncing ${CACHE_NAME} cache...")
 
-            // 踢除旧的缓存
+            // Evict the old cache entry.
             KeyValueCacheKit.evict(CACHE_NAME, getKey(oldTenantId, oldRoleCode))
 
-            // 如果编码或租户改变，也要踢除新的缓存（如果存在）
+            // If code or tenant changed, also evict the new cache entry (if present).
             if (oldTenantId != newTenantId || oldRoleCode != newRoleCode) {
                 KeyValueCacheKit.evict(CACHE_NAME, getKey(newTenantId, newRoleCode))
             }
 
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
 
     /**
-     * 返回参数拼接后的key
+     * Build the cache key by joining the given parameters.
      *
-     * @param tenantId 租户ID
-     * @param roleCode 角色编码
-     * @return 缓存key
+     * @param tenantId tenant id
+     * @param roleCode role code
+     * @return cache key
      */
     fun getKey(tenantId: String, roleCode: String): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${roleCode}"
     }
 
-    /** 仅做本地 (tenantId, roleCode) 失效；AuthRoleHashCache 已独立订阅 AuthRoleDeleted。 */
+    /** Local (tenantId, roleCode) eviction only; AuthRoleHashCache subscribes to AuthRoleDeleted separately. */
     private fun evictBy(tenantId: String, roleCode: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, roleCode))

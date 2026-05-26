@@ -6,7 +6,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 消息接收者群组数据库表-实体关联对象
+ * Message receiver group database table-entity binding object.
  *
  * @author K
  * @author AI: Codex
@@ -14,13 +14,13 @@ import org.ktorm.schema.varchar
  */
 object MsgReceiverGroups : ManagedTable<MsgReceiverGroup>("msg_receiver_group") {
 
-    /** 接收者群组类型字典码 */
+    /** Receiver group type dictionary code */
     var receiverGroupTypeDictCode = varchar("receiver_group_type_dict_code").bindTo { it.receiverGroupTypeDictCode }
 
-    /** 群组定义的表 */
+    /** Table where the group is defined */
     var defineTable = varchar("define_table").bindTo { it.defineTable }
 
-    /** 群组名称在具体群组表中的字段名 */
+    /** Field name of the group name in the specific group table */
     var nameColumn = varchar("name_column").bindTo { it.nameColumn }
 
 

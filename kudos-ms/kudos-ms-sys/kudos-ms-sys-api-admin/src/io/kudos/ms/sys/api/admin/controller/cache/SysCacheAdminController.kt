@@ -11,7 +11,7 @@ import io.kudos.ms.sys.core.cache.service.iservice.ISysCacheService
 import org.springframework.web.bind.annotation.*
 
 /**
- * 缓存管理控制器
+ * Cache management controller.
  *
  * @author K
  * @since 1.0.0
@@ -22,11 +22,11 @@ open class SysCacheAdminController :
     BaseCrudController<String, ISysCacheService, SysCacheQuery, SysCacheRow, SysCacheDetail, SysCacheEdit, SysCacheFormCreate, SysCacheFormUpdate>() {
 
     /**
-     * 更新active状态
+     * Update the active status.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     @PutMapping("/updateActive")
     fun updateActive(id: String, active: Boolean): Boolean {
@@ -34,10 +34,10 @@ open class SysCacheAdminController :
     }
 
     /**
-     * 重载指定缓存配置（按 id）下某 key 的缓存项
+     * Reload the cache entry for a given key under the specified cache configuration (by id).
      *
-     * @param id 缓存配置主键
-     * @param key 缓存 key
+     * @param id cache configuration primary key
+     * @param key cache key
      */
     @GetMapping("/management/reload")
     fun reload(id: String, key: String) {
@@ -45,9 +45,9 @@ open class SysCacheAdminController :
     }
 
     /**
-     * 重载指定缓存配置（按 id）下的所有缓存项
+     * Reload all cache entries under the specified cache configuration (by id).
      *
-     * @param id 缓存配置主键
+     * @param id cache configuration primary key
      */
     @GetMapping("/management/reloadAll")
     fun reloadAll(id: String) {
@@ -55,10 +55,10 @@ open class SysCacheAdminController :
     }
 
     /**
-     * 踢除指定缓存配置（按 id）下某 key 的缓存项
+     * Evict the cache entry for a given key under the specified cache configuration (by id).
      *
-     * @param id 缓存配置主键
-     * @param key 缓存 key
+     * @param id cache configuration primary key
+     * @param key cache key
      */
     @DeleteMapping("/management/evict")
     fun evict(id: String, key: String) {
@@ -66,9 +66,9 @@ open class SysCacheAdminController :
     }
 
     /**
-     * 踢除指定缓存配置（按 id）下的所有缓存项
+     * Evict all cache entries under the specified cache configuration (by id).
      *
-     * @param id 缓存配置主键
+     * @param id cache configuration primary key
      */
     @DeleteMapping("/management/evictAll")
     fun evictAll(id: String) {
@@ -76,10 +76,10 @@ open class SysCacheAdminController :
     }
 
     /**
-     * 检测指定缓存配置（按 id）下某 key 是否存在
+     * Check whether a given key exists under the specified cache configuration (by id).
      *
-     * @param id 缓存配置主键
-     * @param key 缓存 key
+     * @param id cache configuration primary key
+     * @param key cache key
      */
     @GetMapping("/management/existsKey")
     fun existsKey(id: String, key: String): Boolean {
@@ -87,11 +87,11 @@ open class SysCacheAdminController :
     }
 
     /**
-     * 获取指定缓存配置（按 id）下某 key 的值的 json 表示
+     * Get the JSON representation of the value for a given key under the specified cache configuration (by id).
      *
-     * @param id 缓存配置主键
-     * @param key 缓存 key
-     * @return value 的 json 串，value 为 null 或出错返回空串
+     * @param id cache configuration primary key
+     * @param key cache key
+     * @return JSON string of the value; returns empty string when the value is null or an error occurs
      */
     @GetMapping("/management/getValueJson")
     fun getValueJson(id: String, key: String): String {

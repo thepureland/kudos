@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * AbstractExcelImporter测试用例
+ * AbstractExcelImporter test cases
  *
  * @author K
  * @since 1.0.0
@@ -19,10 +19,10 @@ internal class AbstractExcelImporterTest {
 
         val path = PathKit.getResourcePath("TestExcelImporter.xls")
 
-        // 行对象类为数据类方式
+        // Row object class as a data class
         assertEquals(3, TestStudentExcelImporter().import(File(path)).size)
 
-        // 行对象类为普通类方式
+        // Row object class as a regular class
         assertEquals(3, TestPersonExcelImporter().import(File(path)).size)
     }
 
@@ -33,7 +33,7 @@ internal class AbstractExcelImporterTest {
         override fun getSheetName(): String = "students"
 
         override fun save(rowObjects: List<TestStudent>) {
-            // 模拟保存数据到DB
+            // Simulate saving data to DB
         }
 
     }
@@ -61,7 +61,7 @@ internal class AbstractExcelImporterTest {
         override fun getSheetName(): String = "students"
 
         override fun save(rowObjects: List<TestPerson>) {
-            // 模拟保存数据到DB
+            // Simulate saving data to DB
         }
 
     }

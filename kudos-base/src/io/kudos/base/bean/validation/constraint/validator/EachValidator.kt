@@ -5,7 +5,7 @@ import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 
 /**
- * Each约束验证器
+ * Each constraint validator.
  *
  * @author K
  * @since 1.0.0

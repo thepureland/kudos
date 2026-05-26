@@ -6,7 +6,7 @@ import io.kudos.ms.msg.core.template.model.po.MsgTemplate
 
 
 /**
- * 消息模板业务接口
+ * Message template business service interface.
  *
  * @author K
  * @author AI: Codex
@@ -16,20 +16,22 @@ interface IMsgTemplateService : IBaseCrudService<String, MsgTemplate> {
 
 
     /**
-     * 根据id获取模板缓存项。当前实现直接走 DAO，无独立缓存层；保留 CacheEntry 返回类型便于
-     * 后续接入 hash-cache 而不破坏调用方。
+     * Gets the template cache entry by id. The current implementation goes directly to the DAO with
+     * no separate cache layer; the CacheEntry return type is kept so a future hash-cache integration
+     * will not break callers.
      *
-     * @param id 模板主键
-     * @return MsgTemplateCacheEntry，找不到返回 null
+     * @param id template primary key
+     * @return MsgTemplateCacheEntry, or null if not found
      */
     fun getTemplateById(id: String): MsgTemplateCacheEntry?
 
     /**
-     * 按租户 + 事件类型 + 消息类型 + 语言 查找模板。
-     * 这四元组是发送端选模板的天然路由键（同一事件可针对不同消息类型/语言准备不同文案）。
-     * 若 `localeDictCode` 传 null 则忽略 locale 维度，留给调用方退到默认语言。
+     * Looks up a template by tenant + event type + message type + language.
+     * This 4-tuple is the natural routing key for the sender to select a template (the same event can
+     * have different content prepared for different message types/languages).
+     * If `localeDictCode` is null the locale dimension is ignored, leaving the caller to fall back to the default language.
      *
-     * @return 第一条匹配的模板；找不到返回 null
+     * @return the first matching template; null if not found
      */
     fun getTemplateByEvent(
         tenantId: String,

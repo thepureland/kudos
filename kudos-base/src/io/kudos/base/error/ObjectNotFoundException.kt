@@ -1,8 +1,8 @@
 package io.kudos.base.error
 
 /**
- * 对象找不到异常。
- * 用于本该找得到，但结果未找到的情况。
+ * Thrown when the target object cannot be found.
+ * Used when the object was expected to exist but was not located.
  *
  * @author K
  * @since 1.0.0

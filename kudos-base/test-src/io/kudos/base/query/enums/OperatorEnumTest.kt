@@ -8,16 +8,16 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * OperatorEnum.compare() 测试用例
+ * OperatorEnum.compare() test cases.
  *
- * 按操作符分组组织：
- * - 等值：EQ / IEQ / NE / LG
- * - 大小比较：GE / LE / GT / LT
- * - 字符串匹配：LIKE / LIKE_S / LIKE_E / ILIKE / ILIKE_S / ILIKE_E
- * - 集合成员：IN / NOT_IN
- * - 空值/空集合：IS_NULL / IS_NOT_NULL / IS_EMPTY / IS_NOT_EMPTY
- * - 范围：BETWEEN / NOT_BETWEEN
- * - 属性间比较（*_P）：当前实现下 compare() 一律返回 false
+ * Organized by operator group:
+ * - Equality: EQ / IEQ / NE / LG
+ * - Magnitude: GE / LE / GT / LT
+ * - String match: LIKE / LIKE_S / LIKE_E / ILIKE / ILIKE_S / ILIKE_E
+ * - Collection membership: IN / NOT_IN
+ * - Null/empty: IS_NULL / IS_NOT_NULL / IS_EMPTY / IS_NOT_EMPTY
+ * - Range: BETWEEN / NOT_BETWEEN
+ * - Property-to-property (*_P): compare() always returns false under current implementation
  *
  * @author K
  * @since 1.0.0
@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 internal class OperatorEnumTest {
 
     // ============================================================
-    // EQ - 严格相等
+    // EQ - strict equality
     // ============================================================
 
     @Test fun eqBothNullIsTrue() = assertTrue(OperatorEnum.EQ.compare(null, null))
@@ -36,7 +36,7 @@ internal class OperatorEnumTest {
     @Test fun eqDifferentTypesIsFalse() = assertFalse(OperatorEnum.EQ.compare(1, "1"))
 
     // ============================================================
-    // IEQ - 忽略大小写相等（string-only，非 string 走 v1 == v2）
+    // IEQ - case-insensitive equality (string-only; non-string falls back to v1 == v2)
     // ============================================================
 
     @Test fun ieqBothNullIsTrue() = assertTrue(OperatorEnum.IEQ.compare(null, null))
@@ -48,11 +48,11 @@ internal class OperatorEnumTest {
     @Test fun ieqMixedTypesIsFalse() = assertFalse(OperatorEnum.IEQ.compare(42, "42"))
 
     // ============================================================
-    // NE / LG - 不等
+    // NE / LG - inequality
     // ============================================================
 
     @Test fun neBothNullIsFalse() {
-        // 语义：null != null → false（两者都是 null，"不相等"不成立）
+        // Semantics: null != null -> false (both are null; "not equal" does not hold)
         assertFalse(OperatorEnum.NE.compare(null, null))
         assertFalse(OperatorEnum.LG.compare(null, null))
     }
@@ -66,7 +66,7 @@ internal class OperatorEnumTest {
     )
 
     // ============================================================
-    // GE / LE / GT / LT - 大小比较
+    // GE / LE / GT / LT - magnitude comparison
     // ============================================================
 
     @Test fun geBothNullIsTrue() = assertTrue(OperatorEnum.GE.compare(null, null))
@@ -91,26 +91,26 @@ internal class OperatorEnumTest {
     @Test fun ltGreaterIsFalse() = assertFalse(OperatorEnum.LT.compare(5, 3))
 
     // ============================================================
-    // 数值跨类型比较 - 通过 BigDecimal 兜底
+    // Cross-type numeric comparison - falls back via BigDecimal
     // ============================================================
 
     @Test fun gtMixedNumericIntVsLong() = assertTrue(OperatorEnum.GT.compare(5, 3L))
     @Test fun gtMixedNumericIntVsBigDecimal() = assertTrue(OperatorEnum.GT.compare(5, BigDecimal("3.5")))
     @Test fun gtMixedNumericFloatVsDouble() = assertTrue(OperatorEnum.GT.compare(5.5f, 3.0))
     @Test fun eqMixedNumericIntVsLong() {
-        // EQ 用 == 不走 compareNumbers，所以 Int(5) != Long(5)
+        // EQ uses ==, not compareNumbers, so Int(5) != Long(5)
         assertFalse(OperatorEnum.EQ.compare(5, 5L))
     }
 
     @Test fun gtNonComparableTypesFalse() {
-        // 自定义类不实现 Comparable，compareComparableValues 返回 null → false
+        // Custom class does not implement Comparable; compareComparableValues returns null -> false
         val o1 = Any()
         val o2 = Any()
         assertFalse(OperatorEnum.GT.compare(o1, o2))
     }
 
     // ============================================================
-    // LIKE / LIKE_S / LIKE_E - 字符串匹配（区分大小写）
+    // LIKE / LIKE_S / LIKE_E - string match (case-sensitive)
     // ============================================================
 
     @Test fun likeContainsIsTrue() = assertTrue(OperatorEnum.LIKE.compare("hello world", "lo wo"))
@@ -119,7 +119,7 @@ internal class OperatorEnumTest {
         assertFalse(OperatorEnum.LIKE.compare("Hello", "hello"))
     @Test fun likeNonStringIsFalse() = assertFalse(OperatorEnum.LIKE.compare(123, "12"))
     @Test fun likeEmptyPatternIsTrue() {
-        // String.contains("") 在 Kotlin/Java 里恒为 true
+        // String.contains("") is always true in Kotlin/Java
         assertTrue(OperatorEnum.LIKE.compare("anything", ""))
     }
 
@@ -135,7 +135,7 @@ internal class OperatorEnumTest {
     @Test fun likeENotEndsWithIsFalse() = assertFalse(OperatorEnum.LIKE_E.compare("hello", "abc"))
 
     // ============================================================
-    // ILIKE / ILIKE_S / ILIKE_E - 忽略大小写
+    // ILIKE / ILIKE_S / ILIKE_E - case-insensitive
     // ============================================================
 
     @Test fun ilikeContainsIgnoresCase() = assertTrue(OperatorEnum.ILIKE.compare("Hello WORLD", "lo wo"))
@@ -155,7 +155,7 @@ internal class OperatorEnumTest {
     // ============================================================
 
     @Test fun inStringSplitsRightByComma() {
-        // 两侧都是 String 时，右值按逗号 split
+        // When both sides are String, the right value is split by comma
         assertTrue(OperatorEnum.IN.compare("b", "a,b,c"))
         assertFalse(OperatorEnum.IN.compare("d", "a,b,c"))
     }
@@ -171,13 +171,13 @@ internal class OperatorEnumTest {
     }
 
     @Test fun inCollectionIsSubsetOfRight() {
-        // 左值是 Collection 时，判断 v2.containsAll(v1)
+        // When the left value is a Collection, check v2.containsAll(v1)
         assertTrue(OperatorEnum.IN.compare(listOf(1, 2), listOf(1, 2, 3)))
         assertFalse(OperatorEnum.IN.compare(listOf(1, 4), listOf(1, 2, 3)))
     }
 
     @Test fun inArrayAsLeftConvertedToList() {
-        // 左值是 Array 时，自动转 List 走 subset 判断
+        // When the left value is an Array, it is auto-converted to List and goes through subset check
         assertTrue(OperatorEnum.IN.compare(arrayOf(1, 2), listOf(1, 2, 3)))
     }
 
@@ -187,7 +187,7 @@ internal class OperatorEnumTest {
     }
 
     @Test fun inTypeMismatchIsFalse() {
-        // v2 既不是 String 也不是 Collection/Array/Map → 落到最后 false 分支
+        // v2 is neither String nor Collection/Array/Map -> falls through to false branch
         assertFalse(OperatorEnum.IN.compare(1, 1))
     }
 
@@ -197,7 +197,7 @@ internal class OperatorEnumTest {
     }
 
     @Test fun notInTypeMismatchIsTrue() {
-        // IN 返回 false → NOT_IN 取反 → true（即使类型不匹配也"不在"）
+        // IN returns false -> NOT_IN negates -> true (even with type mismatch, it is "not in")
         assertTrue(OperatorEnum.NOT_IN.compare(1, 1))
     }
 
@@ -215,7 +215,7 @@ internal class OperatorEnumTest {
     // ============================================================
 
     @Test fun isEmptyNullIsFalse() {
-        // 文档约定：null 对 IS_EMPTY 返回 false（与 IS_NOT_EMPTY 返回 true 配对）
+        // Documented convention: null returns false for IS_EMPTY (paired with IS_NOT_EMPTY returning true)
         assertFalse(OperatorEnum.IS_EMPTY.compare(null, null))
     }
 
@@ -228,8 +228,8 @@ internal class OperatorEnumTest {
     @Test fun isEmptyNonEmptyMapIsFalse() = assertFalse(OperatorEnum.IS_EMPTY.compare(mapOf("a" to 1), null))
 
     @Test fun isEmptyOtherTypeUsesToString() {
-        // 落到默认分支：v1.toString().isEmpty()
-        // 任何会 toString 出非空内容的对象都返回 false
+        // Falls through to default branch: v1.toString().isEmpty()
+        // Any object whose toString yields non-empty content returns false
         assertFalse(OperatorEnum.IS_EMPTY.compare(42, null))
         assertFalse(OperatorEnum.IS_EMPTY.compare(false, null))
     }
@@ -251,14 +251,14 @@ internal class OperatorEnumTest {
         assertTrue(OperatorEnum.IS_NOT_EMPTY.compare(mapOf("a" to 1), null))
 
     @Test fun isNotEmptyOtherTypeUsesToString() {
-        // 落到默认分支：v1.toString().isNotEmpty()
-        // Int 42 → toString = "42" → 非空 → true
+        // Falls through to default branch: v1.toString().isNotEmpty()
+        // Int 42 -> toString = "42" -> non-empty -> true
         assertTrue(OperatorEnum.IS_NOT_EMPTY.compare(42, null))
         assertTrue(OperatorEnum.IS_NOT_EMPTY.compare(false, null))
     }
 
     // ============================================================
-    // BETWEEN / NOT_BETWEEN - 只接受 ClosedFloatingPointRange
+    // BETWEEN / NOT_BETWEEN - only accept ClosedFloatingPointRange
     // ============================================================
 
     @Test fun betweenInsideRangeIsTrue() {
@@ -276,17 +276,17 @@ internal class OperatorEnumTest {
     }
 
     @Test fun betweenIntRangeNotSupportedKnownLimitation() {
-        // KNOWN LIMITATION：BETWEEN 只识别 ClosedFloatingPointRange<*>，
-        // Kotlin 的 IntRange（即 1..10）不是 ClosedFloatingPointRange，会返回 false。
-        // 这是设计取舍——如要查整数区间，调用方需写成 1.0..10.0
+        // KNOWN LIMITATION: BETWEEN recognizes only ClosedFloatingPointRange<*>;
+        // Kotlin's IntRange (i.e. 1..10) is not a ClosedFloatingPointRange and will return false.
+        // This is a design tradeoff - to query an integer interval, callers must write 1.0..10.0
         assertFalse(
             OperatorEnum.BETWEEN.compare(5, 1..10),
-            "IntRange 不被 BETWEEN 识别，需用 1.0..10.0"
+            "IntRange is not recognized by BETWEEN; use 1.0..10.0"
         )
     }
 
     @Test fun notBetweenStrictlyOutsideIsTrue() {
-        // 严格在范围之外（< start 或 > end）应返回 true
+        // Strictly outside the range (< start or > end) should return true
         assertTrue(OperatorEnum.NOT_BETWEEN.compare(0.5, 1.0..10.0))
         assertTrue(OperatorEnum.NOT_BETWEEN.compare(11.0, 1.0..10.0))
     }
@@ -301,17 +301,17 @@ internal class OperatorEnumTest {
     }
 
     @Test fun notBetweenWithNonRangeIsTrue() {
-        // v2 不是 ClosedFloatingPointRange → 早返回 true（"不在范围内"）
+        // v2 is not a ClosedFloatingPointRange -> early-returns true ("not in range")
         assertTrue(OperatorEnum.NOT_BETWEEN.compare(5, "not a range"))
     }
 
     // ============================================================
-    // 属性间比较 *_P：compare() 不处理，全部返回 false
+    // Property-to-property *_P: not handled by compare(); always returns false
     // ============================================================
 
     @Test fun propertyOperatorsAlwaysReturnFalseInCompare() {
-        // *_P 操作符是属性间比较，在 compare() 的 when 里走 else 分支返回 false
-        // 真正的比较在 SQL 生成阶段做，不在内存里
+        // *_P operators are property-to-property comparisons; in compare()'s when block they hit the else branch and return false.
+        // The actual comparison happens at SQL generation time, not in memory.
         listOf(
             OperatorEnum.EQ_P,
             OperatorEnum.NE_P,
@@ -322,13 +322,13 @@ internal class OperatorEnumTest {
         ).forEach { op ->
             assertFalse(
                 op.compare(5, 3),
-                "$op 在 compare() 中应返回 false（属性比较不在此处理）"
+                "$op should return false in compare() (property comparison is not handled here)"
             )
         }
     }
 
     // ============================================================
-    // BigInteger / BigDecimal 跨类型
+    // BigInteger / BigDecimal cross-type
     // ============================================================
 
     @Test fun gtBigIntegerVsInt() {
@@ -336,16 +336,16 @@ internal class OperatorEnumTest {
     }
 
     @Test fun eqBigDecimalSameScaleSameValue() {
-        // EQ 用 == ，BigDecimal 的 equals 严格区分 scale (1.0 != 1.00)
+        // EQ uses ==; BigDecimal.equals strictly distinguishes scale (1.0 != 1.00)
         assertTrue(OperatorEnum.EQ.compare(BigDecimal("1.0"), BigDecimal("1.0")))
         assertFalse(
             OperatorEnum.EQ.compare(BigDecimal("1.0"), BigDecimal("1.00")),
-            "BigDecimal.equals 区分 scale，KNOWN BEHAVIOR"
+            "BigDecimal.equals distinguishes scale, KNOWN BEHAVIOR"
         )
     }
 
     // ============================================================
-    // enumOf 解析
+    // enumOf parsing
     // ============================================================
 
     @Test fun enumOfAcceptsUppercaseCode() {
@@ -354,13 +354,13 @@ internal class OperatorEnumTest {
     }
 
     @Test fun enumOfNormalizesLowercaseToUppercase() {
-        // 内部 uppercase()，所以小写 like 也能识别
+        // Internally calls uppercase(), so lowercase like is also recognized
         assertEquals(OperatorEnum.LIKE, OperatorEnum.enumOf("like"))
     }
 
     @Test fun enumOfUnknownCodeThrows() {
         runCatching { OperatorEnum.enumOf("UNKNOWN_OP") }.also {
-            assertTrue(it.isFailure, "未知 code 应抛异常")
+            assertTrue(it.isFailure, "Unknown code should throw an exception")
         }
     }
 }

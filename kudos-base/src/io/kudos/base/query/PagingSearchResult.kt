@@ -1,14 +1,14 @@
 package io.kudos.base.query
 
 /**
- * 分页查询结果
+ * Paged search result.
  *
  * @author K
  * @since 1.0.0
  */
 data class PagingSearchResult<T>(
-    /** 结果行对象列表 */
+    /** List of result row objects. */
     val data : List<T>,
-    /** 总行数 */
+    /** Total row count. */
     val totalCount: Int,
 )

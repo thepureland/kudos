@@ -4,14 +4,14 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 消息模板表单更新请求VO
+ * Message template update form request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgTemplateFormUpdate (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
     override val sendTypeDictCode: String?,

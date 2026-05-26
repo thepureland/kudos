@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 import io.kudos.base.query.sort.Sortable
 
 /**
- * 访问规则数据库实体
+ * Access rule DB entity.
  *
  * @author K
  * @since 1.0.0
@@ -14,15 +14,15 @@ interface SysAccessRule : IManagedDbEntity<String, SysAccessRule> {
 
     companion object : DbEntityFactory<SysAccessRule>()
 
-    /** 租户id */
+    /** Tenant id */
     @get:Sortable
     var tenantId: String
 
-    /** 系统编码 */
+    /** System code */
     @get:Sortable
     var systemCode: String
 
-    /** 访问规则类型字典代码 */
+    /** Access rule type dict code */
     var accessRuleTypeDictCode: String
 
 }

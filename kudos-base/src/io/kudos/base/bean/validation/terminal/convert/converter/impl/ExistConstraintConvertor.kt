@@ -5,7 +5,7 @@ import io.kudos.base.bean.validation.constraint.validator.ConstraintsValidator
 
 
 /**
- * Exist注解约束->终端约束的转换器
+ * Converter from the Exist annotation constraint to a terminal constraint.
  *
  * @author K
  * @since 1.0.0
@@ -14,12 +14,12 @@ class ExistConstraintConvertor(annotation: Annotation) : DefaultConstraintConver
 
     override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         val map = linkedMapOf<String, Any>()
-        require(constraintAnnotation is Exist) { "ExistConstraintConvertor 仅支持 Exist 注解" }
+        require(constraintAnnotation is Exist) { "ExistConstraintConvertor only supports the Exist annotation" }
         val annotations = ConstraintsValidator.getAnnotations(constraintAnnotation.value)
         annotations.forEach {
-            val constraintName = requireNotNull(it.annotationClass.simpleName) { "无法解析注解名: ${it.annotationClass}" }
+            val constraintName = requireNotNull(it.annotationClass.simpleName) { "Cannot resolve annotation name: ${it.annotationClass}" }
             val ruleMap = super.getRule(it)
-            ruleMap.remove("message") // 对于Exist约束来说，子约束的message无意义
+            ruleMap.remove("message") // For the Exist constraint, sub-constraint messages are meaningless.
             map[constraintName] = ruleMap
         }
         map["message"] = constraintAnnotation.message

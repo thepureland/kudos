@@ -6,10 +6,10 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import java.io.IOException
 
 /**
- * 检查 Docker 是否已安装的条件执行器
- * 
- * 通过执行 `docker --version` 命令来判断 Docker 是否已安装。
- * 如果命令执行成功，说明 Docker 已安装；否则说明未安装。
+ * Condition executor that checks whether Docker is installed.
+ *
+ * Runs the `docker --version` command to determine whether Docker is installed.
+ * A successful command means Docker is installed; otherwise it is not.
  * 
  * @author K
  * @author AI:Cursor
@@ -26,19 +26,19 @@ class DockerInstalledCondition : ExecutionCondition {
         val installed = isDockerInstalled()
         
         return if (installed) {
-            ConditionEvaluationResult.enabled("Docker 已安装")
+            ConditionEvaluationResult.enabled("Docker is installed")
         } else {
-            ConditionEvaluationResult.disabled("Docker 未安装，跳过测试用例")
+            ConditionEvaluationResult.disabled("Docker is not installed; skipping test case")
         }
     }
     
     /**
-     * 检查 Docker 是否已安装
-     * 
-     * @return true 如果 Docker 已安装，false 如果未安装
+     * Check whether Docker is installed.
+     *
+     * @return true if Docker is installed, false otherwise
      */
     private fun isDockerInstalled(): Boolean {
-        // 使用双重检查锁定模式，避免多次执行命令
+        // Use double-checked locking to avoid running the command multiple times
         if (dockerInstalled != null) {
             return requireNotNull(dockerInstalled)
         }
@@ -54,7 +54,7 @@ class DockerInstalledCondition : ExecutionCondition {
     }
     
     /**
-     * 通过执行 `docker --version` 命令检查 Docker 是否已安装
+     * Check whether Docker is installed by running the `docker --version` command.
      */
     private fun checkDockerInstalled(): Boolean {
         return try {
@@ -65,7 +65,7 @@ class DockerInstalledCondition : ExecutionCondition {
             val exitCode = process.waitFor()
             exitCode == 0
         } catch (e: IOException) {
-            // 如果命令执行失败（如找不到 docker 命令），说明 Docker 未安装
+            // If the command fails (e.g. docker command not found), Docker is not installed
             false
         } catch (e: InterruptedException) {
             Thread.currentThread().interrupt()

@@ -7,7 +7,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 组-用户关系数据库表-实体关联对象
+ * Group-user relation table mapping.
  *
  * @author K
  * @author AI: Codex
@@ -15,28 +15,28 @@ import org.ktorm.schema.varchar
  */
 object AuthGroupUsers : StringIdTable<AuthGroupUser>("auth_group_user") {
 
-    /** 组id */
+    /** Group id. */
     var groupId = varchar("group_id").bindTo { it.groupId }
 
-    /** 用户id */
+    /** User id. */
     var userId = varchar("user_id").bindTo { it.userId }
 
-    /** 创建者id */
+    /** Creator id. */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 创建者名称 */
+    /** Creator name. */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 创建时间 */
+    /** Creation time. */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新者id */
+    /** Updater id. */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 更新者名称 */
+    /** Updater name. */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 更新时间 */
+    /** Update time. */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 

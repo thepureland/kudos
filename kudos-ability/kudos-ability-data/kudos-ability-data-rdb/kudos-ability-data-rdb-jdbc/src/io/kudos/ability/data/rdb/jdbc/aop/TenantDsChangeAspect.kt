@@ -14,11 +14,11 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 处理 [TenantDsChange] 注解的切面：把 `value` 包成 `_context::<value>` 写入
- * `DbParam.forcedDs`，告诉下游 [DynamicDataSourceAspect] 这是"按上下文动态解析"的意图，
- * 而不是直接当数据源 key 用。
+ * Aspect that handles the [TenantDsChange] annotation: wraps `value` as `_context::<value>` and
+ * writes it into `DbParam.forcedDs`, telling downstream [DynamicDataSourceAspect] that this is a
+ * "resolve dynamically by context" intent, not a direct data source key.
  *
- * 切面 `@Order(-100)`、`@Lazy` 的原因同 [DsChangeAspect]。
+ * The `@Order(-100)` and `@Lazy` rationale is the same as [DsChangeAspect].
  *
  * @author K
  * @author AI: Codex
@@ -33,15 +33,16 @@ class TenantDsChangeAspect {
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * pointcut 定义：所有带 [TenantDsChange] 注解的方法。
+     * Pointcut definition: all methods annotated with [TenantDsChange].
      */
     @Pointcut("@annotation(io.kudos.ability.data.rdb.jdbc.aop.TenantDsChange)")
     private fun cut() {
     }
 
     /**
-     * 环绕通知。把 `_context::<serviceCode>` 写入 forcedDs，proceed 业务方法，finally 恢复
-     * 进入切面前的 [DbParam] 快照。value 若已带 `_context` 前缀就原样透传，避免重复嵌套。
+     * Around advice. Writes `_context::<serviceCode>` into forcedDs, proceeds the business method,
+     * and finally restores the [DbParam] snapshot captured before entering the aspect. If `value`
+     * already has the `_context` prefix it is forwarded as-is to avoid nesting.
      */
     @Around("cut()")
     @Throws(Throwable::class)
@@ -56,7 +57,7 @@ class TenantDsChangeAspect {
                 else "_context::${dsChange.value}"
             current.readonly = dsChange.readonly
             DbContext.set(current)
-            log.debug("强制指定数据源:ds=${current.forcedDs},readonly=${dsChange.readonly}")
+            log.debug("Forcing data source: ds=${current.forcedDs}, readonly=${dsChange.readonly}")
         }
         return try {
             joinPoint.proceed()

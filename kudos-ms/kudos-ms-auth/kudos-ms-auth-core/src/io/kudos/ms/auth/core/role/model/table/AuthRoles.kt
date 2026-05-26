@@ -8,7 +8,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 角色数据库表-实体关联对象
+ * Role database table-entity association object
  *
  * @author K
  * @author AI: Cursor
@@ -16,43 +16,43 @@ import org.ktorm.schema.varchar
  */
 object AuthRoles : StringIdTable<AuthRole>("auth_role") {
 
-    /** 角色编码 */
+    /** Role code */
     var code = varchar("code").bindTo { it.code }
 
-    /** 角色名称 */
+    /** Role name */
     var name = varchar("name").bindTo { it.name }
 
-    /** 租户id */
+    /** Tenant id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
-    /** 子系统编码 */
+    /** Subsystem code */
     var subsysCode = varchar("subsys_code").bindTo { it.subsysCode }
 
-    /** 备注 */
+    /** Remark */
     var remark = varchar("remark").bindTo { it.remark }
 
-    /** 是否激活 */
+    /** Whether active */
     var active = boolean("active").bindTo { it.active }
 
-    /** 是否内置 */
+    /** Whether built-in */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
 
-    /** 创建者id */
+    /** Creator id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 创建者名称 */
+    /** Creator name */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 创建时间 */
+    /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新者id */
+    /** Updater id */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 更新者名称 */
+    /** Updater name */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 

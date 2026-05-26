@@ -6,12 +6,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertSame
 
 /**
- * [SpelExpressionCache] 单元测试。
+ * Unit tests for [SpelExpressionCache].
  *
- * 该缓存在 cache 模块所有 Aspect 的热路径上，确保：
- *  - 同一 SpEL 字符串只解析一次（命中缓存返回同一 Expression 实例）
- *  - 不同 SpEL 字符串得到不同实例
- *  - 解析结果可以执行求值（防止有人把 `parseExpression` 换成别的实现而破坏 API）
+ * This cache sits on the hot path of every Aspect in the cache module, ensuring:
+ *  - the same SpEL string is parsed only once (a hit returns the same Expression instance);
+ *  - different SpEL strings yield different instances;
+ *  - parsed results can still be evaluated (so that swapping `parseExpression` for some other implementation cannot silently break the API).
  */
 internal class SpelExpressionCacheTest {
 
@@ -19,7 +19,7 @@ internal class SpelExpressionCacheTest {
     fun get_sameSpel_returnsCachedInstance() {
         val first = SpelExpressionCache.get("#root")
         val second = SpelExpressionCache.get("#root")
-        assertSame(first, second, "同一 SpEL 应返回同一缓存的 Expression 实例")
+        assertSame(first, second, "The same SpEL should return the same cached Expression instance")
     }
 
     @Test

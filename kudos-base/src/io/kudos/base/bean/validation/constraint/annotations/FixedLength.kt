@@ -8,10 +8,10 @@ import jakarta.validation.constraints.Size
 import kotlin.reflect.KClass
 
 /**
- * 定长约束，等价于 [Size] 且 `min == max == value`。
+ * Fixed-length constraint, equivalent to [Size] with `min == max == value`.
  *
- * 被校验对象类型必须为以下之一或其子类：
- * CharSequence、Array<*>、Collection<*>、DoubleArray、IntArray、LongArray、CharArray、FloatArray、BooleanArray、ByteArray、ShortArray、Map<*, *>
+ * The validated object's type must be one of the following or a subclass:
+ * CharSequence, Array<*>, Collection<*>, DoubleArray, IntArray, LongArray, CharArray, FloatArray, BooleanArray, ByteArray, ShortArray, Map<*, *>.
  *
  * @author K
  * @author AI: Cursor
@@ -25,22 +25,22 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class FixedLength(
     /**
-     * 必须恰好等于该长度（对 CharSequence 为字符单元个数，与 [Size] 一致）。
-     * 参数名为 `value`，可简写为 `@FixedLength(5)`。
+     * Must be exactly equal to this length (for CharSequence, the number of character units, consistent with [Size]).
+     * The parameter is named `value`, so it can be shortened to `@FixedLength(5)`.
      */
     @get:OverridesAttribute(constraint = Size::class, name = "min")
     @get:OverridesAttribute(constraint = Size::class, name = "max")
     val value: Int,
     /**
-     * 校验不通过时的提示
+     * Message to show when validation fails.
      */
     val message: String = "sys.valid-msg.default.FixedLength",
     /**
-     * 该校验规则所从属的分组类，通过分组可以过滤校验规则或排序校验顺序。默认值必须是空数组。
+     * The group classes this validation rule belongs to; groups allow filtering validation rules or ordering validation sequence. The default value must be an empty array.
      */
     val groups: Array<KClass<*>> = [],
     /**
-     * 约束注解的有效负载(通常用来将一些元数据信息与该约束注解相关联，常用的一种情况是用负载表示验证结果的严重程度)
+     * The payload of the constraint annotation (typically used to associate some metadata with the constraint; a common use is to express the severity of the validation result with the payload)
      */
     val payload: Array<KClass<out Payload>> = []
 )

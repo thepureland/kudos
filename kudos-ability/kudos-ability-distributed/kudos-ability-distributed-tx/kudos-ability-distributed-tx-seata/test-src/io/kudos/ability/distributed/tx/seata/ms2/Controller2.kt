@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * 微服务应用2的Controller
+ * Controller of microservice application 2.
  *
  * @author K
  * @since 1.0.0
@@ -19,7 +19,7 @@ open class Controller2 {
     private lateinit var service2: IService2
 
     /**
-     * 扣减账户余额
+     * Decrease the account balance.
      */
     @RequestMapping("/increase")
     fun decrease(@RequestParam("id") id: Int, @RequestParam("money") money: Double) {

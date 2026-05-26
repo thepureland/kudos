@@ -1,9 +1,9 @@
 package io.kudos.ms.sys.core.accessrule.event
 
 /**
- * IP 访问规则（`sys_access_rule_ip`）领域事件。同样由 `@TransactionalEventListener(AFTER_COMMIT)` 派发。
+ * IP access rule (`sys_access_rule_ip`) domain events. Also dispatched via `@TransactionalEventListener(AFTER_COMMIT)`.
  *
- * IP 缓存按「父规则的 systemCode + tenantId」聚合，所以事件直接携带这两个维度键，避免订阅方反查父规则。
+ * The IP cache is aggregated by "parent rule's systemCode + tenantId", so events carry these two dimension keys directly to spare subscribers a parent-rule lookup.
  *
  * @author K
  * @author AI: Cursor
@@ -11,12 +11,12 @@ package io.kudos.ms.sys.core.accessrule.event
  */
 sealed interface SysAccessRuleIpEvent {
     val id: String
-    /** 父规则维度 */
+    /** Parent rule dimensions */
     val parentSystemCode: String
     val parentTenantId: String?
 }
 
-/** IP 规则新增。若父规则 `active=false` 或 IP 自身 `active=false`，缓存可选择不写入。 */
+/** IP rule inserted. If the parent rule is `active=false` or the IP itself is `active=false`, the cache may skip the write. */
 data class SysAccessRuleIpInserted(
     override val id: String,
     override val parentSystemCode: String,
@@ -24,7 +24,7 @@ data class SysAccessRuleIpInserted(
     val active: Boolean,
 ) : SysAccessRuleIpEvent
 
-/** IP 规则更新（含 active 状态变更）。 */
+/** IP rule updated (including active-state changes). */
 data class SysAccessRuleIpUpdated(
     override val id: String,
     override val parentSystemCode: String,
@@ -32,20 +32,20 @@ data class SysAccessRuleIpUpdated(
     val active: Boolean,
 ) : SysAccessRuleIpEvent
 
-/** IP 规则删除。 */
+/** IP rule deleted. */
 data class SysAccessRuleIpDeleted(
     override val id: String,
     override val parentSystemCode: String,
     override val parentTenantId: String?,
 ) : SysAccessRuleIpEvent
 
-/** 批量删除：携带涉及的所有父规则维度，订阅方按维度键刷新 IP 缓存。 */
+/** Batch delete: carries every affected parent-rule dimension so subscribers can refresh the IP cache by dimension key. */
 data class SysAccessRuleIpBatchDeleted(
     val ids: Collection<String>,
     val dimensions: List<Pair<String, String?>>,
 ) : SysAccessRuleIpEvent {
     override val id: String get() = ids.first()
-    /** 批量事件没有单一父规则，取首维度满足契约 */
+    /** Batch events have no single parent rule; pick the first dimension to satisfy the contract */
     override val parentSystemCode: String get() = dimensions.first().first
     override val parentTenantId: String? get() = dimensions.first().second
 }

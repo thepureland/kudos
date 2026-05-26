@@ -5,8 +5,7 @@ import jakarta.servlet.http.HttpServletRequestWrapper
 import jakarta.servlet.http.HttpServletResponse
 
 /**
- * 请求的request对象
- * 用于设置缓存
+ * Request wrapper used for cache handling.
  */
 class CacheClientRequest(
     request: HttpServletRequest?,

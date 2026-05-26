@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysSystemService
  *
- * 测试数据来源：`SysSystemServiceTest.sql`
+ * Test data source: `SysSystemServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -59,7 +59,7 @@ class SysSystemServiceTest : RdbAndRedisCacheTestBase() {
         val success = sysSystemService.updateActive(code, false)
         assertTrue(success)
 
-        // 更新后可再次更新回 true，验证写操作链路可用
+        // After update, can update back to true again to verify the write path works
         val success2 = sysSystemService.updateActive(code, true)
         assertTrue(success2)
     }

@@ -6,14 +6,14 @@ import jakarta.validation.constraints.NotBlank
 
 
 /**
- * 出网白名单表单更新请求VO
+ * Request VO for updating an outbound whitelist form.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysOutLineFormUpdate(
 
-    /** 主键 */
+    /** Primary key */
     @get:NotBlank
     @get:FixedLength(36)
     override val id: String,

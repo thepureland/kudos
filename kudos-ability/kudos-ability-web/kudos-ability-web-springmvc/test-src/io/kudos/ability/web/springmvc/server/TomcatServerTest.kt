@@ -4,7 +4,7 @@ import io.kudos.test.common.init.EnableKudosTest
 import org.springframework.boot.test.context.SpringBootTest
 
 /**
- * tomcat容器测试用例
+ * Test cases for the Tomcat container.
  *
  * @author K
  * @author AI: Codex

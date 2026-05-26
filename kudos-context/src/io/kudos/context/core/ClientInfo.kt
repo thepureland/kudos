@@ -4,47 +4,47 @@ import java.util.Locale
 import java.util.TimeZone
 
 /**
- * 客户端信息
+ * Client information.
  *
  * @author K
  * @since 1.0.0
  */
 class ClientInfo(builder: Builder) {
 
-    /** 请求的ip */
+    /** Request IP */
     var ip: String? = null
 
-    /** 访问的域名 */
+    /** Requested domain */
     var domain: String? = null
 
-    /** 访问的url */
+    /** Requested URL */
     var url: String? = null
 
-    /** 请求的参数 */
+    /** Request parameters */
     var params: Map<String, Array<String?>?>? = null
 
-//    /** 请求内容字节数据表示 */
+//    /** Byte representation of request content */
 //    var requestContent: ByteArray? = null
 //
-    /** 请求内容字符串表示 */
+    /** String representation of request content */
     var requestContentString: String? = null
 
-    /** 请求referer */
+    /** Request referer */
     var requestReferer: String? = null
 
-    /** 请求类型(GET/POST等) */
+    /** Request type (GET/POST, etc.) */
     var requestType: String? = null
 
-    /** 客户端操作系统 */
+    /** Client operating system */
     var os: Pair<String, String>? = null
 
-    /** 客户端浏览器 */
+    /** Client browser */
     var browser: Pair<String, String>? = null
 
-    /** 客户端地区-语言 */
+    /** Client region-language */
     var locale: Locale? = null
 
-    /** 客户端时区 */
+    /** Client time zone */
     var timeZone: TimeZone? = null
 
 
@@ -64,47 +64,47 @@ class ClientInfo(builder: Builder) {
     }
 
     /**
-     * 客户端信息对象构建者
+     * Builder for the client information object.
      *
      * @author K
      * @since 1.0.0
      */
     class Builder {
 
-        /** 请求的ip */
+        /** Request IP */
         internal var ip: String? = null
 
-        /** 访问的域名 */
+        /** Requested domain */
         internal var domain: String? = null
 
-        /** 访问的url */
+        /** Requested URL */
         internal var url: String? = null
 
-        /** 请求的参数 */
+        /** Request parameters */
         internal var params: Map<String, Array<String?>?>? = null
 
-//        /** 请求内容字节数据表示 */
+//        /** Byte representation of request content */
 //        internal var requestContent: ByteArray? = null
 
-        /** 请求内容字符串表示 */
+        /** String representation of request content */
         internal var requestContentString: String? = null
 
-        /** 请求referer */
+        /** Request referer */
         internal var requestReferer: String? = null
 
-        /** 请求类型(GET/POST等) */
+        /** Request type (GET/POST, etc.) */
         internal var requestType: String? = null
 
-        /** 客户端操作系统 */
+        /** Client operating system */
         internal var os: Pair<String, String>? = null
 
-        /** 客户端浏览器 */
+        /** Client browser */
         internal var browser: Pair<String, String>? = null
 
-        /** 客户端地区-语言 */
+        /** Client region-language */
         internal var locale: Locale? = null
 
-        /** 客户端时区 */
+        /** Client time zone */
         internal var timeZone: TimeZone? = null
 
 

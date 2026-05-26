@@ -4,7 +4,7 @@ import io.kudos.ability.distributed.tx.seata.data.TestTable
 
 
 /**
- * 微服务应用1的service接口
+ * Service interface for microservice application 1.
  *
  * @author K
  * @since 1.0.0

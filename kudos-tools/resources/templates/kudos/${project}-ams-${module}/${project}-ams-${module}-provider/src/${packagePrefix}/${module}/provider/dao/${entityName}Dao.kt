@@ -13,7 +13,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseReadOnlyDao
 </#if>
 
 
-<@generateClassComment table.comment+"数据访问对象"/>
+<@generateClassComment table.comment+" data access object"/>
 @Repository
 //region your codes 1
 open class ${entityName}Dao : ${superDao}<${pkColumn.kotlinTypeName}, ${entityName}, ${entityName}s>() {

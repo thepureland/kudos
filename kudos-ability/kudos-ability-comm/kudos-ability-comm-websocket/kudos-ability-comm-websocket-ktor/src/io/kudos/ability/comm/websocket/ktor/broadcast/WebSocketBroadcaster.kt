@@ -8,13 +8,15 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 
 /**
- * 多端广播 / 单播工具。
+ * Multi-target broadcast / unicast utility.
  *
- * 依赖 [KudosWebSocketRegistry] 找接收方，然后并发地把消息推送出去。"并发"指各 session
- * 的 `sendText` 用 `async { }` 并行启动；任一 session 的发送失败被 catch + WARN 日志，
- * 不会让其余 session 的发送停掉。
+ * Uses [KudosWebSocketRegistry] to look up receivers and then pushes messages to them
+ * concurrently. "Concurrently" means each session's `sendText` is launched in parallel via
+ * `async { }`; a send failure on any single session is caught and logged at WARN level
+ * without stopping sends to the remaining sessions.
  *
- * **不**做消息批处理 / 速率限制——业务侧需要时自己加。
+ * Does **not** perform message batching or rate limiting — add these on the business side
+ * when needed.
  *
  * @author K
  * @since 1.0.0
@@ -23,22 +25,22 @@ class WebSocketBroadcaster(private val registry: KudosWebSocketRegistry) {
 
     private val log = LogFactory.getLog(this::class)
 
-    /** 广播给所有连接的 session。 */
+    /** Broadcasts to all connected sessions. */
     suspend fun broadcast(text: String): Int = sendTo(registry.all(), text)
 
-    /** 广播给指定 `userId` 名下所有 session（多端在线场景）。 */
+    /** Broadcasts to all sessions of the given `userId` (multi-device online scenario). */
     suspend fun broadcastToUser(userId: String, text: String): Int =
         sendTo(registry.findByUserId(userId), text)
 
-    /** 广播给指定 `tenantId` 名下所有 session。 */
+    /** Broadcasts to all sessions of the given `tenantId`. */
     suspend fun broadcastToTenant(tenantId: String, text: String): Int =
         sendTo(registry.findByTenantId(tenantId), text)
 
-    /** 单播到指定 sessionId。返回发送是否成功。 */
+    /** Unicasts to the given sessionId. Returns whether the send succeeded. */
     suspend fun unicast(sessionId: String, text: String): Boolean {
         val session = registry.findById(sessionId) ?: return false
         return runCatching { session.sendText(text) }
-            .onFailure { log.warn("单播失败 sessionId={0} cause={1}", sessionId, it.message) }
+            .onFailure { log.warn("Unicast failed sessionId={0} cause={1}", sessionId, it.message) }
             .isSuccess
     }
 
@@ -48,7 +50,7 @@ class WebSocketBroadcaster(private val registry: KudosWebSocketRegistry) {
             sessions.map { session ->
                 async {
                     runCatching { session.sendText(text); 1 }.getOrElse { t ->
-                        log.warn("广播到 sessionId={0} 失败 cause={1}", session.sessionId, t.message)
+                        log.warn("Broadcast to sessionId={0} failed cause={1}", session.sessionId, t.message)
                         0
                     }
                 }

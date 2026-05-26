@@ -15,11 +15,11 @@ internal class TreeKitTest {
     @Test
     fun convertListToTree() {
         val list = listOf(
-            TestTreeNode("10", null, "根结点10"),
-            TestTreeNode("11", "10", "10的子结点11"),
-            TestTreeNode("12", "10", "10的子结点12"),
-            TestTreeNode("20", null, "根结点20"),
-            TestTreeNode("21", "20", "20的子结点21")
+            TestTreeNode("10", null, "root node 10"),
+            TestTreeNode("11", "10", "child of 10: 11"),
+            TestTreeNode("12", "10", "child of 10: 12"),
+            TestTreeNode("20", null, "root node 20"),
+            TestTreeNode("21", "20", "child of 20: 21")
         )
         val treeList = TreeKit.convertListToTree(list)
         var result = treeList.size == 2
@@ -40,12 +40,12 @@ internal class TreeKitTest {
 
     @Test
     fun depthTraverse() {
-        val rootNode00 = TestTreeNode("00", null, "根结点10")
-        val node11 = TestTreeNode("11", "00", "00的子结点11")
+        val rootNode00 = TestTreeNode("00", null, "root node 10")
+        val node11 = TestTreeNode("11", "00", "child of 00: 11")
         rootNode00.children.add(node11)
-        val node21 = TestTreeNode("21", "11", "11的子结点21")
+        val node21 = TestTreeNode("21", "11", "child of 11: 21")
         node11.children.add(node21)
-        val node12 = TestTreeNode("12", "00", "00的子结点12")
+        val node12 = TestTreeNode("12", "00", "child of 00: 12")
         rootNode00.children.add(node12)
 
         val sb = StringBuilder()
@@ -57,7 +57,7 @@ internal class TreeKitTest {
 
     @Test
     fun convertListToTreeStrictParameterIsPassedThrough() {
-        // TreeKit 只是 ListToTreeConverter 的薄包装；这里仅验证 strict 参数透传不会丢
+        // TreeKit is only a thin wrapper around ListToTreeConverter; this only verifies the `strict` flag is propagated
         val nodes = listOf(
             TestTreeNode("1", null, "Root"),
             TestTreeNode("2", "999", "Orphan")
@@ -69,16 +69,16 @@ internal class TreeKitTest {
 
     @Test
     fun breadthTraverse() {
-        val rootNode00 = TestTreeNode("00", null, "根结点10")
-        val node11 = TestTreeNode("11", "00", "00的子结点11")
+        val rootNode00 = TestTreeNode("00", null, "root node 10")
+        val node11 = TestTreeNode("11", "00", "child of 00: 11")
         rootNode00.children.add(node11)
-        val node21 = TestTreeNode("21", "11", "11的子结点21")
+        val node21 = TestTreeNode("21", "11", "child of 11: 21")
         node11.children.add(node21)
-        val node12 = TestTreeNode("12", "00", "00的子结点12")
+        val node12 = TestTreeNode("12", "00", "child of 00: 12")
         rootNode00.children.add(node12)
-        val node13 = TestTreeNode("13", "00", "00的子结点13")
+        val node13 = TestTreeNode("13", "00", "child of 00: 13")
         rootNode00.children.add(node13)
-        val node22 = TestTreeNode("22", "13", "13的子结点22")
+        val node22 = TestTreeNode("22", "13", "child of 13: 22")
         node13.children.add(node22)
         val sb = StringBuilder()
         TreeKit.breadthTraverse(rootNode00) {

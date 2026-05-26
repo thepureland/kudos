@@ -6,53 +6,53 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户组缓存项
+ * User group cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthGroupCacheEntry (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String,
 
-    /** 用户组编码 */
+    /** User group code. */
     val code: String?,
 
-    /** 用户组名称 */
+    /** User group name. */
     val name: String?,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String?,
 
-    /** 子系统编码 */
+    /** Subsystem code. */
     val subsysCode: String?,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String?,
 
-    /** 是否激活 */
+    /** Whether the group is active. */
     val active: Boolean?,
 
-    /** 是否内置 */
+    /** Whether the group is built-in. */
     val builtIn: Boolean?,
 
-    /** 创建者id */
+    /** Creator id. */
     val createUserId: String?,
 
-    /** 创建者名称 */
+    /** Creator name. */
     val createUserName: String?,
 
-    /** 创建时间 */
+    /** Creation time. */
     val createTime: LocalDateTime?,
 
-    /** 更新者id */
+    /** Updater id. */
     val updateUserId: String?,
 
-    /** 更新者名称 */
+    /** Updater name. */
     val updateUserName: String?,
 
-    /** 更新时间 */
+    /** Update time. */
     val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {

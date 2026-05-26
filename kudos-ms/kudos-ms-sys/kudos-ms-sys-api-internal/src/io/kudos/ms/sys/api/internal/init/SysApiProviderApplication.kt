@@ -4,7 +4,7 @@ import io.kudos.context.init.EnableKudos
 import org.springframework.boot.SpringApplication
 
 /**
- * sys-api-provider启动入口
+ * sys-api-provider startup entry point.
  *
  * @author K
  * @since 1.0.0

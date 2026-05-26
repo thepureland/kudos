@@ -1,16 +1,18 @@
 package io.kudos.ability.comm.sms.aws.init.properties
 
 /**
- * AWS SDK 正向代理配置；对应 `kudos.ability.comm.sms.aws.proxy.*`。
+ * AWS SDK forward proxy configuration; corresponds to `kudos.ability.comm.sms.aws.proxy.*`.
  *
- * 启用后 `AwsSmsHandler` 在 `@PostConstruct` 阶段构造一个共享的 [software.amazon.awssdk.http.apache.ApacheHttpClient]
- * 并赋给进程级静态字段（`HTTP_CLIENT`）。**代理配置变更需重启进程**——多租户若需不同
- * 代理出口需要另行设计客户端工厂。
+ * When enabled, `AwsSmsHandler` constructs a shared
+ * [software.amazon.awssdk.http.apache.ApacheHttpClient] during `@PostConstruct` and assigns it to
+ * the process-level static field (`HTTP_CLIENT`). **Changing the proxy configuration requires a
+ * process restart** - if multi-tenant scenarios need different proxy egress, a separate client
+ * factory must be designed.
  *
- * @property enable 是否启用代理
- * @property url 代理服务器 URL（`http://proxy.example.com:1234`）
- * @property username 代理认证用户名（可选）
- * @property password 代理认证密码（可选，**敏感**不要落日志）
+ * @property enable whether to enable the proxy
+ * @property url proxy server URL (`http://proxy.example.com:1234`)
+ * @property username proxy authentication username (optional)
+ * @property password proxy authentication password (optional, **sensitive** - do not log)
  * @author K
  * @since 1.0.0
  */

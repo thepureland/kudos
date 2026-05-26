@@ -7,7 +7,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 消息接收数据库表-实体关联对象
+ * Message receive database table-entity binding object.
  *
  * @author K
  * @author AI: Codex
@@ -15,22 +15,22 @@ import org.ktorm.schema.varchar
  */
 object MsgReceives : StringIdTable<MsgReceive>("msg_receive") {
 
-    /** 接收者ID */
+    /** Receiver ID */
     var receiverId = varchar("receiver_id").bindTo { it.receiverId }
 
-    /** 发送ID */
+    /** Send ID */
     var sendId = varchar("send_id").bindTo { it.sendId }
 
-    /** 接收状态字典码 */
+    /** Receive status dictionary code */
     var receiveStatusDictCode = varchar("receive_status_dict_code").bindTo { it.receiveStatusDictCode }
 
-    /** 创建时间 */
+    /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
 

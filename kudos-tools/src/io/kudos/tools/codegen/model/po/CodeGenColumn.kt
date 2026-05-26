@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 
 
 /**
- * 代码生成-列信息数据库实体
+ * Code generation - column info database entity.
  *
  * @author K
  * @since 1.0.0
@@ -16,28 +16,28 @@ interface CodeGenColumn : IDbEntity<String, CodeGenColumn> {
 
     companion object : DbEntityFactory<CodeGenColumn>()
 
-    /** 字段名 */
+    /** Field name */
     var name: String
 
-    /** 对象名称 */
+    /** Object name */
     var objectName: String
 
-    /** 注释 */
+    /** Comment */
     var comment: String?
 
-    /** 是否查询项 */
+    /** Whether it is a search item */
     var searchItem: Boolean
 
-    /** 是否列表项 */
+    /** Whether it is a list item */
     var listItem: Boolean
 
-    /** 是否编辑项 */
+    /** Whether it is an edit item */
     var editItem: Boolean
 
-    /** 是否详情项 */
+    /** Whether it is a detail item */
     var detailItem: Boolean
 
-    /** 是否缓存项 */
+    /** Whether it is a cache item */
     var cacheItem: Boolean
 
 

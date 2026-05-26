@@ -10,10 +10,11 @@ import javafx.scene.layout.HBox
 import javafx.stage.Stage
 
 /**
- * 代码生成器主入口（JavaFX 应用）。
+ * Code generator main entry point (JavaFX application).
  *
- * 启动后弹一个简单选择窗：「单表」/「多表」两个按钮分别打开 [SingleTableCodeGenerateWizard]
- * / [MultiTablesCodeGenerateWizard]，点击后关闭本窗，让子向导独占舞台。
+ * On startup it shows a simple selection window with two buttons, "Single Table" and "Multi Table",
+ * which open [SingleTableCodeGenerateWizard] and [MultiTablesCodeGenerateWizard] respectively. After
+ * clicking, this window closes so the child wizard owns the stage.
  *
  * @author K
  * @since 1.0.0
@@ -21,22 +22,22 @@ import javafx.stage.Stage
 class CodeGeneraterMain : Application() {
 
     /**
-     * JavaFX 应用入口：构造按钮 + HBox，置入 Scene。
+     * JavaFX application entry: builds the buttons and HBox, then puts them in a Scene.
      *
-     * @param primaryStage JavaFX 提供的主舞台
+     * @param primaryStage the main stage provided by JavaFX
      * @author K
      * @since 1.0.0
      */
     override fun start(primaryStage: Stage) {
 
-        val singleTableButton = Button("单表").apply {
+        val singleTableButton = Button("Single Table").apply {
             setOnAction {
                 SingleTableCodeGenerateWizard().start(Stage())
                 primaryStage.close()
             }
         }
 
-        val multiTableButton = Button("多表").apply {
+        val multiTableButton = Button("Multi Table").apply {
             setOnAction {
                 MultiTablesCodeGenerateWizard().start(Stage())
                 primaryStage.close()
@@ -48,7 +49,7 @@ class CodeGeneraterMain : Application() {
         }
 
         primaryStage.apply {
-            title = "Kudos代码生成器"
+            title = "Kudos Code Generator"
             scene = Scene(root, 300.0, 100.0)
             show()
         }
@@ -57,7 +58,7 @@ class CodeGeneraterMain : Application() {
 }
 
 /**
- * 命令行 / IDE 启动入口：委托给 [Application.launch]，由 JavaFX 框架反射回调 [CodeGeneraterMain.start]。
+ * Command-line / IDE startup entry: delegates to [Application.launch], which lets the JavaFX framework reflectively call back into [CodeGeneraterMain.start].
  *
  * @author K
  * @since 1.0.0

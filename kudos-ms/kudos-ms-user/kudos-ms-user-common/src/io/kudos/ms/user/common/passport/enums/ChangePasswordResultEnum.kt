@@ -1,21 +1,21 @@
 package io.kudos.ms.user.common.passport.enums
 
 /**
- * 修改密码（登录密码 / 安全密码）的结果。
+ * Result of changing password (login password / security password).
  *
- * 与 [PassportLoginStatusEnum] 一样，HTTP 层一律 200，由本枚举区分原因。
+ * Like [PassportLoginStatusEnum], HTTP layer always returns 200, with this enum distinguishing the reason.
  *
  * @author K
  * @since 1.0.0
  */
 enum class ChangePasswordResultEnum {
 
-    /** 修改成功 */
+    /** Change succeeded */
     SUCCESS,
 
-    /** 用户不存在 */
+    /** User not found */
     USER_NOT_FOUND,
 
-    /** 旧密码不正确 */
+    /** Old password is incorrect */
     OLD_PASSWORD_WRONG,
 }

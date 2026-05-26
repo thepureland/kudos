@@ -10,7 +10,7 @@ import org.aspectj.lang.annotation.Pointcut
 import org.aspectj.lang.reflect.MethodSignature
 
 /**
- * MQ生产者注解切面
+ * Aspect for the MQ producer annotation.
  *
  * @author paul
  * @author K
@@ -34,24 +34,24 @@ open class MqProducerAspect {
         val signature = joinPoint.signature as MethodSignature
         val annotation = signature.method.getAnnotation(MqProducer::class.java)
             ?: run {
-                log.warn("MqProducer 注解缺失，method={0}", signature.toShortString())
+                log.warn("MqProducer annotation missing, method={0}", signature.toShortString())
                 return
             }
         if (retVal is Boolean && !retVal && annotation.cancelOnFalse) {
-            log.warn("MqProducer 方法返回false，跳过发送。method={0}", joinPoint.signature.toShortString())
+            log.warn("MqProducer method returned false, skipping send. method={0}", joinPoint.signature.toShortString())
             return
         }
         val bindingName = annotation.bindingName
         if (joinPoint.args.size > 1 && annotation.payloadParameterIndex == 0) {
             log.warn(
-                "MqProducer 方法有多个参数但未显式指定payloadParameterIndex，默认发送第一个参数。method={0}",
+                "MqProducer method has multiple parameters but payloadParameterIndex is not set explicitly; sending the first parameter by default. method={0}",
                 signature.toShortString()
             )
         }
         val data = selectPayload(joinPoint.args, annotation.payloadParameterIndex)
             ?: run {
                 log.warn(
-                    "Stream生产消息体为空或payloadParameterIndex越界，忽略本次消息。method={0}, payloadParameterIndex={1}",
+                    "Stream producer payload is null or payloadParameterIndex out of range; ignoring this message. method={0}, payloadParameterIndex={1}",
                     signature.toShortString(),
                     annotation.payloadParameterIndex
                 )
@@ -59,7 +59,7 @@ open class MqProducerAspect {
             }
         val success = producerHelper.sendMessage(bindingName, data)
         if (!success) {
-            log.warn("Stream生产消息发送结果:false, bindingName={0}", bindingName)
+            log.warn("Stream producer send result:false, bindingName={0}", bindingName)
         }
     }
 

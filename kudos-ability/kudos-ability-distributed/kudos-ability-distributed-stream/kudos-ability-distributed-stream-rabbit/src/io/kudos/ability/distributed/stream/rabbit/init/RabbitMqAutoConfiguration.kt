@@ -11,19 +11,20 @@ import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 
 /**
- * RabbitMQ stream broker 接入装配。
+ * RabbitMQ stream broker integration configuration.
  *
- * 继承 [StreamCommonConfiguration] —— 实际所有 producer / consumer / 失败重试 / binding
- * 校验的 bean 都来自父类。本类只负责：
- * 1. 用 [PropertySource] + [YamlPropertySourceFactory] 把 `kudos-ability-distributed-stream-rabbit.yml`
- *    与 `kudos-ability-distributed-stream-common.yml` 合并到 Spring Environment
- * 2. 通过 [IComponentInitializer] 让 kudos 自定义装配 SPI 识别本模块
+ * Extends [StreamCommonConfiguration] — all the producer / consumer / failure-retry / binding
+ * verifier beans actually come from the parent. This class only handles:
+ * 1. Using [PropertySource] + [YamlPropertySourceFactory] to merge `kudos-ability-distributed-stream-rabbit.yml`
+ *    and `kudos-ability-distributed-stream-common.yml` into the Spring Environment.
+ * 2. Letting the kudos custom-configuration SPI recognize this module via [IComponentInitializer].
  *
- * [AutoConfigureAfter] 在 kudos 体系下有效——`ComponentInitializationDispatcher` 会按依赖
- * 顺序调度 IComponentInitializer 实例，所以本类一定在 [ContextAutoConfiguration] 之后初始化。
+ * [AutoConfigureAfter] is honored under the kudos framework — `ComponentInitializationDispatcher`
+ * schedules IComponentInitializer instances in dependency order, so this class is guaranteed to
+ * initialize after [ContextAutoConfiguration].
  *
- * 通过 [StreamConsumerEnvironRegistrar] 启用 multi-binding function.definition 自动聚合，
- * 让多个 kudos yml 中声明的 consumer 能合并注册。
+ * Enables multi-binding function.definition auto-aggregation via [StreamConsumerEnvironRegistrar],
+ * so consumers declared across multiple kudos ymls can be merged and registered.
  *
  * @author K
  * @since 1.0.0
@@ -40,7 +41,7 @@ import org.springframework.context.annotation.PropertySource
 @Import(StreamConsumerEnvironRegistrar::class)
 open class RabbitMqAutoConfiguration : StreamCommonConfiguration(), IComponentInitializer {
 
-    /** kudos 装配 SPI 用的组件名——务必全模块唯一，与 jar artifact 同名约定。 */
+    /** Component name for the kudos configuration SPI — must be unique across all modules; conventionally matches the jar artifact name. */
     override fun getComponentName() = "kudos-ability-distributed-stream-rabbit"
 
 }

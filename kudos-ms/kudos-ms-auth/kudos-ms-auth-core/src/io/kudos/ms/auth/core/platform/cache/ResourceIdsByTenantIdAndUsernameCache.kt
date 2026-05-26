@@ -23,13 +23,14 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * 用户资源ID列表（by tenant id & username）缓存处理器。
+ * Cache handler for the per-user resource ID list keyed by (tenantId, username).
  *
- * 与 [ResourceIdsByUserIdCache] 完全平行 —— 只是 key 用 (tenantId, username) 而不是 userId。
- * 数据来源：`user_account` ∪ `auth_role_user`（直接角色）∪ `auth_group_user` + `auth_group_role`（组继承角色），
- * 再 join `auth_role_resource` 拿到资源 ID 集合。
+ * Parallels [ResourceIdsByUserIdCache] exactly — the only difference is that the key is
+ * (tenantId, username) rather than userId. Sources: `user_account` UNION `auth_role_user`
+ * (direct roles) UNION `auth_group_user` + `auth_group_role` (roles inherited via group),
+ * joined with `auth_role_resource` to obtain the resource ID set.
  *
- * 缓存 key：tenantId::username；value：List<String>。
+ * Cache key: tenantId::username; value: List<String>.
  *
  * @author K
  * @author AI: Cursor
@@ -64,7 +65,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
 
     override fun doReload(key: String): List<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
-            "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户名"
+            "Cache ${CACHE_NAME} key format must be tenantId${Consts.CACHE_KEY_DEFAULT_DELIMITER}username"
         }
         val tenantAndUsername = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
         return getSelf<ResourceIdsByTenantIdAndUsernameCache>().getResourceIds(
@@ -74,7 +75,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有用户的资源ID！")
+            log.info("Cache is disabled; skipping load and cache of resource IDs for all users.")
             return
         }
 
@@ -85,9 +86,9 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         val roleIdToResourceIdsMap = authRoleResourceDao.searchAllRoleIdToResourceIdsForCache()
 
         log.debug(
-            "从数据库加载了${users.size}条用户、直接角色分组${userIdToDirectRoleIds.size}、" +
-                "用户-组分组${userIdToGroupIds.size}、组-角色分组${groupIdToRoleIds.size}、" +
-                "角色-资源分组${roleIdToResourceIdsMap.size}。"
+            "Loaded ${users.size} users, ${userIdToDirectRoleIds.size} direct-role groups, " +
+                "${userIdToGroupIds.size} user-group groups, ${groupIdToRoleIds.size} group-role groups, " +
+                "and ${roleIdToResourceIdsMap.size} role-resource groups from the database."
         )
 
         if (clear) {
@@ -111,13 +112,14 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
 
             if (resourceIds.isNotEmpty()) {
                 KeyValueCacheKit.put(CACHE_NAME, getKey(tenantId, username), resourceIds)
-                log.debug("缓存了租户${tenantId}用户${username}的${resourceIds.size}条资源ID。")
+                log.debug("Cached ${resourceIds.size} resource IDs for tenant ${tenantId} user ${username}.")
             }
         }
     }
 
     /**
-     * 根据租户ID和用户名从缓存中获取该用户拥有的所有资源ID（直接角色 ∪ 组继承角色 下的所有资源 union 去重）。
+     * Get all resource IDs owned by the given user (the deduplicated union of resources reachable via
+     * direct roles and group-inherited roles) from the cache, keyed by (tenantId, username).
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -126,12 +128,12 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
     )
     open fun getResourceIds(tenantId: String, username: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在租户${tenantId}用户${username}的资源ID，从数据库中加载...")
+            log.debug("Cache miss for resource IDs of tenant ${tenantId} user ${username}; loading from the database...")
         }
 
         val userId = userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
         if (userId == null) {
-            log.debug("找不到租户${tenantId}的用户${username}。")
+            log.debug("User ${username} not found in tenant ${tenantId}.")
             return emptyList()
         }
 
@@ -142,29 +144,30 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         }
         val effectiveRoleIds = (direct + viaGroup).distinct()
         if (effectiveRoleIds.isEmpty()) {
-            log.debug("用户${username}没有分配任何（直接或组继承）角色。")
+            log.debug("User ${username} has no roles assigned, directly or via group inheritance.")
             return emptyList()
         }
 
         val resultList = authRoleResourceDao.searchResourceIdsByRoleIds(effectiveRoleIds)
         log.debug(
-            "从数据库加载了租户${tenantId}用户${username}的${effectiveRoleIds.size}个有效角色" +
-                "（直接${direct.size}+组继承${viaGroup.size}），共${resultList.size}条资源ID。"
+            "Loaded ${effectiveRoleIds.size} effective roles for tenant ${tenantId} user ${username} " +
+                "(direct ${direct.size} + group-inherited ${viaGroup.size}) from the database, yielding ${resultList.size} resource IDs."
         )
         return resultList.toList()
     }
 
     /**
-     * 合并"直接绑定的角色"与"通过组继承的角色"为去重后的有效角色列表。
-     * 早返：两边都空时立刻返回空列表。
+     * Merge directly bound roles and group-inherited roles into a deduplicated list of effective roles.
+     * Short-circuits: returns an empty list immediately when both inputs are empty.
      *
-     * 注：该 helper 在 RoleIdsByUserIdCache / ResourceIdsByUserIdCache 中也有完全相同的实现，
-     * 历史上没有提取为顶层 util 以避免引入跨模块依赖；如未来调用方再增多，建议下沉到 base 层。
+     * Note: an identical helper exists in RoleIdsByUserIdCache / ResourceIdsByUserIdCache. It has not
+     * been extracted to a top-level util historically to avoid introducing cross-module dependencies;
+     * if the caller count grows further, consider pushing it down to the base layer.
      *
-     * @param directRoleIds 用户直接持有的角色 id 集合
-     * @param groupIds 用户所属组 id 集合
-     * @param groupIdToRoleIds 组 id → 该组持有的角色 id 列表（批量预 load 避免 N+1）
-     * @return 去重后的有效角色 id 列表
+     * @param directRoleIds role id collection directly held by the user
+     * @param groupIds group id collection the user belongs to
+     * @param groupIdToRoleIds group id -> list of role ids held by that group (pre-loaded in batch to avoid N+1)
+     * @return deduplicated list of effective role ids
      * @author K
      * @since 1.0.0
      */
@@ -179,23 +182,23 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
     }
 
     /**
-     * 用户信息更新后同步缓存（用户名或租户变更）。
+     * Sync the cache after user information is updated (username or tenant changed).
      */
     open fun syncOnUserUpdate(oldTenantId: String, oldUsername: String, newTenantId: String, newUsername: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        log.debug("用户信息更新后，同步${CACHE_NAME}缓存...")
+        log.debug("User information updated; syncing the ${CACHE_NAME} cache...")
 
         KeyValueCacheKit.evict(CACHE_NAME, getKey(oldTenantId, oldUsername))
         if (oldTenantId != newTenantId || oldUsername != newUsername) {
             KeyValueCacheKit.evict(CACHE_NAME, getKey(newTenantId, newUsername))
         }
-        log.debug("${CACHE_NAME}缓存同步完成。")
+        log.debug("${CACHE_NAME} cache sync complete.")
     }
 
-    /** @deprecated 保留旧名做向后兼容；新代码请走事件机制（[AuthGroupUserRelationsChanged] 等）。 */
+    /** @deprecated Kept under the old name for backward compatibility; new code should rely on the event mechanism (such as [AuthGroupUserRelationsChanged]). */
     open fun syncOnRoleUserChange(tenantId: String, username: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        log.debug("用户${username}的角色关系变更后，同步${CACHE_NAME}缓存...")
+        log.debug("User ${username} role relations changed; syncing the ${CACHE_NAME} cache...")
         evict(getKey(tenantId, username))
         if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
             getSelf<ResourceIdsByTenantIdAndUsernameCache>().getResourceIds(tenantId, username)
@@ -203,12 +206,12 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
     }
 
     /**
-     * 角色-资源关系变更后同步缓存（需要根据角色找到所有关联用户）。
-     * 注意：受影响的用户包括 a) 直接拥有该角色的用户 b) 通过组继承该角色的用户。
+     * Sync the cache after a role-resource relation change (must locate every user associated with the role).
+     * Note: affected users include a) users who directly hold the role and b) users who inherit it via a group.
      */
     open fun syncOnRoleResourceChange(roleId: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        log.debug("角色${roleId}的资源关系变更后，同步${CACHE_NAME}缓存...")
+        log.debug("Role ${roleId} resource relations changed; syncing the ${CACHE_NAME} cache...")
 
         val directUserIds = authRoleUserDao.searchUserIdsByRoleId(roleId)
         val groupIds = authGroupRoleDao.searchGroupIdsByRoleId(roleId)
@@ -221,11 +224,11 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
             val t = user.tenantId ?: return@forEach
             val u = user.username ?: return@forEach
             KeyValueCacheKit.evict(CACHE_NAME, getKey(t, u))
-            log.debug("踢除了用户${u}的资源缓存。")
+            log.debug("Evicted the resource cache for user ${u}.")
         }
         log.debug(
-            "${CACHE_NAME}缓存同步完成，共影响${allUserIds.size}个用户（" +
-                "直接${directUserIds.size}+组继承${viaGroupUserIds.size}）。"
+            "${CACHE_NAME} cache sync complete; ${allUserIds.size} users affected " +
+                "(direct ${directUserIds.size} + group-inherited ${viaGroupUserIds.size})."
         )
     }
 
@@ -233,13 +236,13 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${username}"
     }
 
-    /** 仅做本地 (tenantId, username) 失效。 */
+    /** Evict the local entry for (tenantId, username) only. */
     private fun evictBy(tenantId: String, username: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, username))
     }
 
-    /** 批量按 userIds 反查 (tenantId, username) 并失效。 */
+    /** Resolve (tenantId, username) in batch from userIds and evict the corresponding cache entries. */
     private fun evictByUserIds(userIds: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         if (userIds.isEmpty()) return
@@ -259,11 +262,11 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
         event.items.forEach { evictBy(it.tenantId, it.username) }
     }
 
-    /** 用户进出组 → 该用户的资源集合变化。 */
+    /** Users joining or leaving a group changes their resource set. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthGroupUserRelationsChanged): Unit = evictByUserIds(event.userIds)
 
-    /** 组绑定的角色变了 → 组内所有用户的资源集合都要重算。 */
+    /** Roles bound to a group changed, so resources for every user in the group must be recomputed. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthGroupRoleRelationsChanged) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return

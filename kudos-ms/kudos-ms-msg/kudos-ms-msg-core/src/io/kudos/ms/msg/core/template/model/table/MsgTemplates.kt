@@ -7,7 +7,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 消息模板数据库表-实体关联对象
+ * Message template database table-entity binding object.
  *
  * @author K
  * @author AI: Codex
@@ -15,37 +15,37 @@ import org.ktorm.schema.varchar
  */
 object MsgTemplates : StringIdTable<MsgTemplate>("msg_template") {
 
-    /** 发送类型字典码 */
+    /** Send type dictionary code */
     var sendTypeDictCode = varchar("send_type_dict_code").bindTo { it.sendTypeDictCode }
 
-    /** 事件类型字典码 */
+    /** Event type dictionary code */
     var eventTypeDictCode = varchar("event_type_dict_code").bindTo { it.eventTypeDictCode }
 
-    /** 消息类型字典码 */
+    /** Message type dictionary code */
     var msgTypeDictCode = varchar("msg_type_dict_code").bindTo { it.msgTypeDictCode }
 
-    /** 模板分组编码 */
+    /** Template group code */
     var receiverGroupCode = varchar("receiver_group_code").bindTo { it.receiverGroupCode }
 
-    /** 国家-语言字典码 */
+    /** Country-language dictionary code */
     var localeDictCode = varchar("locale_dict_code").bindTo { it.localeDictCode }
 
-    /** 模板标题 */
+    /** Template title */
     var title = varchar("title").bindTo { it.title }
 
-    /** 模板内容 */
+    /** Template content */
     var content = varchar("content").bindTo { it.content }
 
-    /** 是否启用默认值 */
+    /** Whether default values are enabled */
     var defaultActive = boolean("default_active").bindTo { it.defaultActive }
 
-    /** 模板标题默认值 */
+    /** Default template title */
     var defaultTitle = varchar("default_title").bindTo { it.defaultTitle }
 
-    /** 模板内容默认值 */
+    /** Default template content */
     var defaultContent = varchar("default_content").bindTo { it.defaultContent }
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
 

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 用户 Feign 容错降级实现。
+ * User account Feign fallback.
  *
  * @author K
  * @author AI: Cursor
@@ -39,7 +39,7 @@ open class UserAccountFallback :
     }
 
     override fun isUserInOrg(userId: String, orgId: String): Boolean {
-        // 安全默认：远端不可达时按「未归属」处理，避免错误授权
+        // Safe default: when the remote is unreachable, treat as "not a member" to avoid incorrect authorization.
         warnRead("isUserInOrg", userId, orgId)
         return false
     }

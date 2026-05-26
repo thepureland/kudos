@@ -8,14 +8,14 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * ApiResponse 测试用例
+ * ApiResponse test cases.
  *
- * 覆盖 sealed 重构后的关键契约：
- * - 工厂方法仍按以前签名工作（生产端向后兼容）
- * - Success / Failure 各自的字段语义
- * - `when` 编译期穷尽性
- * - Failure 通过协变可赋值给任意 `ApiResponse<T>`
- * - 占位 timestamp 真的取当前时间
+ * Covers the key contracts after the sealed refactor:
+ * - Factory methods still work with the previous signatures (producer-side backward compatibility)
+ * - Field semantics of Success / Failure
+ * - Compile-time exhaustiveness of `when`
+ * - Failure is assignable to any `ApiResponse<T>` via covariance
+ * - Placeholder timestamp actually picks up the current time
  *
  * @author K
  * @since 1.0.0
@@ -23,13 +23,13 @@ import kotlin.test.assertTrue
 internal class ApiResponseTest {
 
     // ============================================================
-    // 工厂方法：success / fail
+    // Factory methods: success / fail
     // ============================================================
 
     @Test
     fun successFactoryProducesSuccessSubtype() {
-        // 用 named arg 显式选 1-arg overload；裸 "hello" 在两个 overload 之间有歧义，
-        // 会被 Kotlin 解析到 success(message, data=null)——这是 API 既有行为
+        // Use a named arg to explicitly pick the 1-arg overload; bare "hello" is ambiguous
+        // between the two overloads and Kotlin resolves to success(message, data=null) - this is the existing API behavior.
         val resp: ApiResponse<String> = ApiResponse.success(data = "hello")
         assertTrue(resp is ApiResponse.Success<String>)
         assertEquals("hello", resp.data)
@@ -40,13 +40,13 @@ internal class ApiResponseTest {
 
     @Test
     fun successFactoryOneArgGoesToMessageOverloadKnownBehavior() {
-        // KNOWN BEHAVIOR：success(data) 和 success(message, data) 两个 overload 在
-        // 单一 String 参数下歧义，Kotlin 会选 2-arg overload，把它当 message。
-        // 若要传 data，请用 named arg `data = ...`。
+        // KNOWN BEHAVIOR: success(data) and success(message, data) are ambiguous with a single String
+        // argument; Kotlin picks the 2-arg overload and treats it as message.
+        // To pass data, use the named arg `data = ...`.
         val resp: ApiResponse<String> = ApiResponse.success("hello")
         assertTrue(resp is ApiResponse.Success<String>)
-        assertEquals("hello", resp.message, "裸 String 进的是 message，不是 data")
-        assertNull(resp.data, "data 默认为 null")
+        assertEquals("hello", resp.message, "Bare String becomes message, not data")
+        assertNull(resp.data, "data defaults to null")
     }
 
     @Test
@@ -58,11 +58,11 @@ internal class ApiResponseTest {
 
     @Test
     fun successFactoryWithCustomMessage() {
-        val resp = ApiResponse.success("已保存", "data-payload")
+        val resp = ApiResponse.success("Saved", "data-payload")
         assertTrue(resp is ApiResponse.Success<String>)
-        assertEquals("已保存", resp.message)
+        assertEquals("Saved", resp.message)
         assertEquals("data-payload", resp.data)
-        // 自定义消息时 code 仍是 SUCCESS
+        // With a custom message, code is still SUCCESS
         assertEquals(CommonErrorCodeEnum.SUCCESS.code, resp.code)
     }
 
@@ -79,7 +79,7 @@ internal class ApiResponseTest {
     @Test
     fun failFactoryWithErrors() {
         val errors = listOf(
-            ErrorDetail(code = "REQUIRED", field = "name", message = "名称不能为空")
+            ErrorDetail(code = "REQUIRED", field = "name", message = "name must not be empty")
         )
         val resp = ApiResponse.fail<Any>("400", "validation failed", errors = errors)
         assertTrue(resp is ApiResponse.Failure)
@@ -95,7 +95,7 @@ internal class ApiResponseTest {
     }
 
     // ============================================================
-    // success 标志固定值
+    // success flag fixed value
     // ============================================================
 
     @Test
@@ -113,12 +113,12 @@ internal class ApiResponseTest {
     }
 
     // ============================================================
-    // sealed 编译期穷尽性
+    // Sealed compile-time exhaustiveness
     // ============================================================
 
     @Test
     fun whenExpressionIsExhaustiveWithoutElse() {
-        // 这个 when 没有 else 分支——能编译通过本身就说明 sealed 类型穷尽性生效
+        // This `when` has no else branch - successful compilation alone shows sealed-type exhaustiveness takes effect
         val resp: ApiResponse<String> = ApiResponse.success(data = "x")
         val branch = when (resp) {
             is ApiResponse.Success -> "S:${resp.data}"
@@ -138,12 +138,12 @@ internal class ApiResponseTest {
     }
 
     // ============================================================
-    // 协变：Failure 可赋值给任意 ApiResponse<T>
+    // Covariance: Failure assignable to any ApiResponse<T>
     // ============================================================
 
     @Test
     fun failureAssignableToTypedResponseViaCovariance() {
-        // Failure : ApiResponse<Nothing>，out T 让它能成为 ApiResponse<String> 等
+        // Failure : ApiResponse<Nothing>; the `out T` lets it become ApiResponse<String> etc.
         val stringResp: ApiResponse<String> = ApiResponse.fail("400", "bad")
         val intResp: ApiResponse<Int> = ApiResponse.fail("400", "bad")
         val nestedResp: ApiResponse<List<Map<String, Any>>> = ApiResponse.fail("400", "bad")
@@ -153,7 +153,7 @@ internal class ApiResponseTest {
     }
 
     // ============================================================
-    // timestamp 默认值
+    // timestamp default
     // ============================================================
 
     @Test
@@ -163,12 +163,12 @@ internal class ApiResponseTest {
         val after = System.currentTimeMillis()
         assertTrue(
             resp.timestamp in before..after,
-            "timestamp ${resp.timestamp} 应在 [$before, $after] 区间内"
+            "timestamp ${resp.timestamp} should be within [$before, $after]"
         )
     }
 
     // ============================================================
-    // data class equals / copy 在各自子类上工作
+    // data class equals / copy work on each subclass
     // ============================================================
 
     @Test
@@ -187,11 +187,11 @@ internal class ApiResponseTest {
 
     @Test
     fun successCopyAllowsTraceIdInjection() {
-        // 这条用例对应 GlobalResponseBodyHandler 的 traceId 回填流程
+        // This case corresponds to GlobalResponseBodyHandler's traceId backfill flow
         val original = ApiResponse.Success(code = "200", message = "ok", data = "x")
         val withTrace = original.copy(traceId = "trace-001")
         assertEquals("trace-001", withTrace.traceId)
-        assertEquals("x", withTrace.data, "copy 不影响其它字段")
+        assertEquals("x", withTrace.data, "copy should not affect other fields")
     }
 
     @Test

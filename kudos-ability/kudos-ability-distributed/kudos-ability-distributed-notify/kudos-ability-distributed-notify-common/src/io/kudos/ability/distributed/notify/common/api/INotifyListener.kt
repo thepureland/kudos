@@ -5,12 +5,13 @@ import java.io.Serializable
 
 
 /**
- * 跨节点通知消息的消费方 SPI。
+ * SPI for consumers of cross-node notification messages.
  *
- * 业务侧实现本接口并注册为 Spring bean——[NotifyListenerBeanPostProcessor] 会按 [notifyType]
- * 自动登记到 [NotifyListenerItem]。通知到达时（具体由 notify-mq 等模块负责）按 type 派发。
+ * Callers implement this interface and register it as a Spring bean—[NotifyListenerBeanPostProcessor]
+ * automatically registers it into [NotifyListenerItem] keyed by [notifyType]. When a notification arrives
+ * (delivered by modules such as notify-mq) it is dispatched by type.
  *
- * 典型实现：`io.kudos.ability.cache.common.notify.CacheNotifyListener`（接收 cache 失效消息）。
+ * Typical implementation: `io.kudos.ability.cache.common.notify.CacheNotifyListener` (receives cache invalidation messages).
  *
  * @author Younger
  * @author K
@@ -18,10 +19,10 @@ import java.io.Serializable
  */
 interface INotifyListener {
 
-    /** 本 listener 关心的通知类型标识。多个 listener 关心同一 type 时按 namespace 区分。 */
+    /** Identifier of the notification type this listener handles. When multiple listeners share the same type, they are distinguished by namespace. */
     fun notifyType(): String
 
-    /** 处理收到的通知消息。注意业务侧应自行做幂等——MQ 实现可能投递多次。 */
+    /** Handles the received notification message. Callers must implement idempotency themselves—MQ implementations may deliver multiple times. */
     fun notifyProcess(notifyMessageVo: NotifyMessageVo<out Serializable>)
 
 }

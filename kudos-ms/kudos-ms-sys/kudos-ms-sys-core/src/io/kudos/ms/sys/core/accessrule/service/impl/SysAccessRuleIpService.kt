@@ -29,9 +29,9 @@ import java.math.BigDecimal
 
 
 /**
- * IP 访问规则（`sys_access_rule_ip`）的增删改查；写后发布
+ * CRUD for IP access rules (`sys_access_rule_ip`); after writes, publishes
  * [SysAccessRuleIpInserted] / [SysAccessRuleIpUpdated] / [SysAccessRuleIpDeleted] / [SysAccessRuleIpBatchDeleted]
- * 领域事件，由缓存通过 `@TransactionalEventListener(AFTER_COMMIT)` 订阅刷新。
+ * domain events, subscribed by the cache via `@TransactionalEventListener(AFTER_COMMIT)` to refresh.
  *
  * @author K
  * @author AI: Cursor
@@ -60,7 +60,8 @@ open class SysAccessRuleIpService(
         accessRuleIpsBySubSysAndTenantIdCache.getAccessRuleIps(systemCode, tenantId)
 
     /**
-     * 判断给定整型 IP 是否落在当前系统与租户维度下任一未过期且区间包含该值的规则内。
+     * Check whether the given integer IP falls within any non-expired rule whose range
+     * contains the value under the current system and tenant dimensions.
      */
     @Transactional(readOnly = true)
     override fun checkIpAccess(ip: BigDecimal, systemCode: String, tenantId: String?): Boolean {
@@ -74,11 +75,11 @@ open class SysAccessRuleIpService(
     override fun deleteByRuleId(ruleId: String): Int {
         val parent = sysAccessRuleDao.get(ruleId)
         val count = dao.deleteByParentRuleId(ruleId)
-        log.debug("删除规则${ruleId}的所有IP，共删除${count}条。")
+        log.debug("Deleted all IPs of rule ${ruleId}; ${count} records deleted in total.")
         if (parent != null && count > 0) {
             eventPublisher.publishEvent(
                 SysAccessRuleIpBatchDeleted(
-                    ids = emptyList(), // ids 对此场景非必要，订阅方按 dimensions 重建
+                    ids = emptyList(), // ids are not needed for this scenario; subscribers rebuild by dimensions
                     dimensions = listOf(parent.systemCode to parent.tenantId as String?),
                 )
             )
@@ -94,7 +95,7 @@ open class SysAccessRuleIpService(
             SysAccessRuleIp.of(any, cacheEntry.id)
         } else any
         val id = super.insert(ruleIp)
-        completeCrudInsert(log, "新增id为${id}的IP访问规则。") {
+        completeCrudInsert(log, "Inserted IP access rule with id ${id}.") {
             val ip = dao.get(id) ?: return@completeCrudInsert
             val parent = sysAccessRuleDao.get(ip.parentRuleId) ?: return@completeCrudInsert
             eventPublisher.publishEvent(
@@ -111,12 +112,12 @@ open class SysAccessRuleIpService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "IP访问规则")
+        val id = requireStringId(any, "IP access rule")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的IP访问规则。",
-            failureMessage = "更新id为${id}的IP访问规则失败！",
+            successMessage = "Updated IP access rule with id ${id}.",
+            failureMessage = "Failed to update IP access rule with id ${id}!",
         ) {
             val ip = dao.get(id) ?: return@completeCrudUpdate
             val parent = sysAccessRuleDao.get(ip.parentRuleId) ?: return@completeCrudUpdate
@@ -134,7 +135,7 @@ open class SysAccessRuleIpService(
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
         if (dao.get(id) == null) {
-            log.error("更新id为${id}的IP访问规则的启用状态时，记录不存在！")
+            log.error("Record not found when updating active state of IP access rule with id ${id}!")
             return false
         }
         val patch = SysAccessRuleIp {
@@ -144,8 +145,8 @@ open class SysAccessRuleIpService(
         return completeCrudUpdate(
             success = dao.update(patch),
             log = log,
-            successMessage = "更新id为${id}的IP访问规则的启用状态为${active}。",
-            failureMessage = "更新id为${id}的IP访问规则的启用状态为${active}失败！",
+            successMessage = "Updated active state of IP access rule with id ${id} to ${active}.",
+            failureMessage = "Failed to update active state of IP access rule with id ${id} to ${active}!",
         ) {
             val ip = dao.get(id) ?: return@completeCrudUpdate
             val parent = sysAccessRuleDao.get(ip.parentRuleId) ?: return@completeCrudUpdate
@@ -167,8 +168,8 @@ open class SysAccessRuleIpService(
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的IP访问规则。",
-            failureMessage = "删除id为${id}的IP访问规则失败！",
+            successMessage = "Deleted IP access rule with id ${id}.",
+            failureMessage = "Failed to delete IP access rule with id ${id}!",
         ) {
             if (parent != null) {
                 eventPublisher.publishEvent(
@@ -179,13 +180,13 @@ open class SysAccessRuleIpService(
                     )
                 )
             } else {
-                log.warn("删除id为${id}的IP访问规则后无法定位父规则，跳过事件发布；缓存仅能等下次 reloadAll 修正。")
+                log.warn("After deleting IP access rule with id ${id}, parent rule cannot be located; skipping event publish; cache can only be corrected by the next reloadAll.")
             }
         }
     }
 
     /**
-     * 批量删除 IP 规则；删除成功后发布 [SysAccessRuleIpBatchDeleted]。
+     * Batch delete IP rules; publishes [SysAccessRuleIpBatchDeleted] on successful deletion.
      */
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {

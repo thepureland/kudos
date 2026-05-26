@@ -5,41 +5,41 @@ import java.time.LocalDateTime
 
 
 /**
- * 登录成功后返回给调用方的用户信息快照。
+ * Snapshot of user info returned to the caller after a successful login.
  *
- * 与 [io.kudos.ms.user.common.account.vo.UserAccountCacheEntry] 的区别：
- * 后者是缓存层的内部类型（含完整字段），本类仅暴露登录后可对外公开的字段。
+ * Difference from [io.kudos.ms.user.common.account.vo.UserAccountCacheEntry]:
+ * the latter is an internal type for the cache layer (containing all fields); this class only exposes fields safe to publish after login.
  *
  * @author K
  * @since 1.0.0
  */
 data class UserInfoModel(
 
-    /** 用户主键 */
+    /** User primary key */
     val id: String,
 
-    /** 用户名 */
+    /** Username */
     val username: String,
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String,
 
-    /** 用户所在机构id，可为 null */
+    /** Organization id the user belongs to; may be null */
     val orgId: String?,
 
-    /** 账号类型字典码 */
+    /** Account type dictionary code */
     val accountTypeDictCode: String?,
 
-    /** 默认语言 */
+    /** Default locale */
     val defaultLocale: String?,
 
-    /** 默认时区 */
+    /** Default timezone */
     val defaultTimezone: String?,
 
-    /** 默认币种 */
+    /** Default currency */
     val defaultCurrency: String?,
 
-    /** 本次登录时间（服务端时间） */
+    /** Login time of this session (server time) */
     val loginTime: LocalDateTime,
 
 ) : Serializable {

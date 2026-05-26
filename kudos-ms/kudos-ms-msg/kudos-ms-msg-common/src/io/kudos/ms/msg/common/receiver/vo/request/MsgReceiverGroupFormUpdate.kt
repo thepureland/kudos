@@ -4,14 +4,14 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 消息接收者群组表单更新请求VO
+ * Update request VO for the message receiver group form.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgReceiverGroupFormUpdate (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
     override val receiverGroupTypeDictCode: String?,

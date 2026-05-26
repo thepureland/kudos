@@ -4,13 +4,14 @@ import com.alibaba.nacos.api.config.listener.AbstractListener
 
 
 /**
- * Nacos 配置变更监听器基类。
+ * Base class for Nacos config-change listeners.
  *
- * 继承 nacos SDK 自带的 [AbstractListener]，并提供变更处理前后的 hook。业务侧实现
- * [onConfigChanged] 即可；需要埋点 / 重试 / 上下文透传时可覆盖 [beforeConfigChanged] /
- * [afterConfigChanged]，无需再包一层 listener。
+ * Extends the Nacos SDK's own [AbstractListener] and exposes hooks before and after change
+ * handling. Application code only needs to implement [onConfigChanged]; instrumentation, retry,
+ * or context propagation can override [beforeConfigChanged] / [afterConfigChanged] without
+ * wrapping yet another listener layer.
  *
- * 业务侧典型用法：
+ * Typical application usage:
  * ```kotlin
  * NacosConfigServiceListener(serverAddr).addListener(dataId, group, object : AbstractConfigChangeListener() {
  *     override fun onConfigChanged(configInfo: String?) { /* ... */ }

@@ -13,15 +13,15 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * 验证 [SysAccessRuleService][io.kudos.ms.sys.core.accessrule.service.impl.SysAccessRuleService]
- * 在 CRUD 完成后正确发布领域事件。
+ * Verifies that [SysAccessRuleService][io.kudos.ms.sys.core.accessrule.service.impl.SysAccessRuleService]
+ * publishes domain events correctly after CRUD operations complete.
  *
- * 由于 [SqlTestBase][io.kudos.test.rdb.SqlTestBase] 在测试方法事务结束时自动回滚，
- * `@TransactionalEventListener(AFTER_COMMIT)` 不会触发；但 Spring 在 publishEvent 时**立即**派发到
- * 普通 [@EventListener][EventListener] 订阅者，所以这里用一个 capture bean 验证「服务确实发布了事件」。
+ * Because [SqlTestBase][io.kudos.test.rdb.SqlTestBase] auto-rolls back at the end of the test method's transaction,
+ * `@TransactionalEventListener(AFTER_COMMIT)` will not fire; however, Spring dispatches publishEvent **immediately**
+ * to regular [@EventListener][EventListener] subscribers, so we use a capture bean here to verify "the service did publish the event".
  *
- * Listener 内部对事件 → 缓存写入的转换由 [AccessRuleIpsBySubSysAndTenantIdCacheTest] / [SysAccessRuleHashCacheTest]
- * 直接调用 listener 方法验证。两边合起来覆盖完整链路。
+ * The listener's event-to-cache write conversion is verified directly by [AccessRuleIpsBySubSysAndTenantIdCacheTest] /
+ * [SysAccessRuleHashCacheTest] by invoking the listener methods. The two together cover the full chain.
  *
  * @author K
  * @author AI: Cursor
@@ -49,7 +49,7 @@ class SysAccessRuleEventPublishingTest : RdbAndRedisCacheTestBase() {
                 remark = "event-test",
             )
         )
-        val event = assertNotNull(captor.lastOf<SysAccessRuleInserted>(), "应发布 SysAccessRuleInserted 事件")
+        val event = assertNotNull(captor.lastOf<SysAccessRuleInserted>(), "SysAccessRuleInserted event should be published")
         assertEquals(id, event.id)
         assertEquals("svc-system-evt-test-1", event.systemCode)
         assertEquals("20000000-0000-0000-0000-000000099001", event.tenantId)
@@ -62,13 +62,13 @@ class SysAccessRuleEventPublishingTest : RdbAndRedisCacheTestBase() {
         assertTrue(sysAccessRuleService.updateActive(id, false))
         val event = assertNotNull(captor.lastOf<SysAccessRuleUpdated>())
         assertEquals(id, event.id)
-        // updateActive 不改变维度键，before == after
+        // updateActive does not change the dimension keys, so before == after
         assertEquals(event.beforeSystemCode, event.systemCode)
         assertEquals(event.beforeTenantId, event.tenantId)
     }
 }
 
-/** 测试期间捕获领域事件的辅助 bean。 */
+/** Helper bean that captures domain events during tests. */
 @Component
 open class AccessRuleEventCaptor {
     val raw: MutableList<Any> = mutableListOf()

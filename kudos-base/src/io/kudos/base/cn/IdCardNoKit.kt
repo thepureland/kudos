@@ -10,33 +10,33 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * 身份证工具类.
+ * ID card utility.
  *
  * @author K
  * @since 1.0.0
  */
 object IdCardNoKit {
 
-    /** 中国大陆公民身份证号码最小长度。  */
+    /** Minimum length of a Chinese mainland citizen ID card number. */
     private const val MAINLAND_ID_MIN_LENGTH = 15
 
-    /** 中国大陆公民身份证号码最大长度。  */
+    /** Maximum length of a Chinese mainland citizen ID card number. */
     private const val MAINLAND_ID_MAX_LENGTH = 18
 
     /**
-     * 每位加权因子
+     * Weighting factor for each digit.
      */
     private val power = intArrayOf(7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2)
 
     /**
-     * 第18位校检码
+     * Check codes for the 18th digit.
      */
     private val verifyCode = arrayOf("1", "0", "X", "9", "8", "7", "6", "5", "4", "3", "2")
 
-    /** 最低年限  */
+    /** Minimum year. */
     private const val MIN = 1930
 
-    /** 台湾身份首字母对应数字  */
+    /** Mapping from Taiwan ID card leading letters to numeric values. */
     private val twFirstCode: Map<String, Int> = mapOf(
         "A" to 10, "B" to 11, "C" to 12, "D" to 13, "E" to 14, "F" to 15, "G" to 16, "H" to 17,
         "J" to 18, "K" to 19, "L" to 20, "M" to 21, "N" to 22, "P" to 23, "Q" to 24, "R" to 25,
@@ -45,10 +45,10 @@ object IdCardNoKit {
     )
 
     /**
-     * 将15位身份证号码转换为18位(大陆)
+     * Convert a 15-digit ID card number to 18 digits (mainland).
      *
-     * @param idCardNo15 15位身份编码, 非法值将返回null
-     * @return 18位身份编码
+     * @param idCardNo15 15-digit ID code; returns null for invalid input
+     * @return 18-digit ID code
      * @author K
      * @since 1.0.0
      */
@@ -67,10 +67,10 @@ object IdCardNoKit {
     }
 
     /**
-     * 检查指定字符串是否为身份证号(包括大陆、港、澳、台)
+     * Check whether the specified string is an ID card number (mainland, Hong Kong, Macau, Taiwan).
      *
-     * @param str 待检查的字符串, 为null返回false
-     * @return true: 为身份证号
+     * @param str the string to check; returns false for null
+     * @return true if it is an ID card number
      * @author K
      * @since 1.0.0
      */
@@ -81,10 +81,10 @@ object IdCardNoKit {
     }
 
     /**
-     * 检查是否为18位身份号(大陆)
+     * Check whether the string is an 18-digit ID number (mainland).
      *
-     * @param str 待检查的字符串, 为null返回false
-     * @return true: 为18位身份证号
+     * @param str the string to check; returns false for null
+     * @return true if it is an 18-digit ID card number
      * @author K
      * @since 1.0.0
      */
@@ -97,10 +97,10 @@ object IdCardNoKit {
     }
 
     /**
-     * 检查是否为15位身份号(大陆)
+     * Check whether the string is a 15-digit ID number (mainland).
      *
-     * @param str 待检查的字符串, 为null返回false
-     * @return true: 为18位身份证号
+     * @param str the string to check; returns false for null
+     * @return true if it is an 18-digit ID card number
      * @author K
      * @since 1.0.0
      */
@@ -119,10 +119,10 @@ object IdCardNoKit {
     }
 
     /**
-     * 检查是否为台湾身份号
+     * Check whether the string is a Taiwan ID number.
      *
-     * @param str 待检查的字符串, 为null返回false
-     * @return true: 为台湾身份证号
+     * @param str the string to check; returns false for null
+     * @return true if it is a Taiwan ID card number
      * @author K
      * @since 1.0.0
      */
@@ -136,13 +136,13 @@ object IdCardNoKit {
     }
 
     /**
-     * 检查是否为香港身份号(存在Bug，部份特殊身份证无法检查)
-     * 身份证前2位为英文字符，如果只出现一个英文字符则表示第一位是空格，对应数字58 前2位英文字符A-Z分别对应数字10-35
-     * 最后一位校验码为0-9的数字加上字符"A"，"A"代表10
-     * 将身份证号码全部转换为数字，分别对应乘9-1相加的总和，整除11则证件号码有效
+     * Check whether the string is a Hong Kong ID number (has bugs; some special ID cards cannot be validated).
+     * The first two characters of the ID are English letters; if only one English letter appears, the first position is a space, corresponding to the number 58. The English letters A-Z in the first two positions map to the numbers 10-35.
+     * The last digit is a 0-9 digit or the character "A"; "A" represents 10.
+     * Convert the entire ID number to digits, multiply each digit by 9-1 respectively and sum them; if the sum is divisible by 11, the ID is valid.
      *
-     * @param str 待检查的字符串, 为null返回false
-     * @return true: 为香港身份证号
+     * @param str the string to check; returns false for null
+     * @return true if it is a Hong Kong ID card number
      * @author K
      * @since 1.0.0
      */
@@ -163,10 +163,10 @@ object IdCardNoKit {
     }
 
     /**
-     * 检查是否为澳门身份号
+     * Check whether the string is a Macau ID number.
      *
-     * @param str 待检查的字符串, 为null返回false
-     * @return true: 为澳门身份证号
+     * @param str the string to check; returns false for null
+     * @return true if it is a Macau ID card number
      * @author K
      * @since 1.0.0
      */
@@ -175,11 +175,11 @@ object IdCardNoKit {
     }
 
     /**
-     * 将字符数组按 ASCII 偏移转换为数字数组（'0'..'9' -> 0..9）。
-     * 入参未做数字字符校验，调用方需先保证输入仅含数字字符。
+     * Convert a char array to a digit array by ASCII offset ('0'..'9' -> 0..9).
+     * The input is not validated for digit characters; the caller must ensure the input contains only digits.
      *
-     * @param ca 待转换的字符数组
-     * @return 与入参等长的整型数组
+     * @param ca the char array to convert
+     * @return an int array of the same length as the input
      * @author K
      * @since 1.0.0
      */
@@ -187,10 +187,10 @@ object IdCardNoKit {
         IntArray(ca.size) { ca[it].code - 48 }
 
     /**
-     * 将身份证的每位和对应位的加权因子相乘之后，再得到和值
+     * Multiply each digit of the ID number by the corresponding weighting factor and then sum the results.
      *
      * @param iArr
-     * @return 身份证编码。
+     * @return the ID code.
      * @author K
      * @since 1.0.0
      */
@@ -199,20 +199,20 @@ object IdCardNoKit {
         else iArr.indices.sumOf { iArr[it] * power[it] }
 
     /**
-     * 将power和值与11取模获得余数进行校验码判断
+     * Determine the check code by taking the power sum modulo 11.
      *
      * @param iSum
-     * @return 校验位
+     * @return the check digit
      * @author K
      * @since 1.0.0
      */
     private fun getCheckCode18(iSum: Int): String = verifyCode[iSum % 11]
 
     /**
-     * 根据身份编号获取生日(仅限大陆身份证)
+     * Get the birth date from an ID number (mainland ID cards only).
      *
-     * @param idCardNo 身份证号, 为null或空或不是大陆身份证将返回null
-     * @return 生日(yyyyMMdd)
+     * @param idCardNo the ID number; returns null for null, blank, or non-mainland ID cards
+     * @return birth date (yyyyMMdd)
      * @author K
      * @since 1.0.0
      */
@@ -231,10 +231,10 @@ object IdCardNoKit {
     }
 
     /**
-     * 根据身份证号获取性别(仅限大陆和台湾)
+     * Get the sex from an ID number (mainland and Taiwan only).
      *
-     * @param idCardNo 身份证号，为null返回SexEnum.UNKNOWN
-     * @return 性别枚举
+     * @param idCardNo the ID number; returns SexEnum.UNKNOWN for null
+     * @return the sex enum
      * @author K
      * @since 1.0.0
      */
@@ -251,10 +251,10 @@ object IdCardNoKit {
     }
 
     /**
-     * 根据身份证号获取户籍省份(包括大陆、港、澳、台)
+     * Get the registered province from an ID number (mainland, Hong Kong, Macau, Taiwan).
      *
-     * @param idCardNo 身份证号 为null或空返回null
-     * @return 省枚举，未匹配返回null
+     * @param idCardNo the ID number; returns null for null or empty
+     * @return the province enum, or null if no match
      * @author K
      * @since 1.0.0
      */
@@ -270,12 +270,12 @@ object IdCardNoKit {
     }
 
     /**
-     * 验证小于当前日期 是否有效
+     * Validate whether the date is valid and earlier than the current date.
      *
-     * @param iYear 待验证日期(年)
-     * @param iMonth 待验证日期(月 1-12)
-     * @param iDate 待验证日期(日)
-     * @return 是否有效
+     * @param iYear year to validate
+     * @param iMonth month to validate (1-12)
+     * @param iDate day to validate
+     * @return whether the date is valid
      * @author K
      * @since 1.0.0
      */

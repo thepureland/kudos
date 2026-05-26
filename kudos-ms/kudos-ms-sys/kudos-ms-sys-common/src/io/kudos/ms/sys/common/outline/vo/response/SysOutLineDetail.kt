@@ -5,59 +5,59 @@ import java.time.LocalDateTime
 
 
 /**
- * 出网白名单详情响应VO
+ * Response VO for outbound whitelist details.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysOutLineDetail(
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
-    /** 主机名或通配符 */
+    /** Hostname or wildcard */
     val host: String = "",
 
-    /** 端口 */
+    /** Port */
     val port: Int? = null,
 
-    /** 协议 */
+    /** Protocol */
     val protocol: String = "",
 
-    /** 系统编码 */
+    /** System code */
     val systemCode: String = "",
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = false,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Creation time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

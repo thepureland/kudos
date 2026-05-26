@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 
 /**
- * RabbitMq生产者Feign客户端
+ * RabbitMQ producer Feign client.
  *
  * @author shane
  * @author K

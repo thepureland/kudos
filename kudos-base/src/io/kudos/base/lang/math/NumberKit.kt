@@ -4,7 +4,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 /**
- * 数值工具类
+ * Number utility.
  *
  * @author K
  * @since 1.0.0
@@ -13,105 +13,105 @@ object NumberKit {
 
 
     /**
-     * 将字符串转换为Number
-     * 首先，将检查给定值的结尾类型限定符`'f','F','d','D','l','L'`。
-     * 如果找到，开始尝试从指定的类型逐个创建更大的类型，直到找到一个能表示该值的类型。
-     * 如果一个类型说明符也没有找到，它会检查小数点，然后从小到大地尝试类型，
-     * 从Integer到BigInteger，从Float的BigDecimal
-     * 一个字符串以`0x` 或 `-0x`(大写或小写)开头，它将被解释为十六进制整数。
-     * 以`0`开头的则被解释为八进制。
-     * 如果参数为 `null` 将返回 `null`.
-     * 该方法不会对输入的字符串作trim操作。
-     * 如：字符串含有前导或后导空格将抛出NumberFormatException异常.
+     * Convert a string to a Number.
+     * First, the trailing type qualifiers `'f','F','d','D','l','L'` of the value are checked.
+     * If one is found, the method starts from the specified type and tries successively larger types until it finds one capable of representing the value.
+     * If no type specifier is found, the method checks for a decimal point and then tries types from smallest to largest,
+     * Integer -> BigInteger, Float -> BigDecimal.
+     * A string starting with `0x` or `-0x` (in either case) is interpreted as a hexadecimal integer.
+     * A string starting with `0` is interpreted as octal.
+     * If the argument is `null`, `null` is returned.
+     * This method does not trim the input string.
+     * For example, a string containing leading or trailing whitespace will throw a NumberFormatException.
      *
-     * @param str 数值的字符串形式, 可以为null
-     * @return 字符串所代表的数值，为 `null` 将返回 `null`
-     * @throws NumberFormatException 如果字符串不能被转换
+     * @param str the string form of the number, may be null
+     * @return the numeric value represented by the string, returns `null` if `null` is passed in
+     * @throws NumberFormatException if the string cannot be converted
      * @author K
      * @since 1.0.0
      */
     /**
-     * 将字符串转换为Number对象
-     * 
-     * 支持多种数字格式：十六进制、十进制整数、浮点数、科学计数法。
-     * 
-     * 工作流程：
-     * 1. 空值处理：如果输入为null，直接返回null
-     * 2. 去除空白：去除字符串首尾空白字符
-     * 3. 空字符串检查：如果去除空白后为空，抛出异常
-     * 4. 转换为小写：便于统一处理十六进制标识
-     * 5. 格式判断：
-     *    - 十六进制：以"0x"或"-0x"开头
-     *    - 浮点数：包含小数点或科学计数法（e/E）
-     *    - 整数：其他情况
-     * 
-     * 支持的格式：
-     * 1. 十六进制：
-     *    - 正数："0xFF" → 255
-     *    - 负数："-0x1A" → -26
-     *    - 使用BigInteger解析，支持任意精度
-     * 2. 浮点数：
-     *    - 普通小数："3.14" → BigDecimal
-     *    - 科学计数法："1.23e10" → BigDecimal
-     *    - 使用BigDecimal解析，保证精度
-     * 3. 整数：
-     *    - 普通整数："123" → BigInteger
-     *    - 支持以0开头（不再识别为八进制，统一按十进制处理）
-     *    - 使用BigInteger解析，支持任意精度
-     * 
-     * 精度保证：
-     * - 整数使用BigInteger，支持任意长度的整数
-     * - 浮点数使用BigDecimal，保证精度不丢失
-     * - 避免使用基本类型导致的精度问题
-     * 
-     * 异常处理：
-     * - 空字符串：抛出NumberFormatException
-     * - 格式错误：抛出NumberFormatException，包含详细错误信息
-     * - 所有异常都包含原始字符串，便于调试
-     * 
-     * 注意事项：
-     * - 十六进制标识不区分大小写（0x、0X都可以）
-     * - 科学计数法不区分大小写（e、E都可以）
-     * - 以0开头的数字不再识别为八进制，统一按十进制处理
-     * - 返回BigInteger或BigDecimal，需要根据实际需求转换
-     * 
-     * @param str 待转换的字符串，可以为null
-     * @return Number对象（BigInteger或BigDecimal），如果输入为null则返回null
-     * @throws NumberFormatException 如果字符串格式不正确或为空
+     * Convert a string to a Number object.
+     *
+     * Supports a variety of numeric formats: hexadecimal, decimal integer, floating point, and scientific notation.
+     *
+     * Workflow:
+     * 1. Null handling: if the input is null, return null directly
+     * 2. Trim: strip leading and trailing whitespace
+     * 3. Empty check: if the trimmed string is empty, throw an exception
+     * 4. Lowercase: normalize for hex prefix handling
+     * 5. Format detection:
+     *    - Hexadecimal: starts with "0x" or "-0x"
+     *    - Floating point: contains a decimal point or scientific notation (e/E)
+     *    - Integer: otherwise
+     *
+     * Supported formats:
+     * 1. Hexadecimal:
+     *    - Positive: "0xFF" -> 255
+     *    - Negative: "-0x1A" -> -26
+     *    - Parsed with BigInteger, supports arbitrary precision
+     * 2. Floating point:
+     *    - Normal decimal: "3.14" -> BigDecimal
+     *    - Scientific notation: "1.23e10" -> BigDecimal
+     *    - Parsed with BigDecimal to preserve precision
+     * 3. Integer:
+     *    - Normal integer: "123" -> BigInteger
+     *    - Leading-zero values are no longer treated as octal; they are parsed as decimal
+     *    - Parsed with BigInteger, supports arbitrary precision
+     *
+     * Precision guarantees:
+     * - Integers use BigInteger and support integers of arbitrary length
+     * - Floating-point numbers use BigDecimal to preserve precision
+     * - Avoids precision issues caused by primitive types
+     *
+     * Exception handling:
+     * - Empty string: throws NumberFormatException
+     * - Format error: throws NumberFormatException with detailed error message
+     * - All exceptions include the original string for easier debugging
+     *
+     * Notes:
+     * - The hex prefix is case-insensitive (both 0x and 0X work)
+     * - Scientific notation is case-insensitive (both e and E work)
+     * - Numbers with a leading zero are no longer recognized as octal; they are parsed as decimal
+     * - Returns BigInteger or BigDecimal; convert as needed
+     *
+     * @param str the string to convert, may be null
+     * @return a Number object (BigInteger or BigDecimal); returns null if the input is null
+     * @throws NumberFormatException if the string is malformed or empty
      */
     fun createNumber(str: String?): Number? {
         if (str == null) return null
-        // 先检查是否为十六进制（可带正负号）
+        // Check for hexadecimal first (may carry a sign)
         val s = str.trim()
-        if (s.isEmpty()) throw NumberFormatException("空字符串不能转换为数字")
+        if (s.isEmpty()) throw NumberFormatException("Empty string cannot be converted to a number")
         val lower = s.lowercase()
         return when {
             lower.startsWith("0x") -> {
-                // 例如 "0xFF" ⇒ 255
+                // For example, "0xFF" -> 255
                 BigInteger(lower.substring(2), 16)
             }
 
             lower.startsWith("-0x") -> {
-                // 例如 "-0x1A" ⇒ -26
+                // For example, "-0x1A" -> -26
                 BigInteger(lower.substring(3), 16).negate()
             }
-            // 判断是否包含小数点或科学计数法
+            // Check for a decimal point or scientific notation
             s.contains('.') || lower.contains('e') -> {
-                // 直接用 BigDecimal 解析
+                // Parse directly with BigDecimal
                 try {
                     BigDecimal(s)
                 } catch (ex: NumberFormatException) {
-                    throw NumberFormatException("无法将 \"$s\" 转换为 BigDecimal: ${ex.message}")
+                    throw NumberFormatException("Cannot convert \"$s\" to BigDecimal: ${ex.message}")
                 }
             }
 
             else -> {
-                // 普通整数，尝试用 BigInteger 解析
+                // Plain integer, try parsing with BigInteger
                 try {
-                    // 支持以 0 开头的八进制? Java 不再默认识别八进制，统一用 BigInteger 十进制
+                    // Support leading 0 as octal? Java no longer recognizes octal by default; parse as decimal with BigInteger
                     BigInteger(s)
                 } catch (ex: NumberFormatException) {
-                    throw NumberFormatException("无法将 \"$s\" 转换为整数: ${ex.message}")
+                    throw NumberFormatException("Cannot convert \"$s\" to an integer: ${ex.message}")
                 }
             }
         }
@@ -119,28 +119,28 @@ object NumberKit {
 
 
     /**
-     * 检查指定的字符串是否只包含数字字符
-     * `Null` 或 空串将返回 `false`.
+     * Check whether the specified string contains only digit characters.
+     * Returns `false` for `null` or an empty string.
      *
-     * @param str 待检查的字符串
-     * @return `true` 指定的字符串只包含Unicode的数字字符
+     * @param str the string to check
+     * @return `true` if the specified string contains only Unicode digit characters
      * @author K
      * @since 1.0.0
      */
     fun isDigits(str: String?): Boolean {
         if (str.isNullOrEmpty()) return false
-        // 只要所有字符都是 0..9，即视为数字
+        // Treat as a number only if every character is in 0..9
         return str.all { it in '0'..'9' }
     }
 
     /**
-     * 检查指定的字符串是否只为java的数值
-     * 有效的数值包括以限定符`0x`开头的十六进制数，科学记数法和
-     * 以类型限定符结尾的数值（如：123L）
-     * `Null` 或 空串将返回 `false`.
+     * Check whether the specified string represents a valid Java numeric value.
+     * Valid numbers include hexadecimal values prefixed with `0x`, scientific notation,
+     * and values ending with a type qualifier (e.g., 123L).
+     * Returns `false` for `null` or an empty string.
      *
-     * @param str 待检查的字符串
-     * @return `true` 如果指定的字符串为一个正确格式的数值
+     * @param str the string to check
+     * @return `true` if the specified string is a properly formatted number
      * @author K
      * @since 1.0.0
      */
@@ -149,16 +149,16 @@ object NumberKit {
         val s = str.trim()
         if (s.isEmpty()) return false
 
-        // 检查十六进制
+        // Check hexadecimal
         val lower = s.lowercase()
         if (lower.startsWith("0x") || lower.startsWith("-0x")) {
-            // 后面至少要有一个十六进制字符
+            // At least one hex character must follow the prefix
             val hexPart = if (lower.startsWith("0x")) lower.substring(2) else lower.substring(3)
             if (hexPart.isEmpty()) return false
             return hexPart.all { it in '0'..'9' || it in 'a'..'f' }
         }
 
-        // 带小数点或科学记数法，则尝试 BigDecimal 解析
+        // For decimal point or scientific notation, try to parse with BigDecimal
         return try {
             BigDecimal(s)
             true

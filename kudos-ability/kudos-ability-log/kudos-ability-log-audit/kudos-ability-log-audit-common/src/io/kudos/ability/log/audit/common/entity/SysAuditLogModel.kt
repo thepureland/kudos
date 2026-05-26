@@ -5,29 +5,31 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 审计日志聚合模型。
+ * Audit-log aggregate model.
  *
- * 用于 MQ 投递 / 服务接口入参，把"主审计记录 ([entities])"与"对应明细 ([sysAuditDetailLogs])"打包在一起，
- * 加上跨进程透传所需的子系统和租户 id。toString 直接走 JSON 序列化以便日志排查时打印完整结构。
+ * Used for MQ delivery and service-interface inputs; packages the "main audit records ([entities])"
+ * together with the "matching details ([sysAuditDetailLogs])", plus the subsystem and tenant id
+ * needed for cross-process forwarding. toString serializes to JSON directly so the full structure
+ * shows up in logs for troubleshooting.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 class SysAuditLogModel : Serializable {
-    /** 审计明细列表，与 [entities] 顺序对应；批量操作时一对多 */
+    /** Audit detail list, aligned in order with [entities]; one-to-many in batch operations */
     var sysAuditDetailLogs: MutableList<SysAuditDetailLogVo?>? = null
 
-    /** 主审计记录列表（每次操作可对多个实体生效） */
+    /** Main audit record list (a single operation may affect multiple entities) */
     var entities: MutableList<SysAuditLogVo>? = null
 
-    /** 子系统编码，跨进程审计时用于路由到对应数据库 */
+    /** Subsystem code, used for routing to the correct database in cross-process auditing */
     var subSysCode: String? = null
-    /** 租户 id，多租户场景下用于隔离 */
+    /** Tenant id, used for isolation in multi-tenant scenarios */
     var tenantId: String? = null
 
     /**
-     * 直接序列化为 JSON 串，便于日志排查时打印完整结构。
+     * Serializes directly to a JSON string so the full structure shows up in logs.
      *
      * @author K
      * @since 1.0.0
@@ -37,7 +39,7 @@ class SysAuditLogModel : Serializable {
     }
 
     companion object {
-        /** Serializable 版本号 */
+        /** Serializable version uid */
         @Serial
         private val serialVersionUID = -2034863673832068399L
     }

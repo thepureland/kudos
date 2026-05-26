@@ -1,24 +1,25 @@
 package io.kudos.ability.distributed.lock.common.locker
 
 /**
- * 分布式锁回调 SPI。
+ * Distributed-lock callback SPI.
  *
- * `@DistributedLock` 注解的切面（在 lock-redisson 模块实现）拿锁前后调用本接口的方法；
- * 业务侧通过 `DistributedLockContext.set(callback)` 把自己的回调实例塞入 ThreadLocal，
- * 切面读出来调用。
+ * The aspect for the `@DistributedLock` annotation (implemented in the lock-redisson module)
+ * invokes the methods of this interface before and after acquiring the lock; application code
+ * stores its callback instance in ThreadLocal via `DistributedLockContext.set(callback)`, and the
+ * aspect retrieves and invokes it.
  *
  * @author K
  * @since 1.0.0
  */
 interface IDistributedLockCallback {
     /**
-     * 成功上锁增加处理
+     * Additional handling after a successful lock acquisition.
      * @param lockKey
      */
     fun doLockSuccess(lockKey: String) {}
 
     /**
-     * 上锁失败处理
+     * Handling after a failed lock acquisition.
      * @param lockKey
      */
     fun doLockFail(lockKey: String)

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 子系统-微服务关系数据访问对象
+ * Sub-system to micro-service relation DAO.
  *
  * @author K
  * @author AI: Cursor
@@ -20,10 +20,10 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
 
 
     /**
-     * 根据子系统编码查找对应的微服务编码
+     * Find micro-service codes by sub-system code.
      *
-     * @param subSystemCode 子系统编码
-     * @return Set<微服务编码>
+     * @param subSystemCode sub-system code
+     * @return Set<micro-service code>
      */
     fun searchMicroServiceCodesBySubSystemCode(subSystemCode: String): Set<String> {
         val criteria = Criteria(SysSubSystemMicroService::subSystemCode eq subSystemCode)
@@ -31,10 +31,10 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
     }
 
     /**
-     * 根据微服务编码查找对应的子系统编码
+     * Find sub-system codes by micro-service code.
      *
-     * @param microServiceCode 微服务编码
-     * @return Set<子系统编码>
+     * @param microServiceCode micro-service code
+     * @return Set<sub-system code>
      */
     fun fetchSubSystemCodesByMicroServiceCode(microServiceCode: String): Set<String> {
         val criteria = Criteria(SysSubSystemMicroService::microServiceCode eq microServiceCode)
@@ -42,11 +42,11 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
     }
 
     /**
-     * 检查关系是否存在
+     * Check whether the relation exists.
      *
-     * @param subSystemCode 子系统编码
-     * @param microServiceCode 微服务编码
-     * @return 是否存在
+     * @param subSystemCode sub-system code
+     * @param microServiceCode micro-service code
+     * @return whether the relation exists
      */
     fun exists(subSystemCode: String, microServiceCode: String): Boolean {
         val criteria = Criteria.and(
@@ -57,11 +57,11 @@ open class SysSubSystemMicroServiceDao : BaseCrudDao<String, SysSubSystemMicroSe
     }
 
     /**
-     * 按子系统编码和微服务编码删除关系
+     * Delete the relation by sub-system code and micro-service code.
      *
-     * @param subSystemCode 子系统编码
-     * @param microServiceCode 微服务编码
-     * @return 删除条数
+     * @param subSystemCode sub-system code
+     * @param microServiceCode micro-service code
+     * @return number of rows deleted
      */
     fun deleteBySubSystemCodeAndMicroServiceCode(subSystemCode: String, microServiceCode: String): Int {
         val criteria = Criteria.and(

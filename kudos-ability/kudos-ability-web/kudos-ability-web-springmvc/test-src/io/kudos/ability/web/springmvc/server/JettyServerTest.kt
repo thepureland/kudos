@@ -4,7 +4,7 @@ import io.kudos.test.common.init.EnableKudosTest
 import org.springframework.boot.test.context.SpringBootTest
 
 /**
- * jetty容器测试用例
+ * Test cases for the Jetty container.
  *
  * @author K
  * @author AI: Codex

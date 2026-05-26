@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 记住我登录数据访问对象
+ * Remember-me login data access object
  *
  * @author K
  * @author AI: Codex

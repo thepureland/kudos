@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 角色数据访问对象
+ * Role DAO.
  *
  * @author K
  * @author AI: Cursor
@@ -22,7 +22,7 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
 
 
     /**
-     * 查询所有 active=true 的角色
+     * Queries all roles with active=true.
      *
      * @return List<AuthRoleCacheEntry>
      */
@@ -32,11 +32,11 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
     }
 
     /**
-     * 按租户、角色编码查询（不区分 active），返回单条缓存用 VO
+     * Queries by tenant and role code (regardless of active state) and returns a single cache VO.
      *
-     * @param tenantId 租户id
-     * @param code 角色编码
-     * @return AuthRoleCacheEntry，不存在返回null
+     * @param tenantId tenant id
+     * @param code role code
+     * @return AuthRoleCacheEntry, or null when not found
      */
     open fun searchRoleByTenantIdAndRoleCode(tenantId: String, code: String): AuthRoleCacheEntry? {
         val criteria = Criteria.and(
@@ -47,10 +47,10 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
     }
 
     /**
-     * 查询租户下所有启用角色ID
+     * Queries all active role IDs under a tenant.
      *
-     * @param tenantId 租户ID
-     * @return 角色ID列表
+     * @param tenantId tenant id
+     * @return list of role IDs
      */
     fun searchActiveRoleIdsByTenantId(tenantId: String): List<String> {
         val criteria = Criteria(AuthRole::tenantId eq tenantId)

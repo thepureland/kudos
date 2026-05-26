@@ -20,17 +20,17 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 国际化统一缓存处理器，基于 Hash 结构存储 [SysI18nCacheEntry]。
+ * Unified i18n cache handler. Stores [SysI18nCacheEntry] using a Hash structure.
  *
- * 提供按主属性与按副属性查询与回写能力：
- *  1. 按主键 id：单条 [getI18nById]、批量 [getI18nsByIds]
- *  2. 按副属性：locale + atomicServiceCode + i18nTypeDictCode + namespace
+ * Supports querying and write-back by primary and secondary properties:
+ *  1. By primary key id: single [getI18nById], batch [getI18nsByIds]
+ *  2. By secondary properties: locale + atomicServiceCode + i18nTypeDictCode + namespace
  *
- * 数据来源表：sys_i18n
+ * Source table: sys_i18n
  *
- * 使用 [FILTERABLE_PROPERTIES] 中的副属性建立 Set 索引，支持多条件等值查询；所有写入、删除、全量刷新均需使用同一副属性集合以保持索引一致。
+ * Uses the secondary properties in [FILTERABLE_PROPERTIES] to build Set indexes supporting multi-condition equality queries. All writes, deletes, and full refreshes must use the same secondary property set to keep indexes consistent.
  *
- * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
+ * Before use, add a configuration named [CACHE_NAME] with hash=true in the sys_cache configuration table.
  *
  * @author K
  * @author AI: Cursor
@@ -47,7 +47,7 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
     companion object {
         const val CACHE_NAME = "SYS_I18N__HASH"
 
-        /** 可筛选副属性，用于按 locale / atomicServiceCode / i18nTypeDictCode / namespace 建二级索引 */
+        /** Filterable secondary properties, used to build secondary indexes by locale / atomicServiceCode / i18nTypeDictCode / namespace. */
         val FILTERABLE_PROPERTIES = setOf(
             SysI18nCacheEntry::locale.name,
             SysI18nCacheEntry::atomicServiceCode.name,
@@ -65,13 +65,13 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
     override fun doReload(id: Any): SysI18nCacheEntry? =
         sysI18nDao.get(id.toString(), SysI18nCacheEntry::class)
 
-    // ---------- 按主键 id ----------
+    // ---------- By primary key id ----------
 
     /**
-     * 根据主键 id 从缓存获取国际化项，未命中则查库并回写。
+     * Get an i18n entry from the cache by primary key id. On miss, load from DB and write back.
      *
-     * @param id 国际化主键，非空
-     * @return 国际化缓存项，不存在时 null
+     * @param id i18n primary key, non-blank
+     * @return i18n cache entry, or null if not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -81,15 +81,15 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
         filterableProperties = ["locale", "atomicServiceCode", "i18nTypeDictCode", "namespace"]
     )
     open fun getI18nById(id: String): SysI18nCacheEntry? {
-        require(id.isNotBlank()) { "获取国际化时 id 不能为空" }
+        require(id.isNotBlank()) { "id must not be blank when fetching i18n" }
         return sysI18nDao.get(id, SysI18nCacheEntry::class)
     }
 
     /**
-     * 根据多个主键 id 批量从缓存获取国际化项，未命中的从库加载并回写。
+     * Batch fetch i18n entries from the cache by multiple primary key ids. On miss, load from DB and write back.
      *
-     * @param ids 国际化主键集合，可为空
-     * @return id -> 缓存对象 映射，仅包含能查到的 id
+     * @param ids i18n primary key collection, may be empty
+     * @return id -> cache object map, containing only ids that were found
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -105,18 +105,18 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
         }.toMap()
     }
 
-    // ---------- 按 locale + atomicServiceCode + i18nTypeDictCode + namespace ----------
+    // ---------- By locale + atomicServiceCode + i18nTypeDictCode + namespace ----------
 
     /**
-     * 按语言、原子服务编码、国际化类型、命名空间多条件等值查询，返回匹配的启用的国际化列表。
-     * 先按副属性索引查缓存，未命中则查库并回写。
-     * namespace 可不传或传空，不传时按 locale + atomicServiceCode + i18nTypeDictCode 查询（不按 namespace 过滤）。
+     * Multi-condition equality query by locale, atomic service code, i18n type, and namespace. Returns the list of matched, enabled i18n entries.
+     * Queries the cache via secondary indexes first; on miss, loads from DB and writes back.
+     * namespace may be omitted or empty; when empty, the query uses locale + atomicServiceCode + i18nTypeDictCode (namespace is not used as a filter).
      *
-     * @param locale 语言_地区，非空
-     * @param atomicServiceCode 原子服务编码，非空
-     * @param i18nTypeDictCode 国际化类型字典代码，非空
-     * @param namespace 命名空间，缺省为null，为空不参与查询
-     * @return 匹配的缓存列表
+     * @param locale language_region, non-blank
+     * @param atomicServiceCode atomic service code, non-blank
+     * @param i18nTypeDictCode i18n type dictionary code, non-blank
+     * @param namespace namespace, defaults to null; when blank it is not used in the query
+     * @return matched cache entries
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -130,21 +130,21 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
         i18nTypeDictCode: String,
         namespace: String? = null
     ): List<SysI18nCacheEntry> {
-        require(locale.isNotBlank()) { "获取国际化时 locale 不能为空" }
-        require(atomicServiceCode.isNotBlank()) { "获取国际化时 atomicServiceCode 不能为空" }
-        require(i18nTypeDictCode.isNotBlank()) { "获取国际化时 i18nTypeDictCode 不能为空" }
+        require(locale.isNotBlank()) { "locale must not be blank when fetching i18n" }
+        require(atomicServiceCode.isNotBlank()) { "atomicServiceCode must not be blank when fetching i18n" }
+        require(i18nTypeDictCode.isNotBlank()) { "i18nTypeDictCode must not be blank when fetching i18n" }
         return sysI18nDao.fetchActiveI18nsForCache(locale, atomicServiceCode, i18nTypeDictCode, namespace ?: "")
     }
 
     /**
-     * 按语言、原子服务编码、国际化类型、命名空间多条件等值查询，返回匹配的启用的国际化信息Map。
-     * 先按副属性索引查缓存，未命中则查库并回写。
+     * Multi-condition equality query by locale, atomic service code, i18n type, and namespace. Returns a map of matched, enabled i18n entries.
+     * Queries the cache via secondary indexes first; on miss, loads from DB and writes back.
      *
-     * @param locale 语言—地区，非空
-     * @param atomicServiceCode 原子服务编码，非空
-     * @param i18nTypeDictCode 国际化类型字典代码，非空
-     * @param namespace 命名空间
-     * @return Map<国际化key，译文>
+     * @param locale language-region, non-blank
+     * @param atomicServiceCode atomic service code, non-blank
+     * @param i18nTypeDictCode i18n type dictionary code, non-blank
+     * @param namespace namespace
+     * @return Map<i18n key, translated text>
      */
     open fun getI18nMap(
         locale: String,
@@ -157,13 +157,13 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
     }
 
     /**
-     * 按语言、原子服务编码、国际化类型多条件等值查询，返回匹配的启用的国际化信息Map。
-     * 先按副属性索引查缓存，未命中则查库并回写。
+     * Multi-condition equality query by locale, atomic service code, and i18n type. Returns a map of matched, enabled i18n entries.
+     * Queries the cache via secondary indexes first; on miss, loads from DB and writes back.
      *
-     * @param locale 语言—地区，非空
-     * @param atomicServiceCode 原子服务编码，非空
-     * @param i18nTypeDictCode 国际化类型字典代码，非空
-     * @return Map<命名空间，Map<国际化key，译文>>
+     * @param locale language-region, non-blank
+     * @param atomicServiceCode atomic service code, non-blank
+     * @param i18nTypeDictCode i18n type dictionary code, non-blank
+     * @return Map<namespace, Map<i18n key, translated text>>
      */
     open fun getI18nMap(
         locale: String,
@@ -177,29 +177,29 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
             }
     }
 
-    // ---------- 全量刷新与同步 ----------
+    // ---------- Full refresh and sync ----------
 
     /**
-     * 从库全量加载启用的国际化并刷新 Hash 缓存。
+     * Load all enabled i18n entries from DB and refresh the Hash cache.
      *
-     * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
+     * @param clear when true, clear before writing; when false, overwrite in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载国际化 Hash 缓存")
+            log.info("Cache is disabled; skipping i18n Hash cache load")
             return
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
         val list = sysI18nDao.fetchAllActiveI18nsForCache()
-        log.debug("从数据库加载 ${list.size} 条国际化，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} i18n entries from the database; refreshing Hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /**
-     * 新增国际化后同步：将指定 id 的实体从库加载并写入缓存。
+     * Sync after i18n insert: load the entity with the given id from DB and write it into the cache.
      *
-     * @param id 主键
+     * @param id primary key
      */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
@@ -208,19 +208,19 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
     }
 
     /**
-     * 新增国际化后同步（重载，接收业务对象与 id）。
+     * Sync after i18n insert (overload, accepts business object and id).
      *
-     * @param any 业务对象，仅用于重载区分
-     * @param id 主键
+     * @param any business object, used only to distinguish the overload
+     * @param id primary key
      */
     open fun syncOnInsert(any: Any, id: String) {
         syncOnInsert(id)
     }
 
     /**
-     * 更新国际化后同步：从库重新加载该 id 并写回缓存。
+     * Sync after i18n update: reload the entity with this id from DB and write back into the cache.
      *
-     * @param id 主键
+     * @param id primary key
      */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -231,19 +231,19 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
     }
 
     /**
-     * 更新国际化后同步（重载）。
+     * Sync after i18n update (overload).
      *
-     * @param any 业务对象，仅用于重载区分
-     * @param id 主键
+     * @param any business object, used only to distinguish the overload
+     * @param id primary key
      */
     open fun syncOnUpdate(any: Any, id: String) {
         syncOnUpdate(id)
     }
 
     /**
-     * 删除国际化后同步：从缓存中移除该 id 及其副属性索引。
+     * Sync after i18n delete: remove the id and its secondary-property indexes from the cache.
      *
-     * @param id 主键
+     * @param id primary key
      */
     open fun syncOnDelete(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -251,18 +251,18 @@ open class SysI18nHashCache : AbstractHashCacheHandler<SysI18nCacheEntry>() {
     }
 
     /**
-     * 批量删除后同步：从缓存中移除这些 id 及其副属性索引。
+     * Sync after batch delete: remove these ids and their secondary-property indexes from the cache.
      *
-     * @param ids 主键集合
+     * @param ids primary key collection
      */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(cacheName())) return
-        log.debug("批量删除 id 为 $ids 的 sys_i18n 后，同步从 ${cacheName()} 缓存中踢除...")
+        log.debug("After batch deleting sys_i18n ids $ids, evicting from ${cacheName()} cache...")
         val cache = hashCache()
         ids.forEach {
             cache.deleteById(cacheName(), it, SysI18nCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
         }
-        log.debug("${cacheName()} 缓存同步完成。")
+        log.debug("${cacheName()} cache sync complete.")
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)

@@ -1,61 +1,61 @@
 package io.kudos.ability.cache.common.support
 
 /**
- * 缓存配置提供者接口
+ * Cache configuration provider interface.
  *
  * @author K
  * @since 1.0.0
  */
 interface ICacheConfigProvider {
     /**
-     * 返回指定名称的缓存配置
+     * Returns the cache configuration for the given name.
      *
-     * @param name 缓存名称
-     * @return 缓存配置信息，找不到返回null
+     * @param name cache name
+     * @return cache configuration; null if not found
      * @author K
      * @since 1.0.0
      */
     fun getCacheConfig(name: String): CacheConfig?
 
     /**
-     * 返回所有缓存配置信息
+     * Returns all cache configurations.
      *
-     * @return Map(String, 缓存配置信息)
+     * @return Map(String, cache configuration)
      * @author K
      * @since 1.0.0
      */
     fun getAllCacheConfigs(): Map<String, CacheConfig>
 
     /**
-     * 返回本地(第一级)缓存配置信息
+     * Returns the local (first-tier) cache configurations.
      *
-     * @return Map(String, 本地缓存配置信息)
+     * @return Map(String, local cache configuration)
      * @author K
      * @since 1.0.0
      */
     fun getLocalCacheConfigs(): Map<String, CacheConfig>
 
     /**
-     * 返回远程(第二级)缓存配置信息
+     * Returns the remote (second-tier) cache configurations.
      *
-     * @return Map(String, 远程缓存配置信息)
+     * @return Map(String, remote cache configuration)
      * @author K
      * @since 1.0.0
      */
     fun getRemoteCacheConfigs(): Map<String, CacheConfig>
 
     /**
-     * 返回本地-远程(一级和二级)缓存配置信息
+     * Returns the local-remote (first- and second-tier) cache configurations.
      *
-     * @return Map(String, 地 - 远程 ( 一级和二级)缓存配置信息)
+     * @return Map(String, local-remote (first- and second-tier) cache configuration)
      * @author K
      * @since 1.0.0
      */
     fun getLocalRemoteCacheConfigs(): Map<String, CacheConfig>
 
     /**
-     * 返回 Hash 缓存配置（hash==true 的配置），用于 MixHashCacheManager 初始化。
-     * key 为 cacheName，value 含 strategy 等，与 key-value 共用同一配置源。
+     * Returns the Hash cache configurations (those with hash==true), used to initialize MixHashCacheManager.
+     * Keys are cacheName; values contain strategy etc. Shares the same configuration source as key-value caches.
      *
      * @return Map(cacheName, CacheConfig)
      * @since 1.0.0

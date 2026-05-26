@@ -30,7 +30,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户账号业务
+ * User account service implementation.
  *
  * @author K
  * @author AI: Cursor
@@ -96,14 +96,14 @@ open class UserAccountService(
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean =
-        updateAndPublish(id, "更新id为${id}的用户的启用状态为${active}") {
+        updateAndPublish(id, "Updated active flag of user id=${id} to ${active}") {
             this.active = active
         }
 
     @Transactional
     override fun resetPassword(id: String, newPassword: String): Boolean {
         val encryptedPassword = PasswordKit.hash(newPassword)
-        return updateAndPublish(id, "重置id为${id}的用户的登录密码") {
+        return updateAndPublish(id, "Reset login password of user id=${id}") {
             this.loginPassword = encryptedPassword
             this.loginErrorTimes = 0
         }
@@ -112,7 +112,7 @@ open class UserAccountService(
     @Transactional
     override fun resetSecurityPassword(id: String, newPassword: String): Boolean {
         val encryptedPassword = PasswordKit.hash(newPassword)
-        return updateAndPublish(id, "重置id为${id}的用户的安全密码") {
+        return updateAndPublish(id, "Reset security password of user id=${id}") {
             this.securityPassword = encryptedPassword
             this.securityPasswordErrorTimes = 0
         }
@@ -120,7 +120,7 @@ open class UserAccountService(
 
     @Transactional
     override fun updateLastLoginInfo(id: String, loginIp: Long, loginTime: LocalDateTime): Boolean =
-        updateAndPublish(id, "更新id为${id}的用户的最后登录信息") {
+        updateAndPublish(id, "Updated last-login info of user id=${id}") {
             this.lastLoginIp = loginIp
             this.lastLoginTime = loginTime
             this.loginErrorTimes = 0
@@ -128,7 +128,7 @@ open class UserAccountService(
 
     @Transactional
     override fun updateLastLogoutInfo(id: String, logoutTime: LocalDateTime): Boolean =
-        updateAndPublish(id, "更新id为${id}的用户的最后登出信息") {
+        updateAndPublish(id, "Updated last-logout info of user id=${id}") {
             this.lastLogoutTime = logoutTime
         }
 
@@ -136,14 +136,14 @@ open class UserAccountService(
     override fun incrementLoginErrorTimes(id: String): Boolean {
         val existing = dao.get(id) ?: return false
         val current = existing.loginErrorTimes ?: 0
-        return updateAndPublish(id, "增加id为${id}的用户的登录错误次数") {
+        return updateAndPublish(id, "Incremented login error count of user id=${id}") {
             this.loginErrorTimes = current + 1
         }
     }
 
     @Transactional
     override fun resetLoginErrorTimes(id: String): Boolean =
-        updateAndPublish(id, "重置id为${id}的用户的登录错误次数") {
+        updateAndPublish(id, "Reset login error count of user id=${id}") {
             this.loginErrorTimes = 0
         }
 
@@ -151,32 +151,32 @@ open class UserAccountService(
     override fun incrementSecurityPasswordErrorTimes(id: String): Boolean {
         val existing = dao.get(id) ?: return false
         val current = existing.securityPasswordErrorTimes ?: 0
-        return updateAndPublish(id, "增加id为${id}的用户的安全密码错误次数") {
+        return updateAndPublish(id, "Incremented security-password error count of user id=${id}") {
             this.securityPasswordErrorTimes = current + 1
         }
     }
 
     @Transactional
     override fun resetSecurityPasswordErrorTimes(id: String): Boolean =
-        updateAndPublish(id, "重置id为${id}的用户的安全密码错误次数") {
+        updateAndPublish(id, "Reset security-password error count of user id=${id}") {
             this.securityPasswordErrorTimes = 0
         }
 
     /**
-     * 共用模板：构造只含 id + 修改字段的 [UserAccount]，调用 [UserAccountDao.update]，
-     * 成功记录 debug + 发布 [UserAccountUpdated]，失败记录 error。
+     * Shared template: build a [UserAccount] containing only id + changed fields, call [UserAccountDao.update],
+     * log debug + publish [UserAccountUpdated] on success, or log error on failure.
      *
-     * 抽出来收口原本散布在 9 个 update 方法里的「build → update → log + event」三段式样板，
-     * 避免新增字段时漏发事件或日志措辞漂移。
+     * Extracted to consolidate the "build -> update -> log + event" boilerplate that was previously
+     * scattered across 9 update methods, avoiding missed events or drifting log wording when fields are added.
      */
     private inline fun updateAndPublish(id: String, actionDesc: String, build: UserAccount.() -> Unit): Boolean {
         val user = UserAccount { this.id = id }.apply(build)
         val success = dao.update(user)
         if (success) {
-            log.debug("$actionDesc。")
+            log.debug("$actionDesc.")
             eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
-            log.error("${actionDesc}失败！")
+            log.error("${actionDesc} failed!")
         }
         return success
     }
@@ -184,7 +184,7 @@ open class UserAccountService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        log.debug("新增id为${id}的用户。")
+        log.debug("Inserted user id=${id}.")
         eventPublisher.publishEvent(UserAccountInserted(id = id))
         return id
     }
@@ -194,10 +194,10 @@ open class UserAccountService(
         val success = super.update(any)
         val id = BeanKit.getProperty(any, UserAccount::id.name) as String
         if (success) {
-            log.debug("更新id为${id}的用户。")
+            log.debug("Updated user id=${id}.")
             eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
-            log.error("更新id为${id}的用户失败！")
+            log.error("Failed to update user id=${id}!")
         }
         return success
     }
@@ -205,15 +205,15 @@ open class UserAccountService(
     @Transactional
     override fun deleteById(id: String): Boolean {
         val user = dao.get(id) ?: run {
-            log.warn("删除id为${id}的用户时，发现其已不存在！")
+            log.warn("Failed to delete user id=${id}: already does not exist!")
             return false
         }
         val success = super.deleteById(id)
         if (success) {
-            log.debug("删除id为${id}的用户。")
+            log.debug("Deleted user id=${id}.")
             eventPublisher.publishEvent(UserAccountDeleted(id, user.tenantId, user.username))
         } else {
-            log.error("删除id为${id}的用户失败！")
+            log.error("Failed to delete user id=${id}!")
         }
         return success
     }
@@ -222,7 +222,7 @@ open class UserAccountService(
     override fun resetAuthKey(id: String, accountName: String, issuer: String): AuthKeySetup? {
         val secret = GoogleAuthenticator.generateSecretKey()
             ?: run {
-                log.error("生成 TOTP secret 失败: userId=${id}")
+                log.error("Failed to generate TOTP secret: userId=${id}")
                 return null
             }
         val user = UserAccount {
@@ -230,26 +230,26 @@ open class UserAccountService(
             this.authenticationKey = secret
         }
         if (!dao.update(user)) {
-            log.error("重置 TOTP secret 失败（用户不存在？）: userId=${id}")
+            log.error("Failed to reset TOTP secret (user missing?): userId=${id}")
             return null
         }
-        // 标准 otpauth URL，前端可直接渲染为二维码（zxing/qrcode.js 等）
+        // Standard otpauth URL; the front end can render it directly as a QR code (zxing/qrcode.js etc.).
         val otpauthUrl = "otpauth://totp/${encodeOtpAuthLabel(issuer, accountName)}" +
             "?secret=${secret}&issuer=${java.net.URLEncoder.encode(issuer, Charsets.UTF_8)}"
-        log.debug("重置 id 为 ${id} 的用户的 TOTP secret。")
+        log.debug("Reset TOTP secret for user id=${id}.")
         eventPublisher.publishEvent(UserAccountUpdated(id = id))
         return AuthKeySetup(secret = secret, otpauthUrl = otpauthUrl)
     }
 
     @Transactional
     override fun cleanAuthKey(id: String): Boolean {
-        // ktorm 的 update 对于 null 字段：直接 set null 需要用 dao.updateProperties
+        // For ktorm update, setting a column to null requires dao.updateProperties.
         val success = dao.updateProperties(id, mapOf(UserAccount::authenticationKey.name to null))
         if (success) {
-            log.debug("清除 id 为 ${id} 的用户的 TOTP secret。")
+            log.debug("Cleared TOTP secret for user id=${id}.")
             eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
-            log.warn("清除 TOTP secret 失败（用户不存在？）: userId=$id")
+            log.warn("Failed to clear TOTP secret (user missing?): userId=$id")
         }
         return success
     }
@@ -261,14 +261,15 @@ open class UserAccountService(
     }
 
     /**
-     * 按 RFC 6238 / Google Authenticator 规范拼出 `otpauth://` URI 的 label 段。
+     * Build the label segment of the `otpauth://` URI per RFC 6238 / Google Authenticator conventions.
      *
-     * 格式约定：`issuer:accountName` 整体做 URL 编码——冒号在编码后会变成 `%3A`，正符合 GA App 解析期望。
-     * 如果 issuer 或 accountName 含空格 / 特殊字符（中文用户名常见），不编码会破坏整个 URI。
+     * Format: URL-encode the whole `issuer:accountName` -- the colon becomes `%3A` after encoding,
+     * which matches what the GA app expects. If issuer or accountName contains spaces / special characters
+     * (common with non-ASCII usernames), failing to encode would corrupt the entire URI.
      *
-     * @param issuer 应用方标识（通常是产品名）
-     * @param accountName 账号名（用户登录名/邮箱）
-     * @return 编码后的 label 段
+     * @param issuer application identifier (usually the product name)
+     * @param accountName account name (user login name / email)
+     * @return the encoded label segment
      * @author K
      * @since 1.0.0
      */
@@ -284,9 +285,9 @@ open class UserAccountService(
         freezeStartTime: LocalDateTime?,
         freezeEndTime: LocalDateTime?,
     ): Boolean {
-        require(freezeType.isNotBlank()) { "freezeType 不能为空" }
-        // 用 updateProperties 显式更新（包括 null）。ktorm 普通 update 对 null 字段不生效，
-        // 这里需要明确把 start/end 在 caller 没传时清零。
+        require(freezeType.isNotBlank()) { "freezeType must not be blank" }
+        // Use updateProperties to update explicitly (including nulls). ktorm's plain update is a no-op
+        // for null fields, but here we must clear start/end when the caller does not pass them.
         val success = dao.updateProperties(
             id, mapOf(
                 UserAccount::freezeType.name to freezeType,
@@ -298,17 +299,17 @@ open class UserAccountService(
             )
         )
         if (success) {
-            log.debug("冻结 id 为 ${id} 的账号，type=${freezeType}")
+            log.debug("Froze account id=${id}, type=${freezeType}")
             eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
-            log.warn("冻结账号失败（用户不存在？）: userId=${id}")
+            log.warn("Failed to freeze account (user missing?): userId=${id}")
         }
         return success
     }
 
     @Transactional
     override fun unfreezeAccount(id: String): Boolean {
-        // 清掉 6 列。freezeTime 也清掉，避免"曾被冻结过"残留误导。
+        // Clear all 6 columns. freezeTime is also cleared to avoid the misleading "was once frozen" residue.
         val success = dao.updateProperties(
             id, mapOf(
                 UserAccount::freezeType.name to null,
@@ -320,10 +321,10 @@ open class UserAccountService(
             )
         )
         if (success) {
-            log.debug("解除 id 为 ${id} 的账号冻结。")
+            log.debug("Unfroze account id=${id}.")
             eventPublisher.publishEvent(UserAccountUpdated(id = id))
         } else {
-            log.warn("解除冻结失败（用户不存在？）: userId=${id}")
+            log.warn("Failed to unfreeze account (user missing?): userId=${id}")
         }
         return success
     }
@@ -331,20 +332,22 @@ open class UserAccountService(
     @Transactional
     override fun cleanExpiredFreezes(): Int {
         // freeze_end_time IS NOT NULL AND freeze_end_time < now()
-        // lt 操作符在底层是 SQL `<`，对 NULL 自然不匹配——永久冻结(freeze_end_time=null)不会被清。
+        // The `lt` operator maps to SQL `<`, which naturally does not match NULL --
+        // permanent freezes (freeze_end_time=null) are not cleared.
         val expired = dao.searchAs<UserAccount>(Criteria(UserAccount::freezeEndTime lt LocalDateTime.now()))
         val cleared = expired.count { unfreezeAccount(it.id) }
-        if (cleared > 0) log.info("auto-unfreeze: 共清理 $cleared 条已过期的冻结记录")
+        if (cleared > 0) log.info("auto-unfreeze: cleaned $cleared expired freeze records in total")
         return cleared
     }
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        // 先 snapshot tenantId/username，AFTER_COMMIT 后下游 (tenantId, username) 缓存无法回查
+        // Snapshot tenantId/username first; after AFTER_COMMIT, downstream (tenantId, username) caches
+        // can no longer look them up.
         val snapshots = if (ids.isEmpty()) emptyList()
             else dao.getByIds(ids).map { UserAccountBatchDeleted.Item(it.id, it.tenantId, it.username) }
         val count = super.batchDelete(ids)
-        log.debug("批量删除用户，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch deleted users: expected ${ids.size}, actually deleted ${count}.")
         if (snapshots.isNotEmpty()) {
             eventPublisher.publishEvent(UserAccountBatchDeleted(snapshots))
         }

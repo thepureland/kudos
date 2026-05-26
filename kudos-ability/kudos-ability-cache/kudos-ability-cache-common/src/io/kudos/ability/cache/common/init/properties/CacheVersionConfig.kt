@@ -4,22 +4,23 @@ import io.kudos.context.support.Consts
 import org.springframework.beans.factory.annotation.Value
 
 /**
- * 缓存版本与命名隔离配置。
+ * Cache version and naming-isolation configuration.
  *
- * 把所有缓存项的实际 key 加上 `<version>:` 前缀，实现"灰度发布""蓝绿部署""数据格式变更"的
- * 隔离——升级后改一下 `kudos.ability.cache.version` 就可以与老版本数据并存而不互踩。
- * 同时也会用于分布式失效广播的 channel 前缀（[realMsgChannel]）。
+ * Prepends a `<version>:` prefix to the real key of every cache entry, providing isolation for
+ * "canary release", "blue/green deployment", and "data format change" — after upgrading, simply
+ * change `kudos.ability.cache.version` to coexist with old data without clashing.
+ * The same prefix is also used as the channel prefix for distributed invalidation broadcasts ([realMsgChannel]).
  *
  * @author K
  * @since 1.0.0
  */
 class CacheVersionConfig {
 
-    /** 当前缓存版本；为空串时不加前缀，等价于"不启用版本隔离"。 */
+    /** Current cache version; empty string disables prefixing, equivalent to "no version isolation". */
     @Value($$"${kudos.ability.cache.version:default}")
     var cacheVersion: String = "default"
 
-    /** 把逻辑缓存名转为带版本前缀的真实名（`<version>:<name>`）。版本为空则原样返回。 */
+    /** Converts a logical cache name to its real, version-prefixed form (`<version>:<name>`). Returns the input unchanged when the version is empty. */
     fun getFinalCacheName(cacheName: String): String {
         if (cacheVersion.isBlank()) {
             return cacheName
@@ -27,7 +28,7 @@ class CacheVersionConfig {
         return cacheVersion + Consts.CACHE_KEY_DEFAULT_DELIMITER + cacheName
     }
 
-    /** 把带版本前缀的真实名剥回逻辑名；前缀不匹配时原样返回（兼容历史无前缀数据）。 */
+    /** Strips the version prefix back to the logical name; returns the input unchanged when the prefix does not match (back-compat with legacy unprefixed data). */
     fun getRealCacheName(cacheName: String): String {
         return if (cacheName.startsWith(cacheVersion)) {
             cacheName.replace(cacheVersion + Consts.CACHE_KEY_DEFAULT_DELIMITER, "")
@@ -36,7 +37,7 @@ class CacheVersionConfig {
         }
     }
 
-    /** 分布式失效广播的真实 channel：`<version>:cache:local-remote:channel`。 */
+    /** Real channel for distributed invalidation broadcasts: `<version>:cache:local-remote:channel`. */
     val realMsgChannel: String
         get() = "$cacheVersion:$MSG_CHANNEL"
 

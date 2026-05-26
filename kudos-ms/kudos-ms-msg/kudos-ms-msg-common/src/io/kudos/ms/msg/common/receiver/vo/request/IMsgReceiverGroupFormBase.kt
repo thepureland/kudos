@@ -3,26 +3,26 @@ package io.kudos.ms.msg.common.receiver.vo.request
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 
 /**
- * 消息接收者群组表单基础字段（新建 / 更新共用）
+ * Base fields of the message receiver group form (shared by create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface IMsgReceiverGroupFormBase {
 
-    /** 接收者群组类型字典码 */
+    /** Receiver group type dictionary code */
     val receiverGroupTypeDictCode: String?
 
-    /** 群组定义的表 */
+    /** Table where the group is defined */
     val defineTable: String?
 
-    /** 群组名称在具体群组表中的字段名 */
+    /** Column name of the group name within the specific group table */
     val nameColumn: String?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean?
 }

@@ -23,10 +23,12 @@ import org.springframework.core.Ordered
 import reactor.core.publisher.Flux
 
 /**
- * 自定义负载策略：当 `spring.cloud.loadbalancer.configurations=zone-preference` 时启用
- * [HintZoneServiceInstanceListSupplier]——按客户端请求的 `hint header` 选目标实例 zone。
+ * Custom load-balancing strategy: when `spring.cloud.loadbalancer.configurations=zone-preference`
+ * is set, enable [HintZoneServiceInstanceListSupplier] — pick the target instance zone based on
+ * the client request's `hint header`.
  *
- * 同时支持 blocking 和 reactive 两种 discovery 客户端；通过条件注解按需装配。
+ * Supports both blocking and reactive discovery clients; assembled on demand via conditional
+ * annotations.
  *
  * @see com.alibaba.cloud.nacos.loadbalancer.NacosLoadBalancerClientConfiguration
  * @author K
@@ -49,8 +51,8 @@ open class DiscoveryLoadbalancerConfiguration {
             return ServiceInstanceListSupplierBuilder.DelegateCreator { context: ConfigurableApplicationContext, delegate: ServiceInstanceListSupplier ->
                 val loadBalancerClientFactory: LoadBalancerClientFactory = context.getBean<LoadBalancerClientFactory>()
                 val zoneConfig: LoadBalancerZoneConfig = context.getBean(LoadBalancerZoneConfig::class.java)
-                // 可配置 metadata 字段名——nacos 实例上挂的是 region / cluster-zone 等场景；
-                // 缺省回退到 spring-cloud-loadbalancer 的标准 "zone"
+                // Configurable metadata field name — nacos instances may carry region / cluster-zone etc.;
+                // falls back to spring-cloud-loadbalancer's standard "zone" by default
                 val zoneMetadataKey = context.environment.getProperty(ZONE_METADATA_KEY_PROPERTY)
                     ?.takeIf { it.isNotBlank() }
                     ?: HintZoneServiceInstanceListSupplier.DEFAULT_ZONE_METADATA_KEY
@@ -70,7 +72,7 @@ open class DiscoveryLoadbalancerConfiguration {
     }
 
     /**
-     * Blocking discovery client 的 hint zone 负载均衡支持配置。
+     * Hint-zone load-balancing support configuration for the blocking discovery client.
      *
      * @author K
      * @author AI: Codex
@@ -86,25 +88,26 @@ open class DiscoveryLoadbalancerConfiguration {
             context: ConfigurableApplicationContext
         ): ServiceInstanceListSupplier? {
             val supplier = ServiceInstanceListSupplier.builder().withBlockingDiscoveryClient()
-                .with(hintZone()) //应用: 服务实例 Header提示策略
+                .with(hintZone()) // Apply: service-instance header hint strategy
                 .build(context)
             return ordered(supplier, context, DEFAULT_BLOCKING_SERVICE_INSTANCE_SUPPLIER_ORDER)
         }
 
         /**
-         * 仅用于在日志里标记 blocking 分支已装配——便于运维一眼确认走哪条 LB 路径。
+         * Used purely to mark in the logs that the blocking branch has been assembled — lets ops
+         * see at a glance which LB path is in use.
          *
          * @author K
          * @since 1.0.0
          */
         @PostConstruct
         fun init() {
-            LogFactory.getLog(this::class).info("[blocking hint zone preference]初始化完成...")
+            LogFactory.getLog(this::class).info("[blocking hint zone preference] initialization complete...")
         }
     }
 
     /**
-     * Reactive discovery client 的 hint zone 负载均衡支持配置。
+     * Hint-zone load-balancing support configuration for the reactive discovery client.
      *
      * @author K
      * @author AI: Codex
@@ -120,25 +123,26 @@ open class DiscoveryLoadbalancerConfiguration {
             context: ConfigurableApplicationContext
         ): ServiceInstanceListSupplier? {
             val supplier = ServiceInstanceListSupplier.builder().withDiscoveryClient()
-                .with(hintZone()) //应用: 服务实例 Header提示策略
+                .with(hintZone()) // Apply: service-instance header hint strategy
                 .build(context)
             return ordered(supplier, context, DEFAULT_REACTIVE_SERVICE_INSTANCE_SUPPLIER_ORDER)
         }
 
         /**
-         * 仅用于在日志里标记 reactive 分支已装配——便于运维一眼确认走哪条 LB 路径。
+         * Used purely to mark in the logs that the reactive branch has been assembled — lets ops
+         * see at a glance which LB path is in use.
          *
          * @author K
          * @since 1.0.0
          */
         @PostConstruct
         fun init() {
-            LogFactory.getLog(this::class).info("[reactive hint zone preference]初始化完成...")
+            LogFactory.getLog(this::class).info("[reactive hint zone preference] initialization complete...")
         }
     }
 
     /**
-     * 为委托的 [ServiceInstanceListSupplier] 补充固定 Spring order 的包装器。
+     * Wrapper that augments the delegated [ServiceInstanceListSupplier] with a fixed Spring order.
      *
      * @author K
      * @author AI: Codex

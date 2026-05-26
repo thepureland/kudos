@@ -4,15 +4,15 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 要以json返回的带有惟一标识的结果对象，会自动去除值为null的属性
+ * A result object carrying a unique identifier, to be returned as JSON; properties with null values are automatically stripped.
  *
- * @param T ID类型
+ * @param T ID type
  * @author K
  * @since 1.0.0
  */
 abstract class IdJsonResult<T>: IJsonResult, IIdEntity<T> {
 
-//    /** 惟一标识 */
+//    /** Unique identifier */
 //    @Suppress("UNCHECKED_CAST")
 //    override var id: T = null as T
 

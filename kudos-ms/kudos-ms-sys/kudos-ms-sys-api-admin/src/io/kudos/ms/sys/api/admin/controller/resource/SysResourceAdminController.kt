@@ -17,7 +17,7 @@ import io.kudos.ms.sys.core.resource.service.iservice.ISysResourceService
 import org.springframework.web.bind.annotation.*
 
 /**
- * 资源管理控制器
+ * Resource management controller.
  *
  * @author K
  * @since 1.0.0
@@ -28,22 +28,22 @@ open class SysResourceAdminController :
     BaseCrudController<String, ISysResourceService, SysResourceQuery, SysResourceRow, SysResourceDetail, SysResourceEdit, SysResourceFormCreate, SysResourceFormUpdate>() {
 
     /**
-     * 根据id获取资源详情；`fetchAllParentIds = true` 时由 service 一次性回填祖先 id 列表。
+     * Get resource detail by id; when `fetchAllParentIds = true`, the service back-fills the ancestor id list in one call.
      *
-     * @param id 主键
-     * @param fetchAllParentIds 是否要获取所有父结点的 id
-     * @return SysResourceDetail；当主键无对应记录时回退到 BaseCrudController.getDetail（保留旧行为）
+     * @param id primary key
+     * @param fetchAllParentIds whether to fetch the ids of all parent nodes
+     * @return SysResourceDetail; falls back to BaseCrudController.getDetail when the primary key has no matching record (preserves old behavior)
      */
     @GetMapping("/getResourceDetail")
     fun getResourceDetail(id: String, fetchAllParentIds: Boolean = false): SysResourceDetail =
         service.getDetailWithOptionalParents(id, fetchAllParentIds) ?: super.getDetail(id)
 
     /**
-     * 根据资源类型和子系统，返回对应的资源
+     * Return resources matching the resource type and sub-system.
      *
-     * @param resourceType 资源类型枚举
-     * @param subSystemCode 子系统代码, 缺省为 SysConsts.DEFAULT_SUB_SYSTEM_CODE
-     * @return List(资源对象)
+     * @param resourceType resource type enum
+     * @param subSystemCode sub-system code; defaults to SysConsts.DEFAULT_SUB_SYSTEM_CODE
+     * @return List(resource object)
      */
     @GetMapping("/getResourcesByType")
     fun getResources(
@@ -54,10 +54,10 @@ open class SysResourceAdminController :
     }
 
     /**
-     * 根据子系统，返回对应的基础菜单树
+     * Return the base menu tree for the given sub-system.
      *
-     * @param subSystemCode 子系统编码, 缺省为 SysConsts.DEFAULT_SUB_SYSTEM_CODE
-     * @return List(基础的菜单树结点)
+     * @param subSystemCode sub-system code; defaults to SysConsts.DEFAULT_SUB_SYSTEM_CODE
+     * @return List(base menu tree node)
      */
     @GetMapping("/getSimpleMenus")
     fun getSimpleMenus(subSystemCode: String = SysConsts.DEFAULT_SUB_SYSTEM_CODE): List<BaseMenuTreeNode> {
@@ -65,10 +65,10 @@ open class SysResourceAdminController :
     }
 
     /**
-     * 根据子系统，返回对应的菜单树
+     * Return the menu tree for the given sub-system.
      *
-     * @param subSystemCode 子系统编码, 缺省为 SysConsts.DEFAULT_SUB_SYSTEM_CODE
-     * @return List(菜单树结点)
+     * @param subSystemCode sub-system code; defaults to SysConsts.DEFAULT_SUB_SYSTEM_CODE
+     * @return List(menu tree node)
      */
     @GetMapping("/getMenus")
     fun getMenus(subSystemCode: String = SysConsts.DEFAULT_SUB_SYSTEM_CODE): List<MenuTreeNode> {
@@ -76,12 +76,12 @@ open class SysResourceAdminController :
     }
 
     /**
-     * 返回指定父菜单id的直接孩子菜单(active的)
+     * Return direct child menus (active) for the given parent menu id.
      *
-     * @param resourceType 资源类型枚举
-     * @param parentId 父菜单id，为null时返回第一层菜单
-     * @param subSystemCode 子系统编码, 缺省为 SysConsts.DEFAULT_SUB_SYSTEM_CODE
-     * @return List(资源对象)
+     * @param resourceType resource type enum
+     * @param parentId parent menu id; null returns the first-level menus
+     * @param subSystemCode sub-system code; defaults to SysConsts.DEFAULT_SUB_SYSTEM_CODE
+     * @return List(resource object)
      */
     @GetMapping("/getDirectChildrenResources")
     fun getDirectChildrenResources(
@@ -93,12 +93,12 @@ open class SysResourceAdminController :
     }
 
     /**
-     * 返回指定父菜单id的所有孩子菜单(active的)
+     * Return all descendant menus (active) for the given parent menu id.
      *
-     * @param resourceType 资源类型枚举
-     * @param parentId 父菜单id
-     * @param subSystemCode 子系统编码, 缺省为 SysConsts.DEFAULT_SUB_SYSTEM_CODE
-     * @return List(资源对象)
+     * @param resourceType resource type enum
+     * @param parentId parent menu id
+     * @param subSystemCode sub-system code; defaults to SysConsts.DEFAULT_SUB_SYSTEM_CODE
+     * @return List(resource object)
      */
     @GetMapping("/getChildrenResources")
     fun getChildrenResources(
@@ -110,9 +110,9 @@ open class SysResourceAdminController :
     }
 
     /**
-     * 按资源类型(0层)->子系统(1层)->资源(>=2层)逐层加载资源树的直接孩子结点
+     * Load direct child nodes of the resource tree level by level: resource type (level 0) -> sub-system (level 1) -> resource (>= level 2).
      *
-     * @param sysResourceQuery 资源查询条件
+     * @param sysResourceQuery resource query conditions
      * @return List<IdAndNameTreeNode>
      */
     @PostMapping("/loadDirectChildrenForTree")
@@ -121,11 +121,11 @@ open class SysResourceAdminController :
     }
 
     /**
-     * 更新active状态
+     * Update the active status.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     @PutMapping("/updateActive")
     fun updateActive(id: String, active: Boolean): Boolean {

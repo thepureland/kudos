@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 角色-用户关系数据访问对象
+ * Role-user relation DAO.
  *
  * @author K
  * @author AI: Cursor
@@ -20,11 +20,11 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
 
 
     /**
-     * 检查关系是否存在
+     * Checks whether the relation exists.
      *
-     * @param roleId 角色ID
-     * @param userId 用户ID
-     * @return 是否存在
+     * @param roleId role id
+     * @param userId user id
+     * @return true if it exists
      * @author AI: Cursor
      * @since 1.0.0
      */
@@ -37,10 +37,10 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
     }
 
     /**
-     * 按用户ID查询角色ID列表
+     * Queries role IDs by user id.
      *
-     * @param userId 用户id
-     * @return List<角色ID>
+     * @param userId user id
+     * @return List<role id>
      */
     fun searchRoleIdsByUserId(userId: String): List<String> {
         val criteria = Criteria(AuthRoleUser::userId eq userId)
@@ -48,9 +48,9 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
     }
 
     /**
-     * 全量角色-用户关系，按用户ID分组为「用户ID -> 角色ID列表」
+     * Returns all role-user relations grouped by user id as "user id -> list of role ids".
      *
-     * @return Map<用户ID,List<角色ID>>
+     * @return Map<user id, List<role id>>
      */
     fun searchAllUserIdToRoleIdsForCache(): Map<String, List<String>> {
         val all = allSearch()
@@ -58,10 +58,10 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
     }
 
     /**
-     * 按角色ID查询用户ID列表
+     * Queries user IDs by role id.
      *
-     * @param roleId 角色id
-     * @return List<用户ID>
+     * @param roleId role id
+     * @return List<user id>
      */
     fun searchUserIdsByRoleId(roleId: String): List<String> {
         val criteria = Criteria(AuthRoleUser::roleId eq roleId)
@@ -69,9 +69,9 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
     }
 
     /**
-     * 全量角色-用户关系，按角色ID分组为「角色ID -> 用户ID列表」
+     * Returns all role-user relations grouped by role id as "role id -> list of user ids".
      *
-     * @return Map<角色ID,List<用户ID>>
+     * @return Map<role id, List<user id>>
      */
     fun getAllRoleIdToUserIdsForCache(): Map<String, List<String>> {
         val all = allSearch()
@@ -79,11 +79,11 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
     }
 
     /**
-     * 按角色ID和用户ID删除关系
+     * Deletes a relation by role id and user id.
      *
-     * @param roleId 角色ID
-     * @param userId 用户ID
-     * @return 删除条数
+     * @param roleId role id
+     * @param userId user id
+     * @return number of rows deleted
      */
     fun deleteByRoleIdAndUserId(roleId: String, userId: String): Int {
         val criteria = Criteria.and(

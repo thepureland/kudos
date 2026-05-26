@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 参数 对外API
+ * External API for parameters.
  *
  * @author K
  * @since 1.0.0
@@ -15,11 +15,11 @@ interface ISysParamApi {
 
 
     /**
-     * 根据参数名称和原子服务编码，取得对应参数
+     * Get the corresponding parameter by parameter name and atomic service code.
      *
-     * @param paramName 参数名称
-     * @param atomicServiceCode 原子服务编码，缺省为 "default"
-     * @return 参数信息缓存对象。查无结果返回null。
+     * @param paramName Parameter name
+     * @param atomicServiceCode Atomic service code, defaults to "default".
+     * @return Parameter cache object. Returns null if not found.
      * @author K
      * @since 1.0.0
      */

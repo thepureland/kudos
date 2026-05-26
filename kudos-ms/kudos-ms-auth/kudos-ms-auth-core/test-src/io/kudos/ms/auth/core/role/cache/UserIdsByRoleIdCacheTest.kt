@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for UserIdsByRoleIdCacheHandler
  *
- * 测试数据来源：`UserIdsByRoleIdCacheTest.sql`
+ * Test data source: `UserIdsByRoleIdCacheTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -48,67 +48,67 @@ class UserIdsByRoleIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun getUserIds() {
-        // 存在的角色ID，有多个用户
+        // Existing role ID with multiple users
         var roleId = "5e90ce80-1111-1111-1111-111111111111"
         val userIds1 = cacheHandler.getUserIds(roleId)
         val userIds2 = cacheHandler.getUserIds(roleId)
-        assertTrue(userIds1.isNotEmpty(), "角色${roleId}应该有用户ID列表")
-        assertEquals(userIds1, userIds2, "两次调用应该返回相同的结果（缓存验证）")
-        // 验证用户ID：角色ROLE_ADMIN有用户admin和zhangsan
-        assertEquals(2, userIds1.size, "角色${roleId}应该有2个用户ID")
-        assertTrue(userIds1.contains("5e90ce80-1111-1111-1111-111111111111"), "应该包含admin的用户ID，实际返回：${userIds1}")
-        assertTrue(userIds1.contains("5e90ce80-2222-2222-2222-222222222222"), "应该包含zhangsan的用户ID，实际返回：${userIds1}")
+        assertTrue(userIds1.isNotEmpty(), "role ${roleId} should have a user ID list")
+        assertEquals(userIds1, userIds2, "two calls should return the same result (cache validation)")
+        // Verify user IDs: role ROLE_ADMIN has users admin and zhangsan
+        assertEquals(2, userIds1.size, "role ${roleId} should have 2 user IDs")
+        assertTrue(userIds1.contains("5e90ce80-1111-1111-1111-111111111111"), "should contain admin's user ID; actual: ${userIds1}")
+        assertTrue(userIds1.contains("5e90ce80-2222-2222-2222-222222222222"), "should contain zhangsan's user ID; actual: ${userIds1}")
 
-        // 存在的角色ID，有一个用户
+        // Existing role ID with one user
         roleId = "5e90ce80-2222-2222-2222-222222222222"
         val userIds3 = cacheHandler.getUserIds(roleId)
         val userIds4 = cacheHandler.getUserIds(roleId)
-        assertTrue(userIds3.isNotEmpty(), "角色${roleId}应该有用户ID列表")
-        assertEquals(userIds3, userIds4, "两次调用应该返回相同的结果（缓存验证）")
-        // 角色ROLE_USER只有用户zhangsan
+        assertTrue(userIds3.isNotEmpty(), "role ${roleId} should have a user ID list")
+        assertEquals(userIds3, userIds4, "two calls should return the same result (cache validation)")
+        // Role ROLE_USER only has user zhangsan
         assertEquals(
             1,
             userIds3.size,
-            "角色${roleId}应该有1个用户ID，实际返回：${userIds3}"
+            "role ${roleId} should have 1 user ID; actual: ${userIds3}"
         )
-        assertTrue(userIds3.contains("5e90ce80-2222-2222-2222-222222222222"), "应该包含zhangsan的用户ID")
+        assertTrue(userIds3.contains("5e90ce80-2222-2222-2222-222222222222"), "should contain zhangsan's user ID")
 
-        // 存在的角色ID，但没有用户
+        // Existing role ID with no users
         roleId = "5e90ce80-3333-3333-3333-333333333333"
         val userIds5 = cacheHandler.getUserIds(roleId)
-        assertTrue(userIds5.isEmpty(), "角色${roleId}没有用户，应该返回空列表")
+        assertTrue(userIds5.isEmpty(), "role ${roleId} has no users; should return an empty list")
 
-        // 不存在的角色ID
+        // Non-existing role ID
         roleId = "no_exist_role_id"
         val userIds6 = cacheHandler.getUserIds(roleId)
-        assertTrue(userIds6.isEmpty(), "不存在的角色ID应该返回空列表")
+        assertTrue(userIds6.isEmpty(), "non-existing role ID should return an empty list")
     }
 
     @Test
     fun syncOnRoleUserChange() {
         val roleId = "5e90ce80-3333-3333-3333-333333333333"
         val userId = "5e90ce80-3333-3333-3333-333333333333"
-        
-        // 先获取一次，记录初始用户数量
+
+        // Fetch once to record the initial user count
         val userIdsBefore = cacheHandler.getUserIds(roleId)
         val beforeSize = userIdsBefore.size
-        
-        // 插入一条新的角色-用户关系记录
+
+        // Insert a new role-user relation record
         val authRoleUser = AuthRoleUser.Companion().apply {
             this.roleId = roleId
             this.userId = userId
         }
         val id = authRoleUserDao.insert(authRoleUser)
-        
-        // 同步缓存（模拟角色-用户关系变更）
+
+        // Sync cache (simulating a role-user relation change)
         cacheHandler.syncOnRoleUserChange(roleId)
-        
-        // 验证缓存已被清除并重新加载，应该包含新插入的用户
+
+        // Verify the cache was evicted and reloaded; it should contain the newly inserted user
         val userIdsAfter = cacheHandler.getUserIds(roleId)
-        assertTrue(userIdsAfter.size > beforeSize, "同步后应该包含新插入的用户ID")
-        assertTrue(userIdsAfter.contains(userId), "应该包含新插入的用户ID")
-        
-        // 清理测试数据
+        assertTrue(userIdsAfter.size > beforeSize, "after sync, the newly inserted user ID should be present")
+        assertTrue(userIdsAfter.contains(userId), "should contain the newly inserted user ID")
+
+        // Clean up test data
         authRoleUserDao.deleteById(id)
     }
 
@@ -119,32 +119,32 @@ class UserIdsByRoleIdCacheTest : RdbAndRedisCacheTestBase() {
         val userId1 = "5e90ce80-1111-1111-1111-111111111111"
         val userId2 = "5e90ce80-2222-2222-2222-222222222222"
         val roleIds = listOf(roleId1, roleId2)
-        
-        // 先获取一次，记录初始用户数量
+
+        // Fetch once to record the initial user count
         val userIds1Before = cacheHandler.getUserIds(roleId1)
         val beforeSize = userIds1Before.size
-        
-        // 批量插入角色-用户关系记录
+
+        // Batch-insert role-user relation records
         val authRoleUser1 = AuthRoleUser.Companion().apply {
             this.roleId = roleId1
             this.userId = userId1
         }
         val id1 = authRoleUserDao.insert(authRoleUser1)
-        
+
         val authRoleUser2 = AuthRoleUser.Companion().apply {
             this.roleId = roleId2
             this.userId = userId2
         }
         val id2 = authRoleUserDao.insert(authRoleUser2)
-        
-        // 批量同步缓存（模拟批量角色-用户关系变更）
+
+        // Batch-sync cache (simulating batch role-user relation changes)
         cacheHandler.syncOnBatchRoleUserChange(roleIds)
-        
-        // 验证缓存已被清除并重新加载，应该包含新插入的用户
+
+        // Verify the cache was evicted and reloaded; it should contain the newly inserted users
         val userIds1After = cacheHandler.getUserIds(roleId1)
-        assertTrue(userIds1After.size > beforeSize, "同步后应该包含新插入的用户ID")
-        
-        // 清理测试数据
+        assertTrue(userIds1After.size > beforeSize, "after sync, the newly inserted user IDs should be present")
+
+        // Clean up test data
         authRoleUserDao.deleteById(id1)
         authRoleUserDao.deleteById(id2)
     }
@@ -153,39 +153,39 @@ class UserIdsByRoleIdCacheTest : RdbAndRedisCacheTestBase() {
     fun syncOnRoleDelete() {
         val roleId = "5e90ce80-3333-3333-3333-333333333333"
         val userId = "5e90ce80-1111-1111-1111-111111111111"
-        
-        // 先插入一条角色-用户关系记录
+
+        // First insert a role-user relation record
         val authRoleUser = AuthRoleUser.Companion().apply {
             this.roleId = roleId
             this.userId = userId
         }
         val id = authRoleUserDao.insert(authRoleUser)
-        
-        // 先同步缓存，确保缓存中有新插入的数据
+
+        // Sync cache first so it contains the newly inserted data
         cacheHandler.syncOnRoleUserChange(roleId)
-        
-        // 获取一次，确保缓存中有数据
+
+        // Fetch once to ensure the cache has data
         val userIdsBefore = cacheHandler.getUserIds(roleId)
-        assertTrue(userIdsBefore.contains(userId), "新插入的用户关系应该在缓存中")
-        
-        // 删除数据库记录（模拟角色删除或角色-用户关系删除）
+        assertTrue(userIdsBefore.contains(userId), "the newly inserted user relation should be in the cache")
+
+        // Delete the DB record (simulating role deletion or role-user relation deletion)
         val deleteSuccess = authRoleUserDao.deleteById(id)
-        assertTrue(deleteSuccess, "删除应该成功")
-        
-        // 直接驱动事件 listener（AFTER_COMMIT 在 @Transactional 测试中不会触发，故直接调用 on(...)）
+        assertTrue(deleteSuccess, "deletion should succeed")
+
+        // Drive the event listener directly (AFTER_COMMIT does not fire in @Transactional tests, so call on(...) directly)
         cacheHandler.on(AuthRoleDeleted(roleId, tenantId = "tenant-x", code = "code-x"))
-        
-        // 验证缓存已被清除，重新获取应该不包含已删除的用户
+
+        // Verify the cache was evicted; a refetch should not contain the deleted user
         val userIdsAfter = cacheHandler.getUserIds(roleId)
-        assertTrue(!userIdsAfter.contains(userId), "删除后，缓存应该被清除，不应该包含已删除的用户ID")
+        assertTrue(!userIdsAfter.contains(userId), "after deletion the cache should be evicted and not contain the deleted user ID")
     }
 
-    // -------------------- group 路径（role ← group ← user）的覆盖 --------------------
+    // -------------------- group path (role <- group <- user) coverage --------------------
 
     @Test
     fun getUserIds_includesUsersFromGroupBoundToRole() {
-        // ROLE_GUEST (3333) 当前没有直接用户。建一个 group 绑定 ROLE_GUEST，并加入两个用户。
-        // 期望：getUserIds(ROLE_GUEST) 返回这两个用户。
+        // ROLE_GUEST (3333) currently has no direct users. Create a group bound to ROLE_GUEST and add two users.
+        // Expected: getUserIds(ROLE_GUEST) returns both users.
         val roleId = "5e90ce80-3333-3333-3333-333333333333" // ROLE_GUEST
         val userA = "5e90ce80-1111-1111-1111-111111111111" // admin
         val userB = "5e90ce80-2222-2222-2222-222222222222" // zhangsan
@@ -199,8 +199,8 @@ class UserIdsByRoleIdCacheTest : RdbAndRedisCacheTestBase() {
         try {
             cacheHandler.evict(roleId)
             val users = cacheHandler.getUserIds(roleId)
-            assertTrue(users.contains(userA), "应通过组继承包含 admin，实际：${users}")
-            assertTrue(users.contains(userB), "应通过组继承包含 zhangsan，实际：${users}")
+            assertTrue(users.contains(userA), "should inherit admin via the group; actual: ${users}")
+            assertTrue(users.contains(userB), "should inherit zhangsan via the group; actual: ${users}")
         } finally {
             authGroupUserDao.deleteById(gu1Id)
             authGroupUserDao.deleteById(gu2Id)
@@ -220,18 +220,18 @@ class UserIdsByRoleIdCacheTest : RdbAndRedisCacheTestBase() {
         val gId = insertGroup(groupId)
         val grId = insertGroupRole(gId, roleId)
         try {
-            // 起点：组里没人
+            // Initial state: no users in the group
             val before = cacheHandler.getUserIds(roleId)
-            assertTrue(!before.contains(newUserId), "新用户尚未入组")
+            assertTrue(!before.contains(newUserId), "the new user is not yet in the group")
 
-            // 入组
+            // Add to group
             val guId = insertGroupUser(gId, newUserId)
             try {
                 cacheHandler.on(AuthGroupUserRelationsChanged(gId, listOf(newUserId)))
-                // existing tests 已知 @Cacheable 可能持有 on() 之前的旧值，需要显式 evict
+                // Existing tests have shown @Cacheable may still hold the value seen before on(); explicit evict is needed.
                 cacheHandler.evict(roleId)
                 val after = cacheHandler.getUserIds(roleId)
-                assertTrue(after.contains(newUserId), "入组后角色 ${roleId} 应包含该用户，实际：${after}")
+                assertTrue(after.contains(newUserId), "after joining the group, role ${roleId} should contain the user; actual: ${after}")
             } finally {
                 authGroupUserDao.deleteById(guId)
             }
@@ -244,7 +244,8 @@ class UserIdsByRoleIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun on_AuthGroupRoleRelationsChanged_invalidatesCache() {
-        // 组里已经有 user A。最初组没绑定 ROLE_GUEST → 缓存空。绑定后失效 → A 进 ROLE_GUEST 的用户集合。
+        // User A is already in the group. Initially the group is not bound to ROLE_GUEST, so the cache is empty.
+        // After binding and invalidation, A appears in ROLE_GUEST's user set.
         val roleId = "5e90ce80-3333-3333-3333-333333333333" // ROLE_GUEST
         val userA = "5e90ce80-1111-1111-1111-111111111111"
         val groupId = "5e90ce80-grp3-cccc-cccc-cccccccccccc"
@@ -254,15 +255,15 @@ class UserIdsByRoleIdCacheTest : RdbAndRedisCacheTestBase() {
         val guId = insertGroupUser(gId, userA)
         try {
             val before = cacheHandler.getUserIds(roleId)
-            assertTrue(!before.contains(userA), "组尚未绑定 ROLE_GUEST")
+            assertTrue(!before.contains(userA), "the group is not yet bound to ROLE_GUEST")
 
-            // 给组绑定 ROLE_GUEST
+            // Bind ROLE_GUEST to the group
             val grId = insertGroupRole(gId, roleId)
             try {
                 cacheHandler.on(AuthGroupRoleRelationsChanged(gId, listOf(roleId)))
                 cacheHandler.evict(roleId)
                 val after = cacheHandler.getUserIds(roleId)
-                assertTrue(after.contains(userA), "组绑角色后 ROLE_GUEST 应包含 admin，实际：${after}")
+                assertTrue(after.contains(userA), "after binding the role, ROLE_GUEST should contain admin; actual: ${after}")
             } finally {
                 authGroupRoleDao.deleteById(grId)
             }

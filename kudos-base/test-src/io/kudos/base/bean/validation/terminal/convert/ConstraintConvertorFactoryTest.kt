@@ -12,7 +12,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 /**
- * ConstraintConvertorFactory测试用例
+ * Test cases for ConstraintConvertorFactory.
  *
  * @author AI: cursor
  * @author K
@@ -96,7 +96,7 @@ internal class ConstraintConvertorFactoryTest {
             .getAnnotation(DictItemCode::class.java)
         if (annotation != null) {
             val convertor = ConstraintConvertorFactory.getInstance(annotation)
-            // DictCode应该返回null
+            // DictCode should return null
             assertNull(convertor)
         }
     }
@@ -117,7 +117,7 @@ internal class ConstraintConvertorFactoryTest {
             .getAnnotation(NotNull::class.java)
         if (annotation != null) {
             val convertor = ConstraintConvertorFactory.getInstance(annotation)
-            // 默认转换器
+            // Default convertor
             assertNotNull(convertor)
         }
     }

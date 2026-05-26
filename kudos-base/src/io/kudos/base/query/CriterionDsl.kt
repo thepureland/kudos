@@ -4,9 +4,9 @@ import io.kudos.base.query.enums.OperatorEnum
 import kotlin.reflect.KProperty1
 
 /**
- * Criterion 条件表示式 DSL
+ * Criterion DSL for query-condition expressions.
  *
- * 允许通过属性引用构建查询条件，例如：SysResource::subSystemCode eq subSystemCode
+ * Builds query conditions from property references, for example: SysResource::subSystemCode eq subSystemCode.
  *
  * @author K
  * @author AI: Cursor
@@ -49,16 +49,16 @@ infix fun KProperty1<*, *>.inArray(values: Array<*>): Criterion = op(OperatorEnu
 infix fun KProperty1<*, *>.notInList(values: Collection<*>): Criterion = op(OperatorEnum.NOT_IN, values)
 infix fun KProperty1<*, *>.notInArray(values: Array<*>): Criterion = op(OperatorEnum.NOT_IN, values)
 
-/** SQL `IS NULL`：例 `User::name.isNull()`。无需值参数，故非 infix。 */
+/** SQL `IS NULL`: e.g. `User::name.isNull()`. Not infix because it takes no value argument. */
 fun KProperty1<*, *>.isNull(): Criterion = op(OperatorEnum.IS_NULL)
 
-/** SQL `IS NOT NULL`：例 `User::name.isNotNull()`。 */
+/** SQL `IS NOT NULL`: e.g. `User::name.isNotNull()`. */
 fun KProperty1<*, *>.isNotNull(): Criterion = op(OperatorEnum.IS_NOT_NULL)
 
-/** SQL "字段为空字符串"：例 `User::name.isEmpty()`。和 [isNull] 语义不同，请按需选用。 */
+/** SQL "field equals empty string": e.g. `User::name.isEmpty()`. Semantically distinct from [isNull]; choose accordingly. */
 fun KProperty1<*, *>.isEmpty(): Criterion = op(OperatorEnum.IS_EMPTY, "")
 
-/** SQL "字段非空字符串"：例 `User::name.isNotEmpty()`。 */
+/** SQL "field is non-empty string": e.g. `User::name.isNotEmpty()`. */
 fun KProperty1<*, *>.isNotEmpty(): Criterion = op(OperatorEnum.IS_NOT_EMPTY, "")
 
 infix fun KProperty1<*, *>.between(range: ClosedRange<*>): Criterion = op(OperatorEnum.BETWEEN, range)

@@ -17,33 +17,33 @@ import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Component
 
 /**
- * Redis缓存消息处理器
- * 
- * 监听Redis发布订阅消息，实现分布式缓存同步和失效通知。
- * 
- * 核心功能：
- * 1. 消息发送：将缓存操作消息发送到Redis发布订阅频道，通知其他节点
- * 2. 消息接收：监听Redis频道，接收其他节点发送的缓存操作消息
- * 3. 节点隔离：通过节点ID机制，避免当前节点处理自己发送的消息（避免重复清理）
- * 4. 本地缓存清理：接收到其他节点的清理消息后，清除本地缓存
- * 5. 监听器通知：触发注册的缓存清理监听器，支持自定义清理逻辑
- * 
- * 工作流程：
- * - 发送消息：将CacheMessage对象序列化后发送到Redis频道，并设置发送节点ID
- * - 接收消息：从Redis频道接收消息，反序列化为CacheMessage对象
- * - 节点判断：比较消息中的节点ID和当前节点ID，只有不同节点的消息才处理
- * - 本地清理：调用MixCacheManager清除本地缓存
- * - 监听器触发：通知注册的缓存清理监听器执行清理逻辑
- * 
- * 节点ID机制：
- * - 每个应用实例启动时生成唯一的节点ID（UUID）
- * - 发送消息时携带节点ID，接收消息时比较节点ID
- * - 只有其他节点的消息才会触发本地缓存清理，避免重复操作
- * 
- * 注意事项：
- * - 消息序列化失败时会记录警告日志，但不会中断处理流程
- * - 支持缓存版本隔离，消息中的缓存名称会经过版本转换
- * - 需要确保Redis连接正常，否则消息无法正常发送和接收
+ * Redis cache message handler.
+ *
+ * Listens on Redis pub/sub to drive distributed cache sync and invalidation notifications.
+ *
+ * Core features:
+ * 1. Send: publish cache operation messages to a Redis channel so other nodes are notified.
+ * 2. Receive: subscribe to the Redis channel and pick up cache operation messages from other nodes.
+ * 3. Node isolation: use a node-id mechanism so the current node ignores messages it published (no duplicate clearing).
+ * 4. Local cache clearing: clear the local cache when receiving an invalidation from another node.
+ * 5. Listener notification: trigger registered cache-clean listeners for custom logic.
+ *
+ * Workflow:
+ * - Send: serialize the CacheMessage, publish to the Redis channel with the sender node id set.
+ * - Receive: read messages from the Redis channel and deserialize back into CacheMessage.
+ * - Node check: compare the message's node id with the current node id; only foreign messages are processed.
+ * - Local clear: invoke MixCacheManager to clear the local cache.
+ * - Listener fire: notify registered cache-clean listeners to execute clearing logic.
+ *
+ * Node-id mechanism:
+ * - Each app instance generates a unique node id (UUID) at startup.
+ * - The node id is attached when sending, and compared when receiving.
+ * - Only foreign messages trigger local cache clearing, preventing duplicate work.
+ *
+ * Notes:
+ * - Deserialization failures are logged at warning level but do not interrupt the flow.
+ * - Cache version isolation is honored; cache names in messages are version-converted.
+ * - Redis connectivity must be healthy; otherwise messages cannot be sent or received properly.
  *
  * @author K
  * @author AI: Codex
@@ -67,107 +67,113 @@ open class RedisCacheMessageHandler(
     protected lateinit var versionConfig: CacheVersionConfig
 
     /**
-     * Hash 缓存的本地同步钩子；可选——无 hash 缓存模块时不会有这个 bean。每条 Redis 通知都要
-     * 找它，旧实现走 `SpringKit.getBeansOfType<IHashCacheSync>().values.firstOrNull()`，每次都
-     * 触发一次全量 bean 扫描，热路径开销不划算；改为 Spring 注入一次（`required = false`）。
+     * Local sync hook for the Hash cache; optional — absent when no hash cache module is present.
+     * Every Redis notification needs to find it; the old implementation called
+     * `SpringKit.getBeansOfType<IHashCacheSync>().values.firstOrNull()` every time, triggering a full
+     * bean scan on a hot path. Switched to a single Spring injection (`required = false`).
      */
     @Autowired(required = false)
     private var hashCacheSync: IHashCacheSync? = null
 
     /**
-     * 发送缓存操作消息
-     * 
-     * 将缓存操作消息发送到Redis发布订阅频道，通知其他节点进行缓存清理。
-     * 
-     * 工作流程：
-     * 1. 设置消息的节点ID为当前节点ID
-     * 2. 将消息序列化后发送到Redis频道（使用版本化的频道名称）
-     * 
-     * 节点ID作用：
-     * - 接收方通过比较节点ID判断是否需要处理消息
-     * - 避免当前节点处理自己发送的消息，防止重复清理
-     * 
-     * @param message 缓存操作消息对象
+     * Sends a cache operation message.
+     *
+     * Publishes the cache operation message to the Redis pub/sub channel so other nodes can clear their caches.
+     *
+     * Workflow:
+     * 1. Stamp the message with the current node id.
+     * 2. Serialize and publish to the Redis channel (using the versioned channel name).
+     *
+     * Node-id usage:
+     * - Receivers compare node ids to decide whether to handle the message.
+     * - Prevents the current node from processing its own publications (no duplicate clearing).
+     *
+     * @param message the cache operation message
      */
      override fun sendMessage(message: CacheMessage) {
-        //设置消息发送的节点id
+        // Stamp the sending node id
         message.nodeId = nodeId
         redisTemplates.getRedisTemplate(remoteStore)!!.convertAndSend(versionConfig.realMsgChannel, message)
     }
 
     /**
-     * 接收Redis发布订阅消息
-     * 
-     * 从Redis频道接收缓存操作消息，反序列化后调用receiveMessage处理。
-     * 
-     * 工作流程：
-     * 1. 从消息体中读取字节数组
-     * 2. 使用RedisTemplate的ValueSerializer反序列化为CacheMessage对象
-     * 3. 如果反序列化成功，调用receiveMessage处理消息
-     * 4. 如果反序列化失败，记录警告日志但不中断处理
-     * 
-     * 异常处理：
-     * - 反序列化失败通常是因为缓存key使用了方法参数类型，而序列化时找不到对应类型
-     * - 建议在缓存注解中明确指定key，例如key='ALL'，避免类型解析问题
-     * - 反序列化失败不会抛出异常，只是记录警告日志
-     * 
-     * @param message Redis消息对象，包含消息体和频道信息
-     * @param pattern 频道模式（可选）
+     * Receives a Redis pub/sub message.
+     *
+     * Reads a cache operation message from the Redis channel, deserializes it, and forwards to `receiveMessage`.
+     *
+     * Workflow:
+     * 1. Read the byte array from the message body.
+     * 2. Deserialize into a CacheMessage using RedisTemplate's ValueSerializer.
+     * 3. If deserialization succeeds, invoke `receiveMessage`.
+     * 4. If deserialization fails, log a warning but do not interrupt processing.
+     *
+     * Error handling:
+     * - Deserialization failures usually occur because the cache key uses a method-parameter type that
+     *   cannot be resolved during serialization.
+     * - Recommend specifying the key explicitly in cache annotations, e.g. key='ALL', to avoid type-resolution issues.
+     * - Deserialization failures are not propagated; only logged.
+     *
+     * @param message the Redis message (body + channel info)
+     * @param pattern optional channel pattern
      */
     override fun onMessage(message: Message, pattern: ByteArray?) {
-        logger.debug("收到redis消息通知：清除本地缓存")
+        logger.debug("Received Redis message notification: clearing local cache")
         val deserialized: CacheMessage? = try {
             redisTemplates.getRedisTemplate(remoteStore)!!.valueSerializer
                 .deserialize(message.body) as CacheMessage?
         } catch (e: Exception) {
-            // 反序列化失败是分布式缓存一致性事故：本节点不会收到这条失效通知 → 本地缓存可能长期持有脏数据。
-            // 这里抬到 error 级别并带堆栈，便于运维捕获；同时不向上抛，避免破坏 listener 线程。
-            // 常见原因：发送方与接收方的 CacheMessage 类签名不一致（serialVersionUID）、key 类型 classpath 缺失。
-            logger.error(e, "Redis 缓存失效通知反序列化失败，本节点本地缓存可能不一致；请检查发送/接收方的 CacheMessage 与 key 类是否兼容")
+            // Deserialization failure is a distributed-cache consistency incident: this node will not receive
+            // the invalidation -> the local cache may hold stale data indefinitely. Raise to ERROR with the
+            // stack trace so operators can detect it; do not rethrow so the listener thread is not killed.
+            // Common causes: CacheMessage class signatures (serialVersionUID) diverge between sender/receiver,
+            // or the key class is missing from the classpath.
+            logger.error(e, "Redis cache invalidation deserialization failed; this node's local cache may be inconsistent. Check that CacheMessage and key classes are compatible across sender/receiver.")
             null
         }
         val cacheMessage = deserialized ?: return
         try {
             receiveMessage(cacheMessage)
         } catch (e: Exception) {
-            // listener 由 Spring 单线程串行投递，处理异常若抛出会被容器吞掉但中断对该条的处理。显式 catch + log，避免后续消息被误以为"全部失败"。
-            logger.error(e, "处理 Redis 缓存失效通知时异常：cacheName={0}, key={1}", cacheMessage.cacheName, cacheMessage.key)
+            // Spring dispatches listener calls serially on a single thread; an unhandled exception would be
+            // swallowed by the container but stop this message from being processed. Explicit catch + log
+            // prevents subsequent messages from being misread as "all failed".
+            logger.error(e, "Error processing Redis cache invalidation: cacheName={0}, key={1}", cacheMessage.cacheName, cacheMessage.key)
         }
     }
 
     /**
-     * 处理接收到的缓存操作消息
-     * 
-     * 根据消息内容执行本地缓存清理和触发清理监听器。
-     * 
-     * 工作流程：
-     * 1. 节点判断：比较消息中的节点ID和当前节点ID
-     *    - 如果不同：说明是其他节点发送的消息，需要清理本地缓存
-     *    - 如果相同：说明是当前节点发送的消息，本地已经清理过，跳过
-     * 2. 本地缓存清理：调用MixCacheManager清除本地缓存
-     * 3. 缓存名称转换：将消息中的缓存名称转换为实际缓存名称（去除版本前缀）
-     * 4. 监听器触发：获取注册的清理监听器，逐个触发清理逻辑
-     * 
-     * 节点隔离机制：
-     * - 只有其他节点的消息才会触发本地缓存清理
-     * - 当前节点发送的消息不会触发本地清理，避免重复操作
-     * - 确保分布式环境下缓存清理的正确性
-     * 
-     * 清理监听器：
-     * - 支持注册自定义的缓存清理监听器
-     * - 监听器可以执行额外的清理逻辑，例如清理相关缓存、通知其他系统等
-     * 
-     * @param message 缓存操作消息对象，包含缓存名称、key、节点ID等信息
+     * Processes a received cache operation message.
+     *
+     * Performs local cache clearing and fires registered listeners based on the message.
+     *
+     * Workflow:
+     * 1. Node check: compare the message node id with the current node id.
+     *    - Different: a foreign message; clear the local cache.
+     *    - Same: a self-published message; already cleared locally; skip.
+     * 2. Local cache clearing: invoke MixCacheManager to clear the local cache.
+     * 3. Cache-name conversion: convert the cache name in the message to the actual name (strip the version prefix).
+     * 4. Listener firing: fetch registered clean listeners and fire them one by one.
+     *
+     * Node isolation:
+     * - Only foreign messages trigger local cache clearing.
+     * - Self-published messages do not trigger local clearing, avoiding duplicate work.
+     * - Ensures cache-clearing correctness in distributed environments.
+     *
+     * Clean listeners:
+     * - Custom cache-clean listeners can be registered.
+     * - Listeners can perform extra cleanup, e.g. clearing related caches, notifying other systems, etc.
+     *
+     * @param message cache operation message (cache name, key, node id, etc.)
      */
     override fun receiveMessage(message: CacheMessage) {
         val cacheName = message.cacheName!!
-        // 只有非当前节点的清理才需要删除本地缓存，本节点自己已经删除过了
+        // Only foreign clears need to delete the local cache; this node has already cleared its own.
         if (message.nodeId != nodeId) {
             if (message.cacheType == "hash") {
                 hashCacheSync?.let { sync ->
                     when (val k = message.key) {
                         null -> sync.clearLocal(cacheName)
-                        // 批量操作打包成一条消息携带 id 列表（saveBatch 等场景），避免 N+1 publish 风暴。
+                        // Batch operations bundle id lists into one message (e.g. saveBatch) to avoid N+1 publish storms.
                         is Collection<*> -> k.filterNotNull().forEach { sync.evictLocal(cacheName, it) }
                         else -> sync.evictLocal(cacheName, k)
                     }

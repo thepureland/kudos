@@ -4,15 +4,15 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 表单载体父类
+ * Form payload base class.
  *
- * @param T ID类型
+ * @param T ID type
  * @author K
  * @since 1.0.0
  */
 abstract class FormPayload<T>: IIdEntity<T> {
 
-//    /** 惟一标识 */
+//    /** Unique identifier. */
 //    @Suppress("UNCHECKED_CAST")
 //    override var id: T = null as T
 

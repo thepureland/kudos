@@ -7,26 +7,26 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 数据源列表查询条件请求VO
+ * Data source list query request VO
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDataSourceQuery (
 
-    /** 名称 */
+    /** Name */
     val name: String? = null,
 
-    /** 子系统编码 */
+    /** Subsystem code */
     val subSystemCode: String? = null,
 
-    /** 微服务编码 */
+    /** Microservice code */
     val microServiceCode: String? = null,
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean? = null,
 
 ) : ListSearchPayload() {

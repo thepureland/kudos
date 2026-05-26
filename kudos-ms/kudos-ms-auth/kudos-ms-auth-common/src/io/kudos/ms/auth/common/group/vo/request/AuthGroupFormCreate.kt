@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.common.group.vo.request
 
 /**
- * 用户组表单新建请求VO
+ * Request VO for user group form creation.
  *
  * @author K
  * @since 1.0.0

@@ -1,7 +1,7 @@
 package io.kudos.ms.user.common.account.api
 
 /**
- * 用户第三方账号 对外API
+ * User third-party account external API
  *
  * @author K
  * @author AI: Codex

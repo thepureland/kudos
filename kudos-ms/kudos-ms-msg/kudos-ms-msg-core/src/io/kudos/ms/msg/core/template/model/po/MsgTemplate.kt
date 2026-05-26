@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 
 
 /**
- * 消息模板数据库实体
+ * Message template database entity.
  *
  * @author K
  * @author AI: Codex
@@ -15,37 +15,37 @@ interface MsgTemplate : IDbEntity<String, MsgTemplate> {
 
     companion object : DbEntityFactory<MsgTemplate>()
 
-    /** 发送类型字典码 */
+    /** Send type dictionary code */
     var sendTypeDictCode: String
 
-    /** 事件类型字典码 */
+    /** Event type dictionary code */
     var eventTypeDictCode: String
 
-    /** 消息类型字典码 */
+    /** Message type dictionary code */
     var msgTypeDictCode: String
 
-    /** 模板分组编码 */
+    /** Template group code */
     var receiverGroupCode: String?
 
-    /** 国家-语言字典码 */
+    /** Country-language dictionary code */
     var localeDictCode: String?
 
-    /** 模板标题 */
+    /** Template title */
     var title: String?
 
-    /** 模板内容 */
+    /** Template content */
     var content: String?
 
-    /** 是否启用默认值 */
+    /** Whether default values are enabled */
     var defaultActive: Boolean
 
-    /** 模板标题默认值 */
+    /** Default template title */
     var defaultTitle: String?
 
-    /** 模板内容默认值 */
+    /** Default template content */
     var defaultContent: String?
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId: String
 
 

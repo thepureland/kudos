@@ -25,7 +25,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 参数业务
+ * Parameter business service.
  *
  * @author K
  * @author AI: Cursor
@@ -67,8 +67,8 @@ open class SysParamService(
         return completeCrudUpdate(
             success = dao.update(param),
             log = log,
-            successMessage = "更新id为${id}的参数的启用状态为${active}。",
-            failureMessage = "更新id为${id}的参数的启用状态为${active}失败！",
+            successMessage = "Updated active state of parameter with id ${id} to ${active}.",
+            failureMessage = "Failed to update active state of parameter with id ${id} to ${active}!",
         ) {
             eventPublisher.publishEvent(SysParamUpdated(id = id))
         }
@@ -83,7 +83,7 @@ open class SysParamService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的参数。") {
+        completeCrudInsert(log, "Inserted parameter with id ${id}.") {
             eventPublisher.publishEvent(SysParamInserted(id = id))
         }
         return id
@@ -91,12 +91,12 @@ open class SysParamService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "参数")
+        val id = requireStringId(any, "parameter")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的参数。",
-            failureMessage = "更新id为${id}的参数失败！",
+            successMessage = "Updated parameter with id ${id}.",
+            failureMessage = "Failed to update parameter with id ${id}!",
         ) {
             eventPublisher.publishEvent(SysParamUpdated(id = id))
         }
@@ -105,14 +105,14 @@ open class SysParamService(
     @Transactional
     override fun deleteById(id: String): Boolean {
         val param = dao.get(id) ?: run {
-            log.warn("删除id为${id}的参数时，发现其已不存在！")
+            log.warn("Parameter with id ${id} no longer exists when attempting deletion!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的参数。",
-            failureMessage = "删除id为${id}的参数失败！",
+            successMessage = "Deleted parameter with id ${id}.",
+            failureMessage = "Failed to delete parameter with id ${id}!",
         ) {
             eventPublisher.publishEvent(
                 SysParamDeleted(id = id, atomicServiceCode = param.atomicServiceCode, paramName = param.paramName)
@@ -125,7 +125,7 @@ open class SysParamService(
         val params = dao.inSearchById(ids)
         val moduleAndNames = params.map { Pair(it.atomicServiceCode, it.paramName) }
         val count = super.batchDelete(ids)
-        log.debug("批量删除参数，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch deleting parameters: expected ${ids.size}, actually deleted ${count}.")
         if (count > 0) {
             eventPublisher.publishEvent(SysParamBatchDeleted(ids = ids, moduleAndNames = moduleAndNames))
         }

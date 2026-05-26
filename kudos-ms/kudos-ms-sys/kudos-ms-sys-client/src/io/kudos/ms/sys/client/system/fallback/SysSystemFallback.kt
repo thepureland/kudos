@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 系统 Feign 容错降级实现。
+ * System Feign client fallback implementation.
  *
  * @author K
  * @author AI: Cursor

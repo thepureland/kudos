@@ -6,20 +6,20 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 访问规则数据库表-实体关联对象
+ * Access rule table-entity binding object.
  *
  * @author K
  * @since 1.0.0
  */
 object SysAccessRules : ManagedTable<SysAccessRule>("sys_access_rule") {
 
-    /** 租户id */
+    /** Tenant id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
-    /** 系统编码 */
+    /** System code */
     var systemCode = varchar("system_code").bindTo { it.systemCode }
 
-    /** 访问规则类型字典代码 */
+    /** Access rule type dict code */
     var accessRuleTypeDictCode = varchar("access_rule_type_dict_code").bindTo { it.accessRuleTypeDictCode }
 
 

@@ -11,7 +11,7 @@ import java.lang.reflect.Method
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Bean校验的上下文
+ * Bean validation context.
  *
  * @author K
  * @since 1.0.0
@@ -19,34 +19,34 @@ import java.util.concurrent.ConcurrentHashMap
 object ValidationContext {
 
 
-    /** 缓存 HV 的 initializationContext */
+    /** Cached HV initializationContext. */
     private var hvInitCtx: HibernateConstraintValidatorInitializationContext? = null
-    /** Jakarta 标准约束注解的包名前缀，用于剔除非业务注解 */
+    /** Jakarta standard constraint annotation package prefix, used to filter out non-business annotations. */
     private const val jakartaAnnotationPrefix = "jakarta"
-    /** Hibernate Validator 内置约束注解的包名前缀，用于剔除非业务注解 */
+    /** Hibernate Validator built-in constraint annotation package prefix, used to filter out non-business annotations. */
     private const val hibernateAnnotationPrefix = "org.hibernate"
-    /** 反射查 `getValidatorFactoryScopedContext` 方法的缓存 */
+    /** Cache of reflectively-resolved `getValidatorFactoryScopedContext` methods. */
     private val scopedContextMethodCache = ConcurrentHashMap<Class<*>, Method>()
-    /** 反射查 `validatorFactoryScopedContext` 字段的缓存（方法路径失败时退回字段） */
+    /** Cache of reflectively-resolved `validatorFactoryScopedContext` fields (falls back to the field if the method lookup fails). */
     private val scopedContextFieldCache = ConcurrentHashMap<Class<*>, Field>()
-    /** 反射查 `getConstraintValidatorInitializationContext` 方法的缓存 */
+    /** Cache of reflectively-resolved `getConstraintValidatorInitializationContext` methods. */
     private val initCtxMethodCache = ConcurrentHashMap<Class<*>, Method>()
-    /** 注解类是否“业务自定义约束”的判定缓存：包名既不属 jakarta 也不属 org.hibernate */
+    /** Cache of whether an annotation class is a "business custom constraint": package name belongs to neither jakarta nor org.hibernate. */
     private val businessConstraintAnnotationCache = ConcurrentHashMap<Class<out Annotation>, Boolean>()
 
     /**
-     * 把 ConstraintValidatorContext 的运行时类（HV 的 ConstraintValidatorContextImpl 等）映射到
-     * 一个能从中提取 ConstraintDescriptor 的函数。通过反射的方式做到不硬绑 HV internal class
-     * （之前直接 `as? ConstraintValidatorContextImpl`，HV 改名就编译失败）。
+     * Maps the runtime class of ConstraintValidatorContext (HV's ConstraintValidatorContextImpl, etc.) to
+     * a function that can extract a ConstraintDescriptor from it. Using reflection avoids hard binding to an HV internal class
+     * (previously `as? ConstraintValidatorContextImpl`, which broke compilation when HV renamed it).
      */
     private val descriptorAccessorCache = ConcurrentHashMap<Class<*>, (Any) -> ConstraintDescriptor<*>?>()
 
     /**
-     * 注入构建好的 [jakarta.validation.ValidatorFactory]，
-     * 立即从中提取 Hibernate Validator 的初始化上下文并缓存。
-     * 应用启动时调用一次。
+     * Inject the built [jakarta.validation.ValidatorFactory] and immediately extract and cache the Hibernate Validator
+     * initialization context from it.
+     * Call this once during application startup.
      *
-     * @param factory 已经构建好的 ValidatorFactory
+     * @param factory the constructed ValidatorFactory
      * @author K
      * @since 1.0.0
      */
@@ -55,36 +55,36 @@ object ValidationContext {
     }
 
     /**
-     * 获取已缓存的 [HibernateConstraintValidatorInitializationContext]。
+     * Returns the cached [HibernateConstraintValidatorInitializationContext].
      *
-     * @return HV 初始化上下文
-     * @throws IllegalStateException 未先调用 [setFactory] 注入 ValidatorFactory 时
+     * @return the HV initialization context
+     * @throws IllegalStateException if [setFactory] has not been called yet to inject the ValidatorFactory
      * @author K
      * @since 1.0.0
      */
     fun getHvInitCtx(): HibernateConstraintValidatorInitializationContext =
-        hvInitCtx ?: error("HibernateConstraintValidatorInitializationContext 尚未初始化：请确保先调用 ValidationKit.getValidator() 构建 ValidatorFactory")
+        hvInitCtx ?: error("HibernateConstraintValidatorInitializationContext is not initialized yet: make sure ValidationKit.getValidator() is called first to build the ValidatorFactory")
 
     /**
-     * 从 Hibernate Validator 的 ValidatorFactory 中提取 HibernateConstraintValidatorInitializationContext。
+     * Extracts the HibernateConstraintValidatorInitializationContext from a Hibernate Validator ValidatorFactory.
      *
-     * 为什么要做这件事？
-     * - 你在自定义组合约束（@Constraints）里会“手动”创建并调用内置 ConstraintValidator（如 @Pattern 对应的 PatternValidator）。
-     * - HV 9.1 起，部分内置校验器实现了 HibernateConstraintValidator，
-     *   它们期望通过 HibernateConstraintValidator#initialize(ConstraintDescriptor, HibernateConstraintValidatorInitializationContext)
-     *   进行初始化（例如编译正则 Pattern、构建内部状态等）。
-     * - 但你手动调用时绕开了 Hibernate Validator 引擎的初始化流程，所以必须自己拿到该 initCtx 再初始化一次，
-     *   否则可能出现内部字段未初始化导致 NPE（你遇到的就是 PatternValidator.pattern 为 null）。
+     * Why is this needed?
+     * - In custom composed constraints (@Constraints), you "manually" create and call built-in ConstraintValidator instances (such as PatternValidator backing @Pattern).
+     * - Starting from HV 9.1, some built-in validators implement HibernateConstraintValidator,
+     *   and expect to be initialized via HibernateConstraintValidator#initialize(ConstraintDescriptor, HibernateConstraintValidatorInitializationContext)
+     *   (e.g. compiling regex Pattern, building internal state).
+     * - But when calling them manually, the Hibernate Validator engine's initialization flow is bypassed, so the initCtx must be obtained
+     *   and used to initialize again; otherwise internal fields may remain uninitialized and trigger an NPE (the case you hit was PatternValidator.pattern being null).
      *
-     * ⚠️ 注意：
-     * - 这段实现依赖 HV internal API（org.hibernate.validator.internal.*），版本升级可能改方法名/字段名。
-     * - 因此这里写成“多策略尝试 + 兜底”，尽可能在小版本变动下仍可工作。
+     * Note:
+     * - This implementation relies on HV internal API (org.hibernate.validator.internal.*); minor version bumps may rename methods/fields.
+     * - It is therefore written as "multi-strategy attempts + fallback" so it keeps working across small version changes.
      *
      * @author AI: ChatGPT
      * @since 1.0.0
      */
     private fun extractHvInitCtx(factory: jakarta.validation.ValidatorFactory): HibernateConstraintValidatorInitializationContext {
-        // 1) 先走方法：factory.getValidatorFactoryScopedContext()
+        // 1) Try the method first: factory.getValidatorFactoryScopedContext()
         val scopedContext = runCatching {
             val method = scopedContextMethodCache.getOrPut(factory.javaClass) {
                 factory.javaClass.getDeclaredMethod("getValidatorFactoryScopedContext").apply { isAccessible = true }
@@ -92,13 +92,13 @@ object ValidationContext {
             method.invoke(factory)
         }.getOrNull()
             ?: runCatching {
-                // 2) 再走字段：factory.validatorFactoryScopedContext
+                // 2) Fall back to the field: factory.validatorFactoryScopedContext
                 val field = scopedContextFieldCache.getOrPut(factory.javaClass) {
                     factory.javaClass.getDeclaredField("validatorFactoryScopedContext").apply { isAccessible = true }
                 }
                 field.get(factory)
             }.getOrNull()
-            ?: error("无法从 ${factory.javaClass.name} 获取 ValidatorFactoryScopedContext（HV 版本/实现可能变化）")
+            ?: error("Unable to obtain ValidatorFactoryScopedContext from ${factory.javaClass.name} (HV version/implementation may have changed)")
 
         // 3) scopedContext.getConstraintValidatorInitializationContext()
         val initCtx = runCatching {
@@ -108,26 +108,26 @@ object ValidationContext {
             }
             method.invoke(scopedContext)
         }.getOrNull()
-            ?: error("无法从 ${scopedContext.javaClass.name} 获取 ConstraintValidatorInitializationContext（HV 版本/实现可能变化）")
+            ?: error("Unable to obtain ConstraintValidatorInitializationContext from ${scopedContext.javaClass.name} (HV version/implementation may have changed)")
 
         return initCtx as? HibernateConstraintValidatorInitializationContext
-            ?: error("ConstraintValidatorInitializationContext 类型不匹配: ${initCtx.javaClass.name}")
+            ?: error("ConstraintValidatorInitializationContext type mismatch: ${initCtx.javaClass.name}")
     }
 
-    /** 用于传递Bean给ConstraintValidator，因为hibernate validation的ConstraintValidatorContext取不到Bean */
-    private val beanMapThreadLocal = ThreadLocal.withInitial { mutableMapOf<Int, Any>() } // Map<ConstraintDescriptor对象的hashcode，Bean对象>
+    /** Used to pass the Bean to ConstraintValidator, since Hibernate validation's ConstraintValidatorContext cannot access the Bean. */
+    private val beanMapThreadLocal = ThreadLocal.withInitial { mutableMapOf<Int, Any>() } // Map<ConstraintDescriptor hashcode, Bean instance>
 
-    /** 是否快速失败模式 */
+    /** Whether fail-fast mode is enabled. */
     private val failFastThreadLocal = InheritableThreadLocal<Boolean>()
 
-    /** 验证器 */
+    /** The validator. */
     var validator: Validator? = null
 
     /**
-     * 存放ConstraintDescriptor对象hashcode关联的Bean
+     * Stores the Bean associated with the ConstraintDescriptor's hashcode.
      *
-     * @param validator 验证器
-     * @param bean 待校验的Bean
+     * @param validator the validator
+     * @param bean the Bean to validate
      * @author K
      * @since 1.0.0
      */
@@ -136,15 +136,16 @@ object ValidationContext {
     }
 
     /**
-     * 递归遍历 bean 的所有约束属性，把每个非 Jakarta/HV 约束的 [ConstraintDescriptor] hashcode
-     * 与 bean 自身关联存入 [beanStore]，使自定义约束校验器后续能取回 bean。
+     * Recursively traverses all constrained properties of the bean and associates each non-Jakarta/HV constraint
+     * [ConstraintDescriptor] hashcode with the bean itself, storing it in [beanStore], so that custom constraint
+     * validators can later retrieve the bean.
      *
-     * 嵌套 `@Valid` 属性也会递归处理；List 元素会按 `[i]` 拼接路径。
+     * Nested `@Valid` properties are processed recursively; List elements are joined to the path using `[i]`.
      *
-     * @param validator 当前使用的 [Validator]
-     * @param bean 待存入上下文的 bean
-     * @param parentPath 父级路径（用于嵌套属性的展示，目前未对外暴露）
-     * @param beanStore 线程局部存储
+     * @param validator the [Validator] currently in use
+     * @param bean the bean to store in the context
+     * @param parentPath the parent path (used for display of nested properties; not currently exposed)
+     * @param beanStore thread-local storage
      * @author K
      * @since 1.0.0
      */
@@ -154,17 +155,17 @@ object ValidationContext {
         parentPath: String?,
         beanStore: MutableMap<Int, Any>
     ) {
-        // 获取 bean 的描述符
+        // Obtain the bean's descriptor
         val beanDescriptor = validator.getConstraintsForClass(bean.javaClass)
 
-        // 遍历该 bean 中所有有约束的属性
+        // Iterate over every constrained property of the bean
         beanDescriptor.constrainedProperties.forEach { descriptor: PropertyDescriptor ->
             val propertyName = descriptor.propertyName
-            // 拼接路径时确保 parentPath 为空时不会导致前面多一个 "."
+            // When joining paths, ensure there is no leading "." when parentPath is empty
             val fullPath =
                 if (parentPath.isNullOrEmpty()) propertyName else "$parentPath.$propertyName"
 
-            // 对每个属性的约束进行检查
+            // Check each constraint on the property
             descriptor.constraintDescriptors.forEach { des: ConstraintDescriptor<*> ->
                 val annotationClass = des.annotation.annotationClass.java
                 val isBusinessConstraint = businessConstraintAnnotationCache.getOrPut(annotationClass) {
@@ -172,18 +173,18 @@ object ValidationContext {
                     !annoClassName.startsWith(jakartaAnnotationPrefix) &&
                         !annoClassName.startsWith(hibernateAnnotationPrefix)
                 }
-                // 过滤掉 Jakarta 和 Hibernate 的注解
+                // Filter out Jakarta and Hibernate annotations
                 if (isBusinessConstraint) {
                     beanStore[des.hashCode()] = bean
                 }
             }
 
-            // 判断是否为嵌套对象，即该属性是否有其他受约束的属性（嵌套校验）
+            // Determine whether this is a nested object, i.e. whether the property has other constrained properties (nested validation)
             if (descriptor.isCascaded) {
                 when (val nestedBean = BeanKit.getProperty(bean, propertyName)) {
                     null -> {}
                     is MutableList<*> -> nestedBean.forEachIndexed { i, el ->
-                        // 针对每个列表元素，递归校验并拼接索引到路径中
+                        // For each list element, recursively validate and append the index to the path
                         el?.let { set(validator, it, "$fullPath[$i]", beanStore) }
                     }
                     else -> set(validator, nestedBean, fullPath, beanStore)
@@ -193,10 +194,10 @@ object ValidationContext {
     }
 
     /**
-     * 获取ConstraintDescriptor对象hashcode关联的Bean，并从上下文中移除
+     * Returns the Bean associated with the ConstraintDescriptor's hashcode and removes it from the context.
      *
-     * @param constraintValidatorContext 约束验证器上下文
-     * @return 待校验的Bean
+     * @param constraintValidatorContext the constraint validator context
+     * @return the Bean being validated
      * @author K
      * @since 1.0.0
      */
@@ -206,11 +207,12 @@ object ValidationContext {
     }
 
     /**
-     * 从任意 [ConstraintValidatorContext] 运行时实现里反射提取 [ConstraintDescriptor]，
-     * 不依赖 HV 的具体实现类名（之前是 `as? ConstraintValidatorContextImpl`，HV 改包/改类名
-     * 会编译失败）。优先找 `getConstraintDescriptor()` 方法，兜底找 `constraintDescriptor` 字段。
+     * Reflectively extracts the [ConstraintDescriptor] from any runtime implementation of [ConstraintValidatorContext]
+     * without hard-binding to HV's concrete implementation class name (previously `as? ConstraintValidatorContextImpl`,
+     * which would fail to compile when HV repackaged/renamed it). It first looks for a `getConstraintDescriptor()` method,
+     * then falls back to a `constraintDescriptor` field.
      *
-     * 每个具体 ctx 类的反射 accessor 只构建一次，缓存在 [descriptorAccessorCache] 里。
+     * The reflection accessor for each concrete ctx class is built only once and cached in [descriptorAccessorCache].
      */
     private fun extractConstraintDescriptor(ctx: ConstraintValidatorContext): ConstraintDescriptor<*>? {
         val accessor = descriptorAccessorCache.getOrPut(ctx.javaClass) { buildDescriptorAccessor(ctx.javaClass) }
@@ -218,12 +220,12 @@ object ValidationContext {
     }
 
     /**
-     * 为指定的 ConstraintValidatorContext 运行时类构造一个 descriptor 读取闭包。
-     * 优先使用 `getConstraintDescriptor()` 方法，方法找不到时退回 `constraintDescriptor` 字段，
-     * 兜底返回常量 null 闭包（适用 mock 或非 HV 实现）。
+     * Builds a descriptor-reader closure for the given ConstraintValidatorContext runtime class.
+     * Prefer the `getConstraintDescriptor()` method; if the method is missing, fall back to the `constraintDescriptor` field;
+     * as a last resort, return a constant null closure (suitable for mocks or non-HV implementations).
      *
-     * @param clazz ConstraintValidatorContext 的具体运行时类
-     * @return 把 ctx 实例映射到 [ConstraintDescriptor] 的闭包
+     * @param clazz the concrete runtime class of ConstraintValidatorContext
+     * @return a closure that maps a ctx instance to its [ConstraintDescriptor]
      * @author K
      * @since 1.0.0
      */
@@ -236,18 +238,18 @@ object ValidationContext {
             field.isAccessible = true
             return { runCatching { field.get(it) as? ConstraintDescriptor<*> }.getOrNull() }
         }
-        // 走到这里通常是 mock 或非 HV 实现——返回 null 让 get() 走兜底
+        // Reaching here usually means a mock or non-HV implementation; return null so get() falls back
         return { _ -> null }
     }
 
     /**
-     * 沿继承链向上查找，把 [finder] 应用到每一层。
-     * 任意一层返回非 null 即停止；finder 抛异常视为该层不命中。
+     * Walks up the inheritance chain and applies [finder] to each level.
+     * Stops once any level returns non-null; a thrown exception from finder is treated as a miss for that level.
      *
-     * @param R 查找目标类型（[Method] 或 [Field]）
-     * @param clazz 起始类
-     * @param finder 在单个类上执行查找的闭包
-     * @return 首个命中的结果；都查不到返回 null
+     * @param R the lookup target type ([Method] or [Field])
+     * @param clazz the starting class
+     * @param finder the closure that performs the lookup on a single class
+     * @return the first hit; null when none of the levels match
      * @author K
      * @since 1.0.0
      */
@@ -261,25 +263,25 @@ object ValidationContext {
     }
 
     /**
-     * 清理当前缓存的Bean映射，避免跨次校验残留。
+     * Clears the currently cached Bean mappings to avoid leftovers across validation calls.
      */
     fun clearBeans() {
         beanMapThreadLocal.remove()
     }
 
     /**
-     * 设置快速失败模式
+     * Sets fail-fast mode.
      *
-     * @param failFast true：快速失败模式, false: 非快速失败模式
+     * @param failFast true for fail-fast mode; false otherwise
      * @author K
      * @since 1.0.0
      */
     fun setFailFast(failFast: Boolean) = failFastThreadLocal.set(failFast)
 
     /**
-     * 返回快速失败模式
+     * Returns the fail-fast mode flag.
      *
-     * @return true：快速失败模式, false: 非快速失败模式
+     * @return true for fail-fast mode; false otherwise
      * @author K
      * @since 1.0.0
      */

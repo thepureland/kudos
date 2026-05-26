@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 数据源 API本地实现
+ * Local implementation of the data source API
  *
  * @author K
  * @author AI: Cursor

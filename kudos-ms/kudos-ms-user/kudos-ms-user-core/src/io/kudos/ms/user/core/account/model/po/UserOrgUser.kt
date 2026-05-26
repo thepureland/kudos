@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 机构-用户关系数据库实体
+ * Organization-user association database entity.
  *
  * @author K
  * @author AI: Cursor
@@ -15,31 +15,31 @@ interface UserOrgUser : IDbEntity<String, UserOrgUser> {
 
     companion object : DbEntityFactory<UserOrgUser>()
 
-    /** 机构id */
+    /** Organization id. */
     var orgId: String
 
-    /** 用户id */
+    /** User id. */
     var userId: String
 
-    /** 是否为机构管理员 */
+    /** Whether the user is an organization admin. */
     var orgAdmin: Boolean
 
-    /** 创建者id */
+    /** Creator id. */
     var createUserId: String?
 
-    /** 创建者名称 */
+    /** Creator name. */
     var createUserName: String?
 
-    /** 创建时间 */
+    /** Create time. */
     var createTime: LocalDateTime?
 
-    /** 更新者id */
+    /** Updater id. */
     var updateUserId: String?
 
-    /** 更新者名称 */
+    /** Updater name. */
     var updateUserName: String?
 
-    /** 更新时间 */
+    /** Update time. */
     var updateTime: LocalDateTime?
 
 

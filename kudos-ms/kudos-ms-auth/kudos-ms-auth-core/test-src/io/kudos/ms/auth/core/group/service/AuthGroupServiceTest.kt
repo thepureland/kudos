@@ -8,7 +8,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for AuthGroupService
  *
- * 测试数据来源：`AuthGroupServiceTest.sql`
+ * Test data source: `AuthGroupServiceTest.sql`
  *
  * @author K
  * @author AI: Codex

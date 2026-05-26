@@ -10,23 +10,25 @@ import io.kudos.base.model.contract.entity.IIdEntity
 import kotlin.reflect.KClass
 
 /**
- * Hash 缓存的 Redis 底层存储实现，委托 [IdEntitiesRedisHashDao]。
+ * Redis-backed storage implementation of the Hash cache, delegating to [IdEntitiesRedisHashDao].
  *
- * 设计原则：**只负责存储**，不负责跨节点广播。
+ * Design principle: **storage only**, no cross-node broadcasting.
  *
- * 历史问题（已修）：
- * 之前在每个写方法里 push 一条 Pub/Sub 通知，存在两个 bug：
- * 1) cacheName 传的是 `versionConfig.getFinalCacheName(...)`（带版本前缀），但 [io.kudos.ability.cache.local.caffeine.CaffeineHashCache]
- *    的 mainData / setIndex / zsetIndex 都以"逻辑名"为 key 存（因为 MixHashCache 调 local.save 时传的是逻辑名）。
- *    接收端用前缀名查 mainData 取不到 → 这条通知实际是无效的 no-op。
- * 2) LOCAL_REMOTE 模式下 MixHashCache 也会发一条（用逻辑名），所以一次写操作发了两条 Pub/Sub，
- *    一条有效一条 no-op，纯属浪费。
+ * History (already fixed):
+ * Previously each write method pushed a Pub/Sub notification, which had two bugs:
+ * 1) cacheName was passed as `versionConfig.getFinalCacheName(...)` (version-prefixed), but
+ *    [io.kudos.ability.cache.local.caffeine.CaffeineHashCache] keys mainData / setIndex / zsetIndex by the
+ *    "logical name" (MixHashCache passes the logical name to local.save). The receiver could not find
+ *    mainData by the prefixed name, so the notification was effectively a no-op.
+ * 2) Under LOCAL_REMOTE, MixHashCache also publishes one (using the logical name), so a single write
+ *    produced two Pub/Sub messages — one useful, one no-op — pure waste.
  *
- * 现在的责任划分：广播由 [io.kudos.ability.cache.common.core.hash.MixHashCache] 统一负责（用逻辑名）。
- * 业务侧总是通过 [io.kudos.ability.cache.common.kit.HashCacheKit] 拿到 MixHashCache，不直接持有此类。
+ * Current ownership: broadcasting is centralized in [io.kudos.ability.cache.common.core.hash.MixHashCache]
+ * (using the logical name). Business code always goes through [io.kudos.ability.cache.common.kit.HashCacheKit]
+ * to obtain MixHashCache and never holds this class directly.
  *
  * @author K
-     * @author AI: Codex
+ * @author AI: Codex
  * @since 1.0.0
  */
 class RedisHashCache(
@@ -34,17 +36,17 @@ class RedisHashCache(
     private val versionConfig: CacheVersionConfig
 ) : IHashCache {
 
-    /** 委托给 Redis hash DAO，所有读写操作都经它走 RedisTemplate */
+    /** Delegated Redis hash DAO; all reads/writes go through it via RedisTemplate. */
     private val dao = IdEntitiesRedisHashDao(redisTemplates)
 
     /**
-     * 把业务逻辑 cacheName 拼上版本前缀，作为 Redis key 前缀。
-     * 集中放置一次让所有方法走同一规则，避免多处计算的不一致。
+     * Combines the business `cacheName` with the version prefix to form the Redis key prefix.
+     * Centralized once so every method follows the same rule and avoids inconsistent computations.
      *
-     * @param cacheName 业务逻辑 cache 名
-     * @return 加上版本前缀的最终 Redis key 前缀
+     * @param cacheName logical business cache name
+     * @return final Redis key prefix with the version prefix applied
      * @author K
- * @author AI: Codex
+     * @author AI: Codex
      * @since 1.0.0
      */
     private fun dataKeyPrefix(cacheName: String): String = versionConfig.getFinalCacheName(cacheName)

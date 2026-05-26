@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.tx.seata.ms2
 
 /**
- * 微服务应用2的service接口
+ * Service interface for microservice application 2.
  *
  * @author K
  * @since 1.0.0

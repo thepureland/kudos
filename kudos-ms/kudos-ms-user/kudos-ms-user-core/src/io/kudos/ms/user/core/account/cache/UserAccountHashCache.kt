@@ -19,15 +19,15 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 用户 Hash 缓存处理器（整合原 UserByIdCache、UserIdByTenantIdAndUsernameCache 逻辑）
+ * User Hash cache handler (consolidates the original UserByIdCache and UserIdByTenantIdAndUsernameCache logic).
  *
- * 数据来源表：user_account；主键为 id，缓存的 key 即 id，value 为 [UserAccountCacheEntry]。
- * 使用 Hash 结构存储，支持按 id 存取、按 tenantId+username 二级索引查询。
+ * Source table: user_account; primary key is id. The cache key is id and the value is [UserAccountCacheEntry].
+ * Stored as a Hash, supporting get-by-id and a secondary index by tenantId+username.
  *
- * - 按 id：getUserById、getUsersByIds（等价原 UserByIdCache，含 active=false）
- * - 按租户+用户名：getUsersByTenantIdAndUsername（等价原 UserIdByTenantIdAndUsernameCache 按租户+用户名查用户列表）
+ * - By id: getUserById, getUsersByIds (equivalent to the legacy UserByIdCache, including active=false)
+ * - By tenant+username: getUsersByTenantIdAndUsername (equivalent to the legacy UserIdByTenantIdAndUsernameCache lookup)
  *
- * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
+ * Before use, add an entry named [CACHE_NAME] with hash=true in the sys_cache config table.
  *
  * @author K
  * @since 1.0.0
@@ -43,7 +43,7 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
     companion object {
         const val CACHE_NAME = "USER_ACCOUNT__HASH"
 
-        /** 可筛选副属性：按 tenantId、username 建二级索引 */
+        /** Filterable secondary properties: secondary indexes on tenantId and username. */
         val FILTERABLE_PROPERTIES = setOf(
             UserAccountCacheEntry::tenantId.name,
             UserAccountCacheEntry::username.name
@@ -59,10 +59,10 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
     override fun doReload(id: Any): UserAccountCacheEntry? = userAccountDao.getAs(id.toString())
 
     /**
-     * 根据 id 从缓存获取用户，未命中则查库并回写。
+     * Get a user from the cache by id; on miss, load from DB and write back.
      *
-     * @param id 用户 id（主键），非空
-     * @return 用户缓存项，不存在时 null
+     * @param id user id (primary key), non-blank
+     * @return user cache entry, or null if not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -72,15 +72,15 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
         filterableProperties = ["tenantId", "username"]
     )
     open fun getUserById(id: String): UserAccountCacheEntry? {
-        require(id.isNotBlank()) { "获取用户时 id 不能为空" }
+        require(id.isNotBlank()) { "id must not be blank when fetching a user" }
         return userAccountDao.getAs<UserAccountCacheEntry>(id)
     }
 
     /**
-     * 根据多个 id 从缓存批量获取用户，未命中的从库加载并回写。
+     * Batch-get users from the cache by multiple ids; missing entries are loaded from DB and written back.
      *
-     * @param ids 用户 id 集合，可为空
-     * @return id -> 实体 映射，仅包含能查到的 id
+     * @param ids user id collection (may be empty)
+     * @return id -> entity map, including only ids that were found
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -94,11 +94,11 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
     }
 
     /**
-     * 根据租户、用户名从缓存获取用户列表，未命中则查库并回写。
+     * Get a user from the cache by tenant id and username; on miss, load from DB and write back.
      *
-     * @param tenantId 租户 id
-     * @param username 用户名
-     * @return 用户缓存项，不存在返回null
+     * @param tenantId tenant id
+     * @param username username
+     * @return user cache entry, or null if not found
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -111,30 +111,30 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
     }
 
     /**
-     * 从库全量加载用户并刷新 Hash 缓存（含 active=false，等价原 UserByIdCache 全量）。
+     * Load all users from DB and refresh the Hash cache (including active=false, equivalent to the legacy UserByIdCache full load).
      *
-     * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
+     * @param clear when true, clear the cache before writing; when false, overwrite in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载用户 Hash 缓存")
+            log.info("Cache disabled; skipping user Hash cache load")
             return
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
         val list = userAccountDao.searchAs<UserAccountCacheEntry>()
-        log.debug("从数据库加载 ${list.size} 条用户，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} users from DB; refreshing Hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 新增用户后同步：将指定 id 的实体从库加载并写入缓存。 */
+    /** Sync after user insert: load the entity by id from DB and write it to the cache. */
     open fun syncOnInsert(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME) || !HashCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = userAccountDao.getAs<UserAccountCacheEntry>(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 更新用户后同步：从库重新加载并写入缓存。 */
+    /** Sync after user update: reload from DB and write to the cache. */
     open fun syncOnUpdate(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) return
         val item = userAccountDao.getAs<UserAccountCacheEntry>(id) ?: return
@@ -143,13 +143,13 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
         }
     }
 
-    /** 删除用户后同步：从缓存中移除该 id。 */
+    /** Sync after user delete: remove the id from the cache. */
     open fun syncOnDelete(id: String) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, id, UserAccountCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 批量删除用户后同步：从缓存中移除这些 id（单条 Pub/Sub 通知，避免 N+1 风暴）。 */
+    /** Sync after batch user delete: remove the ids from the cache (single Pub/Sub notification to avoid N+1 storm). */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!HashCacheKit.isCacheActive(CACHE_NAME) || ids.isEmpty()) return
         hashCache().deleteByIds(CACHE_NAME, ids, UserAccountCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())

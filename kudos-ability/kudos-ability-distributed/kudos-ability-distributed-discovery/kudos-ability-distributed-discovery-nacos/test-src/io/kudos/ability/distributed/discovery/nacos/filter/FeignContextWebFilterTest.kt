@@ -17,7 +17,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [FeignContextWebFilter] 入站上下文还原行为单测。
+ * Unit tests for the inbound context-restoration behavior of [FeignContextWebFilter].
  *
  * @author K
  * @author AI: Codex
@@ -108,7 +108,7 @@ internal class FeignContextWebFilterTest {
     }
 
     /**
-     * 记录 provider 上下文扩展点调用次数的测试实现。
+     * Test implementation that records how many times the provider-context extension point is invoked.
      *
      * @author K
      * @author AI: Codex

@@ -6,17 +6,18 @@ import org.springframework.beans.BeansException
 import org.springframework.beans.factory.config.BeanPostProcessor
 
 /**
- * 流式消息生产者失败处理器后置处理器
- * 自动注册所有IStreamFailHandler实现类到StreamFailHandlerItem注册表中
+ * Bean post-processor for Stream producer failure handlers.
+ * Automatically registers all IStreamFailHandler implementations into the
+ * StreamFailHandlerItem registry.
  */
 class StreamProducerFailHandlerProcessor : BeanPostProcessor {
-    
+
     @Throws(BeansException::class)
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
         if (bean is IStreamFailHandler) {
             val handler: IStreamFailHandler = bean
             StreamFailHandlerItem.put(
-                requireNotNull(handler.bindName()) { "IStreamFailHandler.bindName() 不能为 null: ${handler.javaClass.name}" },
+                requireNotNull(handler.bindName()) { "IStreamFailHandler.bindName() must not be null: ${handler.javaClass.name}" },
                 handler
             )
         }

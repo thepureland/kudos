@@ -15,12 +15,12 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * 租户（by id）缓存处理器
+ * Tenant (by id) cache handler.
  *
- * 1.数据来源表：sys_tenant
- * 2.缓存所有租户，包括active=false的
- * 3.缓存的key为：id
- * 4.缓存的value为：SysTenantCacheEntry对象
+ * 1. Source table: sys_tenant
+ * 2. Caches all tenants, including those with active=false
+ * 3. Cache key: id
+ * 4. Cache value: SysTenantCacheEntry object
  *
  * @author K
  * @since 1.0.0
@@ -39,10 +39,10 @@ open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheEntr
     }
 
     /**
-     * 根据id从缓存中获取租户信息，如果缓存中不存在，则从数据库中加载，并回写缓存
+     * Get tenant info from the cache by id. On miss, load from the DB and write back.
      *
-     * @param id 租户id
-     * @return SysTenantCacheEntry, 找不到返回null
+     * @param id tenant id
+     * @return SysTenantCacheEntry, or null if not found
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -54,10 +54,10 @@ open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheEntr
     }
 
     /**
-     * 根据多个id从缓存中批量获取租户信息，缓存中不存在的，从数据库中加载，并回写缓存
+     * Batch fetch tenant info from the cache by multiple ids. For misses, load from the DB and write back.
      *
-     * @param ids 租户id集合
-     * @return Map<租户id，SysTenantCacheEntry>
+     * @param ids collection of tenant ids
+     * @return Map of tenant id -> SysTenantCacheEntry
      */
     @BatchCacheable(
         cacheNames = [CACHE_NAME],
@@ -68,23 +68,23 @@ open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheEntr
     }
 
     /**
-     * 新增租户后同步（重载，接收业务对象与 id）。行为同单参 [syncOnInsert]。
+     * Sync after tenant insert (overload taking business object and id). Behaves like the single-arg [syncOnInsert].
      *
-     * @param any 业务对象，仅用于重载区分
-     * @param id 租户 id
+     * @param any business object, used only to differentiate the overload
+     * @param id tenant id
      */
     open fun syncOnInsert(any: Any, id: String) {
         syncOnInsert(id)
     }
 
     /**
-     * 更新租户后同步（重载，带业务对象）。行为同单参 [syncOnUpdate]。
+     * Sync after tenant update (overload taking business object). Behaves like the single-arg [syncOnUpdate].
      */
     open fun syncOnUpdate(any: Any, id: String) {
         syncOnUpdate(id)
     }
 
-    // region 事件订阅（由 SysTenantService 在事务提交后派发） ---------------------------------
+    // region Event subscriptions (dispatched by SysTenantService after transaction commit) ---------------------------------
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysTenantInserted): Unit = syncOnInsert(event.id)
@@ -100,6 +100,6 @@ open class TenantByIdCache : AbstractByIdCacheHandler<String, SysTenantCacheEntr
 
     // endregion
 
-    override fun itemDesc() = "租户"
+    override fun itemDesc() = "tenant"
 
 }

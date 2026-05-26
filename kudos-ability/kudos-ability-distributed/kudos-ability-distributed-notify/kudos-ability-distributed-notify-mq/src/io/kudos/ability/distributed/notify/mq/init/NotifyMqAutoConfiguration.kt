@@ -32,7 +32,7 @@ import java.util.function.Consumer
 
 
 /**
- * 基于MQ的通知的自动配置类
+ * Auto-configuration for MQ-based notifications.
  *
  * @author K
  * @author AI: Codex
@@ -76,7 +76,7 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
         if (mqProducerAspectProvider.ifAvailable == null) {
             handleProducerVerifierFailure(
                 notifyMqProperties,
-                "[notify-mq] 未找到MqProducerAspect bean，NotifyMqProducer的AOP占位发送不会生效"
+                "[notify-mq] MqProducerAspect bean not found; NotifyMqProducer's AOP-based placeholder send will not take effect"
             )
         }
         val bindingName = NotifyMqBindings.PRODUCER_BINDING
@@ -84,7 +84,7 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
         if (bindingProps.isNullOrEmpty() || !bindingProps.containsKey(bindingName)) {
             handleProducerVerifierFailure(
                 notifyMqProperties,
-                "[notify-mq] 未找到Stream生产者binding配置: $bindingName，通知发送可能不可用"
+                "[notify-mq] Stream producer binding config not found: $bindingName; notification sending may be unavailable"
             )
         }
     }
@@ -104,38 +104,38 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
     )
     open fun mqNotify(notifyMqProperties: NotifyMqProperties = NotifyMqProperties()): Consumer<Message<StreamMessageVo<JSONObject>>?> = Consumer { msg ->
         val streamMsgVo = msg?.payload ?: run {
-            log.warn("[mqNotify] 收到空消息，忽略")
+            log.warn("[mqNotify] received empty message, ignoring")
             return@Consumer
         }
 
         val socketMsgJson = streamMsgVo.data ?: run {
-            log.warn("[mqNotify] 收到空 data，忽略")
+            log.warn("[mqNotify] received empty data, ignoring")
             return@Consumer
         }
 
         val simpleMsgVo = runCatching { socketMsgJson.toJavaObject(NotifyMessageVo::class.java) }
             .getOrElse {
-                log.error(it, "[mqNotify] 通知消息反序列化失败")
+                log.error(it, "[mqNotify] failed to deserialize notification message")
                 rethrowIfNeeded(notifyMqProperties, it)
                 return@Consumer
             }
 
         val notifyType = simpleMsgVo.notifyType
         if (notifyType.isBlank()) {
-            log.warn("[mqNotify] 通知类型为空，忽略")
+            log.warn("[mqNotify] notifyType is blank, ignoring")
             return@Consumer
         }
 
-        log.info("[mqNotify] 消费通知, 类型: $notifyType")
+        log.info("[mqNotify] consuming notification, type: $notifyType")
         val namespace = resolveListenerNamespace()
         val listener = NotifyListenerItem.get(namespace, notifyType) ?: findDefaultNamespaceListener(namespace, notifyType)
         if (listener == null) {
-            log.info("[mqNotify] 命名空间: $namespace, 类型: $notifyType, 无 listener 配置")
+            log.info("[mqNotify] no listener configured for namespace: $namespace, type: $notifyType")
             return@Consumer
         }
         runCatching { listener.notifyProcess(simpleMsgVo) }
             .onFailure {
-                log.error(it, "[mqNotify] listener处理失败, namespace: {0}, 类型: {1}", namespace, notifyType)
+                log.error(it, "[mqNotify] listener processing failed, namespace: {0}, type: {1}", namespace, notifyType)
                 rethrowIfNeeded(notifyMqProperties, it)
             }
     }
@@ -156,11 +156,11 @@ open class NotifyMqAutoConfiguration : NotifyCommonAutoConfiguration(), ICompone
         }
 
     /**
-     * 解析当前应用的 listener namespace。
-     * 优先级：显式配置 `notifyCommonProperties.listenerNamespace` → `spring.application.name` → [NotifyListenerItem.DEFAULT_NAMESPACE]。
-     * 让多应用同 MQ topic 时各自的 listener 仍能按 namespace 隔离。
+     * Resolves the listener namespace for the current application.
+     * Priority: explicit `notifyCommonProperties.listenerNamespace` -> `spring.application.name` -> [NotifyListenerItem.DEFAULT_NAMESPACE].
+     * Lets multiple apps sharing the same MQ topic isolate their listeners by namespace.
      *
-     * @return namespace 字符串
+     * @return the namespace string
      * @author K
      * @since 1.0.0
      */

@@ -8,31 +8,36 @@ import java.util.Date
 import kotlin.math.min
 
 /**
- * 全局监控消息（异常/告警）上报工具。
+ * Global monitor-message (exception/alert) reporting utility.
  *
- * 责任：
- * - 推送：[pushErrMsg] 直接调 [IMonitorService.submit] 提交
- * - 构造：[createSysMonitorMsgVo] 只构造不提交（用于 caller 自行批量收集）
+ * Responsibilities:
+ * - Push: [pushErrMsg] directly calls [IMonitorService.submit] to submit.
+ * - Build: [createSysMonitorMsgVo] only builds without submitting (for the caller
+ *   to collect in batches themselves).
  *
- * 自动抓"调用源"——通过 [StackWalker] 跳过自身两帧拿到真实调用方的 className + methodName，
- * 比硬编码 caller 信息更鲁棒（重构、内联不易破坏）。
+ * Automatically captures the "call source" — uses [StackWalker] to skip its own
+ * two frames and obtain the real caller's className + methodName, which is more
+ * robust than hard-coded caller info (refactoring and inlining are less likely
+ * to break it).
  *
- * 异常堆栈按前 10 行截断，避免单条监控消息体过大压垮 MQ 或日志存储。
+ * Exception stack traces are truncated to the first 10 lines to avoid a single
+ * monitor message becoming too large and overwhelming MQ or log storage.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 object MonitorMsgTool {
-    /** StackWalker 实例；启用 RETAIN_CLASS_REFERENCE 后才能拿到 Class 引用（用于 caller 元信息）。 */
+    /** StackWalker instance; RETAIN_CLASS_REFERENCE must be enabled to obtain Class references (for caller metadata). */
     private val WALKER: StackWalker = StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE)
 
     /**
-     * 上报错误消息：构造 [SysMonitorMsgVo] 后通过 Spring 容器找到 [IMonitorService] 提交。
+     * Reports an error message: builds a [SysMonitorMsgVo] then submits it via
+     * [IMonitorService] looked up from the Spring container.
      *
-     * @param msg 错误描述
-     * @param exceptionType 异常类型标识（自定义错误码或 java 异常 simpleName）
-     * @param throwable 异常对象，附带前 10 帧堆栈
+     * @param msg error description
+     * @param exceptionType exception type identifier (custom error code or Java exception simpleName)
+     * @param throwable exception object, attaches the top 10 stack frames
      * @author K
      * @since 1.0.0
      */
@@ -43,13 +48,14 @@ object MonitorMsgTool {
     }
 
     /**
-     * 构造（不提交）监控消息 VO：caller 自行决定何时调用 [IMonitorService.submit]。
-     * 典型用途是批量收集后统一上报，减少 MQ 调用次数。
+     * Builds (without submitting) a monitor-message VO: the caller decides when to
+     * call [IMonitorService.submit]. Typical use is batch collection followed by a
+     * single report to reduce MQ call counts.
      *
-     * @param msg 错误描述
-     * @param exceptionType 异常类型标识
-     * @param throwable 异常对象
-     * @return 待提交的 VO
+     * @param msg error description
+     * @param exceptionType exception type identifier
+     * @param throwable exception object
+     * @return the VO to be submitted
      * @author K
      * @since 1.0.0
      */
@@ -59,13 +65,14 @@ object MonitorMsgTool {
     }
 
     /**
-     * 真实构造逻辑：填租户/服务/异常类型/时间，可选附带前 10 帧堆栈摘要。
+     * Actual build logic: populates tenant / service / exception type / time, and
+     * optionally appends the top-10 stack-frame summary.
      *
-     * @param msg 错误描述
-     * @param exceptionType 异常类型标识
-     * @param throwable 异常对象；非空时把堆栈摘要拼到 message 末尾
-     * @param callSource 调用源 `(className, methodName)`；由 [callSource] 计算
-     * @return 完整的 VO
+     * @param msg error description
+     * @param exceptionType exception type identifier
+     * @param throwable exception object; when non-null, the stack summary is appended to the message
+     * @param callSource call source `(className, methodName)` computed by [callSource]
+     * @return the complete VO
      * @author K
      * @since 1.0.0
      */
@@ -91,10 +98,11 @@ object MonitorMsgTool {
     }
 
     /**
-     * 通过 StackWalker 跳过自身两帧拿真实调用方信息。
-     * "两帧"对应：本属性自身 + [createSysMonitorMsgVo] / [pushErrMsg]。
+     * Uses StackWalker to skip its own two frames and obtain the real caller info.
+     * "Two frames" corresponds to: this property itself + [createSysMonitorMsgVo] /
+     * [pushErrMsg].
      *
-     * @return `(className, methodName)` 对；无法定位时返回 null
+     * @return `(className, methodName)` pair; null when it cannot be located
      * @author K
      * @since 1.0.0
      */
@@ -108,14 +116,14 @@ object MonitorMsgTool {
 
 
     /**
-     * 获取 Throwable 的前 n 行堆栈信息
+     * Returns the top n stack trace lines of the Throwable.
      */
     private fun getTopStackTraceLines(throwable: Throwable, max: Int): String {
         val sb = StringBuilder()
-        // 打印异常类型和消息
+        // Print the exception type and message.
         sb.append(throwable).append('\n')
 
-        // 直接拿 throwable 自带的 StackTraceElement 数组
+        // Directly take the throwable's own StackTraceElement array.
         val frames = throwable.getStackTrace()
         val len = min(frames.size, max)
         for (i in 0..<len) {

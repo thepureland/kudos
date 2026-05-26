@@ -4,32 +4,32 @@ import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import jakarta.validation.constraints.NotBlank
 
 /**
- * 语言/区域字典表单基础字段（新建 / 更新共用）
+ * Base fields shared by language/locale dictionary forms (create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface ISysLocaleFormBase {
 
-    /** 语言代码 */
+    /** Language code */
     @get:NotBlank
     @get:MaxLength(32)
     val code: String
 
-    /** 显示名称 */
+    /** Display name */
     @get:NotBlank
     @get:MaxLength(64)
     val displayName: String
 
-    /** 英文名称 */
+    /** English name */
     @get:NotBlank
     @get:MaxLength(64)
     val englishName: String
 
-    /** 排序号 */
+    /** Sort number */
     val sortNo: Int
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

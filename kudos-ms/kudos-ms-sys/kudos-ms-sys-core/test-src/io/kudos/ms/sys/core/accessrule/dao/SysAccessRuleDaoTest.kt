@@ -7,7 +7,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for SysAccessRuleDao
  *
- * 测试数据来源：`SysAccessRuleDaoTest.sql`
+ * Test data source: `SysAccessRuleDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor

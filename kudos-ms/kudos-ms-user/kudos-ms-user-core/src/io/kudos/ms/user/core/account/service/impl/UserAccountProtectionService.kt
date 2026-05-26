@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 用户账号保护业务
+ * User account protection service implementation.
  *
  * @author K
  * @author AI: Codex

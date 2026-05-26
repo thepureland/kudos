@@ -10,27 +10,27 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 缓存列表查询条件请求VO
+ * Cache list query request VO
  *
  * @author K
  * @since 1.0.0
  */
 data class SysCacheQuery (
 
-    /** 名称 */
+    /** Name */
     val name: String? = null,
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String? = null,
 
-    /** 缓存策略代码 */
+    /** Cache strategy code */
     @get:DictItemCode(dictType = SysDictTypes.CACHE_STRATEGY, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME)
     val strategyDictCode: String? = null,
 
-    /** 是否为Hash缓存 */
+    /** Whether it is a Hash cache */
     val hash: Boolean? = null,
 
-    /** 仅启用 */
+    /** Only enabled */
     val active: Boolean? = true,
 
 ) : ListSearchPayload() {

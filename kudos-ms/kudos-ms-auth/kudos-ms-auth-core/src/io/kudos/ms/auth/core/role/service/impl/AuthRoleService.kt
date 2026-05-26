@@ -29,7 +29,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 角色业务
+ * Role business
  *
  * @author K
  * @author AI: Cursor
@@ -125,10 +125,10 @@ open class AuthRoleService(
         }
         val success = dao.update(role)
         if (success) {
-            log.debug("更新id为${id}的角色的启用状态为${active}。")
+            log.debug("Updated active status of role with id ${id} to ${active}.")
             eventPublisher.publishEvent(AuthRoleUpdated(id))
         } else {
-            log.error("更新id为${id}的角色的启用状态为${active}失败！")
+            log.error("Failed to update active status of role with id ${id} to ${active}!")
         }
         return success
     }
@@ -136,7 +136,7 @@ open class AuthRoleService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        log.debug("新增id为${id}的角色。")
+        log.debug("Added role with id ${id}.")
         eventPublisher.publishEvent(AuthRoleInserted(id))
         return id
     }
@@ -146,10 +146,10 @@ open class AuthRoleService(
         val success = super.update(any)
         val id = BeanKit.getProperty(any, AuthRole::id.name) as String
         if (success) {
-            log.debug("更新id为${id}的角色。")
+            log.debug("Updated role with id ${id}.")
             eventPublisher.publishEvent(AuthRoleUpdated(id))
         } else {
-            log.error("更新id为${id}的角色失败！")
+            log.error("Failed to update role with id ${id}!")
         }
         return success
     }
@@ -158,27 +158,27 @@ open class AuthRoleService(
     override fun deleteById(id: String): Boolean {
         val role = dao.get(id)
         if (role == null) {
-            log.warn("删除id为${id}的角色时，发现其已不存在！")
+            log.warn("Role with id ${id} no longer exists when attempting to delete!")
             return false
         }
         val success = super.deleteById(id)
         if (success) {
-            log.debug("删除id为${id}的角色。")
+            log.debug("Deleted role with id ${id}.")
             eventPublisher.publishEvent(AuthRoleDeleted(id, role.tenantId, role.code))
         } else {
-            log.error("删除id为${id}的角色失败！")
+            log.error("Failed to delete role with id ${id}!")
         }
         return success
     }
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
-        // 先 snapshot tenantId/code，AFTER_COMMIT 后行已删除，下游 (tenantId, code) 缓存
-        // 无法再回查
+        // Snapshot tenantId/code first; after AFTER_COMMIT the rows are deleted and downstream (tenantId, code) caches
+        // can no longer query back.
         val snapshots = if (ids.isEmpty()) emptyList()
             else dao.getByIds(ids).map { AuthRoleBatchDeleted.Item(it.id, it.tenantId, it.code) }
         val count = super.batchDelete(ids)
-        log.debug("批量删除角色，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete roles: expected to delete ${ids.size} entries, actually deleted ${count}.")
         if (snapshots.isNotEmpty()) {
             eventPublisher.publishEvent(AuthRoleBatchDeleted(snapshots))
         }
@@ -222,12 +222,12 @@ open class AuthRoleService(
 
     @Transactional(readOnly = true)
     override fun getResources(userId: String): List<SysResourceCacheEntry> {
-        // 通过用户ID获取资源ID列表
+        // Get the list of resource IDs by user ID
         val resourceIds = resourceIdsByUserIdCache.getResourceIds(userId)
         if (resourceIds.isEmpty()) return emptyList()
-        // 批量获取资源缓存对象（sysResourceHashCache.getResourcesByIds 接收 Set，做一次去重转换）
+        // Batch fetch resource cache objects (sysResourceHashCache.getResourcesByIds accepts a Set, perform a dedup conversion)
         val resourcesMap = sysResourceHashCache.getResourcesByIds(resourceIds.toSet())
-        // 返回资源列表（按原始ID顺序）
+        // Return resource list (in original ID order)
         return resourceIds.mapNotNull { resourcesMap[it] }
     }
 

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 出网白名单 Feign 容错降级实现
+ * Outbound network whitelist Feign client fallback implementation.
  *
  * @author K
  * @since 1.0.0

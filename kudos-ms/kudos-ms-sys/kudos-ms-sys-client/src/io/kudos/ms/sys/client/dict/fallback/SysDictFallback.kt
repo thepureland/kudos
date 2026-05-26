@@ -7,8 +7,8 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 字典 Feign 容错降级实现：远程不可用时记日志并返回空集合，
- * 让调用方（通常用于校验、下拉数据）以「无可用字典」继续运行而不是抛异常中断。
+ * Dictionary Feign fallback implementation: logs and returns empty collections when the remote is unavailable,
+ * letting callers (typically used for validation or dropdown data) continue with "no available dictionary" instead of aborting with an exception.
  *
  * @author K
  * @since 1.0.0

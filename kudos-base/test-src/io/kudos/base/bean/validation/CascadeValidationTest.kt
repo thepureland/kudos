@@ -11,7 +11,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * 级联校验测试用例
+ * Cascade validation test cases.
  *
  * @author K
  * @since 1.0.0
@@ -27,8 +27,8 @@ internal class CascadeValidationTest {
 
     internal data class TestCascadeBean(
 
-        @get:Length(min = 6, max = 32, message = "name长度必须在6到32之间")
-        @get:Pattern(regexp = "[a-zA-Z]+", message = "name必须为字母")
+        @get:Length(min = 6, max = 32, message = "name length must be between 6 and 32")
+        @get:Pattern(regexp = "[a-zA-Z]+", message = "name must consist of letters")
         val name: String?,
 
         @get:Valid
@@ -43,8 +43,8 @@ internal class CascadeValidationTest {
     internal data class TestBean(
 
         @get:NotNull
-        @get:Max(60, message = "必须60岁以下")
-        @get:Min(18, message = "必须满18岁")
+        @get:Max(60, message = "Must be under 60 years old")
+        @get:Min(18, message = "Must be at least 18 years old")
         val age: Int?
 
     )

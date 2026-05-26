@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 字典项业务
+ * Dictionary item business.
  *
  * @author K
  * @author AI: Cursor
@@ -115,7 +115,7 @@ open class SysDictItemService(
                 )
             )
         } else {
-            log.error("删除id为${id}的字典项失败！")
+            log.error("Failed to delete dictionary item with id ${id}!")
         }
         return success
     }
@@ -129,8 +129,8 @@ open class SysDictItemService(
         return completeCrudUpdate(
             success = dao.update(dictItem),
             log = log,
-            successMessage = "更新id为${dictItemId}的字典项的启用状态为${active}。",
-            failureMessage = "更新id为${dictItemId}的字典项的启用状态为${active}失败！",
+            successMessage = "Updated active status of dictionary item with id ${dictItemId} to ${active}.",
+            failureMessage = "Failed to update active status of dictionary item with id ${dictItemId} to ${active}!",
         ) {
             eventPublisher.publishEvent(SysDictItemUpdated(id = dictItemId))
         }
@@ -139,7 +139,7 @@ open class SysDictItemService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的字典项。") {
+        completeCrudInsert(log, "Inserted dictionary item with id ${id}.") {
             eventPublisher.publishEvent(SysDictItemInserted(id = id))
         }
         return id
@@ -147,12 +147,12 @@ open class SysDictItemService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "字典项")
+        val id = requireStringId(any, "dictionary item")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的字典项。",
-            failureMessage = "更新id为${id}的字典项失败！",
+            successMessage = "Updated dictionary item with id ${id}.",
+            failureMessage = "Failed to update dictionary item with id ${id}!",
         ) {
             eventPublisher.publishEvent(SysDictItemUpdated(id = id))
         }
@@ -161,15 +161,15 @@ open class SysDictItemService(
     @Transactional
     override fun deleteById(id: String): Boolean {
         if (dao.get(id) == null) {
-            log.warn("删除id为${id}的字典项时，发现其已不存在！")
+            log.warn("When deleting dictionary item with id ${id}, found that it no longer exists!")
             return false
         }
         val entry = sysDictItemHashCache.getDictItemById(id)
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的字典项。",
-            failureMessage = "删除id为${id}的字典项失败！",
+            successMessage = "Deleted dictionary item with id ${id}.",
+            failureMessage = "Failed to delete dictionary item with id ${id}!",
         ) {
             eventPublisher.publishEvent(
                 SysDictItemDeleted(
@@ -185,7 +185,7 @@ open class SysDictItemService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
-        log.debug("批量删除字典项，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch-deleted dictionary items: expected to delete ${ids.size}, actually deleted ${count}.")
         if (count > 0) {
             eventPublisher.publishEvent(SysDictItemBatchDeleted(ids = ids))
         }
@@ -193,13 +193,14 @@ open class SysDictItemService(
     }
 
     /**
-     * 沿 parentId 自下而上递归收集所有祖先 id；链上某节点 parentId 为空/blank 即终止。
+     * Recursively collects all ancestor ids bottom-up along parentId; terminates when a node's parentId is null/blank.
      *
-     * **N+1 警告**：每层都走一次 DB 查询；当前业务字典树通常很浅 (<5 层)，可接受。
-     * 若后续遇到深树，应一次性 load 整张字典再在内存里构图。
+     * **N+1 warning**: each level issues one DB query; current business dictionary trees are typically very shallow
+     * (<5 levels), which is acceptable. If deep trees appear later, load the whole dictionary once and build the
+     * graph in memory.
      *
-     * @param itemId 起点字典项 id
-     * @param results 累积容器（追加 parentId）
+     * @param itemId starting dictionary item id
+     * @param results accumulator container (appends parentId)
      * @author K
      * @since 1.0.0
      */
@@ -211,10 +212,10 @@ open class SysDictItemService(
     }
 
     /**
-     * 沿 parentId 自上而下递归收集所有后代 id；同样有 N+1 风险，详见 [recursionFindAllParentId]。
+     * Recursively collects all descendant ids top-down along parentId; also has N+1 risk, see [recursionFindAllParentId].
      *
-     * @param itemId 起点字典项 id
-     * @param results 累积容器（追加 childId）
+     * @param itemId starting dictionary item id
+     * @param results accumulator container (appends childId)
      * @author K
      * @since 1.0.0
      */
@@ -236,8 +237,8 @@ open class SysDictItemService(
         return completeCrudUpdate(
             success = dao.update(dictItem),
             log = log,
-            successMessage = "移动字典项${id}到父节点${newParentId}，排序号${newOrderNum}。",
-            failureMessage = "移动字典项${id}失败！",
+            successMessage = "Moved dictionary item ${id} to parent node ${newParentId}, order number ${newOrderNum}.",
+            failureMessage = "Failed to move dictionary item ${id}!",
         ) {
             eventPublisher.publishEvent(SysDictItemUpdated(id = id))
         }

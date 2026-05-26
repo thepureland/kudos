@@ -1,7 +1,7 @@
 package io.kudos.base.enums.ienums
 
 /**
- * 模块枚举接口
+ * Module enum interface.
  *
  * @author K
  * @since 1.0.0

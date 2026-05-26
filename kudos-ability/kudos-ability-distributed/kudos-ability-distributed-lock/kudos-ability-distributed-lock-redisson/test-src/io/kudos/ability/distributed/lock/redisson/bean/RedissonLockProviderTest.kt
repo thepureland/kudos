@@ -10,7 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [RedissonLockProvider] 解锁守卫行为单测。
+ * Unit tests for [RedissonLockProvider] unlock-guard behavior.
  *
  * @author K
  * @author AI: Codex
@@ -67,7 +67,7 @@ internal class RedissonLockProviderTest {
     }
 
     /**
-     * 记录 Redisson RLock 解锁相关调用的测试代理。
+     * Test proxy that records Redisson RLock unlock-related calls.
      *
      * @author K
      * @author AI: Codex

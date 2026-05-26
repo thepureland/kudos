@@ -1,44 +1,44 @@
 package io.kudos.ms.sys.common.cache.vo.response
 
 /**
- * 缓存列表查询结果响应VO
+ * Cache list query result response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class SysCacheRow (
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String = "",
 
-    /** 缓存策略代码 */
+    /** Cache strategy code */
     val strategyDictCode: String = "",
 
-    /** 是否启动时写缓存 */
+    /** Whether to write cache on startup */
     val writeOnBoot: Boolean = true,
 
-    /** 是否及时回写缓存 */
+    /** Whether to write back cache in real time */
     val writeInTime: Boolean = true,
 
-    /** 缓存生存时间(秒) */
+    /** Cache time-to-live (seconds) */
     val ttl: Int? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = true,
 
-    /** 是否为 Hash 缓存 */
+    /** Whether it is a Hash cache */
     val hash: Boolean = false,
 
 )

@@ -7,8 +7,8 @@ import jakarta.validation.ConstraintValidatorContext
 import java.util.ServiceLoader
 
 /**
- * 字典项编码校验器
- * 用于校验字段值是否为指定模块和类型的有效字典码
+ * Validator for dictionary item codes.
+ * Used to validate whether a field value is a valid dictionary code for the specified module and dictionary type.
  *
  * @author K
  * @since 1.0.0
@@ -29,15 +29,16 @@ class DictItemCodeValidator : ConstraintValidator<DictItemCode, CharSequence?> {
     }
 
     /**
-     * 通过 [ServiceLoader] SPI 加载 [IDictItemCodeFinder] 实现，取首个非空结果。
+     * Loads [IDictItemCodeFinder] implementations via [ServiceLoader] SPI and returns the first non-empty result.
      *
-     * 之所以走 SPI 而非 Spring bean，是因为 [DictItemCodeValidator] 由 bean validation
-     * 框架直接 new 出来，未经 Spring 容器；ServiceLoader 是这一层最低依赖的扩展点。
-     * 找不到任何实现时返回空集合（让校验直接失败，等同"任何字典值都无效"）。
+     * SPI is used instead of Spring beans because [DictItemCodeValidator] is instantiated directly by the
+     * bean validation framework without going through the Spring container; ServiceLoader is the lowest-dependency
+     * extension point available at this layer. Returns an empty set if no implementation is found
+     * (letting validation fail outright, equivalent to "no dictionary value is valid").
      *
-     * @param module 原子服务编码（字典分区）
-     * @param dictType 字典类型
-     * @return 该字典的所有合法 code 集合
+     * @param module atomic service code (dictionary partition)
+     * @param dictType dictionary type
+     * @return the set of all valid codes for this dictionary
      * @author K
      * @since 1.0.0
      */

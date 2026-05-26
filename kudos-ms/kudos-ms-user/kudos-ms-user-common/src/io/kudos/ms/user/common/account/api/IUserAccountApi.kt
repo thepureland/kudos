@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 用户 对外API
+ * User external API
  *
  * @author K
  * @author AI: Cursor
@@ -19,57 +19,57 @@ interface IUserAccountApi {
 
 
     /**
-     * 根据id从缓存中获取用户信息，如果缓存中不存在，则从数据库中加载，并回写缓存
+     * Get user info from cache by id; if not in cache, load from database and write back to cache.
      *
-     * @param id 用户id
-     * @return UserAccountCacheEntry, 找不到返回null
+     * @param id user id
+     * @return UserAccountCacheEntry, null if not found
      */
     @GetMapping("/api/internal/user/account/getUserById")
     fun getUserById(@RequestParam id: String): UserAccountCacheEntry?
 
     /**
-     * 根据多个id从缓存中批量获取用户信息，缓存中不存在的，从数据库中加载，并回写缓存
+     * Batch-get user info from cache by multiple ids; entries missing from cache are loaded from database and written back.
      *
-     * @param ids 用户id集合
-     * @return Map<用户id，UserAccountCacheEntry>
+     * @param ids user id collection
+     * @return Map<user id, UserAccountCacheEntry>
      */
     @PostMapping("/api/internal/user/account/getUsersByIds")
     fun getUsersByIds(@RequestBody ids: Collection<String>): Map<String, UserAccountCacheEntry>
 
     /**
-     * 根据租户ID和用户名从缓存获取对应的用户ID（仅 active=true）
+     * Get the user ID from cache by tenant ID and username (active=true only).
      *
-     * @param tenantId 租户ID
-     * @param username 用户名
-     * @return 用户ID，找不到返回null
+     * @param tenantId tenant ID
+     * @param username username
+     * @return user ID, null if not found
      */
     @GetMapping("/api/internal/user/account/getUserId")
     fun getUserId(@RequestParam tenantId: String, @RequestParam username: String): String?
 
     /**
-     * 根据用户ID获取该用户所属的所有机构列表
+     * Get all organizations the user belongs to by user ID.
      *
-     * @param userId 用户ID
-     * @return 机构列表；用户不存在或没有机构则返回空列表
+     * @param userId user ID
+     * @return organization list; empty list if the user does not exist or has no organizations
      */
     @GetMapping("/api/internal/user/account/getUserOrgs")
     fun getUserOrgs(@RequestParam userId: String): List<UserOrgCacheEntry>
 
     /**
-     * 检查用户是否属于指定机构
+     * Check whether the user belongs to the specified organization.
      *
-     * @param userId 用户ID
-     * @param orgId 机构ID
-     * @return true 表示用户属于该机构
+     * @param userId user ID
+     * @param orgId organization ID
+     * @return true if the user belongs to the organization
      */
     @GetMapping("/api/internal/user/account/isUserInOrg")
     fun isUserInOrg(@RequestParam userId: String, @RequestParam orgId: String): Boolean
 
     /**
-     * 根据租户ID获取该租户下所有激活用户的ID列表
+     * Get the ID list of all active users under the given tenant.
      *
-     * @param tenantId 租户ID
-     * @return 用户ID列表
+     * @param tenantId tenant ID
+     * @return user ID list
      */
     @GetMapping("/api/internal/user/account/getUserIds")
     fun getUserIds(@RequestParam tenantId: String): List<String>

@@ -9,23 +9,23 @@ import java.time.format.DateTimeFormatter
 
 
 /**
- * 把 [MsgTemplateCacheEntry] + 业务参数 渲染成 [RenderedMessage]。
+ * Renders a [MsgTemplateCacheEntry] + business parameters into a [RenderedMessage].
  *
- * 占位符语法沿用 [io.kudos.base.lang.string.fillTemplateByObjectMap] 的 `${name}`。
- * 渲染流程：
- *   1. title/content 任一为空时回退到 defaultTitle / defaultContent
- *   2. 把 [autoParams] 注入到参数 map（业务方传入的同名参数优先级更高，不被覆盖）
- *   3. 用合并后的 map 调 fillTemplateByObjectMap 替换占位符
+ * Placeholder syntax follows [io.kudos.base.lang.string.fillTemplateByObjectMap]'s `${name}`.
+ * Render flow:
+ *   1. When either title/content is empty, fall back to defaultTitle / defaultContent.
+ *   2. Inject [autoParams] into the parameter map (business-supplied parameters with the same name take precedence and are not overridden).
+ *   3. Use the merged map to call fillTemplateByObjectMap to substitute placeholders.
  *
- * 没有占位符的纯文本模板照样能跑（fillTemplate 找不到 `${name}` 就原样返回）。
+ * Plain-text templates without placeholders work too (fillTemplate returns the input unchanged if no `${name}` is found).
  *
- * 自动参数集合 [autoParams]:
- *   - `time`     — yyyy-MM-dd HH:mm:ss
- *   - `date`     — yyyy-MM-dd
- *   - `year` / `month` / `day` — 数字字符串
+ * Auto parameter set [autoParams]:
+ *   - `time`     - yyyy-MM-dd HH:mm:ss
+ *   - `date`     - yyyy-MM-dd
+ *   - `year` / `month` / `day` - numeric strings
  *
- * 单元测试通过覆盖 [render] 的 `nowProvider` 参数注入固定时钟；生产路径走默认的
- * `LocalDateTime.now()`。
+ * Unit tests inject a fixed clock by overriding the `nowProvider` parameter of [render];
+ * the production path uses the default `LocalDateTime.now()`.
  *
  * @author K
  * @since 1.0.0
@@ -34,8 +34,8 @@ import java.time.format.DateTimeFormatter
 open class MsgTemplateRenderer {
 
     /**
-     * @param nowProvider 用于自动参数 (time/date/year/month/day) 的"当前时刻"。
-     *   仅测试需要覆盖；生产留默认即可。
+     * @param nowProvider the "current time" used for auto parameters (time/date/year/month/day).
+     *   Only tests need to override this; production can use the default.
      */
     fun render(
         template: MsgTemplateCacheEntry,
@@ -45,7 +45,7 @@ open class MsgTemplateRenderer {
         val titleSrc = template.title?.takeIf { it.isNotBlank() } ?: template.defaultTitle.orEmpty()
         val contentSrc = template.content?.takeIf { it.isNotBlank() } ?: template.defaultContent.orEmpty()
 
-        // 业务参数同名时优先生效，自动参数仅在缺失时补
+        // Business parameters take precedence on name conflicts; auto parameters only fill in when missing
         val merged = buildMap<String, Any> {
             putAll(autoParams(nowProvider()))
             putAll(params)

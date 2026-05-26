@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 登录通行证 内部 RPC 控制器。路径继承自 [IPassportApi] 方法级注解。
+ * Login passport internal RPC controller. Paths are inherited from method-level annotations on [IPassportApi].
  *
  * @author K
  * @since 1.0.0

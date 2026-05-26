@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
 /**
- * kafka测试服务
- * 
+ * Kafka test service.
+ *
  * @author shane
  * @author K
  * @since 1.0.0
@@ -38,12 +38,12 @@ open class KafkaMainService : IKafkaMainService {
         while (flag) {
             Thread.sleep(1000)
             log.info("{0}", consumerHandler.flag)
-            // 待消费者接收信息后修改 flag 为 false
+            // Set flag to false once the consumer has received the message
             if (consumerHandler.flag) {
                 flag = false
             }
         }
-        log.info("收到 mq 消息")
+        log.info("received mq message")
         return result
     }
 

@@ -50,7 +50,7 @@ class BadRequestExceptionHandlerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("4001"))
-            .andExpect(jsonPath("$.message").value("名称不能为空"))
+            .andExpect(jsonPath("$.message").value("name must not be blank"))
             .andExpect(jsonPath("$.errors[0].field").value("name"))
     }
 
@@ -60,7 +60,7 @@ class BadRequestExceptionHandlerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("400"))
-            .andExpect(jsonPath("$.message").value("缺少请求参数：name"))
+            .andExpect(jsonPath("$.message").value("Missing request parameter: name"))
     }
 
     @Test
@@ -73,7 +73,7 @@ class BadRequestExceptionHandlerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("400"))
-            .andExpect(jsonPath("$.message").value("请求体格式错误"))
+            .andExpect(jsonPath("$.message").value("Malformed request body"))
     }
 
     @Test
@@ -82,12 +82,12 @@ class BadRequestExceptionHandlerTest {
             .andExpect(status().isBadRequest)
             .andExpect(jsonPath("$.success").value(false))
             .andExpect(jsonPath("$.code").value("400"))
-            .andExpect(jsonPath("$.message").value("参数类型错误：age"))
+            .andExpect(jsonPath("$.message").value("Invalid parameter type: age"))
     }
 
     private class TestRequest {
 
-        @field:NotBlank(message = "名称不能为空")
+        @field:NotBlank(message = "name must not be blank")
         var name: String? = null
 
     }

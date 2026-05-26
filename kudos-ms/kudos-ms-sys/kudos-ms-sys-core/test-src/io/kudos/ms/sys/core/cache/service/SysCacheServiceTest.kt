@@ -19,7 +19,7 @@ import kotlin.test.assertFailsWith
 /**
  * junit test for SysCacheService
  *
- * 测试数据来源：`SysCacheServiceTest.sql`
+ * Test data source: `SysCacheServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -35,7 +35,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     private lateinit var sysCacheService: ISysCacheService
 
     @Test
-    /** 从配置缓存中按 id 读取缓存配置 */
+    /** Read cache configuration by id from the configuration cache. */
     fun getCacheFromCache() {
         val cacheItem = sysCacheService.getCacheFromCache(existingId)
         assertNotNull(cacheItem)
@@ -44,14 +44,14 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** 按原子服务编码读取缓存配置列表 */
+    /** Read the list of cache configurations by atomic service code. */
     fun getCachesFromCache() {
         val caches = sysCacheService.getCachesFromCache(existingAtomicServiceCode)
         assertTrue(caches.any { it.name == "svc-cache-test-1" })
     }
 
     @Test
-    /** 更新启用状态并验证缓存同步 */
+    /** Update enabled state and verify cache sync. */
     fun updateActive() {
         assertTrue(sysCacheService.updateActive(existingId, false))
         assertFalse(requireNotNull(sysCacheService.getCacheFromCache(existingId)).active)
@@ -61,7 +61,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** 新增后可从缓存读取，删除后缓存应移除 */
+    /** After insert, the entry is in the cache; after delete, it should be removed. */
     fun insertAndDeleteById() {
         val cache = newCache(name = "svc-cache-service-test-insert")
 
@@ -77,7 +77,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** 更新缓存配置后应同步到配置缓存 */
+    /** Updating a cache configuration should sync to the configuration cache. */
     fun update() {
         val cache = newCache(name = "svc-cache-service-test-update-before")
         val id = sysCacheService.insert(cache)
@@ -102,7 +102,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** 批量删除后配置缓存应同步清理 */
+    /** Batch delete should also clean the configuration cache. */
     fun batchDelete() {
         val id1 = sysCacheService.insert(newCache(name = "svc-cache-service-test-batch-1"))
         val id2 = sysCacheService.insert(newCache(name = "svc-cache-service-test-batch-2"))
@@ -115,7 +115,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** get(id, SysCacheCacheEntry::class) 走缓存读取分支 */
+    /** get(id, SysCacheCacheEntry::class) goes through the cache-read branch. */
     fun getAsCacheEntry() {
         val cacheEntry = sysCacheService.get(existingId, SysCacheCacheEntry::class)
         assertNotNull(cacheEntry)
@@ -124,7 +124,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** get(id, SysCache::class) 走 DAO 查询分支 */
+    /** get(id, SysCache::class) goes through the DAO query branch. */
     fun getAsEntity() {
         val entity = sysCacheService.get(existingId, SysCache::class)
         assertNotNull(entity)
@@ -133,7 +133,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** hash 缓存场景下 exists/evict/reloadAll 行为验证 */
+    /** Verify exists / evict / reloadAll behavior for hash caches. */
     fun existsKey() {
         val hashCacheId = getSysCacheHashConfigId()
         sysCacheService.reloadAll(hashCacheId)
@@ -148,7 +148,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** hash 缓存场景下 getValueJson 返回值序列化验证 */
+    /** Verify getValueJson serialization for hash caches. */
     fun getValueJson() {
         val hashCacheId = getSysCacheHashConfigId()
         sysCacheService.reloadAll(hashCacheId)
@@ -159,7 +159,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** hash 缓存场景下 reload 单 key 行为验证 */
+    /** Verify single-key reload behavior for hash caches. */
     fun reload() {
         val hashCacheId = getSysCacheHashConfigId()
         sysCacheService.reloadAll(hashCacheId)
@@ -170,7 +170,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** hash 缓存场景下 reloadAll 全量回填验证 */
+    /** Verify full-reload backfill for hash caches. */
     fun reloadAll() {
         val hashCacheId = getSysCacheHashConfigId()
 
@@ -182,7 +182,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** hash 缓存场景下 evict 单 key 行为验证 */
+    /** Verify single-key evict behavior for hash caches. */
     fun evict() {
         val hashCacheId = getSysCacheHashConfigId()
         sysCacheService.reload(hashCacheId, existingId)
@@ -192,7 +192,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** hash 缓存场景下 evictAll 清空行为验证 */
+    /** Verify evictAll clearing behavior for hash caches. */
     fun evictAll() {
         val hashCacheId = getSysCacheHashConfigId()
         sysCacheService.reload(hashCacheId, existingId)
@@ -202,7 +202,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** update 在 id 不存在时返回 false */
+    /** update returns false when id does not exist. */
     fun update_whenIdNotExists_returnsFalse() {
         val update = SysCache().apply {
             id = "not-exists-id"
@@ -218,21 +218,21 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** updateActive 在 id 不存在时返回 false */
+    /** updateActive returns false when id does not exist. */
     fun updateActive_whenIdNotExists_returnsFalse() {
         assertFalse(sysCacheService.updateActive("not-exists-id", true))
     }
 
     @Test
-    /** deleteById 在 id 不存在时返回 false */
+    /** deleteById returns false when id does not exist. */
     fun deleteById_whenIdNotExists_returnsFalse() {
         assertFalse(sysCacheService.deleteById("not-exists-id"))
     }
 
     @Test
-    /** key-value 分支下，缺失 key 应抛 CACHE_KEY_NOT_FOUND */
+    /** In the key-value branch, a missing key should throw CACHE_KEY_NOT_FOUND. */
     fun keyValueCacheBranch_whenKeyNotFound_throwServiceException() {
-        val keyValueCacheId = existingId // 测试SQL中该配置 hash=false，走 key-value 分支
+        val keyValueCacheId = existingId // in the test SQL this config has hash=false, so it goes through the key-value branch
         val missingKey = "missing-key"
 
         val reloadEx = assertFailsWith<ServiceException> { sysCacheService.reload(keyValueCacheId, missingKey) }
@@ -246,14 +246,14 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** key-value 分支下，缺失 key 时 existsKey 返回 false */
+    /** In the key-value branch, existsKey returns false when the key is missing. */
     fun keyValueCacheBranch_existsKey_whenKeyNotFound_returnsFalse() {
         val keyValueCacheId = existingId // hash=false
         assertFalse(sysCacheService.existsKey(keyValueCacheId, "missing-key"))
     }
 
     @Test
-    /** key-value 分支下，reloadAll/evictAll 可正常执行（不抛异常） */
+    /** In the key-value branch, reloadAll / evictAll execute without throwing. */
     fun keyValueCacheBranch_reloadAllAndEvictAll_doNotThrow() {
         val keyValueCacheId = existingId // hash=false
         sysCacheService.reloadAll(keyValueCacheId)
@@ -261,7 +261,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** id/key 为空字符串时应抛 IllegalArgumentException */
+    /** id/key being blank should throw IllegalArgumentException. */
     fun cacheMethods_whenIdOrKeyBlank_throwIllegalArgumentException() {
         assertFailsWith<IllegalArgumentException> { sysCacheService.reload("", "k") }
         assertFailsWith<IllegalArgumentException> { sysCacheService.reload(existingId, "") }
@@ -276,7 +276,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** 缓存配置不存在时应抛 CACHE_CONFIG_NOT_FOUND */
+    /** Should throw CACHE_CONFIG_NOT_FOUND when the cache configuration does not exist. */
     fun cacheMethods_whenCacheConfigNotFound_throwServiceException() {
         val notFoundId = "00000000-0000-0000-0000-000000000000"
 
@@ -300,7 +300,7 @@ class SysCacheServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    /** hash 分支下，缺失 key 应抛 CACHE_KEY_NOT_FOUND */
+    /** In the hash branch, a missing key should throw CACHE_KEY_NOT_FOUND. */
     fun cacheMethods_whenKeyNotFound_throwServiceException() {
         val hashCacheId = getSysCacheHashConfigId()
         val missingKey = "missing-key"

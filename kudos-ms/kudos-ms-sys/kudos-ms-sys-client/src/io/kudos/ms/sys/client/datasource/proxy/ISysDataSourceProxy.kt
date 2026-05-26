@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 数据源客户端代理接口
+ * Data source client proxy interface.
  *
  * @author K
  * @since 1.0.0

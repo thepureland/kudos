@@ -4,7 +4,7 @@ import io.kudos.context.init.EnableKudos
 import org.springframework.boot.SpringApplication
 
 /**
- * auth-api-admin启动入口
+ * auth-api-admin bootstrap entry point.
  *
  * @author K
  * @author AI: Cursor

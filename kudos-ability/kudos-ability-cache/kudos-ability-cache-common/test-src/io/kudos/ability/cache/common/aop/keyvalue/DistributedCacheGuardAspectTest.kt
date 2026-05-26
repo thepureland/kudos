@@ -21,22 +21,23 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [DistributedCacheGuardAspect] 集成单测——Spring AOP + `@EnableAspectJAutoProxy`，
- * 不拉起完整 kudos cache 自动配置。
+ * Integration tests for [DistributedCacheGuardAspect] — Spring AOP + `@EnableAspectJAutoProxy`,
+ * without bringing up the full kudos cache auto-configuration.
  *
- * 关注点：
- *  - **抢锁成功**：业务方法被调用，proceed 返回结果
- *  - **抢锁失败**：aspect 退避后查一次缓存（仍 miss），仍 proceed——**不会阻塞挂死**（README
- *    的核心契约）
- *  - **lockProvider.tryLock 被调用**：验证锁路径被走过，而非 aspect 整个跳过
+ * Focus:
+ *  - **Lock acquired**: business method is invoked, proceed returns the result.
+ *  - **Lock failed**: the aspect backs off, queries the cache once (still misses), and proceeds anyway —
+ *    **must not block indefinitely** (the README's core contract).
+ *  - **lockProvider.tryLock is called**: verifies the lock path was exercised and the aspect didn't skip entirely.
  *
- * 测试不依赖 `KeyValueCacheKit` 命中（没注册 `mixCacheManager` MixCacheManager
- * bean，所以 cacheKit 永远 miss），断言围绕"业务方法是否被 invoke"展开。
+ * The tests do not rely on `KeyValueCacheKit` cache hits (no `mixCacheManager` MixCacheManager bean is registered,
+ * so cacheKit always misses); assertions revolve around "was the business method invoked".
  *
- * **PER_CLASS 生命周期**：aspect 用 `LockTool.lockProvider`（`by lazy`）一次性捕获
- * lock provider 实例——若每个测试方法都重建 context，第二轮以后的 aspect 仍然指向第一轮
- * 的 lockProvider 引用，导致后续断言看到 stale 计数。改成"context per class"：所有方法
- * 共享一份 lockProvider，[resetState] 在每个方法前清计数器 + 缓存。
+ * **PER_CLASS lifecycle**: the aspect captures the lock provider instance once via `LockTool.lockProvider`
+ * (`by lazy`) — if the context were rebuilt per test method, the aspect after the first round would still
+ * point to the first round's lockProvider reference, and later assertions would see stale counters. The
+ * "context per class" setup is used instead: all methods share a single lockProvider, and [resetState] clears
+ * the counters + cache before each method.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class DistributedCacheGuardAspectTest {
@@ -46,9 +47,9 @@ internal class DistributedCacheGuardAspectTest {
 
     @BeforeAll
     fun classSetup() {
-        // 两阶段构造：register → set SpringKit → refresh。aspect 的 companion init 触发
-        // `LockTool.lockProvider`（走 `SpringKit.getBeansOfType`），需要 applicationContext
-        // 在 refresh **之前**就可达，否则 lazy 字段会一次性失败永久 null。
+        // Two-phase construction: register → set SpringKit → refresh. The aspect's companion init triggers
+        // `LockTool.lockProvider` (which goes through `SpringKit.getBeansOfType`), so the applicationContext
+        // must be reachable **before** refresh; otherwise the lazy field fails once and stays null forever.
         ctx = AnnotationConfigApplicationContext()
         ctx.register(TestAopConfig::class.java)
         SpringKit.applicationContext = ctx
@@ -65,7 +66,7 @@ internal class DistributedCacheGuardAspectTest {
     fun resetState() {
         lockProvider.alwaysTryLockReturns(true)
         ctx.getBean(AtomicInteger::class.java).set(0)
-        // 清掉 @Cacheable 的缓存，避免跨测试方法的命中干扰
+        // Clear the @Cacheable cache to avoid cross-method hit contamination.
         val cm = ctx.getBean(ConcurrentMapCacheManager::class.java)
         cm.cacheNames.forEach { cm.getCache(it)?.clear() }
     }
@@ -80,9 +81,9 @@ internal class DistributedCacheGuardAspectTest {
         val result = service.loadOnce("a")
 
         assertEquals("loaded:a", result)
-        assertEquals(1, counter.get(), "拿到锁后业务方法应当 invoke 一次")
-        assertEquals(1, lockProvider.tryLockCount.get(), "tryLock 应当被调用一次")
-        assertEquals(1, lockProvider.unLockCount.get(), "成功路径 finally 应释放一次锁")
+        assertEquals(1, counter.get(), "Business method should be invoked once after the lock is acquired")
+        assertEquals(1, lockProvider.tryLockCount.get(), "tryLock should be called once")
+        assertEquals(1, lockProvider.unLockCount.get(), "The success path's finally should release the lock once")
     }
 
     @Test
@@ -96,11 +97,11 @@ internal class DistributedCacheGuardAspectTest {
         val result = service.loadOnce("b")
         val elapsed = System.currentTimeMillis() - start
 
-        // 抢锁失败 → 短退避 200ms → 仍 proceed，绝不挂死
+        // Lock acquisition fails → short 200ms backoff → still proceed, never hangs.
         assertEquals("loaded:b", result)
-        assertEquals(1, counter.get(), "抢锁失败仍应 proceed 一次，不挂死")
-        assert(elapsed < 2000) { "失败路径不应阻塞超过 2s, 实际 ${elapsed}ms" }
-        assertEquals(0, lockProvider.unLockCount.get(), "抢锁失败路径不应调 unLock")
+        assertEquals(1, counter.get(), "Lock failure should still proceed once and not hang")
+        assert(elapsed < 2000) { "Failure path must not block longer than 2s; actual ${elapsed}ms" }
+        assertEquals(0, lockProvider.unLockCount.get(), "Lock-failure path must not call unLock")
     }
 
     @Test
@@ -110,7 +111,7 @@ internal class DistributedCacheGuardAspectTest {
 
         service.loadOnce("c")
 
-        assertEquals(1, lockProvider.tryLockCount.get(), "抢锁失败后不应循环重试 tryLock")
+        assertEquals(1, lockProvider.tryLockCount.get(), "After lock failure, tryLock must not be retried in a loop")
     }
 
     @Configuration
@@ -133,7 +134,7 @@ internal class DistributedCacheGuardAspectTest {
         open fun guardedService(counter: AtomicInteger): GuardedService = GuardedService(counter)
     }
 
-    /** Spring AOP 代理目标类必须 open。计数器外置避免 CGLIB 字段语义干扰。 */
+    /** A Spring AOP proxy target class must be open. The counter is external to avoid CGLIB field-semantics interference. */
     @Service
     open class GuardedService(val calls: AtomicInteger) {
         @Cacheable("test-cache", key = "#input")
@@ -144,7 +145,7 @@ internal class DistributedCacheGuardAspectTest {
         }
     }
 
-    /** 测试用 ILockProvider：tryLock 返回值可控，并记录调用次数。 */
+    /** Test ILockProvider: tryLock return value is controllable, and call counts are recorded. */
     open class ControllableLockProvider : ILockProvider<ReentrantLock> {
         val tryLockCount = AtomicInteger(0)
         val unLockCount = AtomicInteger(0)
@@ -167,6 +168,6 @@ internal class DistributedCacheGuardAspectTest {
 
         override fun lock(key: String): ReentrantLock? = ReentrantLock()
         override fun unLock(lock: Lock, key: String) { /* no-op */ }
-        override fun order(): Int = 1 // 比默认 99 优先
+        override fun order(): Int = 1 // higher priority than the default 99
     }
 }

@@ -5,38 +5,38 @@ import java.time.LocalDateTime
 
 
 /**
- * 角色-资源关系详情响应VO
+ * Response VO for role-resource relation detail.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthRoleResourceDetail (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String = "",
 
-    /** 角色id */
+    /** Role id. */
     val roleId: String? = null,
 
-    /** 资源id */
+    /** Resource id. */
     val resourceId: String? = null,
 
-    /** 创建者id */
+    /** Creator user id. */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator user name. */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Creation time. */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater user id. */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater user name. */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Last update time. */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

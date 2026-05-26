@@ -23,12 +23,12 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.system.measureTimeMillis
 
 /**
- * test-container工具类
+ * test-container utility.
  *
- * 在 [SHARED_LIFECYCLE_ENABLED] 启用时（默认启用），多个 JVM 通过本机文件租约共享同一个 docker 容器：
- * - 仅当不存在运行中的同 label 容器时才会启动
- * - 每个使用容器的 JVM 各自登记一个租约文件
- * - JVM 关闭钩子只释放本进程的租约；只有最后一个存活租约离开时才真正停止容器
+ * When [SHARED_LIFECYCLE_ENABLED] is enabled (default), multiple JVMs share the same docker container via local file leases:
+ * - The container is started only when no running container with the same label exists
+ * - Each JVM that uses the container registers its own lease file
+ * - JVM shutdown hooks only release the current process's lease; the container is actually stopped only when the last live lease leaves
  *
  * @author K
  * @author AI: Claude
@@ -39,7 +39,7 @@ object TestContainerKit {
     const val LABEL_KEY = "kudos-test-container"
 
     /**
-     * 是否启用跨 JVM 共用生命周期。默认启用；若需回到旧行为，可设为 `false`。
+     * Whether to enable cross-JVM shared lifecycle. Enabled by default; set to `false` to revert to the old behavior.
      */
     const val SHARED_LIFECYCLE_ENABLED = "kudos.testcontainer.shared-lifecycle.enabled"
 
@@ -52,20 +52,20 @@ object TestContainerKit {
     private val REGISTERED_LABELS: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
     /**
-     * 启动容器(若需要)
+     * Starts the container (if needed).
      *
-     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
-     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
-     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
-     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
+     * Ensures a single container is shared across a batch of tests, avoiding the time wasted starting/stopping containers repeatedly.
+     * Alternatively, you can run a class's main method manually to start the container and share it while running tests.
+     * Registers a JVM shutdown hook to automatically stop the container when the batch finishes,
+     * rather than stopping after each test — provided the @Testcontainers annotation is not used.
      *
-     * 多个 JVM 同时连到同一个容器时，会以本机租约追踪使用者；先退出的 JVM 不会停止仍被其它 JVM 使用中的容器，
-     * 只有最后一个存活租约释放后才会停止容器。
-     * 当docker没安装时想忽略测试用例，可以用@EnabledIfDockerInstalled
+     * When multiple JVMs connect to the same container, users are tracked via local leases; a JVM that exits first will not stop a container still in use by other JVMs,
+     * and the container is stopped only after the last live lease is released.
+     * To skip tests when Docker is not installed, use @EnabledIfDockerInstalled.
      *
-     * @param label 容器的label的值(key必须为label)
-     * @param container 容器
-     * @return 容器对象
+     * @param label the value of the container's label (the key must be "label")
+     * @param container the container
+     * @return the container instance
      */
     fun startContainerIfNeeded(
         label: String,
@@ -83,21 +83,21 @@ object TestContainerKit {
     }
 
     /**
-     * 容器是否在运行中
+     * Whether the container is running.
      *
-     * 注：container.isRunning只是判断当前jvm中的状态值，而该方法可以判断在docker中运行着。
+     * Note: container.isRunning only checks the current JVM's state value, while this method can detect whether it is running in Docker.
      *
-     * @param label 容器的label的值(key必须为label)
-     * @return true: 运行中，false：未运行
+     * @param label the value of the container's label (the key must be "label")
+     * @return true if running, false otherwise
      */
     fun isContainerRunning(label: String): Boolean = getRunningContainer(label) != null
 
     /**
-     * 服务是否在运行中
+     * Whether the service is running.
      *
-     * @param compose 由compose.yml跑的容器实例
-     * @param serviceInstanceName 服务实例名
-     * @return true: 运行中，false：未运行
+     * @param compose a container instance launched from compose.yml
+     * @param serviceInstanceName the service instance name
+     * @return true if running, false otherwise
      */
     fun isServiceRunning(compose: ComposeContainer, serviceInstanceName: String): Boolean =
         compose.getContainerByServiceName(serviceInstanceName)
@@ -105,13 +105,13 @@ object TestContainerKit {
             .orElse(false)
 
     /**
-     * 根据label获取对应的运行中容器
+     * Gets the running container corresponding to the given label.
      *
-     * 仅返回真正运行中的容器（`withShowAll(false)`）；处于 exited 状态的残留容器不会被误当作"已就绪"返回，
-     * 从而触发后续按需启动。
+     * Only returns truly running containers (`withShowAll(false)`); exited residual containers are not returned as "ready",
+     * so subsequent on-demand startup is correctly triggered.
      *
-     * @param label 容器的label的值(key必须为label)
-     * @return 容器对象，不存在返回null
+     * @param label the value of the container's label (the key must be "label")
+     * @return the container instance, or null if none exists
      */
     fun getRunningContainer(label: String): Container? {
         DockerKit.ensureDockerRunning()
@@ -124,10 +124,10 @@ object TestContainerKit {
     }
 
     /**
-     * 启动容器
+     * Starts the container.
      *
-     * @param container 容器
-     * @param label 容器助记名
+     * @param container the container
+     * @param label the container's mnemonic name
      */
     fun startContainer(container: GenericContainer<*>, label: String) {
         println(">>>>>>>>>>>>>>>>>>>> Starting $label container...")
@@ -139,14 +139,14 @@ object TestContainerKit {
     }
 
     /**
-     * 注册 JVM 关闭钩子，自动停止容器
+     * Registers a JVM shutdown hook to automatically stop the container.
      *
-     * 可以让批量测试结束时才停止容器，而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解
+     * Lets the container be stopped only when the test batch ends, rather than after each test — provided the @Testcontainers annotation is not used.
      *
-     * 启用共用生命周期时，关闭钩子只释放当前 JVM 的租约；若还有其它存活 JVM 租约，容器会继续保留。
+     * When shared lifecycle is enabled, the shutdown hook only releases the current JVM's lease; if other live JVM leases remain, the container is retained.
      *
-     * @param container 容器
-     * @param label 容器助记名
+     * @param container the container
+     * @param label the container's mnemonic name
      */
     fun addShutdownHook(container: GenericContainer<*>, label: String) {
         if (!isSharedLifecycleEnabled()) {
@@ -167,8 +167,8 @@ object TestContainerKit {
     }
 
     /**
-     * 共用容器必须避开 Testcontainers/Ryuk 的单一 JVM session 清理，
-     * 否则第一个启动者离线时仍会被 Ryuk 回收。
+     * Shared containers must avoid Testcontainers/Ryuk's single-JVM session cleanup;
+     * otherwise the container would be reaped by Ryuk when the first starter leaves.
      */
     private fun prepareSharedReusableContainer(container: GenericContainer<*>) {
         if (!isSharedLifecycleEnabled()) return
@@ -177,7 +177,7 @@ object TestContainerKit {
     }
 
     /**
-     * 只在当前 JVM 内存中打开 reuse，不写入用户家目录的 `~/.testcontainers.properties`。
+     * Enables reuse only in the current JVM's memory; does not write to the user's home `~/.testcontainers.properties`.
      */
     private fun enableTestcontainersReuseInMemory() {
         try {
@@ -192,7 +192,7 @@ object TestContainerKit {
     }
 
     /**
-     * 释放当前 JVM 的租约，并在确认没有其它存活租约时停止对应 label 的容器。
+     * Releases the current JVM's lease, and stops the container for the given label once no other live leases remain.
      */
     private fun releaseAndStopIfLast(label: String) {
         withLabelLock(label) {
@@ -207,7 +207,7 @@ object TestContainerKit {
     }
 
     /**
-     * 直接通过 Docker label 查找并停止容器，避免依赖当前 JVM 是否持有原始 [GenericContainer] 实例。
+     * Finds and stops the container directly by Docker label, avoiding any dependency on whether the current JVM still holds the original [GenericContainer] instance.
      */
     private fun stopContainerByLabel(label: String) {
         DockerKit.ensureDockerRunning()
@@ -229,7 +229,7 @@ object TestContainerKit {
     }
 
     /**
-     * 租约文件名带入 pid 与进程内唯一值，避免同一 pid 被操作系统重用时误删新进程租约。
+     * The lease file name includes the pid and an intra-process unique value, preventing accidental deletion of a new process's lease when the OS reuses the same pid.
      */
     private fun registerLease(label: String) {
         withLabelLock(label) {
@@ -251,7 +251,7 @@ object TestContainerKit {
     }
 
     /**
-     * 删除当前 JVM 对指定容器 label 的租约文件。
+     * Deletes the current JVM's lease file for the given container label.
      */
     private fun releaseLease(label: String) {
         try {
@@ -262,7 +262,7 @@ object TestContainerKit {
     }
 
     /**
-     * 清掉已失效的租约文件，并返回仍存活的 JVM 租约数。
+     * Removes stale lease files and returns the count of still-live JVM leases.
      */
     private fun pruneAndCountActiveLeases(label: String): Int {
         val dir = leaseDir(label)
@@ -286,7 +286,7 @@ object TestContainerKit {
     }
 
     /**
-     * 从租约文件读取 pid；文件损坏或内容无效时视为失效租约。
+     * Reads the pid from a lease file; treats corrupted files or invalid contents as stale leases.
      */
     private fun readLeasePid(file: Path): Long? {
         return try {
@@ -300,13 +300,13 @@ object TestContainerKit {
     }
 
     /**
-     * 判断指定 pid 是否仍有存活进程。
+     * Returns whether a process with the given pid is still alive.
      */
     private fun isProcessAlive(pid: Long): Boolean =
         ProcessHandle.of(pid).map { it.isAlive }.orElse(false)
 
     /**
-     * 同一 label 的租约增删与最后停止判断必须互斥，避免两个 JVM 同时认定自己是最后使用者。
+     * Lease add/remove and the last-stop decision for the same label must be mutually exclusive, preventing two JVMs from concurrently concluding they are the last user.
      */
     private fun withLabelLock(label: String, action: () -> Unit) {
         try {
@@ -333,11 +333,11 @@ object TestContainerKit {
     private fun safeLabel(label: String): String = label.replace(Regex("[^A-Za-z0-9_.-]"), "_")
 
     /**
-     * 直接在容器内执行命令
+     * Executes a command directly inside the container.
      *
-     * @param container 容器对象
-     * @param command 要执行的命令及其参数
-     * @return 执行结果，包含退出码、stdout 和 stderr
+     * @param container the container instance
+     * @param command the command and its arguments to execute
+     * @return the execution result, containing exit code, stdout, and stderr
      */
     private fun execInContainer(container: GenericContainer<*>, vararg command: String): ExecResult {
         val result = container.execInContainer(*command)
@@ -349,17 +349,17 @@ object TestContainerKit {
     }
 
     /**
-     * 通过 Docker Java API 在容器内执行命令
+     * Executes a command inside the container via the Docker Java API.
      *
-     * @param container Docker Java API 的 Container 对象
-     * @param command 要执行的命令及其参数
-     * @return 执行结果，包含退出码、stdout 和 stderr
+     * @param container the Container object from the Docker Java API
+     * @param command the command and its arguments to execute
+     * @return the execution result, containing exit code, stdout, and stderr
      */
     fun execInContainer(container: Container, vararg command: String): ExecResult {
         val dockerClient = getDockerClient()
         val containerId = container.id
 
-        // 创建 exec 命令
+        // Create the exec command
         val execCreateCmd = dockerClient.execCreateCmd(containerId)
             .withCmd(*command)
             .withAttachStdout(true)
@@ -368,7 +368,7 @@ object TestContainerKit {
         val execCreateResponse: ExecCreateCmdResponse = execCreateCmd.exec()
         val execId = execCreateResponse.id
 
-        // 执行命令并获取输出
+        // Execute the command and capture the output
         val stdout = ByteArrayOutputStream()
         val stderr = ByteArrayOutputStream()
 
@@ -379,7 +379,7 @@ object TestContainerKit {
                         StreamType.STDOUT -> stdout.write(frame.payload)
                         StreamType.STDERR -> stderr.write(frame.payload)
                         else -> {
-                            // 其他类型（如 RAW）忽略或根据实际情况处理
+                            // Ignore other types (e.g. RAW), or handle as appropriate
                         }
                     }
                 } catch (e: IOException) {
@@ -390,7 +390,7 @@ object TestContainerKit {
 
         dockerClient.execStartCmd(execId).exec(callback).awaitCompletion()
 
-        // 获取退出码
+        // Get the exit code
         val inspectExecResponse = dockerClient.inspectExecCmd(execId).exec()
         val exitCode = inspectExecResponse.exitCodeLong ?: -1
 
@@ -402,7 +402,7 @@ object TestContainerKit {
     }
 
     /**
-     * 执行结果数据类
+     * Execution result data class.
      */
     data class ExecResult(
         val exitCode: Int,
@@ -411,7 +411,7 @@ object TestContainerKit {
     )
 
     /**
-     * 获取 DockerClient 实例（使用 Testcontainers 的 DockerClientFactory）
+     * Obtains a DockerClient instance (using Testcontainers' DockerClientFactory).
      */
     fun getDockerClient(): DockerClient {
         return DockerClientFactory.instance().client()

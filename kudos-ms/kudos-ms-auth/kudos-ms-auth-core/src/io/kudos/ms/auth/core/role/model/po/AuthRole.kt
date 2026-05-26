@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 角色数据库实体
+ * Role database entity
  *
  * @author K
  * @author AI: Cursor
@@ -15,43 +15,43 @@ interface AuthRole : IDbEntity<String, AuthRole> {
 
     companion object : DbEntityFactory<AuthRole>()
 
-    /** 角色编码 */
+    /** Role code */
     var code: String
 
-    /** 角色名称 */
+    /** Role name */
     var name: String
 
-    /** 租户id */
+    /** Tenant id */
     var tenantId: String
 
-    /** 子系统编码 */
+    /** Subsystem code */
     var subsysCode: String
 
-    /** 备注 */
+    /** Remark */
     var remark: String?
 
-    /** 是否激活 */
+    /** Whether active */
     var active: Boolean
 
-    /** 是否内置 */
+    /** Whether built-in */
     var builtIn: Boolean?
 
-    /** 创建者id */
+    /** Creator id */
     var createUserId: String?
 
-    /** 创建者名称 */
+    /** Creator name */
     var createUserName: String?
 
-    /** 创建时间 */
+    /** Create time */
     var createTime: LocalDateTime?
 
-    /** 更新者id */
+    /** Updater id */
     var updateUserId: String?
 
-    /** 更新者名称 */
+    /** Updater name */
     var updateUserName: String?
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime: LocalDateTime?
 
 

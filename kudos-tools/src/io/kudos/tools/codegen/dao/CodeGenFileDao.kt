@@ -10,7 +10,7 @@ import org.ktorm.dsl.where
 import org.springframework.stereotype.Repository
 
 /**
- * 代码生成-文件信息数据访问对象
+ * Code generation - file info data access object.
  *
  * @author K
  * @since 1.0.0

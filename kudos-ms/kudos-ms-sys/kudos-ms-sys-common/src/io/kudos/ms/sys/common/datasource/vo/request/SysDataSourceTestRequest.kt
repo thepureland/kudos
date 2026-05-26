@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank
 
 
 /**
- * 数据源连通性测试请求
+ * Data source connectivity test request
  *
  * @author K
  * @since 1.0.0
@@ -17,12 +17,12 @@ data class SysDataSourceTestRequest(
     @get:MaxLength(256)
     val url: String,
 
-    /** 用户名 */
+    /** Username */
     @get:NotBlank
     @get:MaxLength(32)
     val username: String,
 
-    /** 密码（明文；调用方负责安全传输） */
+    /** Password (plaintext; caller is responsible for secure transport) */
     val password: String?,
 
 )

@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for UserOrgUserService
  *
- * 测试数据来源：`UserOrgUserServiceTest.sql`
+ * Test data source: `UserOrgUserServiceTest.sql`.
  *
  * @author K
  * @author AI: Cursor
@@ -45,10 +45,10 @@ class UserOrgUserServiceTest : RdbAndRedisCacheTestBase() {
         val orgId = "6cd22b48-0000-0000-0000-000000000063"
         val userId = "6cd22b48-0000-0000-0000-000000000060"
         
-        // 测试存在的关系
+        // Test an existing relation.
         assertTrue(userOrgUserService.exists(orgId, userId))
-        
-        // 测试不存在的关系
+
+        // Test a non-existent relation.
         assertFalse(userOrgUserService.exists(orgId, "non-existent-user-id"))
     }
 
@@ -61,17 +61,17 @@ class UserOrgUserServiceTest : RdbAndRedisCacheTestBase() {
             "6cd22b48-0000-0000-0000-000000000062"
         )
         
-        // 批量绑定（非管理员）
+        // Batch bind (non-admin).
         val count = userOrgUserService.batchBind(orgId, userIds, false)
         assertTrue(count >= 3)
-        
-        // 验证绑定成功
+
+        // Verify bind succeeded.
         val boundUserIds = userOrgUserService.getUserIdsByOrgId(orgId)
         assertTrue(boundUserIds.containsAll(userIds))
-        
-        // 测试重复绑定（应该跳过已存在的）
+
+        // Test duplicate binding (should skip already existing).
         val count2 = userOrgUserService.batchBind(orgId, userIds, false)
-        assertTrue(count2 == 0) // 应该返回0，因为都已存在
+        assertTrue(count2 == 0) // Should return 0, because all already exist.
     }
 
     @Test
@@ -79,16 +79,16 @@ class UserOrgUserServiceTest : RdbAndRedisCacheTestBase() {
         val orgId = "6cd22b48-0000-0000-0000-000000000063"
         val userId = "6cd22b48-0000-0000-0000-000000000061"
         
-        // 验证关系存在
+        // Verify the relation exists.
         assertTrue(userOrgUserService.exists(orgId, userId))
-        
-        // 解绑
+
+        // Unbind.
         assertTrue(userOrgUserService.unbind(orgId, userId))
-        
-        // 验证关系已不存在
+
+        // Verify the relation no longer exists.
         assertFalse(userOrgUserService.exists(orgId, userId))
-        
-        // 重新绑定以便后续测试
+
+        // Re-bind for subsequent tests.
         userOrgUserService.batchBind(orgId, listOf(userId), false)
     }
 
@@ -97,16 +97,16 @@ class UserOrgUserServiceTest : RdbAndRedisCacheTestBase() {
         val orgId = "6cd22b48-0000-0000-0000-000000000063"
         val userId = "6cd22b48-0000-0000-0000-000000000061"
         
-        // 先设置为管理员
+        // First set as admin.
         assertTrue(userOrgUserService.setOrgAdmin(orgId, userId, true))
-        
-        // 验证设置成功（通过查询关系确认，这里简化测试）
+
+        // Verify setting succeeded (confirmed by querying the relation, simplified here).
         assertTrue(userOrgUserService.exists(orgId, userId))
-        
-        // 取消管理员
+
+        // Cancel admin.
         assertTrue(userOrgUserService.setOrgAdmin(orgId, userId, false))
-        
-        // 验证取消成功
+
+        // Verify cancellation succeeded.
         assertTrue(userOrgUserService.exists(orgId, userId))
     }
 }

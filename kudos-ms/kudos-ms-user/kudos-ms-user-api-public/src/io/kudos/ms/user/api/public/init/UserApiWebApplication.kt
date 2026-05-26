@@ -4,7 +4,7 @@ import io.kudos.context.init.EnableKudos
 import org.springframework.boot.SpringApplication
 
 /**
- * user-api-web启动入口
+ * user-api-web application entry point
  *
  * @author K
  * @since 1.0.0

@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 接收者群组内部 RPC 控制器。
+ * Internal RPC controller for receiver groups.
  *
  * @author K
  * @author AI: Codex

@@ -6,35 +6,35 @@ import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
 
 /**
- * 字典项表单基础字段（新建 / 更新共用）
+ * Dictionary item form base fields (shared by create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface ISysDictItemFormBase {
 
-    /** 字典项代码 */
+    /** Dictionary item code */
     @get:NotBlank
     @get:MaxLength(64)
     @get:Matches(RegExpEnum.VAR_NAME)
     val itemCode: String
 
-    /** 字典项名称 */
+    /** Dictionary item name */
     @get:NotBlank
     @get:MaxLength(64)
     val itemName: String
 
-    /** 字典id */
+    /** Dictionary id */
     @get:NotBlank
     val dictId: String
 
-    /** 字典项排序 */
+    /** Dictionary item order number */
     val orderNum: Int?
 
-    /** 父id */
+    /** Parent id */
     val parentId: String?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

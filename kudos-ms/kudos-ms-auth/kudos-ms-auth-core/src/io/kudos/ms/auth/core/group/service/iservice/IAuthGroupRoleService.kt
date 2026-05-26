@@ -5,7 +5,7 @@ import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
 
 
 /**
- * 组-角色关系业务接口
+ * Group-role relation service interface.
  *
  * @author K
  * @author AI: Codex
@@ -15,53 +15,53 @@ interface IAuthGroupRoleService : IBaseCrudService<String, AuthGroupRole> {
 
 
     /**
-     * 根据组ID获取角色ID集合
+     * Returns the role IDs bound to the given group.
      *
-     * @param groupId 组ID
-     * @return 角色ID集合
+     * @param groupId group ID
+     * @return set of role IDs
      * @author AI: Codex
      * @since 1.0.0
      */
     fun getRoleIdsByGroupId(groupId: String): Set<String>
 
     /**
-     * 根据角色ID获取组ID集合
+     * Returns the group IDs the given role belongs to.
      *
-     * @param roleId 角色ID
-     * @return 组ID集合
+     * @param roleId role ID
+     * @return set of group IDs
      * @author AI: Codex
      * @since 1.0.0
      */
     fun getGroupIdsByRoleId(roleId: String): Set<String>
 
     /**
-     * 批量绑定组和角色关系
+     * Batch-binds a group to multiple roles.
      *
-     * @param groupId 组ID
-     * @param roleIds 角色ID集合
-     * @return 成功绑定的数量
+     * @param groupId group ID
+     * @param roleIds role IDs to bind
+     * @return number of bindings created
      * @author AI: Codex
      * @since 1.0.0
      */
     fun batchBind(groupId: String, roleIds: Collection<String>): Int
 
     /**
-     * 解绑组和角色关系
+     * Unbinds a group-role relation.
      *
-     * @param groupId 组ID
-     * @param roleId 角色ID
-     * @return 是否解绑成功
+     * @param groupId group ID
+     * @param roleId role ID
+     * @return true if the relation was removed
      * @author AI: Codex
      * @since 1.0.0
      */
     fun unbind(groupId: String, roleId: String): Boolean
 
     /**
-     * 检查关系是否存在
+     * Checks whether a group-role relation exists.
      *
-     * @param groupId 组ID
-     * @param roleId 角色ID
-     * @return 是否存在
+     * @param groupId group ID
+     * @param roleId role ID
+     * @return true if the relation exists
      * @author AI: Codex
      * @since 1.0.0
      */

@@ -7,9 +7,9 @@ import org.ktorm.database.Database
 
 
 /**
- * 取得当前上下文的数据库对象
+ * Returns the database object of the current context.
  *
- * @return 当前上下文的数据库对象
+ * @return Database object of the current context
  * @author K
  * @author AI: Codex
  * @since 1.0.0

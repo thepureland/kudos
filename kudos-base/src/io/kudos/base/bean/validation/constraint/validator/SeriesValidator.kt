@@ -7,55 +7,55 @@ import jakarta.validation.ConstraintValidatorContext
 import java.math.BigDecimal
 
 /**
- * Series约束验证器
+ * Series constraint validator.
  *
  * @author K
  * @since 1.0.0
  */
 class SeriesValidator : ConstraintValidator<Series, Any?> {
 
-    /** 当前实例处理的 [Series] 注解，由 [initialize] 注入 */
+    /** The [Series] annotation handled by the current instance, injected by [initialize] */
     private lateinit var series: Series
 
     override fun initialize(series: Series) {
         this.series = series
         if (series.step < 0.0) {
-            error("@Series约束注解的step不能为负数！")
+            error("The step of the @Series constraint annotation cannot be negative!")
         }
         if (series.size < 0) {
-            error("@Series约束注解的size不能为负数！")
+            error("The size of the @Series constraint annotation cannot be negative!")
         }
     }
 
     /**
-     * 验证值是否符合序列约束
-     * 
-     * 验证数组或列表中的元素是否符合指定的序列规则（递增、递减、等差等）。
-     * 
-     * 工作流程：
-     * 1. null值检查：如果值为null，直接返回true（null值由@NotNull等注解处理）
-     * 2. 类型检查：必须是Array或List类型，否则抛出异常
-     * 3. 长度检查：如果元素数量<=1，直接返回true（单个元素无需验证序列）
-     * 4. 大小检查：如果配置了size且实际大小不匹配，返回false
-     * 5. null元素检查：数组中不能包含null元素，否则抛出异常
-     * 6. 数值转换：将所有元素转换为BigDecimal进行高精度计算
-     * 7. 序列验证：调用validate方法验证序列规则
-     * 
-     * 注意事项：
-     * - 使用BigDecimal进行高精度计算，避免浮点数精度问题
-     * - 数组元素会先转换为String再转为BigDecimal，确保类型兼容
-     * - 只支持Array和List类型，其他类型会抛出异常
-     * 
-     * @param value 待验证的值，必须是Array或List类型
-     * @param context 验证上下文
-     * @return true表示验证通过，false表示验证失败
+     * Validate whether the value meets the series constraint.
+     *
+     * Validates whether elements in an array or list match the specified series rule (increasing, decreasing, arithmetic, etc.).
+     *
+     * Workflow:
+     * 1. Null check: if the value is null, return true directly (null values are handled by annotations such as @NotNull)
+     * 2. Type check: must be Array or List, otherwise an exception is thrown
+     * 3. Length check: if the number of elements is <= 1, return true directly (a single element does not need a series check)
+     * 4. Size check: if size is configured and the actual size does not match, return false
+     * 5. Null element check: the array must not contain null elements; otherwise an exception is thrown
+     * 6. Numeric conversion: convert all elements to BigDecimal for high-precision computation
+     * 7. Series validation: call the validate method to verify the series rule
+     *
+     * Notes:
+     * - Uses BigDecimal for high-precision computation to avoid floating-point precision issues
+     * - Array elements are first converted to String and then to BigDecimal to ensure type compatibility
+     * - Only Array and List types are supported; other types will throw an exception
+     *
+     * @param value the value to validate, must be Array or List
+     * @param context the validation context
+     * @return true if validation passes, false otherwise
      */
     override fun isValid(value: Any?, context: ConstraintValidatorContext): Boolean {
         if (value == null) {
             return true
         }
         if (value !is Array<*> && value !is List<*>) {
-            return fail(context, "@Series约束注解只能设置在返回值类型为Array或List的get方法上！")
+            return fail(context, "The @Series constraint annotation can only be placed on a getter that returns an Array or List!")
         }
         var values = when (value) {
             is Array<*> -> value.toList()
@@ -69,25 +69,25 @@ class SeriesValidator : ConstraintValidator<Series, Any?> {
             return false
         }
         if (values.any { it == null }) {
-            return fail(context, "@Series约束注解限制数组中每个元素均不能为null！数组为：$value")
+            return fail(context, "The @Series constraint annotation requires that every element in the array is non-null! Array: $value")
         }
 
         return try {
-            // 将数组元素全部转为String，方便用BigDecimal进行高精度运算
+            // Convert all array elements to String so they can be handled by BigDecimal for high-precision computation
             values = values.map { BigDecimal(it.toString()) }
             validate(series.type, series.step, *values.toTypedArray())
         } catch (_: RuntimeException) {
-            fail(context, "@Series约束注解仅支持可转为数值的元素类型，数组为：$value")
+            fail(context, "The @Series constraint annotation only supports element types convertible to a number. Array: $value")
         }
     }
 
     /**
-     * 用自定义 message 替换默认 violation 并返回 false。
-     * 用在“值非法到根本无法继续校验”的早退路径（如类型不对、含 null 元素）。
+     * Replace the default violation with a custom message and return false.
+     * Used on early-exit paths where the value is so invalid that validation cannot proceed (wrong type, contains null elements).
      *
-     * @param context Bean Validation 上下文
-     * @param message 自定义错误信息模板
-     * @return 永远返回 false
+     * @param context the Bean Validation context
+     * @param message the custom error message template
+     * @return always returns false
      * @author K
      * @since 1.0.0
      */
@@ -98,36 +98,36 @@ class SeriesValidator : ConstraintValidator<Series, Any?> {
     }
 
     /**
-     * 验证序列规则
-     * 
-     * 根据序列类型验证数值序列是否符合规则，支持多种序列模式。
-     * 
-     * 支持的序列类型：
-     * - INC_DIFF：严格递增，相邻元素差值等于step（step=0时只需递增）
-     * - DESC_DIFF：严格递减，相邻元素差值等于step（step=0时只需递减）
-     * - INC_DIFF_DESC_DIFF：先递增后递减，找到最大值后验证前后两部分
-     * - DESC_DIFF_INC_DIFF：先递减后递增，找到最小值后验证前后两部分
-     * - DIFF：所有元素互不相同，且相邻元素差值等于step（step=0时只需互不相同）
-     * - INC_EQ：非严格递增，允许相等，相邻元素差值等于step或0（step=0时只需非递减）
-     * - DESC_EQ：非严格递减，允许相等，相邻元素差值等于-step或0（step=0时只需非递增）
-     * - INC_EQ_DESC_EQ：先非严格递增后非严格递减，找到最大值区间后验证
-     * - DESC_EQ_INC_EQ：先非严格递减后非严格递增，找到最小值区间后验证
-     * - EQ：所有元素相等
-     * 
-     * 计算说明：
-     * - 使用BigDecimal进行高精度计算，避免浮点数精度问题
-     * - step=0.0表示不应用步进，只验证递增/递减关系
-     * - 对于复合序列（如INC_DIFF_DESC_DIFF），会先找到转折点，然后分别验证前后两部分
-     * 
-     * 注意事项：
-     * - 复合序列的转折点不能是首尾元素，否则验证失败
-     * - 对于允许相等的序列类型，会处理连续相等的情况
-     * - 所有计算都使用BigDecimal，确保精度
-     * 
-     * @param type 序列类型枚举
-     * @param step 步进值，0.0表示不应用步进
-     * @param values 待验证的数值序列
-     * @return true表示序列符合规则，false表示不符合
+     * Validate series rules.
+     *
+     * Validates whether a numeric series matches the rule for the given series type; supports a variety of series patterns.
+     *
+     * Supported series types:
+     * - INC_DIFF: strictly increasing; the difference between adjacent elements equals step (only requires increasing when step=0)
+     * - DESC_DIFF: strictly decreasing; the difference between adjacent elements equals step (only requires decreasing when step=0)
+     * - INC_DIFF_DESC_DIFF: first increasing then decreasing; find the maximum then validate the two halves
+     * - DESC_DIFF_INC_DIFF: first decreasing then increasing; find the minimum then validate the two halves
+     * - DIFF: all elements are distinct, and the difference between adjacent elements equals step (only requires distinctness when step=0)
+     * - INC_EQ: non-strictly increasing; equal values allowed; the difference between adjacent elements equals step or 0 (only requires non-decreasing when step=0)
+     * - DESC_EQ: non-strictly decreasing; equal values allowed; the difference between adjacent elements equals -step or 0 (only requires non-increasing when step=0)
+     * - INC_EQ_DESC_EQ: first non-strictly increasing then non-strictly decreasing; locate the maximum interval and validate
+     * - DESC_EQ_INC_EQ: first non-strictly decreasing then non-strictly increasing; locate the minimum interval and validate
+     * - EQ: all elements are equal
+     *
+     * Computation notes:
+     * - Uses BigDecimal for high-precision computation to avoid floating-point precision issues
+     * - step=0.0 means no step is applied; only the increasing/decreasing relationship is validated
+     * - For composite series (e.g., INC_DIFF_DESC_DIFF), the turning point is located first, then each half is validated
+     *
+     * Notes:
+     * - The turning point of a composite series cannot be the first or last element; otherwise validation fails
+     * - For series types allowing equality, consecutive equal values are handled
+     * - All computations use BigDecimal to ensure precision
+     *
+     * @param type the series type enum
+     * @param step the step value; 0.0 means no step is applied
+     * @param values the numeric series to validate
+     * @return true if the series matches the rule, false otherwise
      */
     private fun validate(type: SeriesTypeEnum, step: Double, vararg values: BigDecimal): Boolean {
         return when (type) {

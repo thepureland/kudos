@@ -11,17 +11,18 @@ import org.springframework.stereotype.Component
 import java.lang.reflect.Modifier
 
 /**
- * 启动期校验：确认 [SysDictTypes] 中声明的每个字典类型常量都在 `sys_dict` 表中有对应的启用记录
- *（`atomic_service_code = "sys"` 且 `active = true`）。
+ * Startup validator: confirms that every dictionary type constant declared in [SysDictTypes] has a corresponding
+ * active record in the `sys_dict` table (`atomic_service_code = "sys"` and `active = true`).
  *
- * 历史问题：[SysDictTypes] 是 `const val`，而 `sys_dict.dict_type` 是另一份「真相」。两边漂移时
- * `@DictItemCode(dictType = SysDictTypes.IP_TYPE)` 会**永远校验失败**而无任何编译期提示。
- * 本校验在 [ApplicationReadyEvent] 时（Flyway / 缓存加载之后）扫一次。
+ * Historical issue: [SysDictTypes] is `const val`, while `sys_dict.dict_type` is another "source of truth". When the
+ * two drift, `@DictItemCode(dictType = SysDictTypes.IP_TYPE)` will **always fail validation** with no compile-time
+ * hint. This validator runs once at [ApplicationReadyEvent] (after Flyway / cache loading).
  *
- * 配置：
- * - `kudos.ms.sys.startup.dict-types-validation.enabled` — 默认 `true`；关掉可跳过整个校验。
- * - `kudos.ms.sys.startup.dict-types-validation.fail-on-missing` — 默认 `false`。
- *   `true` 时若发现缺失则抛 [IllegalStateException]，**应用启动失败**；适合 CI / 预发环境。
+ * Configuration:
+ * - `kudos.ms.sys.startup.dict-types-validation.enabled` — default `true`; turn off to skip the entire validation.
+ * - `kudos.ms.sys.startup.dict-types-validation.fail-on-missing` — default `false`.
+ *   When `true`, throws [IllegalStateException] if anything is missing, **causing application startup to fail**;
+ *   suitable for CI / staging environments.
  *
  * @author K
  * @author AI: Cursor
@@ -36,9 +37,9 @@ open class SysDictTypesStartupValidator(
 
     private val log = LogFactory.getLog(this::class)
 
-    // kotlin-spring (allopen) 默认会把 @Component 类的所有成员视为 open；带 `private set` 的 open 属性
-    // 是非法的（Kotlin 报错"Private setters for open properties are prohibited"）。这里显式 `final`
-    // 关闭这个属性的 open，避免被 allopen 影响。
+    // kotlin-spring (allopen) by default treats all members of @Component classes as open; open properties with a
+    // `private set` are illegal (Kotlin errors out with "Private setters for open properties are prohibited"). Mark
+    // this property `final` explicitly to disable its openness and avoid being affected by allopen.
     @Volatile
     final var lastResult: ValidationResult? = null
         private set
@@ -46,14 +47,14 @@ open class SysDictTypesStartupValidator(
     @EventListener(ApplicationReadyEvent::class)
     open fun onApplicationReady() {
         if (!enabled) {
-            log.info("SysDictTypes 启动校验已禁用（kudos.ms.sys.startup.dict-types-validation.enabled=false）")
+            log.info("SysDictTypes startup validation is disabled (kudos.ms.sys.startup.dict-types-validation.enabled=false)")
             return
         }
         val result = validate(SysConsts.ATOMIC_SERVICE_NAME)
         lastResult = result
         if (result.missing.isNotEmpty()) {
-            val msg = "SysDictTypes 启动校验失败：以下字典类型在 sys_dict 表中找不到 active 记录（atomicServiceCode=${SysConsts.ATOMIC_SERVICE_NAME}）：" +
-                    "${result.missing}。受影响的 @DictItemCode 校验将永远失败，请检查 Flyway 种子数据或代码常量。"
+            val msg = "SysDictTypes startup validation failed: the following dictionary types have no active record in the sys_dict table (atomicServiceCode=${SysConsts.ATOMIC_SERVICE_NAME}): " +
+                    "${result.missing}. Affected @DictItemCode validations will always fail; check the Flyway seed data or code constants."
             if (failOnMissing) {
                 throw IllegalStateException(msg)
             } else {
@@ -62,21 +63,21 @@ open class SysDictTypesStartupValidator(
         }
         if (result.extras.isNotEmpty()) {
             log.warn(
-                "sys_dict 中存在 atomicServiceCode={0} 但未在 SysDictTypes 中声明的 dict_type：{1}。" +
-                        "可能是历史遗留或新加未同步常量。",
+                "sys_dict contains dict_type values with atomicServiceCode={0} that are not declared in SysDictTypes: {1}. " +
+                        "Possibly historical leftovers or newly added constants not yet synced.",
                 SysConsts.ATOMIC_SERVICE_NAME, result.extras,
             )
         }
         if (result.missing.isEmpty() && result.extras.isEmpty()) {
-            log.info("SysDictTypes 启动校验通过：共 {0} 项 dict_type 与数据库一致。", result.declared.size)
+            log.info("SysDictTypes startup validation passed: {0} dict_type entries are consistent with the database.", result.declared.size)
         }
     }
 
     /**
-     * 执行一次校验并返回结果（不副作用于日志）。
+     * Performs a single validation and returns the result (no logging side effects).
      *
-     * @param atomicServiceCode 比对范围；生产中固定为 [SysConsts.ATOMIC_SERVICE_NAME]，
-     *   测试可传独立编码避免与共享 `sys_dict` 种子数据冲突。
+     * @param atomicServiceCode comparison scope; fixed to [SysConsts.ATOMIC_SERVICE_NAME] in production, tests can
+     *   pass an independent code to avoid conflicts with shared `sys_dict` seed data.
      */
     open fun validate(atomicServiceCode: String = SysConsts.ATOMIC_SERVICE_NAME): ValidationResult {
         val declared = readDeclaredDictTypes()
@@ -89,9 +90,9 @@ open class SysDictTypesStartupValidator(
     }
 
     /**
-     * 反射读取 [SysDictTypes] 中所有 String 类型 const val。
-     * Kotlin `object` 的 `const val` 在 JVM 上是 public static final 字段，
-     * 用 Java 反射直接读最稳，避免 `KClass.memberProperties` 在 const 场景下的边界行为。
+     * Reflectively reads all String-typed `const val`s in [SysDictTypes].
+     * A Kotlin `object`'s `const val` becomes a public static final field on the JVM; reading via Java reflection is
+     * the most stable approach, avoiding edge-case behavior of `KClass.memberProperties` for const fields.
      */
     private fun readDeclaredDictTypes(): Set<String> =
         SysDictTypes::class.java.declaredFields
@@ -105,11 +106,11 @@ open class SysDictTypesStartupValidator(
             .toSet()
 
     data class ValidationResult(
-        /** 代码常量声明的所有字典类型 */
+        /** All dictionary types declared as code constants */
         val declared: Set<String>,
-        /** 声明了但数据库中不存在（active=true）的字典类型 —— **必须修复** */
+        /** Dictionary types declared but not present in the database (active=true) — **must be fixed** */
         val missing: List<String>,
-        /** 数据库中存在但代码常量未声明 —— 警告，可能是历史遗留 */
+        /** Dictionary types present in the database but not declared as code constants — warning, possibly leftovers */
         val extras: List<String>,
     ) {
         val isOk: Boolean get() = missing.isEmpty()

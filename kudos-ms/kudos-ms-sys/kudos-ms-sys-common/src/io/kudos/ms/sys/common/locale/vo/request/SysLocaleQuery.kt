@@ -7,20 +7,20 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 语言字典列表查询条件请求VO
+ * Request VO for querying the language dictionary list.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysLocaleQuery(
 
-    /** 语言代码 */
+    /** Language code */
     val code: String? = null,
 
-    /** 显示名称 */
+    /** Display name */
     val displayName: String? = null,
 
-    /** 仅启用 */
+    /** Only enabled */
     val active: Boolean? = null,
 
 ) : ListSearchPayload() {

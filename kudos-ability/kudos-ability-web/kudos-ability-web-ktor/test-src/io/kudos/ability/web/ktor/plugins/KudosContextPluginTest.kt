@@ -12,7 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [KudosContextPlugin] 安装路径测试。
+ * Tests the installation paths of [KudosContextPlugin].
  *
  * @author K
  * @author AI: Codex

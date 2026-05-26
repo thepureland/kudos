@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 字典项视图实体（v_sys_dict_item = sys_dict_item left join sys_dict），只读。
+ * Dictionary item view entity (v_sys_dict_item = sys_dict_item left join sys_dict), read-only.
  *
  * @author K
  * @author AI: Cursor
@@ -15,55 +15,55 @@ interface VSysDictItem : IDbEntity<String, VSysDictItem> {
 
     companion object : DbEntityFactory<VSysDictItem>()
 
-    /** 字典项代码 */
+    /** Dictionary item code */
     var itemCode: String
 
-    /** 字典项名称 */
+    /** Dictionary item name */
     var itemName: String
 
-    /** 字典id */
+    /** Dictionary id */
     var dictId: String
 
-    /** 字典项排序 */
+    /** Dictionary item order */
     var orderNum: Int?
 
-    /** 父id */
+    /** Parent id */
     var parentId: String?
 
-    /** 备注 */
+    /** Remark */
     var remark: String?
 
-    /** 是否启用 */
+    /** Whether active */
     var active: Boolean
 
-    /** 是否内置 */
+    /** Whether built-in */
     var builtIn: Boolean
 
-    /** 记录创建者id */
+    /** Record creator id */
     var createUserId: String?
 
-    /** 记录创建者名称 */
+    /** Record creator name */
     var createUserName: String?
 
-    /** 记录创建时间 */
+    /** Record creation time */
     var createTime: LocalDateTime?
 
-    /** 记录更新者id */
+    /** Record updater id */
     var updateUserId: String?
 
-    /** 记录更新者名称 */
+    /** Record updater name */
     var updateUserName: String?
 
-    /** 记录更新时间 */
+    /** Record update time */
     var updateTime: LocalDateTime?
 
-    /** 字典类型（来自 sys_dict） */
+    /** Dictionary type (from sys_dict) */
     var dictType: String?
 
-    /** 字典名称（来自 sys_dict） */
+    /** Dictionary name (from sys_dict) */
     var dictName: String?
 
-    /** 原子服务编码（来自 sys_dict） */
+    /** Atomic service code (from sys_dict) */
     var atomicServiceCode: String?
 
 }

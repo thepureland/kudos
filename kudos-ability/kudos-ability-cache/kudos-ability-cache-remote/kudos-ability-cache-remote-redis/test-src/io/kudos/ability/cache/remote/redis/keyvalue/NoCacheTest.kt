@@ -13,7 +13,7 @@ import kotlin.test.assertFailsWith
 
 
 /**
- * 不启用缓存测试用例
+ * Tests with caching disabled.
  *
  * @author K
  * @author AI: Codex

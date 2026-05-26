@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestParam
 
 /**
- * 消息接收者群组对外API
+ * External API for message receiver groups.
  *
  * @author K
  * @author AI: Codex
@@ -14,13 +14,13 @@ import org.springframework.web.bind.annotation.RequestParam
 interface IMsgReceiverGroupApi {
 
     /**
-     * 根据 id 获取接收者群组定义。
+     * Get the receiver group definition by id.
      */
     @GetMapping("/api/internal/msg/receiverGroup/getReceiverGroupById")
     fun getReceiverGroupById(@RequestParam id: String): MsgReceiverGroupCacheEntry?
 
     /**
-     * 查询启用的接收者群组定义；传入类型时按类型过滤。
+     * Query active receiver group definitions; filter by type when provided.
      */
     @GetMapping("/api/internal/msg/receiverGroup/listActiveReceiverGroups")
     fun listActiveReceiverGroups(

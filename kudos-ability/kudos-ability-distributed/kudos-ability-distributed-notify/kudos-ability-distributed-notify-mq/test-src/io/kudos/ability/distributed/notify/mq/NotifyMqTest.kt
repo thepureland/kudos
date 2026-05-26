@@ -45,7 +45,7 @@ open class NotifyMqTest {
         SpringApplication.run(MsApplication::class.java, *args)
     }
 
-    /* 因 NotifyListenerItem 宣告静态变数，测试用例为同一jvm下，故无法模拟两组相同微服务测试，listener会被后盖前。 */
+    /* Because NotifyListenerItem holds static state and tests share a single JVM, we cannot simulate two identical microservice instances — later listener registrations overwrite earlier ones. */
     @Test
     fun mqNotifyTest() {
         val key = RandomStringKit.random(8, true, true)

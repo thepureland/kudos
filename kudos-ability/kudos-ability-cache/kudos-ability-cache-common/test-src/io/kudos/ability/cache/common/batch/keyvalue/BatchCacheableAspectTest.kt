@@ -22,15 +22,15 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [BatchCacheableAspect] "半命中合并" 行为单测。
+ * Unit tests for [BatchCacheableAspect] "partial-hit merging" behavior.
  *
- * 核心契约（README）：
- *  - 部分 key 已在缓存 → 仅传**未命中** key 给业务方法
- *  - 业务方法返回的未命中数据写入缓存（`putIfAbsent`，不覆盖已存在的）
- *  - 返回值是"缓存中已有 + 业务新查"的合并 Map
+ * Core contract (README):
+ *  - Some keys already cached → only the **missing** keys are passed to the business method.
+ *  - The missing data returned by the business method is written to the cache (`putIfAbsent`, not overwriting existing entries).
+ *  - The return value is the merged Map of "what's already cached + freshly queried by the business method".
  *
- * 用 [TestableMixCacheManager] + [InMemoryCacheConfigProvider] 通过 [KeyValueCacheKit.overrideForTesting]
- * 绕开真实 cache-common 自动配置——单测不需要 redis/caffeine。
+ * Uses [TestableMixCacheManager] + [InMemoryCacheConfigProvider] through [KeyValueCacheKit.overrideForTesting]
+ * to bypass the real cache-common auto-configuration — unit tests don't need redis/caffeine.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 internal class BatchCacheableAspectTest {
@@ -73,9 +73,9 @@ internal class BatchCacheableAspectTest {
         val result = service.loadAll(listOf(1, 2, 3))
 
         assertEquals(mapOf("1" to "v1", "2" to "v2", "3" to "v3"), result)
-        // 所有 3 个 key 都未命中，业务方法应一次性收到 3 个
+        // All 3 keys miss, so the business method should receive all 3 in a single call.
         assertEquals(listOf(setOf(1, 2, 3)), log.snapshot())
-        // 缓存现在应包含全部
+        // The cache should now contain all of them.
         val cache = cacheManager.getOrCreate(CACHE_NAME)
         assertEquals("v1", cache.get("1")?.get())
         assertEquals("v3", cache.get("3")?.get())
@@ -91,14 +91,14 @@ internal class BatchCacheableAspectTest {
         val log = ctx.getBean(CallLog::class.java)
         val result = service.loadAll(listOf(1, 2, 3))
 
-        // 业务方法只收到未命中 key 集合（"3"）——单元素集合 → 入参 [3]
+        // The business method only receives the missing key set ("3") — a single-element set → arg [3].
         assertEquals(listOf(setOf(3)), log.snapshot(),
-            "业务方法只应被传入未命中的 key 集合")
-        // 返回值合并：缓存中的 1/2 不被业务返回覆盖，3 来自业务
+            "The business method should only receive the set of missing keys")
+        // Return value merges: cached 1/2 are not overridden by business-returned values; 3 comes from the business call.
         assertEquals(
             mapOf("1" to "preloaded-v1", "2" to "preloaded-v2", "3" to "v3"),
             result,
-            "缓存命中值 + 业务新查值应当合并返回"
+            "Cached values + freshly queried values should be merged in the return value"
         )
     }
 
@@ -112,7 +112,7 @@ internal class BatchCacheableAspectTest {
         val log = ctx.getBean(CallLog::class.java)
         val result = service.loadAll(listOf(1, 2))
 
-        assertEquals(emptyList(), log.snapshot(), "全部命中时业务方法不应被调用")
+        assertEquals(emptyList(), log.snapshot(), "Business method should not be called when all keys hit")
         assertEquals(mapOf("1" to "c1", "2" to "c2"), result)
     }
 
@@ -120,15 +120,15 @@ internal class BatchCacheableAspectTest {
     fun putIfAbsent_doesNotOverwriteExistingCacheValue() {
         val cache = cacheManager.getOrCreate(CACHE_NAME)
         cache.put("1", "cached-1")
-        // 业务方法将返回 "v1" — putIfAbsent 应当不覆盖
+        // The business method will return "v1" — putIfAbsent must not overwrite.
 
         val service = ctx.getBean(BatchedService::class.java)
-        // service.loadAll([1, 2]) 触发缓存 1 命中、2 未命中
+        // service.loadAll([1, 2]) triggers cache: 1 hits, 2 misses.
         service.loadAll(listOf(1, 2))
 
-        // cached-1 应保持原值（putIfAbsent 不覆盖）
+        // cached-1 should keep its original value (putIfAbsent does not overwrite).
         assertEquals("cached-1", cache.get("1")?.get(),
-            "putIfAbsent 不应覆盖已有的缓存值")
+            "putIfAbsent must not overwrite an existing cache value")
         assertEquals("v2", cache.get("2")?.get())
     }
 
@@ -148,7 +148,7 @@ internal class BatchCacheableAspectTest {
         open fun batchedService(log: CallLog): BatchedService = BatchedService(log)
     }
 
-    /** 外置的调用记录器——业务 service 是 CGLIB 代理目标，类内 field initializer 在代理路径下可能返回 null。 */
+    /** External call recorder — the business service is a CGLIB proxy target, and in-class field initializers can return null on the proxy path. */
     open class CallLog {
         private val entries = mutableListOf<Set<Int>>()
         fun record(keys: Set<Int>) { entries.add(keys) }
@@ -156,7 +156,7 @@ internal class BatchCacheableAspectTest {
         fun clear() { entries.clear() }
     }
 
-    /** 业务侧的 batch service：返回 Map<String, String>。 */
+    /** Business-side batch service: returns Map<String, String>. */
     @Service
     open class BatchedService(val log: CallLog) {
         @BatchCacheable(cacheNames = [CACHE_NAME], valueClass = String::class)
@@ -166,7 +166,7 @@ internal class BatchCacheableAspectTest {
         }
     }
 
-    /** 最小可用的 [MixCacheManager]：用 [ConcurrentMapCache] 当 backing store，避免拉起完整 kudos 装配。 */
+    /** Minimal usable [MixCacheManager]: backed by [ConcurrentMapCache] so we don't need to bring up full kudos wiring. */
     class TestableMixCacheManager : MixCacheManager() {
         private val caches = ConcurrentHashMap<String, Cache>()
 
@@ -176,11 +176,11 @@ internal class BatchCacheableAspectTest {
             caches.values.forEach { it.clear() }
         }
 
-        // 重写 getCache 绕过父类 versionConfig/initializeCaches 路径
+        // Override getCache to bypass the parent class's versionConfig/initializeCaches path.
         override fun getCache(name: String): Cache = getOrCreate(name)
     }
 
-    /** 最小可用的 [ICacheConfigProvider]：返回 active CacheConfig 即可让 KeyValueCacheKit 不短路。 */
+    /** Minimal usable [ICacheConfigProvider]: returning an active CacheConfig is enough to keep KeyValueCacheKit from short-circuiting. */
     class InMemoryCacheConfigProvider : ICacheConfigProvider {
         private val configs = ConcurrentHashMap<String, CacheConfig>()
         fun register(name: String, active: Boolean) {

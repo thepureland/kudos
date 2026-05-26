@@ -8,7 +8,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * Criteria测试用例
+ * Criteria test cases
  *
  * @author K
  * @author AI: Codex
@@ -148,7 +148,7 @@ internal class CriteriaTest {
     fun testEmptyStringValueIsFiltered() {
         val criteria = Criteria()
             .addAnd("name", OperatorEnum.EQ, "")
-        // 空字符串应该被过滤掉
+        // Empty string should be filtered out
         assertTrue(criteria.isEmpty())
     }
 
@@ -156,7 +156,7 @@ internal class CriteriaTest {
     fun testNullValueWithAcceptNullOperator() {
         val criteria = Criteria()
             .addAnd("name", OperatorEnum.IS_NULL, null)
-        // IS_NULL操作符acceptNull为true，应该被添加
+        // IS_NULL operator has acceptNull=true, should be added
         assertFalse(criteria.isEmpty())
     }
 
@@ -164,7 +164,7 @@ internal class CriteriaTest {
     fun testNullValueWithoutAcceptNullOperator() {
         val criteria = Criteria()
             .addAnd("name", OperatorEnum.EQ, null)
-        // EQ操作符acceptNull为false，null值应该被过滤
+        // EQ operator has acceptNull=false, null value should be filtered
         assertTrue(criteria.isEmpty())
     }
 
@@ -302,7 +302,7 @@ internal class CriteriaTest {
     }
 
     // ============================================================
-    // 内部结构验证：criterionGroups 中 AND / OR / 嵌套的实际表现
+    // Internal structure: actual representation of AND / OR / nesting in criterionGroups
     // ============================================================
 
     @Test
@@ -311,7 +311,7 @@ internal class CriteriaTest {
             .addAnd("a", OperatorEnum.EQ, "1")
             .addAnd("b", OperatorEnum.GT, 2)
         val groups = criteria.getCriterionGroups()
-        assertEquals(2, groups.size, "两次 addAnd 各产生一个独立元素")
+        assertEquals(2, groups.size, "Two addAnd calls each produce a separate element")
         assertTrue(groups[0] is Criterion)
         assertTrue(groups[1] is Criterion)
         assertEquals("a", (groups[0] as Criterion).property)
@@ -326,7 +326,7 @@ internal class CriteriaTest {
             Criterion("c", OperatorEnum.EQ, "3")
         )
         val groups = criteria.getCriterionGroups()
-        assertEquals(3, groups.size, "vararg AND 展开为多个独立 Criterion 元素")
+        assertEquals(3, groups.size, "vararg AND expands to multiple separate Criterion elements")
         groups.forEach { assertTrue(it is Criterion) }
     }
 
@@ -337,9 +337,9 @@ internal class CriteriaTest {
             Criterion("name", OperatorEnum.EQ, "b")
         )
         val groups = criteria.getCriterionGroups()
-        assertEquals(1, groups.size, "addOr 整体只产生 1 个 group 元素")
+        assertEquals(1, groups.size, "addOr as a whole produces a single group element")
         val group = groups[0]
-        assertTrue(group is Array<*>, "OR group 在 criterionGroups 中表示为 Array<*>")
+        assertTrue(group is Array<*>, "OR group is represented as Array<*> in criterionGroups")
         assertEquals(2, group.size)
         assertTrue(group[0] is Criterion)
         assertTrue(group[1] is Criterion)
@@ -352,8 +352,8 @@ internal class CriteriaTest {
         val groups = outer.getCriterionGroups()
         assertEquals(2, groups.size)
         assertTrue(groups[0] is Criterion)
-        assertTrue(groups[1] is Criteria, "AND 嵌套保留为 Criteria，不会被 Array 包裹")
-        assertSame(inner, groups[1], "保留的是同一个嵌套对象，不是拷贝")
+        assertTrue(groups[1] is Criteria, "AND nesting is preserved as Criteria, not wrapped in Array")
+        assertSame(inner, groups[1], "The same nested object is preserved, not a copy")
     }
 
     @Test
@@ -366,26 +366,26 @@ internal class CriteriaTest {
             )
             .addAnd("deleted", OperatorEnum.EQ, false)
         val groups = criteria.getCriterionGroups()
-        assertEquals(3, groups.size, "AND-OR-AND 各占一个 group 元素，保持加入顺序")
+        assertEquals(3, groups.size, "AND-OR-AND each take one group element, preserving insertion order")
         assertTrue(groups[0] is Criterion)
         assertTrue(groups[1] is Array<*>)
         assertTrue(groups[2] is Criterion)
     }
 
     // ============================================================
-    // 过滤行为：vararg 混合有效/无效条件
+    // Filtering behavior: vararg with mixed valid/invalid conditions
     // ============================================================
 
     @Test
     fun testAndVarargFiltersMixedValidAndInvalid() {
         val criteria = Criteria().addAnd(
             Criterion("a", OperatorEnum.EQ, "valid"),
-            Criterion("b", OperatorEnum.EQ, ""),       // 空串：过滤
-            Criterion("c", OperatorEnum.EQ, null),     // null + EQ 不接受 null：过滤
-            Criterion("d", OperatorEnum.EQ, "also")    // 有效
+            Criterion("b", OperatorEnum.EQ, ""),       // Empty string: filtered
+            Criterion("c", OperatorEnum.EQ, null),     // null + EQ does not accept null: filtered
+            Criterion("d", OperatorEnum.EQ, "also")    // Valid
         )
         val groups = criteria.getCriterionGroups()
-        assertEquals(2, groups.size, "只保留两个有效 criterion")
+        assertEquals(2, groups.size, "Only two valid criterions are retained")
         assertEquals("a", (groups[0] as Criterion).property)
         assertEquals("d", (groups[1] as Criterion).property)
     }
@@ -398,7 +398,7 @@ internal class CriteriaTest {
             Criterion("c", OperatorEnum.EQ, null)
         )
         val groups = criteria.getCriterionGroups()
-        assertEquals(1, groups.size, "至少有 1 个有效 criterion 时仍产生 OR group")
+        assertEquals(1, groups.size, "An OR group is still produced when at least one valid criterion exists")
         val orGroup = groups[0] as Array<*>
         assertEquals(1, orGroup.size)
         assertEquals("a", (orGroup[0] as Criterion).property)
@@ -412,14 +412,14 @@ internal class CriteriaTest {
         )
         assertTrue(
             criteria.isEmpty(),
-            "addOr 全部被过滤时不应留下空 OR group"
+            "addOr should not leave an empty OR group when all entries are filtered"
         )
     }
 
     @Test
     fun testOrWithAllEmptyNestedCriteriaAddsNoGroup() {
         val criteria = Criteria().addOr(Criteria(), Criteria())
-        assertTrue(criteria.isEmpty(), "全是空嵌套 Criteria 的 addOr 也不留 group")
+        assertTrue(criteria.isEmpty(), "addOr with all empty nested Criteria leaves no group either")
     }
 
     @Test
@@ -428,7 +428,7 @@ internal class CriteriaTest {
         val nonEmpty = Criteria("a", OperatorEnum.EQ, "1")
         val criteria = Criteria().addOr(empty, nonEmpty)
         val orGroup = criteria.getCriterionGroups()[0] as Array<*>
-        assertEquals(1, orGroup.size, "OR group 内的空嵌套也被剔除")
+        assertEquals(1, orGroup.size, "Empty nested entries inside an OR group are also dropped")
         assertSame(nonEmpty, orGroup[0])
     }
 
@@ -437,7 +437,7 @@ internal class CriteriaTest {
         val criteria = Criteria("name", OperatorEnum.EQ, "x")
         val before = criteria.getCriterionGroups().size
         criteria.addAnd(*arrayOf<Criterion>())
-        assertEquals(before, criteria.getCriterionGroups().size, "vararg 为空时不改动")
+        assertEquals(before, criteria.getCriterionGroups().size, "An empty vararg should not change anything")
     }
 
     @Test
@@ -449,26 +449,26 @@ internal class CriteriaTest {
     }
 
     // ============================================================
-    // 单值过滤的边界：哪些"看似空"的值实际会被保留
+    // Single-value filtering boundaries: which "seemingly empty" values are actually preserved
     // ============================================================
 
     @Test
     fun testWhitespaceOnlyStringIsKept() {
-        // shouldAddCriterion 用的是 isNotEmpty 而非 isNotBlank：纯空白字符串被保留
+        // shouldAddCriterion uses isNotEmpty rather than isNotBlank: pure-whitespace strings are retained
         val criteria = Criteria().addAnd("name", OperatorEnum.EQ, "   ")
-        assertFalse(criteria.isEmpty(), "纯空白字符串不被视为空——使用的是 isNotEmpty")
+        assertFalse(criteria.isEmpty(), "Pure-whitespace strings are not considered empty - isNotEmpty is used")
     }
 
     @Test
     fun testNumericZeroIsKept() {
         val criteria = Criteria().addAnd("count", OperatorEnum.EQ, 0)
-        assertFalse(criteria.isEmpty(), "数值 0 不是空")
+        assertFalse(criteria.isEmpty(), "Numeric 0 is not empty")
     }
 
     @Test
     fun testBooleanFalseIsKept() {
         val criteria = Criteria().addAnd("active", OperatorEnum.EQ, false)
-        assertFalse(criteria.isEmpty(), "false 不是空")
+        assertFalse(criteria.isEmpty(), "false is not empty")
     }
 
     @Test
@@ -476,14 +476,14 @@ internal class CriteriaTest {
         val criteria = Criteria().addAnd("ids", OperatorEnum.IN, intArrayOf())
         assertTrue(
             criteria.isEmpty(),
-            "原始类型空数组（IntArray 等）应和对象数组一样被过滤"
+            "Empty primitive arrays (IntArray, etc.) should be filtered just like object arrays"
         )
     }
 
     @Test
     fun testNonEmptyPrimitiveIntArrayIsAdded() {
         val criteria = Criteria().addAnd("ids", OperatorEnum.IN, intArrayOf(1, 2))
-        assertFalse(criteria.isEmpty(), "非空原始类型数组应保留")
+        assertFalse(criteria.isEmpty(), "Non-empty primitive arrays should be retained")
     }
 
     @Test
@@ -491,23 +491,23 @@ internal class CriteriaTest {
         val criteria = Criteria().addAnd("attrs", OperatorEnum.IN, emptyMap<String, String>())
         assertTrue(
             criteria.isEmpty(),
-            "空 Map 应和空 Collection 一样被过滤"
+            "Empty Map should be filtered just like empty Collection"
         )
     }
 
     @Test
     fun testNonEmptyMapIsAdded() {
         val criteria = Criteria().addAnd("attrs", OperatorEnum.IN, mapOf("k" to "v"))
-        assertFalse(criteria.isEmpty(), "非空 Map 应保留")
+        assertFalse(criteria.isEmpty(), "Non-empty Map should be retained")
     }
 
     // ============================================================
-    // acceptNull 操作符（IS_NULL / IS_NOT_NULL / IS_EMPTY / IS_NOT_EMPTY）
+    // acceptNull operators (IS_NULL / IS_NOT_NULL / IS_EMPTY / IS_NOT_EMPTY)
     // ============================================================
 
     @Test
     fun testIsNullOperatorPassesWithAnyValue() {
-        // acceptNull=true 的操作符直接放行
+        // Operators with acceptNull=true pass through directly
         assertFalse(Criteria().addAnd("x", OperatorEnum.IS_NULL, null).isEmpty())
         assertFalse(Criteria().addAnd("x", OperatorEnum.IS_NULL, "").isEmpty())
         assertFalse(Criteria().addAnd("x", OperatorEnum.IS_NULL, emptyList<Int>()).isEmpty())
@@ -531,7 +531,7 @@ internal class CriteriaTest {
     }
 
     // ============================================================
-    // OR group 内 Criterion + Criteria 混合的顺序
+    // Order of Criterion + Criteria mix inside an OR group
     // ============================================================
 
     @Test
@@ -541,7 +541,7 @@ internal class CriteriaTest {
         val criteria = Criteria().addOr(criterion, nested)
         val orGroup = criteria.getCriterionGroups()[0] as Array<*>
         assertEquals(2, orGroup.size)
-        assertTrue(orGroup[0] is Criterion, "顺序：criterion 先，criteria 后")
+        assertTrue(orGroup[0] is Criterion, "Order: criterion first, criteria second")
         assertTrue(orGroup[1] is Criteria)
     }
 
@@ -552,12 +552,12 @@ internal class CriteriaTest {
         val criteria = Criteria().addOr(nested, criterion)
         val orGroup = criteria.getCriterionGroups()[0] as Array<*>
         assertEquals(2, orGroup.size)
-        assertTrue(orGroup[0] is Criteria, "顺序：criteria 先，criterion 后")
+        assertTrue(orGroup[0] is Criteria, "Order: criteria first, criterion second")
         assertTrue(orGroup[1] is Criterion)
     }
 
     // ============================================================
-    // toString 精确输出格式
+    // toString exact output format
     // ============================================================
 
     @Test
@@ -603,31 +603,31 @@ internal class CriteriaTest {
 
     @Test
     fun testToStringRendersIsNullWithEmptyValue() {
-        // Criterion.toString 会 trim 末尾空白，所以 IS NULL 的 null 值不显示
+        // Criterion.toString trims trailing whitespace, so the null value of IS NULL is not displayed
         val criteria = Criteria("x", OperatorEnum.IS_NULL, null)
         assertEquals("x IS NULL", criteria.toString())
     }
 
     // ============================================================
-    // 链式调用返回值与引用一致性
+    // Chained call return value and reference identity
     // ============================================================
 
     @Test
     fun testAddAndReturnsSameInstanceForChaining() {
         val criteria = Criteria()
         val returned = criteria.addAnd("a", OperatorEnum.EQ, "1")
-        assertSame(criteria, returned, "addAnd 返回 this，支持链式")
+        assertSame(criteria, returned, "addAnd returns this, supports chaining")
     }
 
     @Test
     fun testAddOrReturnsSameInstanceForChaining() {
         val criteria = Criteria()
         val returned = criteria.addOr(Criterion("a", OperatorEnum.EQ, "1"))
-        assertSame(criteria, returned, "addOr 返回 this，支持链式")
+        assertSame(criteria, returned, "addOr returns this, supports chaining")
     }
 
     // ============================================================
-    // 静态工厂未覆盖的重载
+    // Static factory overloads not covered above
     // ============================================================
 
     @Test
@@ -647,13 +647,13 @@ internal class CriteriaTest {
         val criterion = Criterion("b", OperatorEnum.EQ, "2")
         val criteria = Criteria.and(nested, criterion)
         val groups = criteria.getCriterionGroups()
-        assertEquals(2, groups.size, "AND 不包 Array，两个元素各占一格")
+        assertEquals(2, groups.size, "AND does not wrap in Array; the two elements each take a slot")
         assertTrue(groups[0] is Criteria)
         assertTrue(groups[1] is Criterion)
     }
 
     // ============================================================
-    // getCriterionGroups 是不可修改视图（防御封装泄漏）
+    // getCriterionGroups is an unmodifiable view (defends against encapsulation leaks)
     // ============================================================
 
     @Test
@@ -662,25 +662,25 @@ internal class CriteriaTest {
         val groups = criteria.getCriterionGroups()
         @Suppress("UNCHECKED_CAST")
         val mutableView = groups as MutableList<Any>
-        // 强转能编译过（List 在 JVM 下底层就是 java.util.List），但任何 mutation 应抛
+        // The cast compiles (on the JVM List is backed by java.util.List), but any mutation should throw
         val mutationThrew = runCatching {
             mutableView.add(Criterion("b", OperatorEnum.EQ, "2"))
         }.exceptionOrNull() is UnsupportedOperationException
-        assertTrue(mutationThrew, "getCriterionGroups 返回的视图应阻止 mutation")
+        assertTrue(mutationThrew, "The view returned by getCriterionGroups should prevent mutation")
     }
 
     @Test
     fun testGetCriterionGroupsViewReflectsLaterChanges() {
-        // 是 view 不是 copy：之后再 addAnd，view 也能看到新元素
+        // It is a view, not a copy: subsequent addAnd calls are visible through the view
         val criteria = Criteria()
         val view = criteria.getCriterionGroups()
         assertEquals(0, view.size)
         criteria.addAnd("a", OperatorEnum.EQ, "1")
-        assertEquals(1, view.size, "返回的应是 live view，不是 snapshot")
+        assertEquals(1, view.size, "Returned view should be a live view, not a snapshot")
     }
 
     // ============================================================
-    // 嵌套 Criteria 的多层组合
+    // Multi-level composition of nested Criteria
     // ============================================================
 
     @Test

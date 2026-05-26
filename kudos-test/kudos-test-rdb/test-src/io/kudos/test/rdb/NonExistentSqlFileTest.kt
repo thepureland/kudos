@@ -6,7 +6,7 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertTrue
 
 /**
- * 测试SQL文件不存在时的测试用例
+ * Test case for when the test SQL file does not exist.
  *
  * @author K
  * @since 1.0.0
@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 class NonExistentSqlFileTest : RdbTestBase() {
 
     /**
-     * 测试SQL文件不存在时抛出异常
+     * Verifies that an exception is thrown when the SQL file does not exist.
      */
     @BeforeEach
     override fun setUpTestData() {
@@ -24,8 +24,8 @@ class NonExistentSqlFileTest : RdbTestBase() {
         }
 
         assertTrue(
-            exception.message?.contains("测试数据SQL文件不存在") == true,
-            "异常消息应该包含'测试数据SQL文件不存在'，实际消息: ${exception.message}"
+            exception.message?.contains("Test data SQL file not found") == true,
+            "Exception message should contain 'Test data SQL file not found', actual: ${exception.message}"
         )
     }
 

@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import io.kudos.base.model.contract.common.IHasBuiltIn
 
 /**
- * 带 built_in 字段的测试表实体（用于 BaseCrudService 删除内置保护测试）
+ * Test table entity with a built_in field (used by BaseCrudService built-in delete-protection tests).
  *
  * @author K
  * @author AI: Codex
@@ -15,6 +15,6 @@ internal interface TestBuiltInTableKtorm : IDbEntity<Int, TestBuiltInTableKtorm>
 
     companion object Companion : DbEntityFactory<TestBuiltInTableKtorm>()
 
-    /** 名称（用于条件删除/查询测试） */
+    /** Name (used by conditional delete/query tests). */
     var name: String
 }

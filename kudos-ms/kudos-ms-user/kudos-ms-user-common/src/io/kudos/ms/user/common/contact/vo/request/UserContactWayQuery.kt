@@ -5,29 +5,29 @@ import io.kudos.ms.user.common.contact.vo.response.UserContactWayRow
 
 
 /**
- * 用户联系方式列表查询条件请求VO
+ * User contact way list query request VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserContactWayQuery (
 
-    /** 用户ID */
+    /** User ID */
     val userId: String? = null,
 
-    /** 联系方式字典码 */
+    /** Contact way dictionary code */
     val contactWayDictCode: String? = null,
 
-    /** 联系方式值 */
+    /** Contact way value */
     val contactWayValue: String? = null,
 
-    /** 联系方式状态字典码 */
+    /** Contact way status dictionary code */
     val contactWayStatusDictCode: String? = null,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean? = null,
 
 ) : ListSearchPayload() {

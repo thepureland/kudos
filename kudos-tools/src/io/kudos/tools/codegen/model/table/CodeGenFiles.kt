@@ -5,7 +5,7 @@ import io.kudos.tools.codegen.model.po.CodeGenFile
 import org.ktorm.schema.varchar
 
 /**
- * 代码生成-文件信息数据库表-实体关联对象
+ * Code generation - file info table - entity binding object.
  *
  * @author K
  * @since 1.0.0
@@ -14,10 +14,10 @@ import org.ktorm.schema.varchar
 object CodeGenFiles : StringIdTable<CodeGenFile>("code_gen_file") {
 //endregion your codes 1
 
-    /** 文件名 */
+    /** File name */
     var filename = varchar("filename").bindTo { it.filename }
 
-    /** 对象名 */
+    /** Object name */
     var objectName = varchar("object_name").bindTo { it.objectName }
 
 

@@ -3,29 +3,29 @@ package io.kudos.ms.user.common.contact.vo.request
 import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 
 /**
- * 用户联系方式表单基础字段（新建 / 更新共用）
+ * User contact way form base fields (shared between create and update)
  *
  * @author K
  * @since 1.0.0
  */
 interface IUserContactWayFormBase {
 
-    /** 用户ID */
+    /** User ID */
     val userId: String?
 
-    /** 联系方式字典码 */
+    /** Contact way dictionary code */
     val contactWayDictCode: String?
 
-    /** 联系方式值 */
+    /** Contact way value */
     val contactWayValue: String?
 
-    /** 联系方式状态字典码 */
+    /** Contact way status dictionary code */
     val contactWayStatusDictCode: String?
 
-    /** 优先级 */
+    /** Priority */
     val priority: Short?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

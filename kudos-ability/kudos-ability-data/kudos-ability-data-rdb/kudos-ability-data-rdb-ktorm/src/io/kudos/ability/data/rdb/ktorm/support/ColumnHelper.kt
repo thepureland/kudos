@@ -7,20 +7,23 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Kotlin 实体属性名 ↔ Ktorm [Column] 解析与缓存。
+ * Resolution and caching between Kotlin entity property names and Ktorm [Column]s.
  *
- * DAO / 查询封装在拼 SELECT / WHERE / ORDER BY 时只持有属性名（如 `userId`），
- * 需要换回 Ktorm 表对象上的实际 [Column]。本工具按以下顺序查找：
- *  1. 驼峰转下划线小写（`userId` → `user_id`）走 `table[name]`
- *  2. 转大写再试一次（兼容 H2 / Oracle 默认大写命名）
- *  3. 遍历 `table.columns` 用大小写不敏感对比列名或属性名
- *  4. 属性名等于 `id` 时回落到 `table.primaryKeys[0]`
+ * When DAOs / query helpers build SELECT / WHERE / ORDER BY, they only hold property names
+ * (e.g. `userId`) and must resolve them back to actual [Column]s on the Ktorm table. The lookup
+ * order is:
+ *  1. camelCase to lowercase underscore (`userId` → `user_id`), then `table[name]`
+ *  2. uppercase the result and try again (compatible with H2 / Oracle's default uppercase naming)
+ *  3. iterate `table.columns` and compare column name or property name case-insensitively
+ *  4. when the property name equals `id`, fall back to `table.primaryKeys[0]`
  *
- * 命中结果按表名 + 属性名缓存到 [ConcurrentHashMap]，避免每次 DAO 调用都重复反射。
+ * Resolved results are cached by table name + property name into a [ConcurrentHashMap] to avoid
+ * repeated reflection on every DAO call.
  *
- * 并发：[columnOf] 在 DAO 查询路径上会被多线程并发触发，缓存读写必须线程安全。
- * Locale：大小写转换走 [Locale.ROOT]，规避 Turkish locale 等环境下 `"i" → "İ"`
- * 引发的列名解析失败。
+ * Concurrency: [columnOf] is invoked concurrently on DAO query paths, so cache reads and writes
+ * must be thread-safe.
+ * Locale: case conversions use [Locale.ROOT] to avoid `"i" → "İ"` issues under e.g. Turkish locale
+ * that would otherwise break column name resolution.
  *
  * @author K
  * @author AI: Codex
@@ -29,17 +32,17 @@ import java.util.concurrent.ConcurrentHashMap
 object ColumnHelper {
 
     /**
-     * 列信息缓存 Map(表名，Map(属性名, 列对象))。
-     * 使用 [ConcurrentHashMap] 保证多线程下读写安全。
+     * Column info cache Map(table name, Map(property name, column)).
+     * Uses [ConcurrentHashMap] to guarantee thread-safe read/write under multi-threaded access.
      */
     private val columnCache: ConcurrentHashMap<String, ConcurrentHashMap<String, Column<Any>>> = ConcurrentHashMap()
 
     /**
-     * 根据属性名得到列对象
+     * Resolve columns by property names.
      *
-     * @param table ktorm表对象
-     * @param propertyNames 属性名可变数组
-     * @return Map(属性名，列对象)
+     * @param table ktorm table object
+     * @param propertyNames varargs of property names
+     * @return Map(property name, column)
      */
     fun columnOf(table: BaseTable<*>, vararg propertyNames: String): Map<String, Column<Any>> {
         if (propertyNames.isEmpty()) return emptyMap()
@@ -54,7 +57,7 @@ object ColumnHelper {
                 resultMap[propertyName] = cached
             } else {
                 val resolved = resolveColumn(table, propertyName)
-                    ?: error("无法推测属性【${propertyName}】在表【${tableName}】中的字段名！")
+                    ?: error("Cannot resolve the column name for property [${propertyName}] in table [${tableName}]!")
                 @Suppress("UNCHECKED_CAST")
                 val typed = resolved as Column<Any>
                 resultMap[propertyName] = typed
@@ -65,8 +68,8 @@ object ColumnHelper {
     }
 
     /**
-     * 解析单个属性名 → Ktorm [Column]；找不到返回 null。
-     * 多步回退见类级 kdoc。
+     * Resolve a single property name to a Ktorm [Column]; returns null if not found.
+     * See the class-level KDoc for the multi-step fallback order.
      */
     private fun resolveColumn(table: BaseTable<*>, propertyName: String): Column<*>? {
         val lowerName = propertyName.humpToUnderscore(false)

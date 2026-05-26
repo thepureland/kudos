@@ -5,47 +5,47 @@ import java.time.LocalDateTime
 
 
 /**
- * IP访问规则列表查询结果响应 VO。
+ * IP access rule list query result response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysAccessRuleIpRow (
 
-    /** ipRule的id */
+    /** IP rule id. */
     val id: String = "",
 
-    /** 区间起点数值 */
+    /** Range start numeric value. */
     val ipStart: BigDecimal,
 
-    /** 区间终点数值。 */
+    /** Range end numeric value. */
     val ipEnd: BigDecimal,
 
-    /** ip类型字典代码 */
+    /** IP type dictionary code. */
     val ipTypeDictCode: String,
 
-    /** 过期时间 */
+    /** Expiration time. */
     val expirationTime: LocalDateTime? = null,
 
-    /** 父规则id */
+    /** Parent rule id. */
     val parentRuleId: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active. */
     val active: Boolean? = null,
 
-    /** 父规则是否启用 */
+    /** Whether the parent rule is active. */
     val parentRuleActive: Boolean? = null,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 系统编码 */
+    /** System code. */
     val systemCode: String? = null,
 
-    /** 规则类型字典代码 */
+    /** Rule type dictionary code. */
     val accessRuleTypeDictCode: String? = null,
 
 ): IIpBigDecimalToStringSupport {

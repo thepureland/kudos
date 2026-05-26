@@ -2,10 +2,10 @@ package io.kudos.ability.cache.common.aop.keyvalue
 
 
 /**
- * 容器注解：把多个 [TenantCacheEvict] 一起标到同一方法上。
+ * Container annotation: applies multiple [TenantCacheEvict] annotations together on the same method.
  *
- * Kotlin 注解默认不允许在同一目标重复出现，所以需要外层容器（与 Spring 的 [@Caching] 同思路）。
- * AOP 切面会展开 `evicts` 数组依次执行 evict。
+ * Kotlin annotations do not allow repeated occurrences on the same target by default, so an outer container is needed
+ * (the same idea as Spring's [@Caching]). The AOP aspect unwraps the `evicts` array and performs each evict in turn.
  *
  * @author K
  * @since 1.0.0

@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 import io.kudos.base.query.sort.Sortable
 
 /**
- * 缓存数据库实体
+ * Cache configuration DB entity.
  *
  * @author K
  * @since 1.0.0
@@ -14,26 +14,26 @@ interface SysCache : IManagedDbEntity<String, SysCache> {
 
     companion object : DbEntityFactory<SysCache>()
 
-    /** 名称 */
+    /** Name */
     @get:Sortable
     var name: String
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     var atomicServiceCode: String
 
-    /** 缓存策略代码 */
+    /** Cache strategy code */
     var strategyDictCode: String
 
-    /** 是否启动时写缓存 */
+    /** Write to cache on boot */
     var writeOnBoot: Boolean
 
-    /** 是否及时回写缓存 */
+    /** Write back to cache in real time */
     var writeInTime: Boolean
 
-    /** 缓存生存时间(秒) */
+    /** Cache TTL (seconds) */
     var ttl: Int?
 
-    /** 是否为 Hash 缓存（true 时参与 MixHashCacheManager 初始化） */
+    /** Whether it is a Hash cache (when true, participates in MixHashCacheManager initialization) */
     var hash: Boolean
 
 }

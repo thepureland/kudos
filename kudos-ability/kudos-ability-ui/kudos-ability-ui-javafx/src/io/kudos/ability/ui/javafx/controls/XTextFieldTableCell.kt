@@ -24,8 +24,8 @@ import javafx.util.StringConverter
  * property matches this cell's position (requires the table to be
  * of type XTableView)
  *
- * @param S 行数据类型
- * @param T 列值类型
+ * @param S row data type
+ * @param T column value type
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -47,9 +47,9 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
     /**
      * {@inheritDoc}
      *
-     * 覆盖 super 之外额外做的事：把 super 安装好的 [TextField] 反查出来（[findTextField]），
-     * 监听其焦点丢失事件，离开焦点时直接 commitEdit——这是为了让"点别处"也能触发提交，
-     * 而不是仅靠 Enter 键。
+     * In addition to super: looks up the [TextField] installed by super ([findTextField]) and
+     * listens for its focus-lost event so that losing focus triggers commitEdit directly — this
+     * lets "clicking elsewhere" also trigger a commit, not only the Enter key.
      *
      * TBD: cleanup, probably needs WeakListener
      *
@@ -75,9 +75,10 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
     }
 
     /**
-     * 监听 [XTableView.terminatingCellProperty] 的回调：当新位置正好匹配本 cell 时提交编辑。
+     * Listener callback for [XTableView.terminatingCellProperty]: commits the edit when the new
+     * position matches this cell.
      *
-     * @param newPosition 表上新的终止位置
+     * @param newPosition new terminating position on the table
      * @author K
      * @since 1.0.0
      */
@@ -87,8 +88,9 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
     }
 
     /**
-     * 把当前 [myTextField] 的文本通过 converter 转回 T 再 commitEdit。
-     * super 的 commitEdit 默认需要传 T，这里封装一层，避免每个调用点都重复 converter 调用。
+     * Converts the current [myTextField] text back to T via the converter and then commitEdit.
+     * super's commitEdit requires a T argument; this wrapper avoids repeating the converter
+     * call at each call site.
      *
      * @author K
      * @since 1.0.0
@@ -99,8 +101,9 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
     }
 
     /**
-     * 判断给定 [TablePosition] 是否就是本 cell 所在的位置。
-     * super 类把同名方法标成了 private（"WTF is that method private?"），不得不在此 c&p 一份。
+     * Returns whether the given [TablePosition] is exactly this cell's position.
+     * The superclass marks the same method private ("WTF is that method private?"), so we have
+     * to copy-paste a version here.
      *
      * @param pos a TablePosition to check for matching
      * @return true if the given position matches this cell, false otherwise.
@@ -112,16 +115,18 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
     }
 
     /**
-     * 反查 super 已安装的内部 [TextField]。
+     * Looks up the inner [TextField] installed by super.
      *
-     * 三种命中路径：
-     * 1. cell.graphic 就是 TextField（无装饰场景）；
-     * 2. `.text-field` 选择器只命中一个节点；
-     * 3. graphic 是含多个 TextField 的容器，按当前 item 的字符串值匹配。
+     * Three match paths:
+     * 1. cell.graphic is the TextField (no decoration scenario);
+     * 2. the `.text-field` selector matches exactly one node;
+     * 3. graphic is a container with multiple TextFields, matched by the current item's string
+     *    value.
      *
-     * 第三种是边角情况，源代码注释标了 "TBD: untested!"，慎依赖。
+     * The third is a corner case; the source comment marks it as "TBD: untested!" — do not
+     * rely on it.
      *
-     * @return 找到的 [TextField]；都未命中返回 null
+     * @return the [TextField] found; null when none match
      * @author K
      * @since 1.0.0
      */

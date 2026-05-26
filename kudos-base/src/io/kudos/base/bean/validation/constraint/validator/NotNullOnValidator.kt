@@ -7,7 +7,7 @@ import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 
 /**
- * NotNullOn约束注解验证器
+ * Validator for the NotNullOn constraint annotation.
  *
  * @author K
  * @since 1.0.0

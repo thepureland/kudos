@@ -22,7 +22,7 @@ import java.time.Duration
 import java.time.temporal.ChronoUnit
 
 /**
- * redisson分布式锁自动配置类
+ * Auto-configuration for the Redisson distributed lock.
  *
  * @author K
  * @author AI: Codex
@@ -60,13 +60,13 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
     }
 
     /**
-     * 初始化Redisson连接配置
+     * Initialize the Redisson connection config.
      *
-     * @param properties 连接配置文件
+     * @param properties connection properties
      * @param config     Config
      */
     private fun initRedissonConfig(config: Config, properties: RedissonProperties) {
-        // Redisson 4.0+ 中，密码应该在 Config 对象上设置，而不是在 BaseConfig 上
+        // In Redisson 4.0+ the password should be set on the Config object, not on BaseConfig.
         properties.baseConfig?.let {
             if (!it.password.isNullOrBlank()) {
                 config.setPassword(it.password)
@@ -117,13 +117,13 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
     }
 
     /**
-     * 把通用连接参数（ping/timeout/retry/connection 计数等）从 properties 拷到 Redisson [BaseConfig]。
+     * Copy generic connection parameters (ping/timeout/retry/connection counts, etc.) from properties to Redisson [BaseConfig].
      *
-     * 注：Redisson 4.0+ 起 password 已移到顶层 [Config]，不再属于 [BaseConfig]，
-     * 因此本方法**不再设置 password**——具体在 [initRedissonConfig] 顶部统一处理。
+     * Note: since Redisson 4.0+ password has been moved to the top-level [Config] and is no longer part of [BaseConfig],
+     * so this method **no longer sets password** — it is handled in [initRedissonConfig] at the top.
      *
-     * @param baseConfig 单/集群/哨兵任一种配置对象（[BaseConfig] 是它们的公共基类）
-     * @param baseConfigProperties 业务侧配置
+     * @param baseConfig single/cluster/sentinel config object ([BaseConfig] is their common base)
+     * @param baseConfigProperties caller-side configuration
      * @author K
      * @since 1.0.0
      */
@@ -135,8 +135,8 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
             timeout = baseConfigProperties.timeout
             retryAttempts = baseConfigProperties.retryAttempts
             retryDelay = ConstantDelay(Duration.of(baseConfigProperties.retryInterval.toLong(), ChronoUnit.MILLIS))
-            // 注：Redisson 4.0+ 起 password 移到 Config 对象上设置（见 initRedissonConfig 顶部），
-            // BaseConfig 上的 password setter 在升级中被移除，因此此处不再设。
+            // Note: since Redisson 4.0+ password is set on the Config object (see top of initRedissonConfig);
+            // the password setter on BaseConfig was removed during the upgrade, so it is no longer set here.
             subscriptionsPerConnection = baseConfigProperties.subscriptionsPerConnection
             clientName = baseConfigProperties.clientName
         }

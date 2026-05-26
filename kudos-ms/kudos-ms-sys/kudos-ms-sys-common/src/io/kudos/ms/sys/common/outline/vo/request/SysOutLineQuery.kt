@@ -7,29 +7,29 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 出网白名单列表查询条件请求VO
+ * Request VO for querying the outbound whitelist list.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysOutLineQuery(
 
-    /** 名称 */
+    /** Name */
     val name: String? = null,
 
-    /** 主机名 */
+    /** Hostname */
     val host: String? = null,
 
-    /** 协议 */
+    /** Protocol */
     val protocol: String? = null,
 
-    /** 系统编码 */
+    /** System code */
     val systemCode: String? = null,
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String? = null,
 
-    /** 仅启用 */
+    /** Only enabled */
     val active: Boolean? = null,
 
 ) : ListSearchPayload() {

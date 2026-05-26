@@ -11,12 +11,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * RdbAndRedisCacheTestBase的测试用例
+ * Tests for RdbAndRedisCacheTestBase.
  *
- * 测试RdbAndRedisCacheTestBase的核心功能：
- * - 继承AbstractRdbTestBase的功能（SQL文件加载、事务回滚等）
- * - Redis容器配置
- * - 缓存策略配置
+ * Verifies the core functionality of RdbAndRedisCacheTestBase:
+ * - Inherited functionality from AbstractRdbTestBase (SQL file loading, transaction rollback, etc.)
+ * - Redis container configuration
+ * - Cache strategy configuration
  *
  * @author K
  * @since 1.0.0
@@ -39,66 +39,66 @@ class RdbAndRedisCacheTestBaseTest : RdbAndRedisCacheTestBase() {
     private lateinit var environment: Environment
 
     /**
-     * 测试继承AbstractRdbTestBase的SQL文件加载功能
+     * Tests the inherited SQL-file loading from AbstractRdbTestBase.
      */
     @Test
     fun testSqlFileDataLoaded() {
         val count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM test_table", Int::class.java)
-        assertEquals(1, count, "应该有一条测试数据")
+        assertEquals(1, count, "expected exactly one test data row")
 
         val name = jdbcTemplate.queryForObject(
             "SELECT name FROM test_table WHERE id = ?",
             String::class.java,
             "rdb-redis-test"
         )
-        assertEquals("rdb-redis-test", name, "数据应该正确")
+        assertEquals("rdb-redis-test", name, "data should be correct")
     }
 
     /**
-     * 测试继承AbstractRdbTestBase的事务回滚功能
+     * Tests the inherited transaction rollback from AbstractRdbTestBase.
      */
     @Test
     fun testTransactionRollback() {
-        // 在测试方法中插入数据
+        // Insert data within the test method
         jdbcTemplate.update(
             "INSERT INTO test_table (id, name) VALUES (?, ?)",
             "rollback-test",
             "rollback"
         )
 
-        // 在同一个事务中应该能看到插入的数据
+        // The inserted data should be visible within the same transaction
         val count = jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM test_table WHERE id = ?",
             Int::class.java,
             "rollback-test"
         )
-        assertEquals(1, count, "测试方法中应该能看到插入的数据")
+        assertEquals(1, count, "inserted data should be visible in the test method")
     }
 
     /**
-     * 测试Redis容器配置
+     * Tests the Redis container configuration.
      */
     @Test
     fun testRedisContainerConfiguration() {
-        // 验证Redis相关配置已设置（通过环境变量或属性）
-        // 注意：这里主要验证配置属性是否存在，实际Redis连接测试可能需要额外的依赖
+        // Verify that Redis-related configuration is set (via env vars or properties)
+        // Note: this mainly verifies presence of the configuration property; actual Redis connection tests may require extra dependencies.
         val cacheEnabled = environment.getProperty("kudos.ability.cache.enabled")
-        assertEquals("true", cacheEnabled, "缓存应该被启用")
+        assertEquals("true", cacheEnabled, "cache should be enabled")
     }
 
 
 //    /**
-//     * 测试可以修改缓存策略
+//     * Tests that the cache strategy can be modified.
 //     */
 //    @Test
 //    fun testCacheStrategyModification() {
-//        // 修改缓存策略
+//        // Modify the cache strategy
 //        RdbAndRedisCacheTestBase.Companion.cacheStrategyHolder.value = "DISTRIBUTED"
 //
-//        // 验证缓存策略已被修改
-//        assertEquals("DISTRIBUTED", RdbAndRedisCacheTestBase.Companion.cacheStrategyHolder.value, "缓存策略应该被修改")
+//        // Verify the cache strategy has been modified
+//        assertEquals("DISTRIBUTED", RdbAndRedisCacheTestBase.Companion.cacheStrategyHolder.value, "cache strategy should be modified")
 //
-//        // 恢复默认值
+//        // Restore the default value
 //        RdbAndRedisCacheTestBase.Companion.cacheStrategyHolder.value = "SINGLE_LOCAL"
 //    }
 }

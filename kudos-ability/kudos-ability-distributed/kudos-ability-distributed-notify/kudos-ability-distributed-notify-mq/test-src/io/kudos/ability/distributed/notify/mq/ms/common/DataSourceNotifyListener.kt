@@ -24,13 +24,13 @@ open class DataSourceNotifyListener<T: Serializable> : INotifyListener {
     override fun notifyType() = NotifyTypeEnum.DS.code
 
     override fun notifyProcess(notifyMessageVo: NotifyMessageVo<out Serializable>) {
-        // 模擬收到通知，後修改數據源。
+        // Simulates receiving the notification, then updates the data source.
         log.info("@@@@ notifyProcess, port: ${msConfig.port}, appKey: ${msConfig.appKey}, key: ${notifyMessageVo.messageBody}")
         mainClinet.collection(msConfig.port, msConfig.appKey, notifyMessageVo.messageBody as String?)
     }
 
     @PostConstruct
     fun init() {
-        log.info("[DataSourceNotifyListener]初始化完成...port:${msConfig.port}, appKey:${msConfig.appKey}")
+        log.info("[DataSourceNotifyListener] initialization complete...port:${msConfig.port}, appKey:${msConfig.appKey}")
     }
 }

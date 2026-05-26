@@ -6,12 +6,12 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 字典 对外API
+ * External dictionary API.
  *
- * 说明：`batchGetActiveDictItems` / `batchGetActiveDictItemMap` 使用 `Pair` 入参/`Map<Pair, V>` 出参，
- * 不便走 Jackson JSON 序列化，故**仅供进程内调用**，Feign 代理不暴露。
- * 跨服务批量调用请直接多次 GET 单条；或通过 [`SysDictInternalController`] 的 `List<List<String>>`
- * 适配端点（`batchGetActiveDictItems` / `batchGetActiveDictItemMap`）。
+ * Note: `batchGetActiveDictItems` / `batchGetActiveDictItemMap` use `Pair` parameters / `Map<Pair, V>` returns,
+ * which do not serialize well via Jackson JSON, so they are **for in-process use only** and are not exposed via the Feign proxy.
+ * For cross-service batch calls, issue multiple single GETs, or use the `List<List<String>>` adapter endpoints on [`SysDictInternalController`]
+ * (`batchGetActiveDictItems` / `batchGetActiveDictItemMap`).
  *
  * @author K
  * @since 1.0.0
@@ -20,7 +20,7 @@ interface ISysDictApi {
 
 
     /**
-     * 根据字典类型和原子服务编码，取得对应字典项(仅包括处于启用状态的)
+     * Fetch the dictionary items for the given dict type and atomic service code (active items only).
      */
     @GetMapping("/api/internal/sys/dict/getActiveDictItems")
     fun getActiveDictItems(
@@ -29,7 +29,7 @@ interface ISysDictApi {
     ): List<SysDictItemCacheEntry>
 
     /**
-     * 根据字典类型和原子服务编码，取得对应字典项的编码和名称(仅包括处于启用状态的)
+     * Fetch dictionary item codes and names for the given dict type and atomic service code (active items only).
      */
     @GetMapping("/api/internal/sys/dict/getActiveDictItemMap")
     fun getActiveDictItemMap(
@@ -38,18 +38,18 @@ interface ISysDictApi {
     ): LinkedHashMap<String, String>
 
     /**
-     * 根据字典类型和原子服务编码列表，取得对应字典项信息(仅包括处于启用状态的)
+     * Fetch dictionary item info for the given list of dict-type / atomic-service-code pairs (active items only).
      *
-     * 仅进程内调用，不走 Feign（Pair/Map-by-Pair 不便走 JSON）。
+     * In-process only, not exposed via Feign (Pair / Map-by-Pair don't serialize well to JSON).
      */
     fun batchGetActiveDictItems(
         dictTypeAndASCodePairs: List<Pair<String, String>>
     ): Map<Pair<String, String>, List<SysDictItemCacheEntry>>
 
     /**
-     * 根据字典类型和原子服务编码列表，取得对应字典项的编码和名称(仅包括处于启用状态的)
+     * Fetch dictionary item codes and names for the given list of dict-type / atomic-service-code pairs (active items only).
      *
-     * 仅进程内调用，不走 Feign。
+     * In-process only, not exposed via Feign.
      */
     fun batchGetActiveDictItemMap(
         dictTypeAndASCodePairs: List<Pair<String, String>>

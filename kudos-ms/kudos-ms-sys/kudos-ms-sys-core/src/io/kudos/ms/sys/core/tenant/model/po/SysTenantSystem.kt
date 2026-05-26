@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 租户-系统关系数据库实体
+ * Tenant-system relationship database entity
  *
  * @author K
  * @since 1.0.0
@@ -14,28 +14,28 @@ interface SysTenantSystem : IDbEntity<String, SysTenantSystem> {
 
     companion object : DbEntityFactory<SysTenantSystem>()
 
-    /** 租户id */
+    /** Tenant id */
     var tenantId: String
 
-    /** 系统编码 */
+    /** System code */
     var systemCode: String
 
-    /** 创建者id */
+    /** Creator id */
     var createUserId: String?
 
-    /** 创建者名称 */
+    /** Creator name */
     var createUserName: String?
 
-    /** 创建时间 */
+    /** Create time */
     var createTime: LocalDateTime?
 
-    /** 更新者id */
+    /** Updater id */
     var updateUserId: String?
 
-    /** 更新者名称 */
+    /** Updater name */
     var updateUserName: String?
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime: LocalDateTime?
 
 }

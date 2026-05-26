@@ -15,7 +15,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * [NotifyMqAutoConfiguration] MQ 通知消费配置行为单测。
+ * [NotifyMqAutoConfiguration] unit tests for MQ notification consumer configuration behavior.
  *
  * @author K
  * @author AI: Codex
@@ -115,7 +115,7 @@ internal class NotifyMqAutoConfigurationTest {
     }
 
     /**
-     * 统计通知消费次数的测试监听器。
+     * Test listener that counts the number of notifications consumed.
      *
      * @author K
      * @author AI: Codex
@@ -132,7 +132,7 @@ internal class NotifyMqAutoConfigurationTest {
     }
 
     /**
-     * 固定抛错的测试通知监听器。
+     * Test notification listener that always throws.
      *
      * @author K
      * @author AI: Codex

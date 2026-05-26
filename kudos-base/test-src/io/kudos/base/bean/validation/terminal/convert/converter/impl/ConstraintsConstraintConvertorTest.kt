@@ -9,7 +9,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * ConstraintsConstraintConvertor测试用例
+ * Test cases for ConstraintsConstraintConvertor.
  *
  * @author AI: cursor
  * @author K
@@ -25,7 +25,7 @@ internal class ConstraintsConstraintConvertorTest {
             val convertor = ConstraintsConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
             assertNotNull(rule)
-            // 应该包含子约束的规则
+            // Should contain rules for the sub-constraints
             assertTrue(rule.isNotEmpty())
         }
     }
@@ -38,7 +38,7 @@ internal class ConstraintsConstraintConvertorTest {
             val convertor = ConstraintsConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
             assertNotNull(rule)
-            // OR模式下应该包含andOr和message
+            // In OR mode, andOr and message should be included
             assertTrue(rule.containsKey("andOr"))
             assertTrue(rule.containsKey("message"))
         }
@@ -51,10 +51,10 @@ internal class ConstraintsConstraintConvertorTest {
         if (annotation != null) {
             val convertor = ConstraintsConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
-            // OR模式下，子约束的message应该被移除
+            // In OR mode, sub-constraint messages should be removed
             rule.forEach { (key, value) ->
                 if (value is Map<*, *> && key != "andOr" && key != "message") {
-                    // 子约束的message应该被移除
+                    // Sub-constraint message should be removed
                 }
             }
         }
@@ -67,10 +67,10 @@ internal class ConstraintsConstraintConvertorTest {
         if (annotation != null) {
             val convertor = ConstraintsConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
-            // AND模式下，子约束的message应该保留
+            // In AND mode, sub-constraint messages should be preserved
             rule.forEach { (key, value) ->
                 if (value is Map<*, *> && key != "andOr" && key != "message") {
-                    // 子约束的message应该保留
+                    // Sub-constraint message should be preserved
                 }
             }
         }
@@ -80,14 +80,14 @@ internal class ConstraintsConstraintConvertorTest {
         @get:Constraints(
             order = [NotNull::class, Size::class],
             andOr = AndOrEnum.AND,
-            message = "必须满足所有约束"
+            message = "all constraints must be satisfied"
         )
         val value: String?,
-        
+
         @get:Constraints(
             order = [NotNull::class, Size::class],
             andOr = AndOrEnum.OR,
-            message = "至少满足一个约束"
+            message = "at least one constraint must be satisfied"
         )
         val valueOr: String?
     )

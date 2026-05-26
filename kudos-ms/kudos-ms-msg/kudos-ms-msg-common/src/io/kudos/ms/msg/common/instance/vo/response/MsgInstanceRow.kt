@@ -5,44 +5,44 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息实例列表查询结果响应VO
+ * List query result row VO for the message instance.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgInstanceRow (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 国家-语言字典码 */
+    /** Country-language dictionary code */
     val localeDictCode: String? = null,
 
-    /** 标题 */
+    /** Title */
     val title: String? = null,
 
-    /** 通知内容 */
+    /** Notification content */
     val content: String? = null,
 
-    /** 消息模板id */
+    /** Message template id */
     val templateId: String? = null,
 
-    /** 发送类型字典码 */
+    /** Send type dictionary code */
     val sendTypeDictCode: String? = null,
 
-    /** 事件类型字典码 */
+    /** Event type dictionary code */
     val eventTypeDictCode: String? = null,
 
-    /** 消息类型字典码 */
+    /** Message type dictionary code */
     val msgTypeDictCode: String? = null,
 
-    /** 有效期起 */
+    /** Validity start time */
     val validTimeStart: LocalDateTime? = null,
 
-    /** 有效期止 */
+    /** Validity end time */
     val validTimeEnd: LocalDateTime? = null,
 
-    /** 租户ID */
+    /** Tenant ID */
     val tenantId: String? = null,
 
 ) : IIdEntity<String>

@@ -20,14 +20,14 @@ internal class RegistryTest {
 
     @Test
     fun testLookup_onEmptyKey_returnsEmptyListAndDoesNotModifyRegistry() {
-        // 使用一个从未注册过的 key
+        // Use a key that has never been registered
         val key = "uniqueKey_empty"
         val list1 = Registry.lookup(key)
-        // 第一次 lookup，应该是空列表
-        assertTrue(list1.isEmpty(), "对不存在的 key 调用 lookup，应返回空列表")
-        // 再次 lookup，map 内部依然为空
+        // First lookup should be an empty list
+        assertTrue(list1.isEmpty(), "lookup on a non-existent key should return an empty list")
+        // Looking up again, internal map is still empty
         val list2 = Registry.lookup(key)
-        assertTrue(list2.isEmpty(), "对不存在 key 的 lookup 不应改变 Registry 内部状态")
+        assertTrue(list2.isEmpty(), "lookup on a non-existent key should not change Registry internal state")
     }
 
     @Test
@@ -35,20 +35,20 @@ internal class RegistryTest {
         val key = "testKey_single"
         val obj = Any()
 
-        // 初次 lookup 仍然为空
-        assertTrue(Registry.lookup(key).isEmpty(), "初次 lookup，新 key 应为空")
+        // Initial lookup is still empty
+        assertTrue(Registry.lookup(key).isEmpty(), "Initial lookup for a new key should be empty")
 
-        // 第一次注册
+        // First register
         Registry.register(key, obj)
         val afterFirst = Registry.lookup(key)
-        assertEquals(1, afterFirst.size, "注册一个对象后，lookup 应返回 size = 1")
-        assertTrue(afterFirst.contains(obj), "lookup 列表中应包含刚才注册的 obj")
+        assertEquals(1, afterFirst.size, "After registering one object, lookup should return size = 1")
+        assertTrue(afterFirst.contains(obj), "Lookup list should contain the just-registered obj")
 
-        // 第二次注册同一个 obj，不应重复添加
+        // Registering the same obj a second time should not add a duplicate
         Registry.register(key, obj)
         val afterSecond = Registry.lookup(key)
-        assertEquals(1, afterSecond.size, "第二次注册同一个对象后，列表长度仍应为 1，不应重复")
-        assertTrue(afterSecond.contains(obj), "lookup 列表仍应包含 obj")
+        assertEquals(1, afterSecond.size, "After registering the same object again, list size should still be 1, no duplicates")
+        assertTrue(afterSecond.contains(obj), "Lookup list should still contain obj")
     }
 
     @Test
@@ -56,52 +56,52 @@ internal class RegistryTest {
         val key = "testKey_bulk"
         val obj1 = "A"
         val obj2 = 123
-        val obj3 = "A" // 与 obj1 相同的引用或 equals，但 Bulk 注册时不去重
+        val obj3 = "A" // Same reference as obj1 or equals, but bulk register does not de-duplicate
 
-        // 批量注册空数组，应什么都不做
+        // Bulk register of an empty array should be a no-op
         Registry.register(key /*key*/, *emptyArray<Any>())
-        assertTrue(Registry.lookup(key).isEmpty(), "批量注册空 vararg，不应改变内部状态")
+        assertTrue(Registry.lookup(key).isEmpty(), "Bulk register with an empty vararg should not change internal state")
 
-        // 第一次批量注册 obj1、obj2
+        // First bulk register obj1, obj2
         Registry.register(key, obj1, obj2)
         val afterBulk1 = Registry.lookup(key)
-        assertEquals(2, afterBulk1.size, "批量注册两个对象后，lookup size 应为 2")
+        assertEquals(2, afterBulk1.size, "After bulk registering two objects, lookup size should be 2")
         assertTrue(afterBulk1.contains(obj1) && afterBulk1.contains(obj2),
-            "lookup 列表应包含 obj1 和 obj2")
+            "Lookup list should contain obj1 and obj2")
 
-        // 再次批量注册 obj3（与 obj1 equals）和 obj2（与之前相同）
+        // Bulk register again with obj3 (equals obj1) and obj2 (same as before)
         Registry.register(key, obj3, obj2)
         val afterBulk2 = Registry.lookup(key)
-        // Bulk 方法没有去重逻辑，所以列表会累加
-        assertEquals(4, afterBulk2.size, "批量注册不去重，应累加到 4 个元素")
-        // 可以检查对应位置是否正确插入
+        // The bulk method has no de-dup logic, so the list accumulates
+        assertEquals(4, afterBulk2.size, "Bulk register does not de-duplicate; should accumulate to 4 elements")
+        // Verify the inserted order
         // - index 0: obj1
         // - index 1: obj2
         // - index 2: obj3 (equals obj1)
         // - index 3: obj2
         assertEquals(listOf(obj1, obj2, obj3, obj2), afterBulk2,
-            "Bulk 注册后，列表顺序与传入顺序一致，且允许重复")
+            "After bulk register, list order matches the input order and duplicates are allowed")
     }
 
     // ============================================================
-    // 注：Registry 是 object 单例，下面所有测试用唯一 key 前缀避免相互污染
+    // Note: Registry is an object singleton; tests below use unique key prefixes to avoid cross-pollution
     // ============================================================
 
     @Test
     fun testLookup_returnsSnapshotNotLiveView() {
-        // KDoc 注明"返回列表是快照，不会暴露注册表内部可变状态"——这条要钉住
+        // KDoc notes "the returned list is a snapshot and does not expose internal mutable state" - pin this down
         val key = "snapshot_test_key"
         Registry.register(key, "x")
         val snapshot = Registry.lookup(key)
-        // 即使强转 + 修改，也不应影响注册表内部
+        // Even if cast and mutated, internal state must not be affected
         @Suppress("UNCHECKED_CAST")
         val mutated = runCatching { (snapshot as MutableList<Any>).add("y") }
-        // snapshot 实现上是 .toList() 的 ImmutableList，写操作会抛
+        // The snapshot is implemented via .toList() returning an immutable list; write operations throw
         assertTrue(
             mutated.isFailure || Registry.lookup(key).size == 1,
-            "lookup 返回的应是 snapshot：要么不可变要么不影响内部"
+            "lookup should return a snapshot: either immutable or not affecting internals"
         )
-        // 再次 lookup 应该还是只有 "x"
+        // Looking up again should still only contain "x"
         assertEquals(listOf<Any>("x"), Registry.lookup(key))
     }
 
@@ -113,29 +113,29 @@ internal class RegistryTest {
         Registry.register(keyB, "beta")
         assertEquals(listOf<Any>("alpha"), Registry.lookup(keyA))
         assertEquals(listOf<Any>("beta"), Registry.lookup(keyB))
-        // 跨 key 的 register 不影响另一个 key
+        // Register for one key must not affect another key
         Registry.register(keyA, "alpha2")
         assertEquals(2, Registry.lookup(keyA).size)
-        assertEquals(1, Registry.lookup(keyB).size, "keyB 不受 keyA 改动影响")
+        assertEquals(1, Registry.lookup(keyB).size, "keyB is not affected by changes to keyA")
     }
 
     @Test
     fun testSingleRegisterDedupesByEqualsNotByIdentity() {
-        // String 的 equals 是内容相等。两个 new String("dup") 虽然引用不同但 equals true，
-        // 单点 register 应去重
+        // String equals is content-based. Two new String("dup") have different refs but are equal,
+        // single register should de-duplicate.
         val key = "equals_dedup_key"
         val a = String(charArrayOf('d', 'u', 'p'))
         val b = String(charArrayOf('d', 'u', 'p'))
-        assertFalse(a === b, "前置：a 与 b 引用不同")
-        assertEquals(a, b, "前置：a 与 b equals")
+        assertFalse(a === b, "Precondition: a and b have different references")
+        assertEquals(a, b, "Precondition: a equals b")
         Registry.register(key, a)
         Registry.register(key, b)
-        assertEquals(1, Registry.lookup(key).size, "single register 按 equals 去重")
+        assertEquals(1, Registry.lookup(key).size, "Single register de-duplicates by equals")
     }
 
     @Test
     fun testConcurrentRegisterIsSafe() {
-        // 烟测：8 线程 × 100 次注册不同对象，不应丢数据也不应抛异常
+        // Smoke test: 8 threads x 100 registrations of distinct objects; must not drop data nor throw
         val key = "concurrent_register_key"
         val threadCount = 8
         val loops = 100
@@ -149,9 +149,9 @@ internal class RegistryTest {
                 latch.countDown()
             }
         }
-        assertTrue(latch.await(5, TimeUnit.SECONDS), "并发注册应在 5s 内完成")
+        assertTrue(latch.await(5, TimeUnit.SECONDS), "Concurrent register should finish within 5s")
         pool.shutdown()
-        // 所有对象都是 unique，期望 size = threadCount * loops
+        // All objects are unique; expected size = threadCount * loops
         assertEquals(threadCount * loops, Registry.lookup(key).size)
     }
 
@@ -162,25 +162,25 @@ internal class RegistryTest {
         val obj2 = "Y"
         val obj3 = "X"  // equals obj1
 
-        // 单个注册 obj1
+        // Single register obj1
         Registry.register(key, obj1)
         val listAfterSingle = Registry.lookup(key)
-        assertEquals(1, listAfterSingle.size, "单个注册后 size = 1")
-        assertEquals(obj1, listAfterSingle[0], "第一个元素应是 obj1")
+        assertEquals(1, listAfterSingle.size, "After single register, size = 1")
+        assertEquals(obj1, listAfterSingle[0], "First element should be obj1")
 
-        // 批量注册 obj2、obj3
+        // Bulk register obj2, obj3
         Registry.register(key, obj2, obj3)
         val listAfterBulk = Registry.lookup(key)
-        // Bulk 注册不会检查重复，所以此时列表变成 [obj1, obj2, obj3]
-        assertEquals(3, listAfterBulk.size, "混合注册后 size 应为 3")
-        assertEquals(listOf(obj1, obj2, obj3), listAfterBulk, "列表顺序应为 [obj1, obj2, obj3]")
+        // Bulk register does not check duplicates, so the list becomes [obj1, obj2, obj3]
+        assertEquals(3, listAfterBulk.size, "After mixed register, size should be 3")
+        assertEquals(listOf(obj1, obj2, obj3), listAfterBulk, "List order should be [obj1, obj2, obj3]")
 
-        // 再次单个注册 obj2（已经在列表里），单个注册会去重
+        // Single register obj2 again (already in the list); single register de-duplicates
         Registry.register(key, obj2)
         val listAfterSingleAgain = Registry.lookup(key)
-        // obj2 已经存在，所以 size 仍为 3，不会重复添加
-        assertEquals(3, listAfterSingleAgain.size, "单个注册重复对象应去重，size 不变")
-        assertEquals(listAfterBulk, listAfterSingleAgain, "顺序与内容均不变")
+        // obj2 already exists, so size remains 3; no duplicate is added
+        assertEquals(3, listAfterSingleAgain.size, "Single registering a duplicate object should de-duplicate, size unchanged")
+        assertEquals(listAfterBulk, listAfterSingleAgain, "Order and content unchanged")
     }
 
 }

@@ -5,8 +5,8 @@ dependencies {
     api(project(":kudos-context"))
     compileOnly(platform(libs.spring.boot.bom))
     compileOnly("com.fasterxml.jackson.core:jackson-annotations")
-    // 用于在 ISysXxxApi 上挂方法级 @GetMapping/@PostMapping/@RequestParam/@RequestBody，让 Feign 代理可识别。
-    // 仅方法级，不在接口类型上放 @RequestMapping —— 否则实现该接口的 @Component 会被 Spring MVC 当成 handler。
+    // Used to put method-level @GetMapping/@PostMapping/@RequestParam/@RequestBody on ISysXxxApi so Feign proxies can recognize them.
+    // Method-level only; do not put @RequestMapping on the interface type — otherwise any @Component implementing it would be treated as a Spring MVC handler.
     compileOnly("org.springframework:spring-web")
 }
 
@@ -14,6 +14,6 @@ tasks.withType<KotlinCompile>().configureEach {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_25)
         freeCompilerArgs.add("-Xjvm-default=all")
-        javaParameters.set(true)  // 保留构造参数名，供 Jackson 等反射使用
+        javaParameters.set(true)  // Preserve constructor parameter names for use by Jackson and other reflection
     }
 }

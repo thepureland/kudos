@@ -8,32 +8,32 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 缓存数据库表-实体关联对象
+ * Cache configuration table-to-entity binding.
  *
  * @author K
  * @since 1.0.0
  */
 object SysCaches : ManagedTable<SysCache>("sys_cache") {
 
-    /** 名称 */
+    /** Name */
     var name = varchar("name").bindTo { it.name }
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
 
-    /** 缓存策略代码 */
+    /** Cache strategy code */
     var strategyDictCode = varchar("strategy_dict_code").bindTo { it.strategyDictCode }
 
-    /** 是否启动时写缓存 */
+    /** Write to cache on boot */
     var writeOnBoot = boolean("write_on_boot").bindTo { it.writeOnBoot }
 
-    /** 是否及时回写缓存 */
+    /** Write back to cache in real time */
     var writeInTime = boolean("write_in_time").bindTo { it.writeInTime }
 
-    /** 缓存生存时间(秒) */
+    /** Cache TTL (seconds) */
     var ttl = int("ttl").bindTo { it.ttl }
 
-    /** 是否为 Hash 缓存 */
+    /** Whether it is a Hash cache */
     var hash = boolean("hash").bindTo { it.hash }
 
 

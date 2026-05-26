@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 登录日志数据库实体
+ * Login log database entity
  *
  * @author K
  * @author AI: Cursor
@@ -15,49 +15,49 @@ interface UserLogLogin : IDbEntity<String, UserLogLogin> {
 
     companion object : DbEntityFactory<UserLogLogin>()
 
-    /** 用户ID */
+    /** User ID */
     var userId: String
 
-    /** 用户名 */
+    /** Username */
     var username: String
 
-    /** 租户ID */
+    /** Tenant ID */
     var tenantId: String
 
-    /** 登录时间 */
+    /** Login time */
     var loginTime: LocalDateTime
 
-    /** 登录IP */
+    /** Login IP */
     var loginIp: Long?
 
-    /** 登录地点 */
+    /** Login location */
     var loginLocation: String?
 
-    /** 登录设备 */
+    /** Login device */
     var loginDevice: String?
 
-    /** 浏览器 */
+    /** Browser */
     var loginBrowser: String?
 
-    /** 操作系统 */
+    /** Operating system */
     var loginOs: String?
 
-    /** 用户代理字符串 */
+    /** User agent string */
     var userAgent: String?
 
-    /** 是否登录成功 */
+    /** Whether login succeeded */
     var loginSuccess: Boolean
 
-    /** 失败原因 */
+    /** Failure reason */
     var failureReason: String?
 
-    /** 会话ID */
+    /** Session ID */
     var sessionId: String?
 
-    /** 备注 */
+    /** Remark */
     var remark: String?
 
-    /** 创建时间 */
+    /** Create time */
     var createTime: LocalDateTime?
 
 

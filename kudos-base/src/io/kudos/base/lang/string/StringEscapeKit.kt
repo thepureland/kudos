@@ -3,7 +3,7 @@ package io.kudos.base.lang.string
 import org.apache.commons.text.StringEscapeUtils
 
 /**
- * 字符串转义工具类
+ * String escape utility.
  *
  * @author K
  * @since 1.0.0
@@ -11,67 +11,67 @@ import org.apache.commons.text.StringEscapeUtils
 object StringEscapeKit {
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.text.StringEscapeUtils
+    // Wrapper for org.apache.commons.text.StringEscapeUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     //region Java and JavaScript
     /**
-     * 使用java的字符串规则将指定的字符串转义
-     * 能够正确的处理引号和控制字符(tab, 反斜杠, 回车, 走纸换页等)
-     * 一个tab字符将被转义为`'\\'` 和 `'t'`.
-     * java字符串和javascript字符串的不同仅在于, 在javascript中, 单引号和斜杠将被转义.
+     * Escape the specified string using Java string rules.
+     * Correctly handles quotes and control characters (tab, backslash, carriage return, form feed, etc.).
+     * A tab character will be escaped to `'\\'` and `'t'`.
+     * The only difference between Java and JavaScript string rules is that in JavaScript single quotes and slashes are escaped.
      *
-     * 例如:
+     * For example:
      * <pre>
-     * 输入字符串: He didn't say, "Stop!"
-     * 输出字符串: He didn't say, \"Stop!\"
+     * input string : He didn't say, "Stop!"
+     * output string: He didn't say, \"Stop!\"
      * </pre>
      *
-     * @param input 要转义的字符串, 可以为 null
-     * @return 转义后的字符串, `null`将返回`null`
+     * @param input the string to escape, may be null
+     * @return the escaped string, returns `null` if `null` is passed in
      * @author K
      * @since 1.0.0
      */
     fun escapeJava(input: String?): String? = StringEscapeUtils.escapeJava(input)
 
     /**
-     * 使用EcmaScript的字符串规则将指定的字符串转义
-     * 能够正确的处理引号和控制字符(tab, 反斜杠, 回车, 走纸换页等)
-     * 一个tab字符将被转义为`'\\'` 和 `'t'`.
-     * java字符串和javascript字符串的不同仅在于, 在javascript中, 单引号和斜杠将被转义.
-     * EcmaScript最出名的方言为JavaScript 和 ActionScript.
+     * Escape the specified string using EcmaScript string rules.
+     * Correctly handles quotes and control characters (tab, backslash, carriage return, form feed, etc.).
+     * A tab character will be escaped to `'\\'` and `'t'`.
+     * The only difference between Java and JavaScript string rules is that in JavaScript single quotes and slashes are escaped.
+     * The most famous dialects of EcmaScript are JavaScript and ActionScript.
      *
-     * 例如:
+     * For example:
      * <pre>
-     * 输入字符串: He didn't say, "Stop!"
-     * 输出字符串: He didn't say, \"Stop!\"
+     * input string : He didn't say, "Stop!"
+     * output string: He didn't say, \"Stop!\"
      * </pre>
      *
-     * @param input 要转义的字符串, 可以为 null
-     * @return 转义后的字符串, `null`将返回`null`
+     * @param input the string to escape, may be null
+     * @return the escaped string, returns `null` if `null` is passed in
      * @author K
      * @since 1.0.0
      */
     fun escapeEcmaScript(input: String?): String? = StringEscapeUtils.escapeEcmaScript(input)
 
     /**
-     * 解码指定的转义后java字符串
-     * 例如, 将`'\'` 和 `'n'`转为换行符, 除非在`'\'`前有另一个`'\'`
+     * Unescape the specified escaped Java string.
+     * For example, converts `'\'` and `'n'` to a line feed, unless the `'\'` is preceded by another `'\'`.
      *
-     * @param input 要解码转义的字符串, 可以为 null
-     * @return 一个新的解码过的字符串 `String`, `null`将返回`null`
+     * @param input the string to unescape, may be null
+     * @return a new unescaped `String`, returns `null` if `null` is passed in
      * @author K
      * @since 1.0.0
      */
     fun unescapeJava(input: String?): String? = StringEscapeUtils.unescapeJava(input)
 
     /**
-     * 解码指定的转义后EcmaScript字符串
-     * 例如, 将`'\'` 和 `'n'`转为换行符, 除非在`'\'`前有另一个`'\'`
+     * Unescape the specified escaped EcmaScript string.
+     * For example, converts `'\'` and `'n'` to a line feed, unless the `'\'` is preceded by another `'\'`.
      *
      * @see .unescapeJava
-     * @param input 要解码转义的字符串, 可以为 null
-     * @return 一个新的解码过的字符串 `String`, `null`将返回`null`
+     * @param input the string to unescape, may be null
+     * @return a new unescaped `String`, returns `null` if `null` is passed in
      * @author K
      * @since 1.0.0
      */
@@ -80,16 +80,16 @@ object StringEscapeKit {
 
     //region HTML and XML
     /**
-     * 使用HTML的实体将指定的字符串转义
+     * Escape the specified string using HTML entities.
      *
-     * 例如:
+     * For example:
      * `"bread" & "butter"`
-     * 转义成:
+     * becomes:
      * `&quot;bread&quot; &amp; &quot;butter&quot;`.
-     * 支持所有HTML 4.0实体.请注意平时使用的(&amp;apos;) 不是一个逻辑实体, 所以它是不被支持的.
+     * Supports all HTML 4.0 entities. Note that the commonly used (&amp;apos;) is not a logical entity and is therefore not supported.
      *
-     * @param input 要转义的`String`, 可以为 null
-     * @return 一个新的转义后的字符串, `null`将返回`null`
+     * @param input the `String` to escape, may be null
+     * @return a new escaped string, returns `null` if `null` is passed in
      * @see [ISO Entities](http://hotwired.lycos.com/webmonkey/reference/special_characters/)
      * @see [HTML 3.2 Character Entities for ISO Latin-1](http://www.w3.org/TR/REC-html32.latin1)
      * @see [HTML 4.0 Character entity references](http://www.w3.org/TR/REC-html40/sgml/entities.html)
@@ -101,47 +101,47 @@ object StringEscapeKit {
     fun escapeHtml4(input: String?): String? = StringEscapeUtils.escapeHtml4(input)
 
     /**
-     * 使用HTML的实体将指定的字符串转义
-     * 只支持HTML 3.0的实体
+     * Escape the specified string using HTML entities.
+     * Supports only HTML 3.0 entities.
      *
-     * @param input 要转义的`String` , 可以为null
-     * @return 一个新的转义后的字符串, `null`将返回`null`
+     * @param input the `String` to escape, may be null
+     * @return a new escaped string, returns `null` if `null` is passed in
      * @author K
      * @since 1.0.0
      */
     fun escapeHtml3(input: String?): String? = StringEscapeUtils.escapeHtml3(input)
 
     /**
-     * 解码指定的转义后HTML 4.0实体字符串
-     * 例如, 字符串 "&amp;lt;Fran&amp;ccedil;ais&amp;gt;" 将转为 "&lt;Franais&gt;"
-     * 如果某个实体不被识别, 将保持原样, 并逐字插入到结果串中.如: "&amp;gt;&amp;zzzz;x" 将转为 "&gt;&amp;zzzz;x".
+     * Unescape the specified escaped HTML 4.0 entity string.
+     * For example, the string "&amp;lt;Fran&amp;ccedil;ais&amp;gt;" will be converted to "&lt;Franais&gt;".
+     * If an entity is not recognized, it will be left as-is and inserted verbatim into the result. For example: "&amp;gt;&amp;zzzz;x" will be converted to "&gt;&amp;zzzz;x".
      *
-     * @param input 要解码转义的字符串, 可以为 null
-     * @return 一个新的解码过的字符串 `String`, `null`将返回`null`
+     * @param input the string to unescape, may be null
+     * @return a new unescaped `String`, returns `null` if `null` is passed in
      * @author K
      * @since 1.0.0
      */
     fun unescapeHtml4(input: String?): String? = StringEscapeUtils.unescapeHtml4(input)
 
     /**
-     * 解码指定的转义后HTML 3.0实体字符串
+     * Unescape the specified escaped HTML 3.0 entity string.
      *
-     * @param input 要解码转义的字符串, 可以为 null
-     * @return 一个新的解码过的字符串 `String`, `null`将返回`null`
+     * @param input the string to unescape, may be null
+     * @return a new unescaped `String`, returns `null` if `null` is passed in
      * @author K
      * @since 1.0.0
      */
     fun unescapeHtml3(input: String?): String? = StringEscapeUtils.unescapeHtml3(input)
 
     /**
-     * 使用XML的实体将指定的字符串转义
-     * 例如: <tt>"bread" & "butter"</tt> => <tt>&amp;quot;bread&amp;quot; &amp;amp; &amp;quot;butter&amp;quot;</tt>.
-     * 仅支持5个基本的XML实体 (gt, lt, quot, amp, apos). 不支持 DTDs 或外部实体.
-     * 请注意大于0x7f的Unicode字符不会被转义. 如果想被转义, 可以这样做:
+     * Escape the specified string using XML entities.
+     * For example: <tt>"bread" & "butter"</tt> => <tt>&amp;quot;bread&amp;quot; &amp;amp; &amp;quot;butter&amp;quot;</tt>.
+     * Supports only the 5 basic XML entities (gt, lt, quot, amp, apos). DTDs and external entities are not supported.
+     * Note that Unicode characters greater than 0x7f are not escaped. If you want them escaped, you can do:
      * `StringEscapeUtils.ESCAPE_XML.with( NumericEntityEscaper.between(0x7f, Integer.MAX_VALUE) );`
      *
-     * @param input 要转义的 `String` , 可以为null
-     * @return 一个新的转义后的字符串, `null`将返回`null`
+     * @param input the `String` to escape, may be null
+     * @return a new escaped string, returns `null` if `null` is passed in
      * @see .unescapeXml
      * @author K
      * @since 1.0.0
@@ -149,14 +149,14 @@ object StringEscapeKit {
     fun escapeXml10(input: String?): String? = StringEscapeUtils.escapeXml10(input)
 
     /**
-     * 使用XML的实体将指定的字符串转义
-     * 例如: <tt>"bread" & "butter"</tt> => <tt>&amp;quot;bread&amp;quot; &amp;amp; &amp;quot;butter&amp;quot;</tt>.
-     * 仅支持5个基本的XML实体 (gt, lt, quot, amp, apos). 不支持 DTDs 或外部实体.
-     * 请注意大于0x7f的Unicode字符不会被转义. 如果想被转义, 可以这样做:
+     * Escape the specified string using XML entities.
+     * For example: <tt>"bread" & "butter"</tt> => <tt>&amp;quot;bread&amp;quot; &amp;amp; &amp;quot;butter&amp;quot;</tt>.
+     * Supports only the 5 basic XML entities (gt, lt, quot, amp, apos). DTDs and external entities are not supported.
+     * Note that Unicode characters greater than 0x7f are not escaped. If you want them escaped, you can do:
      * `StringEscapeUtils.ESCAPE_XML.with( NumericEntityEscaper.between(0x7f, Integer.MAX_VALUE) );`
      *
-     * @param input 要转义的 `String` , 可以为null
-     * @return 一个新的转义后的字符串, `null`将返回`null`
+     * @param input the `String` to escape, may be null
+     * @return a new escaped string, returns `null` if `null` is passed in
      * @see .unescapeXml
      * @author K
      * @since 1.0.0
@@ -164,12 +164,12 @@ object StringEscapeKit {
     fun escapeXml11(input: String?): String? = StringEscapeUtils.escapeXml11(input)
 
     /**
-     * 解码指定的转义后XML实体字符串
-     * 仅支持5个基本的XML实体 (gt, lt, quot, amp, apos). 不支持 DTDs 或外部实体.
-     * 请注意: 数值的 \\u Unicode 编码不会被解码为对应的Unicode字符. 这在未来的版本可能解决.
+     * Unescape the specified escaped XML entity string.
+     * Supports only the 5 basic XML entities (gt, lt, quot, amp, apos). DTDs and external entities are not supported.
+     * Note: numeric \\u Unicode encodings are not decoded into their corresponding Unicode characters. This may be resolved in a future version.
      *
-     * @param input 要解码转义的字符串, 可以为 null
-     * @return 一个新的解码过的字符串 `String`, `null`将返回`null`
+     * @param input the string to unescape, may be null
+     * @return a new unescaped `String`, returns `null` if `null` is passed in
      * @see .escapeXml
      * @author K
      * @since 1.0.0
@@ -178,35 +178,35 @@ object StringEscapeKit {
     //endregion HTML and XML
 
     /**
-     * 如果需要, 将csv的列用双引号包起来
-     * 如果值包含逗号, 换行或双引号, 字符串的值被被双引号包起来
-     * 值中出现的双引号将用另一个额外的双引号转义
-     * 如果值未包含逗号, 换行或双引号, 字符串将原样返回
-     * 见 [Wikipedia](http://en.wikipedia.org/wiki/Comma-separated_values) 和 [RFC 4180](http://tools.ietf.org/html/rfc4180).
+     * Wrap a CSV field in double quotes if required.
+     * If the value contains a comma, newline or double quote, the string value will be wrapped in double quotes.
+     * Any double quote characters within the value are escaped with an additional double quote.
+     * If the value does not contain a comma, newline or double quote, the string is returned unchanged.
+     * See [Wikipedia](http://en.wikipedia.org/wiki/Comma-separated_values) and [RFC 4180](http://tools.ietf.org/html/rfc4180).
      *
-     * @param input CSV列的值, 可以 null
-     * @return 转义后的字符串, `null` 将返回 null
+     * @param input the value of a CSV column, may be null
+     * @return the escaped string, returns null if `null` is passed in
      * @author K
      * @since 1.0.0
      */
     fun escapeCsv(input: String?): String? = StringEscapeUtils.escapeCsv(input)
 
     /**
-     * 解码转义过的csv列的值
-     * 如果值以双引号包住, 并且包含逗号, 换行或双引号, 这样双引号将被移除
-     * 两个连在一起的双引号将被去掉一个
-     * 如果值没有以双引号包住, 或者有, 但是不包含含逗号, 换行或双引号, 这样字符串将原样返回
-     * 见 [Wikipedia](http://en.wikipedia.org/wiki/Comma-separated_values) 和 [RFC 4180](http://tools.ietf.org/html/rfc4180).
+     * Unescape an escaped CSV column value.
+     * If the value is wrapped in double quotes and contains a comma, newline or double quote, the wrapping double quotes are removed.
+     * Two consecutive double quotes are collapsed into one.
+     * If the value is not wrapped in double quotes, or is wrapped but does not contain a comma, newline or double quote, the string is returned unchanged.
+     * See [Wikipedia](http://en.wikipedia.org/wiki/Comma-separated_values) and [RFC 4180](http://tools.ietf.org/html/rfc4180).
      *
-     * @param input CSV列的值, 可以 null
-     * @return 解码过的CSV列的值
+     * @param input the value of a CSV column, may be null
+     * @return the unescaped value of the CSV column
      * @author K
      * @since 1.0.0
      */
     fun unescapeCsv(input: String?): String? = StringEscapeUtils.unescapeCsv(input)
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.text.StringEscapeUtils
+    // Wrapper for org.apache.commons.text.StringEscapeUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

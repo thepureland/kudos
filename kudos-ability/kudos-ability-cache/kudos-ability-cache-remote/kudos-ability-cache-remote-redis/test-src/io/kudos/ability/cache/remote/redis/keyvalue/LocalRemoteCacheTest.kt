@@ -21,7 +21,7 @@ import kotlin.test.assertTrue
 
 
 /**
- * 混合缓存(两级缓存: 本地+远程)测试用例
+ * Mix-cache (two-level: local + remote) test cases.
  *
  * @author K
  * @author AI: Codex
@@ -112,8 +112,10 @@ internal class LocalRemoteCacheTest {
     }
 
     /**
-     * 验证缓存的 null 值（防穿透标记）能在本地命中，不会被误判为 miss 再回源远端。
-     * 做法：往本地塞 null、往远端塞另一个值；mixCache.get 应返回本地的 null（包装器存在但值为 null）。
+     * Verifies that a cached null value (the cache-penetration marker) hits the local layer and is not
+     * mistakenly treated as a miss that falls through to remote.
+     * Approach: insert null locally and a different value remotely; mixCache.get must return the local null
+     * (a wrapper is present but its value is null).
      */
     @Test
     fun testCachedNullHitsLocal() {
@@ -127,8 +129,8 @@ internal class LocalRemoteCacheTest {
 
         val mixCache = mixCacheManager.getCache(CACHE_NAME)!!
         val wrapper = mixCache.get(key)
-        assertTrue(wrapper != null, "本地缓存了 null，wrapper 不应为 null（命中）")
-        assertTrue(wrapper.get() == null, "本地缓存的 null 应原样返回，不应被远端值覆盖")
+        assertTrue(wrapper != null, "Local cached null: wrapper must not be null (hit)")
+        assertTrue(wrapper.get() == null, "Locally cached null must be returned as-is and not overridden by the remote value")
     }
 
 }

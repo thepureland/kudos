@@ -3,11 +3,13 @@ package io.kudos.ms.auth.core.platform.enums.dict
 import io.kudos.base.enums.ienums.IModuleEnum
 
 /**
- * 鉴权服务的模块枚举占位。
+ * Placeholder module enum for the auth service.
  *
- * 实现 [IModuleEnum]、目前**无任何成员**——保留只为对接框架对 `IModuleEnum` SPI 的扫描契约
- * （字典 / 日志 / 权限组件会按 `IModuleEnum` 子类型聚合分类）。后续 auth 子系统拆出更细粒度的
- * 模块时（如 `ROLE` / `GROUP` / `PERMISSION`）在此追加枚举值即可，避免散落在各处自创 enum。
+ * Implements [IModuleEnum] and currently has **no members**. Kept only to satisfy the framework's
+ * scanning contract for the `IModuleEnum` SPI (dictionary / logging / permission components
+ * aggregate and classify by `IModuleEnum` subtype). When the auth subsystem is later split into
+ * finer-grained modules (such as `ROLE` / `GROUP` / `PERMISSION`), append new enum values here
+ * rather than declaring ad-hoc enums elsewhere.
  *
  * @author K
  * @since 1.0.0

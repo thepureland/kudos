@@ -4,10 +4,11 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 审计明细 VO。
+ * Audit detail VO.
  *
- * 一条审计日志可包含多条明细（例如批量操作每个实体一条），明细持有具体的请求 URL、参数、描述信息，
- * 而 [SysAuditLogVo] 描述的是整次操作的元数据。
+ * A single audit log can have multiple details (e.g. one per entity in a batch operation); details
+ * carry the concrete request URL, params and description, while [SysAuditLogVo] describes the
+ * metadata of the operation as a whole.
  *
  * @author K
  * @author AI: Codex
@@ -15,27 +16,27 @@ import java.io.Serializable
  */
 class SysAuditDetailLogVo : Serializable {
     /**
-     * 主键
+     * Primary key
      */
     var id: String? = null
 
     /**
-     * 业务实体id(被操作对象id)
+     * Business entity id (the id of the affected object)
      */
     var auditId: String? = null
 
     /**
-     * 操作URL(完整路径)
+     * Operation URL (full path)
      */
     var operateUrl: String? = null
 
     /**
-     * 描述参数,对应:{0}
+     * String params for the description, corresponds to: {0}
      */
     var stringParams: String? = null
 
     /**
-     * 描述参数,JSON串,对应:${}
+     * Object params for the description, JSON string, corresponds to: ${}
      */
     var objectParams: String? = null
 
@@ -45,22 +46,22 @@ class SysAuditDetailLogVo : Serializable {
     var requestReferer: String? = null
 
     /**
-     * POST请求数据
+     * POST request payload
      */
     var requestFormData: String? = null
 
     /**
-     * 详情描述，对应post数据的转换
+     * Detail description; the converted form of the POST data
      */
     var description: String? = null
 
-    /** 默认无参构造，反序列化用 */
+    /** Default no-arg constructor for deserialization */
     constructor()
 
     /**
-     * 带主键的构造（用于查询返回时手工组装明细）。
+     * Constructor with primary key (used when assembling a detail manually for query results).
      *
-     * @param id 明细主键
+     * @param id detail primary key
      * @author K
      * @since 1.0.0
      */
@@ -69,10 +70,11 @@ class SysAuditDetailLogVo : Serializable {
     }
 
     companion object {
-        /** 描述字段的临时占位 key，业务上下文里发现该值时表示该明细描述尚未格式化 */
+        /** Temporary placeholder key for the description field; when present in a business context,
+         *  indicates the detail description has not yet been formatted */
         const val AUDIT_LOG_DESC: String = "__AUDIT_LOG_TMP_DESC__"
 
-        /** Serializable 版本号 */
+        /** Serializable version uid */
         @Serial
         private val serialVersionUID = -3787813089272077741L
     }

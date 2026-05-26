@@ -17,7 +17,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 /**
- * openFeign调用测试
+ * OpenFeign invocation tests.
  *
  * @author will
  * @since 5.1.1
@@ -38,21 +38,21 @@ open class OpenFeignTest {
     @BeforeAll
     fun setup() {
         NacosTestContainer.startIfNeeded(null)
-        println("########## 启动模拟的微服务...")
+        println("########## Starting the mock microservice...")
         SpringApplication.run(MockMsApplication::class.java)
-        println("########## 启动模拟的微服务成功.")
+        println("########## Mock microservice started.")
     }
 
     @Test
     fun test() {
-        // 测试get方式的请求
+        // Test GET request
         assertTrue(feignClient.get())
 
-        // 测试post方式的请求
+        // Test POST request
         val result = feignClient.post(PostParam(1, "name"))
         assertEquals(true, result.success)
 
-        // 测试异常抛回
+        // Test exception propagation
         assertFailsWith<RuntimeException> { feignClient.exception() }
     }
 

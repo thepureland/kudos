@@ -4,14 +4,15 @@ import io.kudos.base.model.contract.entity.IIdEntity
 import kotlin.reflect.KClass
 
 /**
- * 基于 Hash 的按主属性批量可缓存注解，语义参考 [BatchCacheable]：按一批主属性（id）先查 Hash 缓存，未命中的再调方法并回写。
+ * Hash-based batch cacheable annotation keyed by primary attribute, semantically aligned with [BatchCacheable]:
+ * loads from Hash cache by a batch of primary attributes (id) first, then invokes the method for misses and writes back.
  *
- * 术语：**主属性**即实体唯一标识（id）；**副属性**为除 id 外参与二级索引、列表查询与排序的属性。
- * 约束：
- * - 缓存 key 为主属性 id（String 或可转为 String），由 [keysGenerator] 从方法参数中生成 id 列表。
- * - 方法返回值必须为 [Map]，key 为 id，value 为 [IIdEntity]（可空）。
- * - 方法需为 open。
- * - 使用前需在缓存配置中为该 [cacheNames] 配置 `hash = true` 且 `writeInTime = true` 以便回写。
+ * Terminology: **primary attribute** is the entity's unique identifier (id); **secondary attributes** are the fields, other than id, that participate in secondary indexes, list queries and sorting.
+ * Constraints:
+ * - The cache key is the primary attribute id (String or convertible to String); [keysGenerator] derives the id list from method parameters.
+ * - The method return type must be [Map]; key is id, value is [IIdEntity] (nullable).
+ * - The method must be open.
+ * - Before use, the [cacheNames] entry must be configured with `hash = true` and `writeInTime = true` to enable writeback.
  *
  * @author K
  * @author AI: Cursor
@@ -22,25 +23,25 @@ import kotlin.reflect.KClass
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY_GETTER, AnnotationTarget.PROPERTY_SETTER)
 annotation class HashBatchCacheableByPrimary(
 
-    /** Hash 缓存名称（需在配置中存在且 hash=true） */
+    /** Hash cache name (must exist in configuration with hash=true). */
     val cacheNames: Array<String> = [],
 
-    /** 实现 [io.kudos.ability.cache.common.batch.keyvalue.IKeysGenerator] 的 Spring Bean 名称，用于从参数生成主属性（id）列表 */
+    /** Spring bean name implementing [io.kudos.ability.cache.common.batch.keyvalue.IKeysGenerator], used to derive the primary attribute (id) list from parameters. */
     val keysGenerator: String = "defaultHashBatchKeysGenerator",
 
-    /** 缓存实体类型，用于 findByIds / saveBatch 的 KClass */
+    /** Cache entity type, the KClass used by findByIds / saveBatch. */
     val entityClass: KClass<out IIdEntity<*>>,
 
-    /** 生成 key 时忽略的参数索引 */
+    /** Parameter indexes to ignore when generating keys. */
     val ignoreParamIndexes: IntArray = [],
 
     /**
-     * 可筛选副属性名（等值查询用 Set 索引）；为空则不建。例外：数值型范围查询条件要放 [sortableProperties]。
+     * Filterable secondary attribute names (Set index for equality queries); none are created if empty. Exception: numeric range query conditions must go into [sortableProperties].
      */
     val filterableProperties: Array<String> = [],
 
     /**
-     * 可排序/范围副属性名（ZSet 索引）；用于 listPageByZSetIndex 等。例外：数值型范围查询条件放本项。
+     * Sortable/range secondary attribute names (ZSet index); used by listPageByZSetIndex etc. Exception: numeric range query conditions belong here.
      */
     val sortableProperties: Array<String> = []
 )

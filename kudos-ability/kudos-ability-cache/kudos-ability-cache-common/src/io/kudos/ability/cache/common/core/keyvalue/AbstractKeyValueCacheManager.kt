@@ -8,7 +8,7 @@ import org.springframework.cache.Cache
 import org.springframework.cache.support.AbstractCacheManager
 
 /**
- * 抽象缓存管理器
+ * Abstract cache manager.
  *
  * @author K
  * @since 1.0.0

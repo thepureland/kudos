@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.tenant.vo.request
 
 /**
- * 租户表单新建请求VO
+ * Tenant create form request VO.
  *
  * @author K
  * @since 1.0.0

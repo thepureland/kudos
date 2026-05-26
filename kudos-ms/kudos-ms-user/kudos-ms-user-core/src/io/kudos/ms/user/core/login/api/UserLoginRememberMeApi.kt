@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 记住我登录 API本地实现
+ * Local implementation of the remember-me login API.
  *
  * @author K
  * @author AI: Codex

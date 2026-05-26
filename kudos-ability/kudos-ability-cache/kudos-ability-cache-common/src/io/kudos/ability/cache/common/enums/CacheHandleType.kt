@@ -4,10 +4,11 @@ import io.kudos.base.enums.ienums.IDictEnum
 
 
 /**
- * 缓存处理类型枚举。
+ * Cache operation type enum.
  *
- * 用于 cache 后台管理 / 监控页面下发"对某缓存做某操作"的指令；本模块自身的 AOP
- * 流程并不直接消费这个枚举（它们走 `@TenantCacheable` / `@TenantCacheEvict` 等注解）。
+ * Used by cache admin / monitoring pages to dispatch "perform this operation on this cache" commands;
+ * this module's own AOP flow does not consume the enum directly (it goes through annotations like
+ * `@TenantCacheable` / `@TenantCacheEvict`).
  *
  * @author K
  * @since 1.0.0
@@ -17,26 +18,26 @@ enum class CacheHandleType(
     override val displayText: String
 ) : IDictEnum {
 
-    /** 重载指定 key 的缓存。 */
-    OVERLOAD("overload", "重载指定key的緩存"),
+    /** Reload the cache entry for the given key. */
+    OVERLOAD("overload", "Reload cache entry for the given key"),
 
-    /** 重载整个缓存的所有 key。 */
-    OVERLOAD_ALL("overloadAll", "重载所有緩存"),
+    /** Reload all keys in the entire cache. */
+    OVERLOAD_ALL("overloadAll", "Reload all cache entries"),
 
-    /** 剔除指定 key 的缓存项。 */
-    EVICT("evict", "剔除指定key的緩存"),
+    /** Evict the cache entry for the given key. */
+    EVICT("evict", "Evict cache entry for the given key"),
 
-    /** 清空整个缓存。 */
-    EVICT_ALL("evictAll", "清除所有緩存"),
+    /** Clear the entire cache. */
+    EVICT_ALL("evictAll", "Clear all cache entries"),
 
-    /** 检查 key 是否存在（不返回 value）。 */
-    GET_KEY("getKey", "檢查key是否存在"),
+    /** Check whether the key exists (does not return the value). */
+    GET_KEY("getKey", "Check whether key exists"),
 
-    /** 获取 key 对应的值。 */
-    GET_VALUE("getValue", "獲取key對應的值");
+    /** Get the value for the given key. */
+    GET_VALUE("getValue", "Get value for the given key");
 
     companion object {
-        /** 按 [code] 字面值查询枚举；未匹配返回 null。 */
+        /** Look up the enum by [code] literal; returns null when no match. */
         fun get(code: String): CacheHandleType? = entries.firstOrNull { it.code == code }
     }
 

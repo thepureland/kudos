@@ -20,20 +20,26 @@ import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
 /**
- * 流式消息生产者辅助类
- * 
- * 提供消息发送的统一接口，支持同步和异步发送，以及失败处理和重试机制。
- * 
- * 核心功能：
- * 1. 同步发送：调用sendMessage方法，立即返回发送结果
- * 2. 异步发送：调用asyncSendMessage方法，使用线程池异步执行，不阻塞调用线程
- * 3. 失败处理：当消息发送失败时，如果配置了失败处理器，会将失败消息发送到错误通道进行后续处理
- * 4. 消息封装：自动创建StreamMessageVo消息对象，并添加必要的消息头信息（包括绑定名称、目标地址等）
- * 
- * 注意事项：
- * - MQ发送都是异步的，send方法返回true不代表消息已成功发送到MQ服务器
- * - 真实的发送错误会在flush时感知，此时会触发失败处理机制
- * - 支持通过StreamFailHandlerItem注册自定义的失败处理器
+ * Stream message producer helper.
+ *
+ * Provides a unified API for sending messages, supporting both synchronous and
+ * asynchronous sends as well as failure handling and retry.
+ *
+ * Core features:
+ * 1. Synchronous send: call sendMessage to send and immediately return the result.
+ * 2. Asynchronous send: call asyncSendMessage to execute asynchronously via a thread
+ *    pool without blocking the calling thread.
+ * 3. Failure handling: when a send fails and a failure handler is configured, the
+ *    failed message is pushed to the error channel for follow-up processing.
+ * 4. Message wrapping: automatically creates the StreamMessageVo and adds required
+ *    headers (binding name, destination, etc.).
+ *
+ * Notes:
+ * - MQ sends are asynchronous; a true return from send does not guarantee the
+ *   message reached the MQ server.
+ * - The real send error is only observed on flush, which then triggers the failure
+ *   handling mechanism.
+ * - Custom failure handlers can be registered via StreamFailHandlerItem.
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -62,15 +68,15 @@ class StreamProducerHelper {
     private var producerLimiterSize: Int = 0
 
     /**
-     * 发送消息
+     * Sends a message.
      *
-     * @param bindingName stream配置名
-     * @param data        消息体对象
-     * @param <T>         消息体对象类型
+     * @param bindingName the stream binding name
+     * @param data        the message body object
+     * @param <T>         the type of the message body
     </T> */
     fun <T> sendMessage(bindingName: String, data: T): Boolean {
         if (!properties.bindings.containsKey(bindingName)) {
-            LOG.error("未找到Stream配置项{0}", bindingName)
+            LOG.error("Stream configuration item not found: {0}", bindingName)
             return false
         }
         if (!acquireProducerPermit(bindingName)) {
@@ -81,7 +87,7 @@ class StreamProducerHelper {
             @Suppress("UNCHECKED_CAST")
             val success = doRealSend(bindingName, msg as Message<StreamMessageVo<Any?>>, false)
             if (!success) {
-                LOG.warn("stream发送消息结果:false, bindingName:${bindingName}, msgId:${msg.headers.id}")
+                LOG.warn("Stream send message result: false, bindingName: ${bindingName}, msgId: ${msg.headers.id}")
             }
             return success
         } finally {
@@ -90,15 +96,15 @@ class StreamProducerHelper {
     }
 
     /**
-     * 发送消息
+     * Sends a message.
      *
-     * @param bindingName stream配置名
-     * @param data        消息体对象
-     * @param <T>         消息体对象类型
+     * @param bindingName the stream binding name
+     * @param data        the message body object
+     * @param <T>         the type of the message body
     </T> */
     fun <T> asyncSendMessage(bindingName: String, data: T) {
         if (!properties.getBindings().containsKey(bindingName)) {
-            LOG.error("未找到Stream配置项{0}", bindingName)
+            LOG.error("Stream configuration item not found: {0}", bindingName)
             return
         }
         if (!acquireProducerPermit(bindingName)) {
@@ -111,7 +117,7 @@ class StreamProducerHelper {
                     @Suppress("UNCHECKED_CAST")
                     val success = doRealSend(bindingName, msg as Message<StreamMessageVo<Any?>>, false)
                     if (!success) {
-                        LOG.warn("stream发送消息结果:false, bindingName:${bindingName}, msgId:${msg.headers.id}")
+                        LOG.warn("Stream send message result: false, bindingName: ${bindingName}, msgId: ${msg.headers.id}")
                     }
                 } finally {
                     releaseProducerPermit()
@@ -124,43 +130,50 @@ class StreamProducerHelper {
     }
 
     /**
-     * 真实发送MQ消息
-     * 
-     * 执行实际的消息发送操作，处理发送失败的情况。
-     * 
-     * 工作流程：
-     * 1. 调用StreamBridge发送消息到指定的binding
-     * 2. 如果发送成功，返回true（注意：MQ发送是异步的，true不代表消息已到达服务器）
-     * 3. 如果发送失败（抛出异常）：
-     *    - 记录错误日志
-     *    - 如果配置了失败处理器且不是重试发送，将失败消息发送到错误通道
-     *    - 返回false
-     * 
-     * 失败处理机制：
-     * - 当发送失败时，如果该binding配置了失败处理器（通过StreamFailHandlerItem注册）
-     *   且不是重试发送（isResend=false），会将失败消息包装为ErrorMessage发送到错误通道
-     * - 错误通道会触发失败处理器的处理逻辑，通常会将消息持久化到本地文件
-     * - 如果是重试发送（isResend=true），不会再次触发失败处理，避免重复持久化
-     * 
-     * 注意事项：
-     * - MQ发送都是异步的，send方法返回true不代表消息已成功发送到MQ服务器
-     * - 真实的发送错误会在flush时感知，此时会触发失败处理机制
-     * - 重试发送时isResend应设置为true，避免重复触发失败处理
-     * 
-     * @param bindingName Stream绑定名称
-     * @param msg 要发送的消息对象
-     * @param isResend 是否为重试发送，true表示重试，false表示首次发送
-     * @return true表示发送操作成功（异步），false表示发送失败
-     * @param T 消息体类型
+     * Actually sends the MQ message.
+     *
+     * Performs the real send operation and handles send failures.
+     *
+     * Workflow:
+     * 1. Call StreamBridge to send the message to the given binding.
+     * 2. On success, return true (note: MQ send is asynchronous; true does not mean
+     *    the message reached the server).
+     * 3. On failure (exception thrown):
+     *    - Log the error.
+     *    - If a failure handler is registered and this is not a retry, push the
+     *      failed message to the error channel.
+     *    - Return false.
+     *
+     * Failure handling:
+     * - When the send fails and the binding has a failure handler registered (via
+     *   StreamFailHandlerItem) and this is not a retry (isResend=false), the failed
+     *   message is wrapped as an ErrorMessage and pushed to the error channel.
+     * - The error channel triggers the failure handler, which typically persists the
+     *   message to a local file.
+     * - If this is a retry (isResend=true), the failure handler will not be
+     *   re-triggered, avoiding duplicate persistence.
+     *
+     * Notes:
+     * - MQ sends are asynchronous; a true return from send does not guarantee the
+     *   message reached the MQ server.
+     * - The real send error is only observed on flush, which then triggers the
+     *   failure handling mechanism.
+     * - On retry, isResend should be true to avoid re-triggering failure handling.
+     *
+     * @param bindingName the Stream binding name
+     * @param msg the message to send
+     * @param isResend true if this is a retry send, false if it is the first send
+     * @return true if the send operation succeeded (asynchronously), false on failure
+     * @param T the message body type
      */
     fun <T> doRealSend(bindingName: String, msg: Message<StreamMessageVo<T>>, isResend: Boolean): Boolean {
         try {
-            //这里MQ都是异步发送，所以永远都会返回true，只有真实flush的是后才会感知错误信息
+            // MQ sends here are asynchronous, so this almost always returns true; the actual error is only observed on flush.
             return streamBridge.send(bindingName, msg, StreamMessageConverter.MESSAGE_TYPE)
         } catch (e: Throwable) {
-            //避免乱七八糟错误补救而已
-            LOG.error(e, "发送mq失败！")
-            //兼容配置不开启异常处理的情况。重发失败返回false，则不需要删除
+            // Best-effort fallback to avoid arbitrary errors.
+            LOG.error(e, "Failed to send MQ message!")
+            // Compatibility for the case where exception handling is not enabled. A failed resend returns false and does not need deletion.
             //properties.getBindings().get(bindingName).getProducer().isErrorChannelEnabled();
             if (StreamFailHandlerItem.hasFailedHandler(bindingName) && !isResend) {
                 val exception = MessageHandlingException(msg)
@@ -173,7 +186,7 @@ class StreamProducerHelper {
 
     @Suppress("UNCHECKED_CAST")
     private fun <T> createMessage(bindingName: String, data: T): Message<StreamMessageVo<T>> {
-        val destination = requireNotNull(properties.bindings[bindingName]) { "未配置 stream binding: $bindingName" }.destination
+        val destination = requireNotNull(properties.bindings[bindingName]) { "Stream binding not configured: $bindingName" }.destination
         val headerMap = BeanKit.extract(StreamHeader.initHeader(destination))
         val map = mutableMapOf<String, Any>().apply {
             putAll(headerMap as Map<out String, Any>)
@@ -197,7 +210,7 @@ class StreamProducerHelper {
             false
         }
         if (!acquired) {
-            LOG.warn("Stream producer本地限流触发，跳过发送。bindingName={0}", bindingName)
+            LOG.warn("Stream producer local rate limit triggered, skipping send. bindingName={0}", bindingName)
         }
         return acquired
     }

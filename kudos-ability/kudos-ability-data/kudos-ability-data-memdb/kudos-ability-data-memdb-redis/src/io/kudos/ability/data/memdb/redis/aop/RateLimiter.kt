@@ -1,20 +1,20 @@
 package io.kudos.ability.data.memdb.redis.aop
 
 /**
- * 方法级限流注解。被注解的方法在 [time] 秒窗口内最多允许 [count] 次调用，超出抛出
- * `ServiceException(SC_REQUEST_FREQUENTLY)`。
+ * Method-level rate-limit annotation. The annotated method allows at most [count] calls within a [time]-second
+ * window; excess calls throw `ServiceException(SC_REQUEST_FREQUENTLY)`.
  *
- * 计数走 Redis（`limit.lua` 脚本里 `INCR + EXPIRE` 原子操作），见 [RateLimiterAspect]。
+ * Counting goes through Redis (atomic `INCR + EXPIRE` in the `limit.lua` script); see [RateLimiterAspect].
  *
- * 用法：
+ * Usage:
  * ```kotlin
  * @RateLimiter(time = 60, count = 10, limitType = LimitType.IP)
  * fun login(...) { ... }
  * ```
  *
- * @property time 限流时间窗口，单位秒，默认 60
- * @property count 窗口内允许的最大调用次数，默认 100
- * @property limitType 限流维度，默认 [LimitType.DEFAULT]（按方法签名）
+ * @property time Rate-limit time window in seconds, default 60.
+ * @property count Maximum allowed call count within the window, default 100.
+ * @property limitType Rate-limit dimension, default [LimitType.DEFAULT] (by method signature).
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -24,15 +24,15 @@ package io.kudos.ability.data.memdb.redis.aop
 @MustBeDocumented
 annotation class RateLimiter(
     /**
-     * 限流时间,单位秒
+     * Rate-limit time window, in seconds.
      */
     val time: Int = 60,
     /**
-     * 限流次数
+     * Rate-limit count.
      */
     val count: Int = 100,
     /**
-     * 限流类型
+     * Rate-limit type.
      */
     val limitType: LimitType = LimitType.DEFAULT
 )

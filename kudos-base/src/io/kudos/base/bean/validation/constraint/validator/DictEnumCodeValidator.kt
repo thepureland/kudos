@@ -6,7 +6,7 @@ import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 
 /**
- * DictEnumCode约束验证器
+ * DictEnumCode constraint validator.
  *
  * @author K
  * @since 1.0.0

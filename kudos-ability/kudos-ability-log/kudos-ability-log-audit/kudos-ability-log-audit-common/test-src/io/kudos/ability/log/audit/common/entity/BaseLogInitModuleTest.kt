@@ -12,18 +12,19 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * [BaseLog.initModule] 多 [ISysAuditModule] 链式解析单测。
+ * Unit tests for chained resolution across multiple [ISysAuditModule] implementations in [BaseLog.initModule].
  *
- * 验证 round-2 修复：从"`values.first()` 只用第一个"改为"遍历每个，第一个返回非空 id /
- * name 的胜出"。覆盖：
- *  - 单实现命中
- *  - 多实现：第一个返回 null/null，第二个有结果——应取第二个
- *  - 多实现：id 来自一个，name 来自另一个（独立累计）
- *  - 全部返回 null——id/name 仍为 null（不爆 NPE）
- *  - 没有任何 ISysAuditModule 实现——不写 id/name
+ * Verifies the round-2 fix: from "use only `values.first()`" to "iterate each; the first to return
+ * a non-null id / name wins". Coverage:
+ *  - Single implementation, direct hit.
+ *  - Multiple impls: the first returns null/null and the second produces results — the second should be used.
+ *  - Multiple impls: id from one, name from another (accumulated independently).
+ *  - All return null — id/name remain null (no NPE).
+ *  - No ISysAuditModule implementation registered — id/name are not written.
  *
- * 旧的 `init` 块 + `SpringKit.getBean()` 在 SpringKit 未就绪时无重试——本测试也作为
- * round-2 [io.kudos.ability.log.audit.common.support.AuditLogTool] 修复的间接守护。
+ * The legacy `init` block + `SpringKit.getBean()` did not retry when SpringKit was not yet ready;
+ * this test also serves as an indirect guard for the round-2 fix in
+ * [io.kudos.ability.log.audit.common.support.AuditLogTool].
  *
  * @author K
  * @author AI: Codex
@@ -63,7 +64,7 @@ internal class BaseLogInitModuleTest {
 
     @Test
     fun multiModules_idFromOneNameFromAnother() {
-        // 一个只知 id 不知 name，另一个反之——链式合并把两半凑齐
+        // One knows only id, the other only name — the chained merge stitches the halves together
         registerModule("first", id = 99, name = null)
         registerModule("second", id = null, name = "Stock")
         val log = baseLog(moduleCode = "STOCK")
@@ -82,7 +83,7 @@ internal class BaseLogInitModuleTest {
 
     @Test
     fun noModulesRegistered_keepsModuleNullable() {
-        // 不注册任何 ISysAuditModule——initModule 直接返回
+        // Don't register any ISysAuditModule — initModule should return immediately
         val log = baseLog(moduleCode = "ANY")
         assertNull(log.moduleId)
         assertNull(log.moduleName)
@@ -95,7 +96,7 @@ internal class BaseLogInitModuleTest {
     }
 
     private fun baseLog(moduleCode: String): BaseLog {
-        // Kotlin 注解类可以直接当构造器调用——比反射构造再 inject 简洁得多
+        // Kotlin annotation classes can be invoked as constructors directly — much cleaner than reflective construction + injection
         val annotation = Audit(
             opType = OperationTypeEnum.CREATE,
             moduleCode = moduleCode,

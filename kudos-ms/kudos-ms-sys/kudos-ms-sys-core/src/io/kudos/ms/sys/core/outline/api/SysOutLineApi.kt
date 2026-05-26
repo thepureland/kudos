@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 出网白名单 API本地实现
+ * Local implementation of the outbound allowlist API
  *
  * @author K
  * @since 1.0.0

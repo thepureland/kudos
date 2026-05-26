@@ -4,7 +4,7 @@ import io.kudos.base.support.service.IBaseCrudService
 import ${packagePrefix}.${module}.provider.model.po.${entityName}
 
 
-<@generateClassComment table.comment+"业务接口"/>
+<@generateClassComment table.comment+" business interface"/>
 //region your codes 1
 interface I${entityName}Service : IBaseCrudService<${pkColumn.kotlinTypeName}, ${entityName}> {
 //endregion your codes 1

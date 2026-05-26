@@ -2,7 +2,7 @@ package io.kudos.ability.distributed.stream.rabbit.main
 
 
 /**
- * RabbitMq测试服务接口
+ * RabbitMQ test service interface.
  *
  * @author shane
  * @author K

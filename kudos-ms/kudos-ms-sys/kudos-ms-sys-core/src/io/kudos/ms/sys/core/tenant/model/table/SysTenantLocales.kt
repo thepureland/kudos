@@ -7,35 +7,35 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 租户-语言关系数据库表-实体关联对象
+ * Tenant-locale relationship table-entity binding object.
  *
  * @author K
  * @since 1.0.0
  */
 object SysTenantLocales : StringIdTable<SysTenantLocale>("sys_tenant_locale") {
 
-    /** 租户id */
+    /** Tenant id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
-    /** 语言代码 */
+    /** Locale code */
     var localeCode = varchar("locale_code").bindTo { it.localeCode }
 
-    /** 创建者id */
+    /** Creator id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 创建者名称 */
+    /** Creator name */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 创建时间 */
+    /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新者id */
+    /** Updater id */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 更新者名称 */
+    /** Updater name */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 

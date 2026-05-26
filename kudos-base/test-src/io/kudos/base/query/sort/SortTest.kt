@@ -3,7 +3,7 @@ package io.kudos.base.query.sort
 import kotlin.test.*
 
 /**
- * Sort测试用例
+ * Sort test cases
  *
  * @author AI: cursor
  * @author K
@@ -207,7 +207,7 @@ internal class SortTest {
         val columnMap = mapOf("userName" to "user_name")
         val sql = Sort.toSql(orders, columnMap)
         assertTrue(sql.contains("user_name"))
-        // createTime没有映射，应该使用默认转换
+        // createTime has no mapping, should use default conversion
         assertTrue(sql.contains("create_time"))
     }
 

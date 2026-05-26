@@ -5,32 +5,32 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息接收编辑响应VO
+ * Message receive edit response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgReceiveEdit (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String = "",
 
-    /** 接收者ID */
+    /** Receiver id. */
     val receiverId: String? = null,
 
-    /** 发送ID */
+    /** Send id. */
     val sendId: String? = null,
 
-    /** 接收状态字典码 */
+    /** Receive status dict code. */
     val receiveStatusDictCode: String? = null,
 
-    /** 创建时间 */
+    /** Create time. */
     val createTime: LocalDateTime? = null,
 
-    /** 更新时间 */
+    /** Update time. */
     val updateTime: LocalDateTime? = null,
 
-    /** 租户ID */
+    /** Tenant id. */
     val tenantId: String? = null,
 
 ) : IIdEntity<String>

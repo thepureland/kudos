@@ -8,7 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 
 /**
- * [ImageCompressorFactory] 压缩器选择规则测试。
+ * Tests the compressor selection rules of [ImageCompressorFactory].
  *
  * @author K
  * @author AI: Codex

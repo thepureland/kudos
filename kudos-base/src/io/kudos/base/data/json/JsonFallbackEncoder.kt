@@ -26,20 +26,22 @@ import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.javaMethod
 
 /**
- * 反射兜底编码器：当类没有 `@Serializable` 时，把任意对象递归转成 [JsonElement]。
+ * Reflection-based fallback encoder: recursively converts any object into a [JsonElement] when the
+ * class is not annotated with `@Serializable`.
  *
- * 支持的类型：
- * 1. 基本类型：String / Boolean / Number / Char → [JsonPrimitive]
- * 2. 枚举：使用 `.name` → [JsonPrimitive]
- * 3. java.time：LocalDate / LocalTime / LocalDateTime → 走 contextual 序列化器
- * 4. Map / Iterable / Array 及各种原始类型数组 → [JsonArray]
- * 5. data class：按主构造参数顺序提取属性 → [JsonObject]（保证输出顺序稳定）
- * 6. Java Bean：使用 [Introspector] 提取属性 → [JsonObject]
+ * Supported types:
+ * 1. Primitives: String / Boolean / Number / Char -> [JsonPrimitive]
+ * 2. Enums: encoded via `.name` -> [JsonPrimitive]
+ * 3. java.time: LocalDate / LocalTime / LocalDateTime -> contextual serializers
+ * 4. Map / Iterable / Array and all primitive arrays -> [JsonArray]
+ * 5. data class: properties extracted in primary-constructor order -> [JsonObject] (stable output order)
+ * 6. Java Bean: properties extracted via [Introspector] -> [JsonObject]
  *
- * 性能：data class 属性访问器和 Java Bean read method 都用 [ConcurrentHashMap] 缓存反射结果，
- * 同一个类只反射一次。
+ * Performance: data-class property accessors and Java Bean read methods are cached in a
+ * [ConcurrentHashMap], so reflection runs only once per class.
  *
- * 设计为 [JsonKit] 的实现细节。声明为 `@PublishedApi internal` 让 [JsonKit] 的 inline 函数能跨文件调用。
+ * Treated as an implementation detail of [JsonKit]. Declared as `@PublishedApi internal` so the
+ * inline functions in [JsonKit] can call it across files.
  *
  * @author AI: ChatGPT
  * @author K
@@ -49,41 +51,42 @@ import kotlin.reflect.jvm.javaMethod
 internal object JsonFallbackEncoder {
 
     /**
-     * data class 属性的“名字 + 读取闭包”。
-     * 读取闭包优先用 Java getter；不可用时退回 Kotlin 反射，避免每次都走完整反射链。
+     * Data-class property accessor: a name plus a read closure.
+     * The closure prefers the Java getter; if unavailable, it falls back to Kotlin reflection,
+     * avoiding a full reflection chain on every call.
      *
-     * @property name 属性名
-     * @property read 读取属性值的闭包；失败返回 null 而非抛出
+     * @property name property name
+     * @property read closure that reads the property value; returns null instead of throwing on failure
      */
     private data class DataClassPropertyAccessor(
         val name: String,
         val read: (Any) -> Any?
     )
 
-    /** 通过反射拿到的 `Json.encodeToString(SerializationStrategy, T)` 方法句柄，避开重载歧义 */
+    /** Reflected handle for `Json.encodeToString(SerializationStrategy, T)`, used to avoid overload ambiguity. */
     private val encodeToStringMethod: Method by lazy {
         Json::class.java.methods.firstOrNull {
             it.name == "encodeToString" &&
                 it.parameterCount == 2 &&
                 SerializationStrategy::class.java.isAssignableFrom(it.parameterTypes[0])
-        } ?: error("Json.encodeToString(serializer, value) 方法不存在")
+        } ?: error("Json.encodeToString(serializer, value) method not found")
     }
-    /** 通过反射拿到的 `Json.encodeToJsonElement(SerializationStrategy, T)` 方法句柄 */
+    /** Reflected handle for `Json.encodeToJsonElement(SerializationStrategy, T)`. */
     private val encodeToJsonElementMethod: Method by lazy {
         Json::class.java.methods.firstOrNull {
             it.name == "encodeToJsonElement" &&
                 it.parameterCount == 2 &&
                 SerializationStrategy::class.java.isAssignableFrom(it.parameterTypes[0])
-        } ?: error("Json.encodeToJsonElement(serializer, value) 方法不存在")
+        } ?: error("Json.encodeToJsonElement(serializer, value) method not found")
     }
-    /** data class 属性访问器缓存，按类缓存，避免每次序列化都遍历构造器与成员属性 */
+    /** Cache of data-class property accessors keyed by class, to avoid walking constructors and properties on each call. */
     private val dataClassPropertyCache = ConcurrentHashMap<KClass<*>, List<DataClassPropertyAccessor>>()
-    /** Java Bean 读取方法缓存，避免每次序列化都执行 [Introspector.getBeanInfo] */
+    /** Cache of Java Bean read methods, to avoid running [Introspector.getBeanInfo] on every serialization. */
     private val javaBeanReadMethodCache = ConcurrentHashMap<Class<*>, List<Pair<String, Method>>>()
 
     /**
-     * 递归把任意对象转成 [JsonElement]。null → [JsonNull]。
-     * 标准 `@Serializable` 路径处理不了时的兜底入口。
+     * Recursively converts any object to a [JsonElement]. null -> [JsonNull].
+     * Fallback entry point for cases the standard `@Serializable` path cannot handle.
      */
     @PublishedApi
     internal fun encodeAnyToJsonElement(json: Json, v: Any?): JsonElement {
@@ -92,47 +95,49 @@ internal object JsonFallbackEncoder {
     }
 
     /**
-     * 按 contextual → 直连 [serializerOrNull] 的顺序，为运行时对象查找 [KSerializer]。
-     * 找不到返回 null（由调用方决定是否走 [encodeAnyToJsonElement] 兜底）。
+     * Looks up a [KSerializer] for a runtime object, trying contextual first and then [serializerOrNull].
+     * Returns null when none is found (callers decide whether to fall back to [encodeAnyToJsonElement]).
      */
     @OptIn(InternalSerializationApi::class, ExperimentalSerializationApi::class)
     internal fun findKSerializer(json: Json, value: Any): KSerializer<*>? {
         val k = value::class
         json.serializersModule.getContextual(k)?.let { return it }
         k.serializerOrNull()?.let { return it }
-        // 多态序列化：当前未启用——如果未来在 SerializersModule 里注册了 polymorphic 基类，
-        // 可在此处补 json.serializersModule.getPolymorphic(Base::class, value)
+        // Polymorphic serialization: currently disabled. If a polymorphic base class is later registered
+        // in the SerializersModule, add json.serializersModule.getPolymorphic(Base::class, value) here.
         return null
     }
 
-    /** 用反射调用 [Json.encodeToString] 的双参版本（带显式 serializer） */
+    /** Reflectively invokes the two-argument form of [Json.encodeToString] (with an explicit serializer). */
     internal fun encodeWithSerializer(json: Json, serializer: KSerializer<*>, value: Any): String {
         return encodeToStringMethod.invoke(json, serializer, value) as? String
-            ?: error("Json.encodeToString 返回值类型异常")
+            ?: error("Json.encodeToString returned an unexpected type")
     }
 
     /**
-     * 反射调用 `Json.encodeToJsonElement(serializer, value)`，主要给 LocalDate/Time 等 contextual 类型用。
+     * Reflectively invokes `Json.encodeToJsonElement(serializer, value)`, primarily for contextual types
+     * such as LocalDate / LocalTime.
      *
-     * @param json 配置好的 Json 引擎
-     * @param serializer 显式的序列化器
-     * @param value 待编码对象
-     * @return 编码后的 [JsonElement]
+     * @param json configured Json engine
+     * @param serializer explicit serializer
+     * @param value object to encode
+     * @return the encoded [JsonElement]
      * @author K
      * @since 1.0.0
      */
     private fun encodeWithSerializerToElement(json: Json, serializer: KSerializer<*>, value: Any): JsonElement {
         return encodeToJsonElementMethod.invoke(json, serializer, value) as? JsonElement
-            ?: error("Json.encodeToJsonElement 返回值类型异常")
+            ?: error("Json.encodeToJsonElement returned an unexpected type")
     }
 
     /**
-     * 快速分支：常见的基本类型 / 时间类型 / 集合 / 数组直接编码为 [JsonElement]，
-     * 没有命中则返回 null 让上层走 [encodeComplexObject] 复杂分支。
+     * Fast path: common primitives / time types / collections / arrays are encoded directly to
+     * [JsonElement]; on a miss, returns null so the caller can take the complex path
+     * [encodeComplexObject].
      *
-     * @param json 配置好的 Json 引擎
-     * @param value 待编码对象，允许 null
-     * @return 命中快速分支返回对应 [JsonElement]，否则 null
+     * @param json configured Json engine
+     * @param value object to encode; null allowed
+     * @return the matching [JsonElement] on hit, otherwise null
      * @author K
      * @since 1.0.0
      */
@@ -147,7 +152,7 @@ internal object JsonFallbackEncoder {
             is Enum<*> -> JsonPrimitive(value.name)
             is LocalDate, is LocalTime, is LocalDateTime -> {
                 val ser = findKSerializer(json, value)
-                    ?: throw SerializationException("缺少 ${value::class.qualifiedName} 的序列化器")
+                    ?: throw SerializationException("Missing serializer for ${value::class.qualifiedName}")
                 encodeWithSerializerToElement(json, ser, value)
             }
             is Map<*, *> -> encodeMapToJsonObject(json, value)
@@ -166,13 +171,14 @@ internal object JsonFallbackEncoder {
     }
 
     /**
-     * 复杂分支：data class 走主构造参数顺序提取属性；其它对象退回 Java Bean 反射；
-     * 均无法处理时抛出 [SerializationException] 提示加 @Serializable。
+     * Complex path: data classes extract properties in primary-constructor order; other objects fall
+     * back to Java Bean reflection. If neither applies, a [SerializationException] is thrown asking the
+     * caller to add @Serializable.
      *
-     * @param json 配置好的 Json 引擎
-     * @param value 非空待编码对象
-     * @return 对应的 [JsonObject]
-     * @throws SerializationException 类型既不是 data class、也无法按 Java Bean 反射时
+     * @param json configured Json engine
+     * @param value non-null object to encode
+     * @return the resulting [JsonObject]
+     * @throws SerializationException when the type is neither a data class nor reflectable as a Java Bean
      * @author K
      * @since 1.0.0
      */
@@ -190,17 +196,17 @@ internal object JsonFallbackEncoder {
         }
         return runCatching { javaBeanToJsonElement(json, value) }.getOrNull()
             ?: throw SerializationException(
-                "无法序列化 ${k.qualifiedName}：请添加 @Serializable，或改为 data class，" +
-                    "或在外层改用可序列化的 DTO/JsonElement/基础类型集合"
+                "Cannot serialize ${k.qualifiedName}: add @Serializable, convert to a data class, " +
+                    "or wrap in a serializable DTO/JsonElement/collection of basic types"
             )
     }
 
     /**
-     * 把任意 [Iterable] 递归编码为 [JsonArray]。
+     * Recursively encodes any [Iterable] as a [JsonArray].
      *
-     * @param json 配置好的 Json 引擎
-     * @param value 待编码集合
-     * @return 编码后的 [JsonArray]
+     * @param json configured Json engine
+     * @param value collection to encode
+     * @return the encoded [JsonArray]
      * @author K
      * @since 1.0.0
      */
@@ -208,11 +214,11 @@ internal object JsonFallbackEncoder {
         JsonArray(value.map { encodeAnyToJsonElement(json, it) })
 
     /**
-     * 把对象数组递归编码为 [JsonArray]。
+     * Recursively encodes an object array as a [JsonArray].
      *
-     * @param json 配置好的 Json 引擎
-     * @param value 待编码对象数组
-     * @return 编码后的 [JsonArray]
+     * @param json configured Json engine
+     * @param value object array to encode
+     * @return the encoded [JsonArray]
      * @author K
      * @since 1.0.0
      */
@@ -220,12 +226,13 @@ internal object JsonFallbackEncoder {
         JsonArray(value.map { encodeAnyToJsonElement(json, it) })
 
     /**
-     * 原始类型数组的统一编码模板：按下标读取并通过 [producer] 转为 [JsonElement]。
-     * inline 是为了避开数百次 lambda 调用的装箱开销。
+     * Unified template for primitive-array encoding: reads by index and maps each element to a
+     * [JsonElement] via [producer]. Marked inline to avoid the boxing overhead of hundreds of lambda
+     * invocations.
      *
-     * @param size 数组长度
-     * @param producer 把下标映射为 [JsonElement] 的闭包
-     * @return 编码后的 [JsonArray]
+     * @param size array length
+     * @param producer closure that maps an index to a [JsonElement]
+     * @return the encoded [JsonArray]
      * @author K
      * @since 1.0.0
      */
@@ -233,12 +240,13 @@ internal object JsonFallbackEncoder {
         JsonArray(List(size, producer))
 
     /**
-     * 把 [Map] 编码为 [JsonObject]：null key 转 `"null"`，非字符串 key 走 [Any.toString]。
-     * 与标准 kotlinx 行为略有差异，仅用于无 `@Serializable` 类型的兜底。
+     * Encodes a [Map] as a [JsonObject]: null keys become `"null"`, non-string keys are converted via
+     * [Any.toString]. This differs slightly from standard kotlinx behavior and is intended only for the
+     * fallback path for types lacking `@Serializable`.
      *
-     * @param json 配置好的 Json 引擎
-     * @param value 待编码的 Map
-     * @return 编码后的 [JsonObject]
+     * @param json configured Json engine
+     * @param value map to encode
+     * @return the encoded [JsonObject]
      * @author K
      * @since 1.0.0
      */
@@ -259,12 +267,13 @@ internal object JsonFallbackEncoder {
     }
 
     /**
-     * 通过 [Introspector] 提取 Java Bean 风格的属性并编码为 [JsonObject]。
-     * 自动跳过 [Object] 自带属性（如 class），属性顺序由 Introspector 给出（一般按 getter 名字字典序）。
+     * Extracts Java Bean style properties via [Introspector] and encodes them as a [JsonObject].
+     * Skips [Object]-inherited properties (such as class). Property order is determined by
+     * Introspector (typically alphabetical by getter name).
      *
-     * @param json 配置好的 Json 引擎
-     * @param bean 待编码对象
-     * @return 编码后的 [JsonObject]
+     * @param json configured Json engine
+     * @param bean object to encode
+     * @return the encoded [JsonObject]
      * @author K
      * @since 1.0.0
      */
@@ -287,16 +296,17 @@ internal object JsonFallbackEncoder {
     }
 
     /**
-     * 把任意条目集合（Map.Entry、Pair、属性元组等）按 keyOf/valueOf 投影为 [JsonObject]。
-     * 使用 [LinkedHashMap] 保证输出顺序与输入一致；为复用性把投影写成 inline 以避免闭包开销。
+     * Projects any iterable of entries (Map.Entry, Pair, property tuples, ...) into a [JsonObject] via
+     * keyOf/valueOf. Uses [LinkedHashMap] to preserve input order in the output; the projection is inline
+     * to avoid closure overhead.
      *
-     * @param T 条目类型
-     * @param json 配置好的 Json 引擎
-     * @param size 预分配的容量提示
-     * @param entries 待编码条目
-     * @param keyOf 从条目提取 JSON 字段名的闭包
-     * @param valueOf 从条目提取字段值的闭包
-     * @return 编码后的 [JsonObject]
+     * @param T entry type
+     * @param json configured Json engine
+     * @param size capacity hint for pre-allocation
+     * @param entries entries to encode
+     * @param keyOf closure that extracts the JSON field name from an entry
+     * @param valueOf closure that extracts the field value from an entry
+     * @return the encoded [JsonObject]
      * @author K
      * @since 1.0.0
      */
@@ -315,11 +325,12 @@ internal object JsonFallbackEncoder {
     }
 
     /**
-     * 返回 data class 的属性访问器，按主构造器参数顺序在前、其它成员属性在后。
-     * 这样输出的 JSON 字段顺序与源码声明一致，diff 友好。结果按类缓存。
+     * Returns a data class's property accessors, with primary-constructor parameters first and other
+     * member properties after. This keeps JSON field order aligned with source declaration order, which
+     * is diff-friendly. Results are cached by class.
      *
-     * @param kClass data class 的 KClass
-     * @return 属性访问器列表
+     * @param kClass KClass of the data class
+     * @return list of property accessors
      * @author K
      * @since 1.0.0
      */
@@ -344,12 +355,12 @@ internal object JsonFallbackEncoder {
     }
 
     /**
-     * 为单个属性构造 [DataClassPropertyAccessor]。
-     * 优先使用 Java getter 反射（更快），失败时退回 Kotlin 反射调用 [KProperty1.get]。
+     * Builds a [DataClassPropertyAccessor] for a single property.
+     * Prefers Java getter reflection (faster) and falls back to Kotlin's [KProperty1.get] on failure.
      *
-     * @param name 属性名
-     * @param prop Kotlin 反射的属性引用
-     * @return 属性访问器
+     * @param name property name
+     * @param prop Kotlin reflection property reference
+     * @return the property accessor
      * @author K
      * @since 1.0.0
      */

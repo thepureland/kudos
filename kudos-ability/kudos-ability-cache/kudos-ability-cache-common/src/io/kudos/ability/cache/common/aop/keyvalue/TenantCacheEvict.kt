@@ -4,10 +4,11 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.core.annotation.AliasFor
 
 /**
- * 租户隔离版本的 [CacheEvict]——通过 `@AliasFor` 直通 Spring 注解，仅把
- * `keyGenerator` 的默认值预置为 `tenantCacheKeyGenerator`，让 key 自带租户维度。
+ * Tenant-isolated version of [CacheEvict] — directly aliased to the Spring annotation via `@AliasFor`, simply presetting
+ * the default value of `keyGenerator` to `tenantCacheKeyGenerator` so that the key carries the tenant dimension by default.
  *
- * 业务侧大多数情况下只需写注解名 + cacheNames，无需重复指定 keyGenerator。
+ * In most cases business code only needs to write the annotation name plus cacheNames and does not need to specify
+ * keyGenerator again.
  *
  * @author K
  * @since 1.0.0

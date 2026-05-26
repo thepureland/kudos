@@ -1,27 +1,27 @@
 package io.kudos.base.enums.ienums
 
 /**
- * Create by (admin) on 6/12/15.
- * 字典枚举接口
+ * Created by (admin) on 6/12/15.
+ * Dict type enum interface.
  */
 interface IDictTypeEnum {
     /**
-     * 所属模块
+     * The owning module.
      */
     val module: IModuleEnum
 
     /**
-     * 获取类型
+     * Returns the type.
      */
     val type: String
 
     /**
-     * 获取描述
+     * Returns the description.
      */
     val desc: String
 
     /**
-     * 父字典
+     * Parent dict.
      */
     val parentType: IDictTypeEnum?
 }

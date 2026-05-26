@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.tx.seata
 
 /**
- * 模拟事务异常
+ * Simulated transaction exception.
  *
  * @author will
  * @since 5.1.1

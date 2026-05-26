@@ -5,7 +5,7 @@ import io.kudos.ms.user.core.contact.model.po.UserContactWay
 
 
 /**
- * 用户联系方式业务接口
+ * User contact way service interface
  *
  * @author K
  * @author AI: Codex
@@ -14,14 +14,14 @@ import io.kudos.ms.user.core.contact.model.po.UserContactWay
 interface IUserContactWayService : IBaseCrudService<String, UserContactWay> {
 
     /**
-     * 查询多个用户在指定联系方式类型下的"启用且优先级最高"的取值。
+     * Query the "active and highest-priority" value of the specified contact way type for multiple users.
      *
-     * 用于消息发送链路：发邮件 / 短信前，按用户 id 批量拿邮箱 / 手机号。
-     * - `contactWayDictCode` 取值参考 SQL 字典 `contact_way`，如 `"201"` 表示 email。
-     * - 同一用户挂多个同类型联系方式时取 `priority ASC` 第一条（priority 越小越优先；null 排最后）。
-     * - 仅 `active = true` 的记录参与，避免给已禁用的联系方式发消息。
+     * Used in messaging pipelines: before sending email / SMS, batch fetch email / phone by user id.
+     * - `contactWayDictCode` values refer to SQL dictionary `contact_way`, e.g. `"201"` denotes email.
+     * - When a user has multiple contact ways of the same type, take the first by `priority ASC` (smaller priority takes precedence; null sorts last).
+     * - Only records with `active = true` are considered, to avoid sending messages to disabled contact ways.
      *
-     * @return Map<userId, contactWayValue>；用户没有该类型可用联系方式时不在 map 中
+     * @return Map<userId, contactWayValue>; users without an available contact way of this type are absent from the map
      */
     fun getActiveContactValuesByUserIds(
         userIds: Collection<String>,

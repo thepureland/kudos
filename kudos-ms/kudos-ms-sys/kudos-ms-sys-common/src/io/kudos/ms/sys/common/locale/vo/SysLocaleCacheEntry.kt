@@ -5,35 +5,35 @@ import java.io.Serializable
 
 
 /**
- * 语言/区域字典缓存项
+ * Cache entry for language/locale dictionary.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysLocaleCacheEntry(
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 语言代码(如 zh_CN) */
+    /** Language code (e.g. zh_CN) */
     val code: String,
 
-    /** 显示名称 */
+    /** Display name */
     val displayName: String,
 
-    /** 英文名称 */
+    /** English name */
     val englishName: String,
 
-    /** 排序号 */
+    /** Sort number */
     val sortNo: Int,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {

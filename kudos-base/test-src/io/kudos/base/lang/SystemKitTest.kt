@@ -20,55 +20,55 @@ internal class SystemKitTest {
 
     @BeforeTest
     fun setupOriginalEnvironment() {
-        // 备份当前的环境变量，以便测试结束后能够恢复
+        // Back up the current environment variables so the test can restore them afterwards
         originalEnv = System.getenv().toMap()
     }
 
     @AfterTest
     fun restoreOriginalEnvironment() {
-        // 尽量将环境变量恢复到测试前的状态
+        // Restore environment variables to the pre-test state as best as possible
         try {
             SystemKit.setEnvVars(originalEnv)
         } catch (_: Throwable) {
-            // 某些 JVM 实现可能不允许修改所有环境变量，这里忽略异常
+            // Some JVM implementations may not allow modifying all environment variables; ignore the exception
         }
     }
 
     @Test
     fun testSetEnvVarsDoesNotThrow_ForNewVariables() {
-        // 只是验证调用 setEnvVars() 时不会抛异常
+        // Just verify that calling setEnvVars() does not throw
         SystemKit.setEnvVars(mapOf("KUDOS_TEST_KEY" to "VALUE123"))
     }
 
     @Test
     fun testSetEnvVarsDoesNotThrow_ForOverrideExisting() {
-        // 覆盖已存在的环境变量（如 PATH），也不应抛异常
+        // Overriding an existing environment variable (e.g. PATH) should also not throw
         val oldPath = System.getenv("PATH") ?: ""
         SystemKit.setEnvVars(mapOf("PATH" to oldPath + "_EXT"))
     }
 
     @Test
     fun testExecuteCommandSuccess() {
-        // 根据操作系统选择不同的 echo 命令
+        // Choose a different echo command depending on the OS
         val result = if (SystemKit.currentOs() == OsEnum.WINDOWS) {
             SystemKit.executeCommand("cmd", "/c", "echo", "HELLO")
         } else {
             SystemKit.executeCommand("echo", "HELLO")
         }
 
-        assertTrue(result.first, "正常执行 echo 命令应返回 success=true")
+        assertTrue(result.first, "A successful echo command should return success=true")
         val output = result.second
         assertNotNull(output)
-        assertTrue(output.contains("HELLO"), "输出应包含 HELLO")
+        assertTrue(output.contains("HELLO"), "Output should contain HELLO")
     }
 
     @Test
     fun testExecuteCommandFailure() {
-        // 调用一个肯定不存在的命令
+        // Call a command that definitely does not exist
         val (success, message) = SystemKit.executeCommand("no_such_command_foobar")
-        assertFalse(success, "不存在的命令应返回 success=false")
+        assertFalse(success, "A non-existent command should return success=false")
         assertNotNull(message)
-        assertTrue(message.isNotBlank(), "错误信息不应为空")
+        assertTrue(message.isNotBlank(), "Error message should not be blank")
     }
 
     @Test
@@ -90,7 +90,7 @@ internal class SystemKitTest {
 
     @Test
     fun testIsDebugReturnsBoolean() {
-        // 无法在运行时强制切换 debug 模式，只要返回 Boolean 即可
+        // Cannot force-toggle debug mode at runtime; it is enough that this returns a Boolean
         SystemKit.isDebug()
     }
 

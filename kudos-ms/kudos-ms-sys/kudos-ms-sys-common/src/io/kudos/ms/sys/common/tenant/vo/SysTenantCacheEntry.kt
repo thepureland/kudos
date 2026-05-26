@@ -5,33 +5,33 @@ import java.io.Serializable
 
 
 /**
- * 租户缓存项
+ * Tenant cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysTenantCacheEntry (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String,
 
 
-    /** 名称 */
+    /** Name. */
     val name: String,
 
-    /** 时区 */
+    /** Timezone. */
     val timezone: String?,
 
-    /** 默认语言编码 */
+    /** Default language code. */
     val defaultLanguageCode: String?,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether active. */
     val active: Boolean,
 
-    /** 是否内置 */
+    /** Whether built-in. */
     val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {

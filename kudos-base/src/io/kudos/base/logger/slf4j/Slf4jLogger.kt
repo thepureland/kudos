@@ -6,7 +6,7 @@ import org.slf4j.spi.LocationAwareLogger
 import java.text.MessageFormat
 
 /**
- * slf4j实现的日志记录器
+ * Logger implementation backed by SLF4J.
  *
  * @author K
  * @since 1.0.0
@@ -22,18 +22,18 @@ open class Slf4jLogger : ILog {
 
 
     override fun trace(msg: String?, vararg args: Any?) {
-        if (logger.isTraceEnabled) // 提前判断是为了减少可能不必要的字符串模板填充机会
+        if (logger.isTraceEnabled) // Early check to avoid potentially unnecessary string-template interpolation
             logger.log(null, FQCN, LocationAwareLogger.TRACE_INT, getMsg(msg, *args), null, null)
     }
 
     override fun debug(msg: String?, vararg args: Any?) {
-        if (logger.isDebugEnabled) // 提前判断是为了减少可能不必要的字符串模板填充机会
+        if (logger.isDebugEnabled) // Early check to avoid potentially unnecessary string-template interpolation
             logger.log(null, FQCN, LocationAwareLogger.DEBUG_INT, getMsg(msg, *args), null, null)
     }
 
     override fun info(msg: String?, vararg args: Any?) =
-//        if (log.isInfoEnabled) // 不再像trace和debug方法那样提前判断，是因为正常情况下info级别都会打开，
-//                               // 提前了大部分情况下反而是多余的计算，warn和error同理
+//        if (log.isInfoEnabled) // Unlike trace/debug, no early check here: info is normally enabled, so the
+//                               // early check is typically redundant computation; the same applies to warn/error.
         logger.log(null, FQCN, LocationAwareLogger.INFO_INT, getMsg(msg, *args), null, null)
 
     override fun warn(msg: String?, vararg args: Any?) =
@@ -49,11 +49,12 @@ open class Slf4jLogger : ILog {
         logger.log(null, FQCN, LocationAwareLogger.ERROR_INT, getMsg(e.message), null, e)
 
     /**
-     * 走 [MessageFormat] 占位符替换；无参数时跳过 format 直接返回原串，避免 `{0}` 之类的字符被误解。
+     * Performs [MessageFormat] placeholder substitution. With no arguments, skips formatting and returns the
+     * original string to avoid misinterpreting characters such as `{0}`.
      *
-     * @param msg 模板
-     * @param args 替换参数
-     * @return 格式化后的消息（null 输入直接返回 null）
+     * @param msg the template
+     * @param args the substitution arguments
+     * @return the formatted message (returns null directly for null input)
      * @author K
      * @since 1.0.0
      */

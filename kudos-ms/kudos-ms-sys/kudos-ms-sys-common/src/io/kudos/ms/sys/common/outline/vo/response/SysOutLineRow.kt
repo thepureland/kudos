@@ -4,43 +4,43 @@ import java.time.LocalDateTime
 
 
 /**
- * 出网白名单列表查询结果响应VO
+ * Response VO for outbound whitelist list query result.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysOutLineRow(
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
-    /** 主机名或通配符 */
+    /** Hostname or wildcard */
     val host: String = "",
 
-    /** 端口 */
+    /** Port */
     val port: Int? = null,
 
-    /** 协议 */
+    /** Protocol */
     val protocol: String = "",
 
-    /** 系统编码 */
+    /** System code */
     val systemCode: String = "",
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = false,
 
-    /** 创建时间 */
+    /** Creation time */
     val createTime: LocalDateTime? = null,
 )

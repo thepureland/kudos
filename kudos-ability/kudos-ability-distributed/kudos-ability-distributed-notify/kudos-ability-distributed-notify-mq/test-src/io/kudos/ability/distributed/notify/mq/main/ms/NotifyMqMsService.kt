@@ -21,8 +21,8 @@ open class NotifyMqMsService {
 //    @Bean
 //    fun contextParam(): ContextParam {
 //        val context = ContextParam()
-//        // 这个数据类型目前是Integer类型, 像配置文件定义的db1,db2这种字符串会有问题
-//        // jdbc模块也有相同问题, 后续建议统一调整为Object类型,并自动对String,Integer,Long等常用类型进行转换
+//        // This data type is currently Integer; strings defined in config files like db1, db2 will cause issues.
+//        // The jdbc module has the same problem; recommend switching to Object type and auto-converting common types like String, Integer, Long.
 //        context.username = "notifyMqTestUser"
 //        CommonContext.set(context)
 //        return context
@@ -32,7 +32,7 @@ open class NotifyMqMsService {
         val messageVo = NotifyMessageVo<String>()
         messageVo.notifyType = NotifyTypeEnum.DS.code
         messageVo.messageBody = key
-        return requireNotNull(notifyProducer) { "INotifyProducer 未注入" }.notify(messageVo)
+        return requireNotNull(notifyProducer) { "INotifyProducer is not injected" }.notify(messageVo)
     }
 
     fun collection(port: Int?, appKey: String, key: String?): Boolean {

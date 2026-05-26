@@ -1,7 +1,7 @@
 package io.kudos.ability.cache.interservice.common
 
 /**
- * 请求结果载休
+ * Request result payload.
  *
  * @author K
  * @since 1.0.0
@@ -11,7 +11,7 @@ data class RequestResult(
     var msg: String?
 ) {
 
-    // 反射调用
+    // For reflective instantiation
     constructor(): this(null, null)
 
 }

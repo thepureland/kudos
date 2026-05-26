@@ -7,24 +7,26 @@ import org.springframework.core.type.AnnotationMetadata
 import kotlin.reflect.KClass
 
 /**
- * 组件初始化器选择器
+ * Component initializer selector.
  *
- * 自动导入类路径上各jar包中实现IComponentInitializer接口的配置类.
+ * Automatically imports configuration classes that implement IComponentInitializer from jars on the classpath.
  *
  * @author K
  * @since 1.0.0
  */
 open class ComponentInitializerSelector : ImportSelector {
 
-    /** 日志器；扫描结果与排除决策仅记录到日志，不影响导入流程 */
+    /** Logger; scan results and exclusion decisions are only recorded in logs and do not affect the import flow */
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * 扫描三个固定根包（`io.kudos.context` / `io.kudos.ability` / `io.kudos.ms`）下所有
-     * [IComponentInitializer] 实现，剔除被 `@EnableKudos(exclusions=...)` 排除的类后导入。
+     * Scan all [IComponentInitializer] implementations under the three fixed root packages
+     * (`io.kudos.context` / `io.kudos.ability` / `io.kudos.ms`), drop the classes excluded by
+     * `@EnableKudos(exclusions=...)`, and import the rest.
      *
-     * @param importingClassMetadata 应用主类的注解元数据，用于读取 [EnableKudos.exclusions]
-     * @return 待 Spring 导入的初始化器全限定名数组
+     * @param importingClassMetadata Annotation metadata of the application's main class, used to read
+     *   [EnableKudos.exclusions]
+     * @return An array of fully-qualified initializer names for Spring to import
      * @author K
      * @since 1.0.0
      */
@@ -38,11 +40,12 @@ open class ComponentInitializerSelector : ImportSelector {
     }
 
     /**
-     * 从应用主类的 [EnableKudos] 注解上读取需要被排除的初始化器列表。
-     * 主类未带 [EnableKudos] 时返回空列表，等价于"不排除任何初始化器"。
+     * Read the list of initializers to be excluded from the application main class's [EnableKudos] annotation.
+     * If the main class is not annotated with [EnableKudos], return an empty list, equivalent to "no initializers
+     * excluded".
      *
-     * @param importingClassMetadata 应用主类的注解元数据
-     * @return 被显式排除的初始化器类列表
+     * @param importingClassMetadata Annotation metadata of the application's main class
+     * @return The list of initializer classes explicitly excluded
      * @author K
      * @since 1.0.0
      */
@@ -52,7 +55,7 @@ open class ComponentInitializerSelector : ImportSelector {
             .firstOrNull { it.annotationClass == EnableKudos::class } as? EnableKudos
             ?: return emptyList()
         val exclusions = enableKudosAnno.exclusions.asList()
-        exclusions.forEach { log.info("${it.simpleName}通过@EnableKudos被排除初始化!") }
+        exclusions.forEach { log.info("${it.simpleName} initialization is excluded via @EnableKudos!") }
         return exclusions
     }
 

@@ -1,8 +1,8 @@
 package io.kudos.ms.sys.core.dict.event
 
 /**
- * 字典（`sys_dict`）领域事件。由 `@TransactionalEventListener(AFTER_COMMIT)` 派发，
- * 与 access rule / tenant 域同套路。
+ * Domain events for dictionaries (`sys_dict`). Dispatched by `@TransactionalEventListener(AFTER_COMMIT)`,
+ * following the same pattern as the access rule / tenant domains.
  *
  * @author K
  * @author AI: Cursor

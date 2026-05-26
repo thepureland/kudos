@@ -6,29 +6,29 @@ import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
 
 /**
- * 域名表单基础字段（新建 / 更新共用）
+ * Domain form base fields (shared by create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface ISysDomainFormBase {
 
-    /** 域名 */
+    /** Domain */
     @get:NotBlank
     @get:MaxLength(256)
     @get:Matches(RegExpEnum.DOMAIN)
     val domain: String
 
-    /** 系统编码 */
+    /** System code */
     @get:NotBlank
     @get:MaxLength(32)
     val systemCode: String
 
-    /** 租户id */
+    /** Tenant id */
     @get:NotBlank
     val tenantId: String
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

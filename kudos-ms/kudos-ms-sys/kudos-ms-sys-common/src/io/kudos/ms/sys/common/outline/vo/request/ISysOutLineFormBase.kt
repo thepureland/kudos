@@ -6,42 +6,42 @@ import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 
 /**
- * 出网白名单表单基础字段（新建 / 更新共用）
+ * Base fields shared by outbound whitelist forms (create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface ISysOutLineFormBase {
 
-    /** 名称 */
+    /** Name */
     @get:NotBlank
     @get:MaxLength(64)
     val name: String
 
-    /** 主机名或通配符 */
+    /** Hostname or wildcard */
     @get:NotBlank
     @get:MaxLength(256)
     val host: String
 
-    /** 端口；null 表示任意端口 */
+    /** Port; null means any port */
     @get:Min(1)
     @get:Max(65535)
     val port: Int?
 
-    /** 协议(http/https/tcp/any) */
+    /** Protocol (http/https/tcp/any) */
     @get:NotBlank
     @get:MaxLength(16)
     val protocol: String
 
-    /** 系统编码 */
+    /** System code */
     @get:NotBlank
     @get:MaxLength(32)
     val systemCode: String
 
-    /** 租户id；null 表示平台级 */
+    /** Tenant id; null means platform-level */
     val tenantId: String?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

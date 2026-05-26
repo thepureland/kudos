@@ -9,14 +9,14 @@ import kotlin.test.assertFails
 import kotlin.test.assertSame
 
 /**
- * [AbstractCacheHandler.getSelf] / `selfBeanName()` 自代理解析单测。
+ * Unit tests for [AbstractCacheHandler.getSelf] / `selfBeanName()` self-proxy resolution.
  *
- * 验证 round-2 修复——`selfBeanName()` override 允许子类在"同型多 bean"场景下显式指定
- * bean 名，避开 [org.springframework.beans.factory.NoUniqueBeanDefinitionException]：
+ * Verifies the round-2 fix — overriding `selfBeanName()` lets subclasses explicitly specify the bean name
+ * in "multiple beans of the same type" scenarios, avoiding [org.springframework.beans.factory.NoUniqueBeanDefinitionException]:
  *
- *  - 默认（[AbstractCacheHandler.selfBeanName] 返回 null）→ 按类型解析；单 bean 时正常拿到
- *  - 多 bean 时按类型解析 → 抛 `NoUniqueBeanDefinitionException`（守住"必须 override 才行"的契约）
- *  - 子类 override 返回非空 bean 名 → 按名解析，多 bean 也能命中
+ *  - Default ([AbstractCacheHandler.selfBeanName] returns null) → resolved by type; works with a single bean.
+ *  - Multiple beans, resolution by type → throws `NoUniqueBeanDefinitionException` (guards the "you must override" contract).
+ *  - Subclass override returns a non-null bean name → resolved by name; works even with multiple beans.
  */
 internal class AbstractCacheHandlerTest {
 
@@ -48,7 +48,7 @@ internal class AbstractCacheHandlerTest {
         ctx.beanFactory.registerSingleton("h2", DefaultHandler())
         val caller = DefaultHandler()
 
-        // 没有 override selfBeanName → 按类型查 → 多 bean 应抛
+        // No selfBeanName override → resolution by type → multiple beans should throw.
         assertFails { caller.exposeSelf<DefaultHandler>() }
     }
 
@@ -59,7 +59,7 @@ internal class AbstractCacheHandlerTest {
         ctx.beanFactory.registerSingleton("h1", h1)
         ctx.beanFactory.registerSingleton("h2", h2)
 
-        // 子类指明自己应当解析为 "h2"
+        // Subclass declares that it should resolve to "h2".
         val caller = NamedHandler(beanName = "h2")
         val resolved: DefaultHandler = caller.exposeSelf()
         assertSame(h2, resolved)
@@ -68,7 +68,7 @@ internal class AbstractCacheHandlerTest {
     private open class DefaultHandler : AbstractCacheHandler<String>() {
         override fun cacheName(): String = "test"
         override fun reloadAll(clear: Boolean) {}
-        // 暴露 protected getSelf 给测试调用
+        // Exposes the protected getSelf for tests.
         fun <S : AbstractCacheHandler<*>?> exposeSelf(): S = getSelf()
     }
 

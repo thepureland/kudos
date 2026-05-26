@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 语言/区域字典 对外API
+ * External API for language/locale dictionary.
  *
  * @author K
  * @since 1.0.0
@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RequestParam
 interface ISysLocaleApi {
 
     /**
-     * 按语言代码查询启用的语言。
+     * Query an enabled locale by language code.
      *
-     * @param code 语言代码(如 zh_CN)
-     * @return 语言项；查无结果或未启用返回 null
+     * @param code Language code (e.g. zh_CN)
+     * @return The locale entry; returns null if not found or not enabled.
      * @author K
      * @since 1.0.0
      */
@@ -25,9 +25,9 @@ interface ISysLocaleApi {
     fun getLocaleByCode(@RequestParam code: String): SysLocaleCacheEntry?
 
     /**
-     * 列出所有启用的语言（按 sort_no 升序）。
+     * List all enabled locales (ordered by sort_no ascending).
      *
-     * @return 启用的语言列表
+     * @return List of enabled locales.
      * @author K
      * @since 1.0.0
      */

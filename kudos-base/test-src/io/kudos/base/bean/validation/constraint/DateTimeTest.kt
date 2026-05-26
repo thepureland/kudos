@@ -6,7 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * DateTime测试用例
+ * DateTime test cases
  *
  * @author K
  * @since 1.0.0

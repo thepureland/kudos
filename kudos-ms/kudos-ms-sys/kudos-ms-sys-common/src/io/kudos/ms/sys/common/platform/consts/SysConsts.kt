@@ -1,17 +1,17 @@
 package io.kudos.ms.sys.common.platform.consts
 
 /**
- * sys定义的全局常量
+ * Global constants defined by sys.
  *
  * @author K
  * @since 1.0.0
  */
 object SysConsts {
 
-    /** 原子服务名称 */
+    /** Atomic service name */
     const val ATOMIC_SERVICE_NAME = "sys"
 
-    /** 默认的子系统编码 */
+    /** Default subsystem code */
     const val DEFAULT_SUB_SYSTEM_CODE = "default-sub-system"
 
 }

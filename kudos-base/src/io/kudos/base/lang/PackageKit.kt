@@ -11,22 +11,22 @@ import java.util.jar.JarFile
 import kotlin.reflect.KClass
 
 /**
- * 包工具类
+ * Package utility.
  *
  * @author K
  * @since 1.0.0
  */
 object PackageKit {
 
-    /** 日志器 */
+    /** Logger */
     private val LOG = LogFactory.getLog(PackageKit::class)
 
     /**
-     * 获取指定包名下的所有类
+     * Get all classes under the specified package name.
      *
-     * @param pkg 以"."分隔的标准包名
-     * @param recursive 是否循环迭代
-     * @return Set(类)
+     * @param pkg standard package name separated by "."
+     * @param recursive whether to iterate recursively
+     * @return Set(class)
      * @author K
      * @since 1.0.0
      */
@@ -37,12 +37,12 @@ object PackageKit {
     }
 
     /**
-     * 根据正则表达式获取匹配的所有包
-     * 包的开头部分必须明确指定
+     * Get all packages matching a regular expression.
+     * The leading portion of the package must be explicitly specified.
      *
-     * @param pkgPattern 包正则表达式
-     * @param recursive 是否递归地获取子包
-     * @return Set(包名)
+     * @param pkgPattern the package regular expression
+     * @param recursive whether to recursively fetch sub-packages
+     * @return Set(package name)
      * @author K
      * @since 1.0.0
      */
@@ -56,11 +56,11 @@ object PackageKit {
     }
 
     /**
-     * 从含通配符的包正则中提取“可枚举的固定前缀”。
-     * 把 `io.kudos.*.bean` 这样的输入截取到第一个含 `*` 段之前，得到 `io.kudos`。
+     * Extract the "enumerable fixed prefix" from a wildcard package pattern.
+     * For an input like `io.kudos.*.bean`, the prefix is truncated to everything before the first segment containing `*`, yielding `io.kudos`.
      *
-     * @param pkgPattern 含 `*` 的包匹配表达式
-     * @return 去掉末尾点号的固定前缀
+     * @param pkgPattern the package match expression containing `*`
+     * @return the fixed prefix with the trailing dot removed
      * @author K
      * @since 1.0.0
      */
@@ -68,37 +68,37 @@ object PackageKit {
         pkgPattern.split(".").takeWhile { !it.contains("*") }.joinToString(".")
 
     /**
-     * 包扫描的统一入口：对当前线程的 classloader 拿到所有匹配资源，
-     * 按协议分发到“文件目录扫描”或“JAR 扫描”。结果写入 [action]。
+     * Unified entry point for package scanning: obtain all matching resources from the current thread's classloader,
+     * then dispatch to "file directory scan" or "JAR scan" based on the protocol. Results are written into [action].
      *
-     * @param packagePrefix 固定包前缀（点号分隔），不能含通配符
-     * @param recursive 是否递归扫描子目录
-     * @param action 扫描结果收集器
+     * @param packagePrefix the fixed package prefix (dot-separated); must not contain wildcards
+     * @param recursive whether to scan subdirectories recursively
+     * @param action the scan result collector
      * @author K
      * @since 1.0.0
      */
     private fun find(packagePrefix: String, recursive: Boolean, action: Action) {
-        // 获取包的名字 并进行替换
+        // Get the package name and substitute
         val packageDirName = packagePrefix.replace('.', '/')
-        // 定义一个枚举的集合 并进行循环来处理这个目录下的things
+        // Define an enumeration of URLs and iterate to process the contents of this directory
         val dirs: Enumeration<URL>
         try {
             dirs = Thread.currentThread().contextClassLoader.getResources(packageDirName)
-            // 循环迭代下去
+            // Iterate
             while (dirs.hasMoreElements()) {
-                // 获取下一个元素
+                // Get the next element
                 val url = dirs.nextElement()
-                // 得到协议的名称
+                // Get the protocol name
                 val protocol = url.protocol
-                // 如果是以文件的形式保存在服务器上
+                // If it is stored as a file on the server
                 if ("file" == protocol) {
-                    // 获取包的物理路径
+                    // Get the physical path of the package
                     val filePath = URLDecoder.decode(url.file, "UTF-8")
-                    // 以文件的方式扫描整个包下的文件 并添加到集合中
+                    // Scan all files under the package as files and add them to the collection
                     findAndAddClassesInPackageByFile(packagePrefix, filePath, recursive, action)
                 } else if ("jar" == protocol) {
-                    // 如果是jar包文件
-                    // 定义一个JarFile
+                    // If it is a JAR file
+                    // Define a JarFile
                     findAndAddClassesInPackageByJar(packagePrefix, packageDirName, url, recursive, action)
                 }
             }
@@ -108,15 +108,15 @@ object PackageKit {
     }
 
     /**
-     * 以 JAR 形式扫描指定包前缀，把命中的类或子包收集到 [action]。
-     * 根据 [Action.isRetrieveClass] 切换“收类”或“收包”行为；
-     * recursive=false 时只收顶层包/类。
+     * Scan the specified package prefix inside a JAR and collect matching classes or sub-packages into [action].
+     * Switch between "collect classes" and "collect packages" behavior via [Action.isRetrieveClass];
+     * when recursive=false, only the top-level package/classes are collected.
      *
-     * @param packageName 入参与递归过程中维护的当前包名
-     * @param packageDirName 包前缀的目录形式（点号转斜杠）
-     * @param url JAR 对应的资源 URL
-     * @param recursive 是否递归扫描
-     * @param action 扫描结果收集器
+     * @param packageName the current package name maintained during input and recursion
+     * @param packageDirName the directory form of the package prefix (dots converted to slashes)
+     * @param url the resource URL of the JAR
+     * @param recursive whether to scan recursively
+     * @param action the scan result collector
      * @author K
      * @since 1.0.0
      */
@@ -126,43 +126,43 @@ object PackageKit {
         var pkgName = packageName
         val jar: JarFile
         try {
-            // 获取jar
+            // Get the jar
             jar = (url.openConnection() as JarURLConnection).jarFile
-            // 从此jar包 得到一个枚举类
+            // Get an enumeration of entries from this jar
             val entries = jar.entries()
-            // 同样的进行循环迭代
+            // Iterate similarly
             while (entries.hasMoreElements()) {
-                // 获取jar里的一个实体 可以是目录 和一些jar包里的其他文件 如META-INF等文件
+                // Get an entry from the jar; may be a directory or other file inside the jar such as META-INF
                 val entry = entries.nextElement()
                 var name = entry.name
-                // 如果是以/开头的
+                // If it starts with /
                 if (name[0] == '/') {
-                    // 获取后面的字符串
+                    // Take the remainder
                     name = name.substring(1)
                 }
-                // 如果前半部分和定义的包名相同
+                // If the prefix matches the defined package name
                 if (name.startsWith(packageDirName)) {
                     val idx = name.lastIndexOf('/')
-                    // 如果以"/"结尾 是一个包
+                    // If it ends with "/", it is a package
                     if (idx != -1) {
-                        // 获取包名 把"/"替换成"."
+                        // Get the package name by replacing "/" with "."
                         pkgName = name.substring(0, idx).replace('/', '.')
                     }
-                    // 如果可以迭代下去 并且是一个包
+                    // If we can recurse and this is a package
                     if (idx != -1 || recursive) {
                         if (action.isRetrieveClass) {
-                            // 如果是一个.class文件 而且不是目录
+                            // If it is a .class file and not a directory
                             if (name.endsWith(".class") && !entry.isDirectory) {
-                                // 去掉后面的".class" 获取真正的类名
+                                // Strip ".class" to get the actual class name
                                 val className = name.substring(pkgName.length + 1, name.length - 6)
                                 try {
-                                    // 添加到classes
+                                    // Add to classes
                                     action.addClass(Class.forName("$pkgName.$className").kotlin)
                                 } catch (e: ClassNotFoundException) {
                                     LOG.error(e)
                                 }
                             }
-                        } else { // 获取包名
+                        } else { // Collect the package name
                             if (entry.isDirectory) {
                                 action.addPackage(pkgName)
                             }
@@ -171,43 +171,43 @@ object PackageKit {
                 }
             }
         } catch (e: IOException) {
-            // log.error("在扫描用户定义视图时从jar包获取文件出错");
+            // log.error("Error fetching files from jar while scanning user-defined views");
             LOG.error(e)
         }
     }
 
     /**
-     * 以文件的形式来获取包下的所有Class
+     * Get all classes under a package via the filesystem.
      */
     private fun findAndAddClassesInPackageByFile(
         packageName: String, packagePath: String, recursive: Boolean, action: Action
     ) {
-        // 获取此包的目录 建立一个File
+        // Build a File for the package directory
         val dir = File(packagePath)
-        // 如果不存在或者 也不是目录就直接返回
+        // If it does not exist, or is not a directory, return immediately
         if (dir.exists() && dir.isDirectory) {
             if (!action.isRetrieveClass) {
                 action.addPackage(packageName)
             }
         } else {
-//			 LOG.warn("用户定义包名 " + packageName + " 下没有任何文件");
+//            LOG.warn("No files found under user-defined package " + packageName);
             return
         }
-        // 如果存在 就获取包下的所有文件 包括目录
+        // If it exists, list all files under the package, including directories
         val dirFiles = dir.listFiles { file ->
-            // 自定义过滤规则 如果可以循环(包含子目录) 或则是以.class结尾的文件(编译好的java类文件)
+            // Custom filter: recurse into directories (if recursive), or .class files (compiled Java classes)
             recursive && file.isDirectory || file.name.endsWith(".class")
         }
-        // 循环所有文件
+        // Iterate over all files
         dirFiles.orEmpty().forEach { file ->
             if (file.isDirectory) {
-                // 如果是目录 则继续扫描
+                // If it is a directory, continue scanning
                 findAndAddClassesInPackageByFile("$packageName.${file.name}", file.absolutePath, recursive, action)
             } else if (action.isRetrieveClass) {
-                // 如果是java类文件 去掉后面的.class 只留下类名
+                // If it is a Java class file, strip the .class suffix and keep only the class name
                 val className = file.name.removeSuffix(".class")
                 try {
-                    // 添加到集合中去
+                    // Add to the collection
                     action.addClass(
                         Thread.currentThread().contextClassLoader.loadClass("$packageName.$className").kotlin
                     )
@@ -219,32 +219,32 @@ object PackageKit {
     }
 
     /**
-     * 包扫描内部收集器。
-     * true 时把命中的类放入 [classes]；false 时把命中的子包放入 [pkgs]，
-     * 通过同一套扫描代码服务于 [getClassesInPackage] 与 [getPackages] 两个公开入口。
+     * Internal collector used by package scanning.
+     * When true, matched classes are placed into [classes]; when false, matched sub-packages are placed into [pkgs].
+     * This allows the same scanning code to serve both [getClassesInPackage] and [getPackages] public entry points.
      *
      * @author K
      * @since 1.0.0
      */
     private class Action(retrieveClass: Boolean) {
-        /** true: 当前扫描在收集类；false: 当前扫描在收集子包 */
+        /** true: the current scan is collecting classes; false: the current scan is collecting sub-packages */
         var isRetrieveClass = true
-        /** 命中的类，使用 [LinkedHashSet] 保证发现顺序 */
+        /** matched classes; uses [LinkedHashSet] to preserve discovery order */
         val classes = LinkedHashSet<KClass<*>>()
-        /** 命中的子包名，使用 [LinkedHashSet] 保证发现顺序 */
+        /** matched sub-package names; uses [LinkedHashSet] to preserve discovery order */
         val pkgs = LinkedHashSet<String>()
 
         /**
-         * 收集一个类。
-         * @param clazz 命中的类
+         * Collect a class.
+         * @param clazz the matched class
          */
         fun addClass(clazz: KClass<*>) {
             classes.add(clazz)
         }
 
         /**
-         * 收集一个子包名。
-         * @param pkg 命中的包名
+         * Collect a sub-package name.
+         * @param pkg the matched package name
          */
         fun addPackage(pkg: String) {
             pkgs.add(pkg)

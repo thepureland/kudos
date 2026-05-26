@@ -6,7 +6,7 @@ import io.kudos.base.query.sort.Sortable
 import java.time.LocalDateTime
 
 /**
- * 系统数据库实体
+ * System database entity.
  *
  * @author K
  * @since 1.0.0
@@ -15,45 +15,45 @@ interface SysSystem : IDbEntity<String, SysSystem> {
 
     companion object : DbEntityFactory<SysSystem>()
 
-    /** 编码 */
+    /** Code */
     @get:Sortable
     var code: String
 
-    /** 名称 */
+    /** Name */
     @get:Sortable
     var name: String
 
-    /** 是否子系统 */
+    /** Whether it is a sub-system */
     var subSystem: Boolean
 
-    /** 父系统编号 */
+    /** Parent system code */
     var parentCode: String?
 
-    /** 备注 */
+    /** Remark */
     var remark: String?
 
-    /** 是否启用 */
+    /** Whether enabled */
     var active: Boolean
 
-    /** 是否内置 */
+    /** Whether built-in */
     var builtIn: Boolean?
 
-    /** 创建者id */
+    /** Creator id */
     var createUserId: String?
 
-    /** 创建者名称 */
+    /** Creator name */
     var createUserName: String?
 
-    /** 创建时间 */
+    /** Created time */
     var createTime: LocalDateTime?
 
-    /** 更新者id */
+    /** Updater id */
     var updateUserId: String?
 
-    /** 更新者名称 */
+    /** Updater name */
     var updateUserName: String?
 
-    /** 更新时间 */
+    /** Updated time */
     var updateTime: LocalDateTime?
 
 

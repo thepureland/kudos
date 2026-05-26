@@ -8,7 +8,7 @@ import kotlin.reflect.full.memberProperties
 import kotlin.test.Test
 
 /**
- * CompareConstraintConvertor测试用例
+ * Test cases for CompareConstraintConvertor.
  *
  * @author K
  * @since 1.0.0
@@ -43,7 +43,7 @@ internal class CompareConstraintConvertorTest {
             ),
             anotherProperty = "password",
             logic = LogicOperatorEnum.EQ,
-            message = "两次密码不同"
+            message = "the two passwords differ"
         )
         val confirmPassword: String?,
 
@@ -52,12 +52,12 @@ internal class CompareConstraintConvertorTest {
             Compare(
                 anotherProperty = "small",
                 logic = LogicOperatorEnum.GT,
-                message = "medium必须大于small"
+                message = "medium must be greater than small"
             ),
             Compare(
                 anotherProperty = "large",
                 logic = LogicOperatorEnum.LT,
-                message = "medium必须小于large"
+                message = "medium must be less than large"
             )
         )
         val medium: String?

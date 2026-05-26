@@ -8,16 +8,16 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * [HintZoneServiceInstanceListSupplier.filteredByHint] 的纯函数单测。
+ * Pure-function unit tests for [HintZoneServiceInstanceListSupplier.filteredByHint].
  *
- * 三大分支：
- *  - **hint 非空，有命中** → 只返回命中实例
- *  - **hint 非空，无命中** → 降级返回全部实例（避免业务被完全拒绝）
- *  - **hint 为空 + 默认 zone 非空** → 只返回 zone 与默认一致或未设 zone 的实例
- *  - **hint 为空 + 默认 zone 为空** → 原样返回
+ * Main branches:
+ *  - **hint non-empty, has match** -> returns only matching instances
+ *  - **hint non-empty, no match** -> falls back to the full instance list (so business calls are not rejected outright)
+ *  - **hint empty + default zone non-empty** -> returns only instances whose zone matches the default, or have no zone set
+ *  - **hint empty + default zone empty** -> returns the list as-is
  *
- * 同时验证可配置的 [HintZoneServiceInstanceListSupplier.DEFAULT_ZONE_METADATA_KEY] 替代场景：
- * metadata 字段名换成 `region` 也能命中。
+ * Also verifies the configurable [HintZoneServiceInstanceListSupplier.DEFAULT_ZONE_METADATA_KEY]
+ * scenario: switching the metadata field name to `region` still hits.
  */
 internal class HintZoneServiceInstanceListSupplierTest {
 
@@ -42,7 +42,7 @@ internal class HintZoneServiceInstanceListSupplierTest {
             all, hint = "moon", defaultZone = null,
             zoneMetadataKey = HintZoneServiceInstanceListSupplier.DEFAULT_ZONE_METADATA_KEY,
         )
-        // 命中为空 → 降级返回原列表（按引用，确保是 fast-path）
+        // No matches -> fall back to the original list (by reference, confirming the fast path)
         assertSame(all, result)
     }
 
@@ -53,7 +53,7 @@ internal class HintZoneServiceInstanceListSupplierTest {
             all, hint = null, defaultZone = "east",
             zoneMetadataKey = HintZoneServiceInstanceListSupplier.DEFAULT_ZONE_METADATA_KEY,
         )
-        assertEquals(listOf(east, none), result, "应包含与默认 zone 一致 + 未设 zone 的实例")
+        assertEquals(listOf(east, none), result, "Should include instances matching the default zone plus those with no zone set")
     }
 
     @Test
@@ -63,7 +63,7 @@ internal class HintZoneServiceInstanceListSupplierTest {
             all, hint = null, defaultZone = "",
             zoneMetadataKey = HintZoneServiceInstanceListSupplier.DEFAULT_ZONE_METADATA_KEY,
         )
-        assertSame(all, result, "无默认 zone 时应原样返回")
+        assertSame(all, result, "Should return as-is when there is no default zone")
     }
 
     @Test
@@ -83,7 +83,7 @@ internal class HintZoneServiceInstanceListSupplierTest {
             all, hint = "   ", defaultZone = null,
             zoneMetadataKey = HintZoneServiceInstanceListSupplier.DEFAULT_ZONE_METADATA_KEY,
         )
-        assertSame(all, result, "空白字符串应当与 null 同义")
+        assertSame(all, result, "Blank string should be treated the same as null")
     }
 
     @Test

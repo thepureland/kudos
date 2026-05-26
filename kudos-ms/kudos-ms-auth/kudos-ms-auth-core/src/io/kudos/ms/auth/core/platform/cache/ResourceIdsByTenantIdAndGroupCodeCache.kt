@@ -20,12 +20,12 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * 资源ID列表（by tenant & group code）缓存处理器
+ * Cache handler for the list of resource ids keyed by (tenantId, groupCode).
  *
- * 1.数据来源表：auth_group + auth_group_role + auth_role_resource
- * 2.缓存各租户下指定用户组的资源ID集合
- * 3.缓存的key为：tenantId::groupCode
- * 4.缓存的value为：资源ID集合（List<String>）
+ * 1. Source tables: auth_group + auth_group_role + auth_role_resource
+ * 2. Caches the resource id set of the specified group per tenant
+ * 3. Cache key: tenantId::groupCode
+ * 4. Cache value: list of resource ids (List<String>)
  *
  * @author K
  * @author AI: Codex
@@ -54,7 +54,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
 
     override fun doReload(key: String): List<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
-            "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户组编码"
+            "Cache ${CACHE_NAME} key format must be tenantId${Consts.CACHE_KEY_DEFAULT_DELIMITER}groupCode"
         }
         val tenantAndGroupCode = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
         return getSelf<ResourceIdsByTenantIdAndGroupCodeCache>().getResourceIds(
@@ -64,7 +64,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有用户组下的资源ID！")
+            log.info("Cache disabled; not loading or caching resource ids for all groups!")
             return
         }
 
@@ -72,7 +72,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         val groupIdToRoleIdsMap = authGroupRoleDao.searchAllGroupIdToRoleIdsForCache()
         val roleIdToResourceIdsMap = authRoleResourceDao.searchAllRoleIdToResourceIdsForCache()
 
-        log.debug("从数据库加载了${groups.size}条用户组、组-角色分组${groupIdToRoleIdsMap.size}、角色-资源分组${roleIdToResourceIdsMap.size}。")
+        log.debug("Loaded ${groups.size} groups, ${groupIdToRoleIdsMap.size} group-role groupings, ${roleIdToResourceIdsMap.size} role-resource groupings from DB.")
 
         if (clear) {
             clear()
@@ -86,16 +86,16 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
             val roleIds = groupIdToRoleIdsMap[groupId] ?: emptyList()
             val resourceIds = roleIds.flatMap { roleId -> roleIdToResourceIdsMap[roleId] ?: emptyList() }.distinct()
             KeyValueCacheKit.put(CACHE_NAME, getKey(tenantId, groupCode), resourceIds)
-            log.debug("缓存了租户${group.tenantId}用户组${group.code}的${resourceIds.size}条资源ID。")
+            log.debug("Cached ${resourceIds.size} resource ids for tenant=${group.tenantId} group=${group.code}.")
         }
     }
 
     /**
-     * 根据租户ID和用户组编码从缓存中获取该用户组下所有资源ID，如果缓存中不存在，则从数据库中加载，并回写缓存
+     * Get all resource ids under a group keyed by (tenantId, groupCode); on cache miss, load from DB and write back.
      *
-     * @param tenantId 租户ID
-     * @param groupCode 用户组编码
-     * @return List<资源ID>
+     * @param tenantId tenant id
+     * @param groupCode group code
+     * @return List<resourceId>
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -104,78 +104,78 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
     )
     open fun getResourceIds(tenantId: String, groupCode: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在租户${tenantId}用户组${groupCode}的资源ID，从数据库中加载...")
+            log.debug("Resource ids for tenant=${tenantId} group=${groupCode} not in cache; loading from DB...")
         }
 
-        // 1. 从缓存中获取用户组ID
+        // 1. Look up the group id from the cache.
         val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
         if (groupId == null) {
-            log.debug("找不到租户${tenantId}的用户组${groupCode}。")
+            log.debug("Group not found for tenant=${tenantId} code=${groupCode}.")
             return emptyList()
         }
 
-        // 2. 获取用户组对应的角色ID列表
+        // 2. Get the role ids associated with the group.
         val roleIds = authGroupRoleDao.searchRoleIdsByGroupId(groupId)
         if (roleIds.isEmpty()) {
             return emptyList()
         }
 
         val resourceIds = authRoleResourceDao.searchResourceIdsByRoleIds(roleIds)
-        log.debug("从数据库加载了租户${tenantId}用户组${groupCode}的${resourceIds.size}条资源ID。")
+        log.debug("Loaded ${resourceIds.size} resource ids from DB for tenant=${tenantId} group=${groupCode}.")
         return resourceIds.toList()
     }
 
     /**
-     * 用户组-角色关系新增后同步缓存
+     * Sync the cache after a group-role association is inserted.
      */
     open fun syncOnGroupRoleInsert(tenantId: String, groupCode: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("新增租户${tenantId}用户组${groupCode}的组-角色关系后，同步${CACHE_NAME}缓存...")
+            log.debug("After inserting group-role association tenant=${tenantId} group=${groupCode}, syncing ${CACHE_NAME} cache...")
             evict(getKey(tenantId, groupCode))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<ResourceIdsByTenantIdAndGroupCodeCache>().getResourceIds(tenantId, groupCode)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 用户组-角色关系删除后同步缓存
+     * Sync the cache after a group-role association is deleted.
      */
     open fun syncOnGroupRoleDelete(tenantId: String, groupCode: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}用户组${groupCode}的组-角色关系后，同步${CACHE_NAME}缓存...")
+            log.debug("After deleting group-role association tenant=${tenantId} group=${groupCode}, syncing ${CACHE_NAME} cache...")
             evict(getKey(tenantId, groupCode))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<ResourceIdsByTenantIdAndGroupCodeCache>().getResourceIds(tenantId, groupCode)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 角色-资源关系变更后同步缓存
+     * Sync the cache after a role-resource association changes.
      */
     open fun syncOnRoleResourceChange(roleId: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("角色${roleId}的资源关系变更后，同步${CACHE_NAME}缓存...")
-            // 简化处理：清除所有缓存，避免复杂的反查
+            log.debug("After role-resource association change for role=${roleId}, syncing ${CACHE_NAME} cache...")
+            // Simplification: clear the whole cache to avoid a complex reverse lookup.
             clear()
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 用户组更新后同步缓存
+     * Sync the cache after a group is updated.
      */
     open fun syncOnGroupUpdate(oldTenantId: String, oldGroupCode: String, newTenantId: String, newGroupCode: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("用户组信息更新后，同步${CACHE_NAME}缓存...")
+            log.debug("After group info update, syncing ${CACHE_NAME} cache...")
             KeyValueCacheKit.evict(CACHE_NAME, getKey(oldTenantId, oldGroupCode))
             if (oldTenantId != newTenantId || oldGroupCode != newGroupCode) {
                 KeyValueCacheKit.evict(CACHE_NAME, getKey(newTenantId, newGroupCode))
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
@@ -183,7 +183,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${groupCode}"
     }
 
-    /** 仅做本地 (tenantId, groupCode) 失效；AuthGroupHashCache 已独立订阅 AuthGroupDeleted。 */
+    /** Local (tenantId, groupCode) eviction only; AuthGroupHashCache subscribes to AuthGroupDeleted separately. */
     private fun evictBy(tenantId: String, groupCode: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))
@@ -198,7 +198,7 @@ open class ResourceIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler
     }
 
     /**
-     * 角色-资源关系变更影响 group -> role -> resource 三级聚合视图：保守清整缓存。
+     * Role-resource changes affect the group -> role -> resource three-level aggregate view: clear the cache conservatively.
      */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthRoleResourceRelationsChanged): Unit = syncOnRoleResourceChange(event.roleId)

@@ -10,7 +10,7 @@ import kotlin.test.*
 /**
  * junit test for UserOrgService
  *
- * 测试数据来源：`UserOrgServiceTest.sql`
+ * Test data source: `UserOrgServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -32,7 +32,7 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
         assertNotNull(cacheItem)
         assertTrue(cacheItem.name == "svc-org-test-root-1-HuAyup4R")
         
-        // 测试不存在的机构
+        // Test a non-existent org
         val notExist = userOrgService.getOrgRecord("non-existent-id")
         assertNull(notExist)
     }
@@ -41,7 +41,7 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
     fun getOrgsByTenantId() {
         val tenantId = "svc-tenant-org-test-1-HuAyup4R"
         val orgs = userOrgService.getOrgsByTenantId(tenantId)
-        assertTrue(orgs.size >= 5) // 只包含active=true的
+        assertTrue(orgs.size >= 5) // Only includes active=true
         assertTrue(orgs.any { it.name == "svc-org-test-root-1-HuAyup4R" })
         assertTrue(orgs.any { it.name == "svc-org-test-child-1-HuAyup4R" })
     }
@@ -49,25 +49,25 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun getOrgTree() {
         val tenantId = "svc-tenant-org-test-1-HuAyup4R"
-        // 测试获取根机构树
+        // Test getting the root org tree
         val tree = userOrgService.getOrgTree(tenantId, null)
         assertTrue(tree.isNotEmpty())
         val rootNode = tree.firstOrNull { it.name == "svc-org-test-root-1-HuAyup4R" }
         assertNotNull(rootNode)
         
-        // 验证树结构：子机构应该在父机构的children中
+        // Verify tree structure: child orgs should be in the parent org's children
         val children = assertNotNull(rootNode.children)
         assertTrue(children.isNotEmpty())
         assertTrue(children.any { it.name == "svc-org-test-child-1-HuAyup4R" })
         assertTrue(children.any { it.name == "svc-org-test-child-2-HuAyup4R" })
         
-        // 测试获取指定父机构的子树（直接返回子机构列表，不构建树）
+        // Test getting the subtree of a specified parent org (returns child org list directly, does not build the tree)
         val parentId = "8b4df430-0000-0000-0000-000000000030"
         val childTree = userOrgService.getOrgTree(tenantId, parentId)
         assertTrue(childTree.isNotEmpty())
         assertTrue(childTree.any { it.name == "svc-org-test-child-1-HuAyup4R" })
         assertTrue(childTree.any { it.name == "svc-org-test-child-2-HuAyup4R" })
-        // 当指定parentId时，返回的是平铺列表，不是树结构（children为空列表）
+        // When parentId is specified, a flat list is returned, not a tree structure (children is an empty list)
         assertTrue(childTree.all { it.children.isNullOrEmpty() })
     }
 
@@ -93,13 +93,13 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun updateActive() {
         val id = "8b4df430-0000-0000-0000-000000000030"
-        // 先设置为false（用 DAO 校验持久化，避免批量跑时缓存未刷新导致断言失败）
+        // Set to false first (verify persistence via DAO to avoid assertion failures from un-refreshed cache during batch runs)
         assertTrue(userOrgService.updateActive(id, false))
         var org = userOrgDao.get(id)
         assertNotNull(org)
         assertNotEquals(org.active, true)
 
-        // 再设置为true
+        // Set to true again
         assertTrue(userOrgService.updateActive(id, true))
         org = userOrgDao.get(id)
         assertNotNull(org)
@@ -118,7 +118,7 @@ class UserOrgServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(org.parentId, newParentId)
         assertEquals(org.sortNum, newSortNum)
 
-        // 移回原位置（用 DAO 校验持久化，避免批量跑时缓存未刷新导致断言失败）
+        // Move back to original position (verify persistence via DAO to avoid assertion failures from un-refreshed cache during batch runs)
         assertTrue(userOrgService.moveOrg(id, "8b4df430-0000-0000-0000-000000000030", 11))
         org = userOrgDao.get(id)
         assertNotNull(org)

@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysAccessRuleIpDao
  *
- * 测试数据来源：`SysAccessRuleIpDaoTest.sql`
+ * Test data source: `SysAccessRuleIpDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor

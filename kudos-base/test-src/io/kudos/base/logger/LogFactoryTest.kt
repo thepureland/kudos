@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertNotNull
 
 /**
- * LogFactory测试用例
+ * Test cases for LogFactory.
  *
  * @author AI: cursor
  * @author K
@@ -36,7 +36,7 @@ internal class LogFactoryTest {
     fun testGetLogIsConsistent() {
         val log1 = LogFactory.getLog(LogFactoryTest::class)
         val log2 = LogFactory.getLog(LogFactoryTest::class)
-        // 应该返回相同的实例或功能相同的logger
+        // Should return the same instance or functionally equivalent logger
         assertNotNull(log1)
         assertNotNull(log2)
     }

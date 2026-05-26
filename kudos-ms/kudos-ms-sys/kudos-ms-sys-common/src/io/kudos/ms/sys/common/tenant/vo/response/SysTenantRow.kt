@@ -4,41 +4,41 @@ import java.time.LocalDateTime
 
 
 /**
- * 租户列表查询结果响应VO
+ * Tenant list query result response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysTenantRow (
 
-    /** 主键 */
+    /** Primary key. */
     val id: String = "",
 
-    /** 名称 */
+    /** Name. */
     val name: String = "",
 
-    /** 时区 */
+    /** Timezone. */
     val timezone: String? = null,
 
-    /** 默认语言编码 */
+    /** Default language code. */
     val defaultLanguageCode: String? = null,
 
-    /** 创建时间 */
+    /** Create time. */
     val createTime: LocalDateTime? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active. */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in. */
     val builtIn: Boolean = false,
 
 ) {
 
 
-    /** 以逗号分隔的子系统编码 */
+    /** Comma-separated sub-system codes. */
     var subSystemCodes: String = ""
 
 

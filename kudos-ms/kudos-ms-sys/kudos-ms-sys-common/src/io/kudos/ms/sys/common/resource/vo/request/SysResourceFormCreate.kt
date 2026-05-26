@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.resource.vo.request
 
 /**
- * 资源表单新建请求VO
+ * Resource create form request VO.
  *
  * @author K
  * @since 1.0.0

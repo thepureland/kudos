@@ -1,7 +1,7 @@
 package io.kudos.ms.user.common.contact.api
 
 /**
- * 用户联系方式 对外API
+ * User contact way external API
  *
  * @author K
  * @author AI: Codex

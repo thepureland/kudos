@@ -10,7 +10,7 @@ dependencies {
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-remote:kudos-ability-cache-remote-redis"))
 
     // h2
-    // h2可以用PostgreSqlDialect来实现分页
+    // h2 can use PostgreSqlDialect for pagination
     testImplementation(libs.h2database.h2)
 
     // postgres

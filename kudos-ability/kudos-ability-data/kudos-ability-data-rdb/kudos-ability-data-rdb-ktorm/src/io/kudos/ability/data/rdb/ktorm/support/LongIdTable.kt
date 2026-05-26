@@ -4,16 +4,16 @@ import org.ktorm.schema.Table
 import org.ktorm.schema.long
 
 /**
- * 长整型主键的dao
+ * DAO for tables with a Long primary key.
  *
- * @param E 实体类型
+ * @param E Entity type
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 open class LongIdTable<E : IDbEntity<Long, E>>(tableName: String): Table<E>(tableName) {
 
-    /** 主键 */
+    /** Primary key */
     val id = long("id").primaryKey().bindTo { it.id }
 
 }

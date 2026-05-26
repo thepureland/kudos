@@ -5,12 +5,12 @@ import org.springframework.test.context.TestContext
 import org.springframework.test.context.TestExecutionListener
 
 /**
- * 在测试准备阶段将 SpringKit 的 applicationContext 同步为当前测试的 ApplicationContext。
+ * During test preparation, syncs SpringKit's applicationContext with the current test's ApplicationContext.
  *
- * 根因：SpringKit 使用静态 applicationContext，仅在上下文**创建**时由
- * [io.kudos.context.spring.SpringContextInitializer] 设置；当 Spring 测试**复用**已缓存的上下文时，
- * 不会再次执行 ApplicationContextInitializer，导致 SpringKit 仍指向其它上下文，
- * 从而出现 NoSuchBeanDefinitionException。
+ * Root cause: SpringKit uses a static applicationContext that is set by
+ * [io.kudos.context.spring.SpringContextInitializer] only when the context is **created**. When the Spring
+ * test framework **reuses** a cached context, the ApplicationContextInitializer is not run again, leaving
+ * SpringKit pointing at another context and causing NoSuchBeanDefinitionException.
  *
  * @author K
  * @author AI: Cursor

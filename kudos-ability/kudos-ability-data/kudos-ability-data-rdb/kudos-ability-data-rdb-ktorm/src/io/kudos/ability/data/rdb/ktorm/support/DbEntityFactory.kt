@@ -3,11 +3,11 @@ package io.kudos.ability.data.rdb.ktorm.support
 import org.ktorm.entity.Entity
 
 /**
- * 数据库实体工厂
- * 可简化使用(companion object : Entity.Factory<E>() => companion object : DbEntityFactory<E>())
- * 并避免Ktorm相关代码侵入PO
+ * Database entity factory.
+ * Simplifies usage (companion object : Entity.Factory<E>() => companion object : DbEntityFactory<E>())
+ * and keeps Ktorm-related code from leaking into the PO.
  *
- * @param E 实体类型
+ * @param E Entity type
  * @author K
  * @author AI: Codex
  * @since 1.0.0

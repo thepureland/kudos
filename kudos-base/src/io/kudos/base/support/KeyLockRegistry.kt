@@ -7,17 +7,17 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 /**
- * 一个基于 Key 的锁注册表。
+ * A key-based lock registry.
  *
- * 特点：
- * - 不同的 key 拥有独立的 ReentrantLock，互不影响；
- * - 相同的 key 会复用同一把锁，从而保证串行化访问；
- * - 内部维护引用计数（usageCount），在没有线程使用时会移除锁，避免内存泄漏；
- * - 提供阻塞、非阻塞、超时三种加锁模式。
+ * Features:
+ * - Different keys have independent ReentrantLocks that do not affect each other;
+ * - The same key reuses the same lock, ensuring serialized access;
+ * - Maintains a reference count (usageCount) internally and removes the lock when no thread is using it, avoiding memory leaks;
+ * - Provides blocking, non-blocking, and timeout-based locking modes.
  *
- * 典型使用场景：
- * - 替代 synchronized(key) 的写法；
- * - 控制对某一类资源（如订单号、用户ID）的并发访问。
+ * Typical use cases:
+ * - As a replacement for synchronized(key);
+ * - To control concurrent access to a class of resources (such as order numbers or user IDs).
  *
  * @author AI: ChatGPT
  * @author K
@@ -26,48 +26,48 @@ import kotlin.concurrent.withLock
 class KeyLockRegistry<K : Any> {
 
     /**
-     * 封装锁对象和使用计数。
+     * Wraps the lock object and its usage count.
      *
-     * @property lock 实际的 ReentrantLock
-     * @property usageCount 当前锁被引用的次数
+     * @property lock The actual ReentrantLock
+     * @property usageCount Current reference count of the lock
      */
     private class LockWrapper {
         val lock = ReentrantLock()
         val usageCount = AtomicInteger(0)
     }
 
-    /** 存放 key -> LockWrapper 的映射表 */
+    /** Mapping table that stores key -> LockWrapper */
     private val lockMap = ConcurrentHashMap<K, LockWrapper>()
 
     /**
-     * 获取指定key的锁，并在锁保护的临界区中执行代码块
-     * 
-     * 自动管理锁的获取和释放，确保代码块执行完成后锁一定会被释放。
-     * 
-     * 工作流程：
-     * 1. 获取或创建锁包装对象：使用computeIfAbsent确保线程安全地获取或创建锁
-     * 2. 增加引用计数：usageCount加1，表示有线程正在使用该锁
-     * 3. 获取锁并执行：使用withLock获取锁并执行代码块（阻塞等待）
-     * 4. 释放引用计数：在finally块中调用releaseWrapper减少引用计数
-     * 
-     * 锁管理：
-     * - 使用try-finally确保引用计数一定会被释放
-     * - 如果引用计数减到0，锁会被从lockMap中移除，避免内存泄漏
-     * - 支持可重入锁，同一线程可以多次获取同一把锁
-     * 
-     * 使用场景：
-     * - 需要确保代码块在锁保护下执行
-     * - 希望自动管理锁的获取和释放
-     * - 适合需要阻塞等待锁的场景
-     * 
-     * 注意事项：
-     * - 如果锁被其他线程持有，当前线程会阻塞等待
-     * - 代码块执行完成后锁会自动释放
-     * - 即使代码块抛出异常，锁也会被正确释放
-     * 
-     * @param key 锁的标识
-     * @param block 需要在锁保护下执行的代码块
-     * @return 代码块的返回值
+     * Acquires the lock for the specified key and executes the given code block within the critical section protected by the lock.
+     *
+     * Automatically manages lock acquisition and release, ensuring the lock is always released after the code block completes.
+     *
+     * Workflow:
+     * 1. Get or create the lock wrapper: use computeIfAbsent to thread-safely obtain or create the lock
+     * 2. Increment reference count: usageCount plus 1, indicating a thread is using this lock
+     * 3. Acquire the lock and execute: use withLock to acquire the lock and execute the code block (blocking wait)
+     * 4. Release the reference count: call releaseWrapper in the finally block to decrement the count
+     *
+     * Lock management:
+     * - Uses try-finally to ensure the reference count is always released
+     * - When the reference count drops to 0, the lock is removed from lockMap to avoid memory leaks
+     * - Supports reentrant locks; the same thread can acquire the same lock multiple times
+     *
+     * Use cases:
+     * - When you need to ensure the code block runs under lock protection
+     * - When you want automatic lock acquisition and release
+     * - Suitable for scenarios that require blocking-wait locks
+     *
+     * Notes:
+     * - If the lock is held by another thread, the current thread will block and wait
+     * - The lock is automatically released after the code block completes
+     * - Even if the code block throws an exception, the lock will still be released properly
+     *
+     * @param key The lock identifier
+     * @param block The code block to execute under lock protection
+     * @return The return value of the code block
      */
     fun <T> withLock(key: K, block: () -> T): T {
         val wrapper = lockMap.computeIfAbsent(key) { LockWrapper() }
@@ -80,33 +80,33 @@ class KeyLockRegistry<K : Any> {
     }
 
     /**
-     * 尝试非阻塞地获取key对应的锁
-     * 
-     * 立即尝试获取锁，如果锁已被其他线程持有，立即返回null而不等待。
-     * 
-     * 工作流程：
-     * 1. 获取或创建锁包装对象：使用computeIfAbsent确保线程安全
-     * 2. 增加引用计数：usageCount加1
-     * 3. 尝试获取锁：调用tryLock()，非阻塞方式
-     * 4. 获取失败处理：如果获取失败，立即释放引用计数并返回null
-     * 5. 获取成功：返回锁对象，调用方需要手动释放锁
-     * 
-     * 返回值：
-     * - 非null：成功获取锁，返回ReentrantLock对象，需要手动调用unlock释放
-     * - null：锁已被其他线程持有，获取失败
-     * 
-     * 使用场景：
-     * - 需要非阻塞的锁获取
-     * - 获取失败时需要执行其他逻辑
-     * - 不希望阻塞当前线程
-     * 
-     * 注意事项：
-     * - 获取成功后必须手动调用unlock释放锁
-     * - 如果获取失败，引用计数会自动释放，无需额外处理
-     * - 适合需要快速失败（fail-fast）的场景
-     * 
-     * @param key 锁的标识
-     * @return ReentrantLock对象表示获取成功，null表示获取失败
+     * Attempts to acquire the lock for the key in a non-blocking manner.
+     *
+     * Immediately attempts to acquire the lock; if the lock is already held by another thread, returns null immediately without waiting.
+     *
+     * Workflow:
+     * 1. Get or create the lock wrapper: use computeIfAbsent to ensure thread safety
+     * 2. Increment reference count: usageCount plus 1
+     * 3. Try to acquire the lock: call tryLock() in non-blocking mode
+     * 4. Failure handling: if acquisition fails, immediately release the reference count and return null
+     * 5. Success: return the lock object; the caller must release the lock manually
+     *
+     * Return value:
+     * - Non-null: lock acquired successfully, returns the ReentrantLock object; unlock() must be called manually
+     * - null: lock is already held by another thread, acquisition failed
+     *
+     * Use cases:
+     * - When non-blocking lock acquisition is needed
+     * - When alternative logic must run on failure
+     * - When you do not want to block the current thread
+     *
+     * Notes:
+     * - After successful acquisition, you must call unlock manually to release the lock
+     * - If acquisition fails, the reference count is automatically released; no additional handling is required
+     * - Suitable for fail-fast scenarios
+     *
+     * @param key The lock identifier
+     * @return A ReentrantLock object on success, or null on failure
      */
     fun tryLock(key: K): ReentrantLock? {
         val wrapper = lockMap.computeIfAbsent(key) { LockWrapper() }
@@ -120,41 +120,41 @@ class KeyLockRegistry<K : Any> {
     }
 
     /**
-     * 尝试在指定超时时间内获取key对应的锁
-     * 
-     * 在指定时间内尝试获取锁，如果超时仍未获取到，返回null。
-     * 
-     * 工作流程：
-     * 1. 获取或创建锁包装对象：使用computeIfAbsent确保线程安全
-     * 2. 增加引用计数：usageCount加1
-     * 3. 尝试获取锁：调用tryLock(timeout, unit)，在指定时间内等待
-     * 4. 超时处理：如果超时仍未获取到锁，释放引用计数并返回null
-     * 5. 获取成功：返回锁对象，调用方需要手动释放锁
-     * 
-     * 超时机制：
-     * - 在timeout时间内会持续尝试获取锁
-     * - 如果timeout时间内获取到锁，立即返回锁对象
-     * - 如果超时仍未获取到，返回null
-     * 
-     * 中断处理：
-     * - 如果等待过程中线程被中断，会抛出InterruptedException
-     * - 调用方需要处理中断异常
-     * 
-     * 使用场景：
-     * - 需要在一定时间内等待锁
-     * - 不希望无限期等待
-     * - 需要在超时后执行其他逻辑
-     * 
-     * 注意事项：
-     * - 获取成功后必须手动调用unlock释放锁
-     * - 如果获取失败或超时，引用计数会自动释放
-     * - 需要处理InterruptedException异常
-     * 
-     * @param key 锁的标识
-     * @param timeout 等待时长
-     * @param unit 时间单位
-     * @return ReentrantLock对象表示获取成功，null表示超时或获取失败
-     * @throws InterruptedException 如果等待过程中线程被中断
+     * Attempts to acquire the lock for the key within the specified timeout.
+     *
+     * Tries to acquire the lock within the given time; returns null if the timeout elapses without acquiring it.
+     *
+     * Workflow:
+     * 1. Get or create the lock wrapper: use computeIfAbsent to ensure thread safety
+     * 2. Increment reference count: usageCount plus 1
+     * 3. Try to acquire the lock: call tryLock(timeout, unit) to wait for the specified time
+     * 4. Timeout handling: if the timeout elapses without acquiring the lock, release the reference count and return null
+     * 5. Success: return the lock object; the caller must release the lock manually
+     *
+     * Timeout mechanism:
+     * - Continues to attempt acquisition within the timeout window
+     * - Returns the lock object immediately once acquired
+     * - Returns null if the timeout elapses without acquiring the lock
+     *
+     * Interrupt handling:
+     * - If the thread is interrupted while waiting, an InterruptedException is thrown
+     * - The caller must handle the interruption exception
+     *
+     * Use cases:
+     * - When waiting for the lock within a bounded period
+     * - When you do not want to wait indefinitely
+     * - When alternative logic must run after a timeout
+     *
+     * Notes:
+     * - After successful acquisition, you must call unlock manually to release the lock
+     * - If acquisition fails or times out, the reference count is automatically released
+     * - InterruptedException must be handled
+     *
+     * @param key The lock identifier
+     * @param timeout The wait duration
+     * @param unit The time unit
+     * @return A ReentrantLock object on success, or null on timeout or failure
+     * @throws InterruptedException If the thread is interrupted while waiting
      */
     @Throws(InterruptedException::class)
     fun tryLock(key: K, timeout: Long, unit: TimeUnit): ReentrantLock? {
@@ -169,27 +169,27 @@ class KeyLockRegistry<K : Any> {
     }
 
     /**
-     * 手动解锁
-     * 
-     * 释放通过tryLock获取的锁，并减少引用计数。
-     * 
-     * 工作流程：
-     * 1. 查找锁包装对象：从lockMap中查找key对应的锁
-     * 2. 检查锁持有者：只有当前线程持有锁时才执行解锁
-     * 3. 释放锁：调用lock.unlock()释放锁
-     * 4. 释放引用计数：调用releaseWrapper减少引用计数
-     * 
-     * 使用场景：
-     * - 配合tryLock使用，手动释放锁
-     * - 需要在锁保护范围外释放锁
-     * 
-     * 注意事项：
-     * - 只有当前线程持有锁时才会执行解锁操作
-     * - 如果key对应的锁不存在，会抛出异常
-     * - 解锁后引用计数会减少，如果减到0，锁会被移除
-     * 
-     * @param key 锁的标识
-     * @throws IllegalStateException 如果key对应的锁不存在
+     * Manually unlocks.
+     *
+     * Releases the lock acquired via tryLock and decrements the reference count.
+     *
+     * Workflow:
+     * 1. Find the lock wrapper: look up the lock for the given key in lockMap
+     * 2. Check the lock holder: only unlock if the current thread holds the lock
+     * 3. Release the lock: call lock.unlock() to release the lock
+     * 4. Release the reference count: call releaseWrapper to decrement the count
+     *
+     * Use cases:
+     * - Used together with tryLock to manually release the lock
+     * - When the lock must be released outside its protected scope
+     *
+     * Notes:
+     * - The unlock operation runs only when the current thread holds the lock
+     * - If no lock exists for the key, an exception is thrown
+     * - After unlocking, the reference count is decremented; if it drops to 0, the lock is removed
+     *
+     * @param key The lock identifier
+     * @throws IllegalStateException If no lock exists for the key
      */
     fun unlock(key: K) {
         val wrapper = lockMap[key] ?: error("No lock found for key=$key")
@@ -200,49 +200,49 @@ class KeyLockRegistry<K : Any> {
     }
 
     /**
-     * 获取当前活跃的锁数量
-     * 
-     * 返回当前lockMap中存在的锁数量，用于监控和调试。
-     * 
-     * 返回值说明：
-     * - 返回lockMap的大小，即当前有多少个不同的key拥有锁
-     * - 如果返回0，表示当前没有任何活跃的锁
-     * 
-     * 使用场景：
-     * - 监控锁的使用情况
-     * - 调试锁泄漏问题
-     * - 性能分析
-     * 
-     * @return 当前活跃锁的数量
+     * Returns the number of currently active locks.
+     *
+     * Returns the number of locks currently present in lockMap; used for monitoring and debugging.
+     *
+     * Return value:
+     * - Returns the size of lockMap, i.e., how many different keys currently hold locks
+     * - 0 means there are no active locks at the moment
+     *
+     * Use cases:
+     * - Monitoring lock usage
+     * - Debugging lock leaks
+     * - Performance analysis
+     *
+     * @return The number of currently active locks
      */
     fun getActiveLockCount(): Int = lockMap.size
 
     /**
-     * 释放锁包装对象
-     * 
-     * 减少锁的引用计数，如果引用计数减到0，从lockMap中移除该锁。
-     * 
-     * 工作流程：
-     * 1. 减少引用计数：usageCount减1（原子操作）
-     * 2. 检查引用计数：如果减到0或以下，说明没有线程在使用该锁
-     * 3. 移除锁：从lockMap中移除该key和wrapper的映射
-     * 
-     * 内存管理：
-     * - 使用引用计数机制避免内存泄漏
-     * - 只有当所有线程都释放锁后，锁才会被移除
-     * - 使用remove(key, wrapper)确保只移除指定的wrapper，避免并发问题
-     * 
-     * 线程安全：
-     * - usageCount使用AtomicInteger，确保原子操作
-     * - lockMap是ConcurrentHashMap，支持并发操作
-     * - remove操作使用CAS机制，确保线程安全
-     * 
-     * 注意事项：
-     * - 引用计数减到0时才会移除锁，避免正在使用的锁被移除
-     * - 使用remove(key, wrapper)而不是remove(key)，确保只移除指定的wrapper实例
-     * 
-     * @param key 锁的标识
-     * @param wrapper 对应的锁包装对象
+     * Releases the lock wrapper.
+     *
+     * Decrements the lock's reference count and removes the lock from lockMap if the count drops to 0.
+     *
+     * Workflow:
+     * 1. Decrement the reference count: usageCount minus 1 (atomic operation)
+     * 2. Check the reference count: if it drops to 0 or below, no thread is using the lock
+     * 3. Remove the lock: remove the mapping from key to wrapper in lockMap
+     *
+     * Memory management:
+     * - Uses a reference counting mechanism to avoid memory leaks
+     * - The lock is removed only after all threads have released it
+     * - Uses remove(key, wrapper) to ensure only the specified wrapper is removed, avoiding concurrency issues
+     *
+     * Thread safety:
+     * - usageCount uses AtomicInteger to ensure atomic operations
+     * - lockMap is a ConcurrentHashMap that supports concurrent operations
+     * - The remove operation uses a CAS mechanism to ensure thread safety
+     *
+     * Notes:
+     * - The lock is removed only when the reference count drops to 0, preventing removal of in-use locks
+     * - Uses remove(key, wrapper) rather than remove(key) to ensure only the specified wrapper instance is removed
+     *
+     * @param key The lock identifier
+     * @param wrapper The corresponding lock wrapper
      */
     private fun releaseWrapper(key: K, wrapper: LockWrapper) {
         if (wrapper.usageCount.decrementAndGet() <= 0) {

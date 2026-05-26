@@ -6,7 +6,7 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.beans.property.StringProperty
 
 /**
- * 生成的文件信息值对象
+ * Value object for generated file information.
  *
  * @author K
  * @since 1.0.0
@@ -18,18 +18,18 @@ class GenFile(
 
     directory: String,
 
-    /** 参数化（Freemarker 处理 `${entityName}` 等占位符后）的文件相对路径 */
+    /** Parameterized (after Freemarker processes placeholders such as `${entityName}`) relative file path */
     var finalFileRelativePath: String,
 
-    /** 模板文件相对路径，生成时据此从模板根目录读取对应模板 */
+    /** Template file relative path; used to read the corresponding template from the template root at generation time */
     var templateFileRelativePath: String
 ) : Comparable<GenFile> {
 
-    /** 是否生成此文件，绑定到 UI 的复选框 */
+    /** Whether to generate this file; bound to a UI checkbox */
     private val generate = SimpleBooleanProperty()
-    /** 目标文件名（已替换占位符） */
+    /** Target file name (placeholders already replaced) */
     private val filename = SimpleStringProperty()
-    /** 目标文件所在目录的绝对路径（已替换占位符） */
+    /** Absolute path of the target file's directory (placeholders already replaced) */
     private val directory = SimpleStringProperty()
 
     init {
@@ -57,7 +57,7 @@ class GenFile(
     fun directoryProperty(): StringProperty = directory
 
     /**
-     * 按目录路径排序，让生成列表在 UI 上按目录归组展示。
+     * Sort by directory path so the generation list groups by directory in the UI.
      */
     override fun compareTo(other: GenFile): Int = getDirectory().compareTo(other.getDirectory())
 }

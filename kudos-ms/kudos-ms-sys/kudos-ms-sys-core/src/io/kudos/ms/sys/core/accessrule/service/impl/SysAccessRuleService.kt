@@ -26,11 +26,11 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 访问规则（`sys_access_rule`）的持久化与查询。写操作成功后发布领域事件
+ * Persistence and query for access rules (`sys_access_rule`). After successful writes, publishes domain events
  * （[SysAccessRuleInserted] / [SysAccessRuleUpdated] / [SysAccessRuleDeleted] / [SysAccessRuleBatchDeleted]），
- * 由各缓存通过 `@TransactionalEventListener(AFTER_COMMIT)` 订阅并自行刷新。
+ * which caches subscribe to via `@TransactionalEventListener(AFTER_COMMIT)` to refresh themselves.
  *
- * 这层不再直接持有任何 cache 句柄（除了写前唯一性预检需要的 [SysAccessRuleHashCache]）。
+ * This layer no longer holds any cache handles directly (except [SysAccessRuleHashCache] needed for the pre-write uniqueness check).
  *
  * @author K
  * @author AI: Cursor
@@ -66,12 +66,12 @@ open class SysAccessRuleService(
         dao.searchAs(Criteria.and(SysAccessRule::systemCode eq systemCode))
 
     /**
-     * 仅更新启用标记；成功后发布 [SysAccessRuleUpdated]（维度键即原维度，订阅方据此刷新 IP 缓存）。
+     * Update only the enabled flag; on success publishes [SysAccessRuleUpdated] (dimension keys are the original ones; subscribers refresh the IP cache accordingly).
      */
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
         val existing = dao.get(id) ?: run {
-            log.error("更新id为${id}的访问规则的启用状态时，记录不存在！")
+            log.error("Cannot update active state of access rule id=$id: record does not exist!")
             return false
         }
         val accessRule = SysAccessRule {
@@ -81,8 +81,8 @@ open class SysAccessRuleService(
         return completeCrudUpdate(
             success = dao.update(accessRule),
             log = log,
-            successMessage = "更新id为${id}的访问规则的启用状态为${active}。",
-            failureMessage = "更新id为${id}的访问规则的启用状态为${active}失败！",
+            successMessage = "Updated access rule id=$id active=$active.",
+            failureMessage = "Failed to update access rule id=$id active=$active!",
         ) {
             eventPublisher.publishEvent(
                 SysAccessRuleUpdated(
@@ -107,7 +107,7 @@ open class SysAccessRuleService(
         }
 
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的访问规则。") {
+        completeCrudInsert(log, "Inserted access rule id=$id.") {
             val rule = dao.get(id) ?: return@completeCrudInsert
             eventPublisher.publishEvent(
                 SysAccessRuleInserted(
@@ -121,17 +121,17 @@ open class SysAccessRuleService(
     }
 
     /**
-     * 更新访问规则；成功后发布 [SysAccessRuleUpdated]，订阅方据 `dimensionChanged` 自行处理旧维度刷新。
+     * Update an access rule; on success publishes [SysAccessRuleUpdated] and subscribers handle old-dimension refresh based on `dimensionChanged`.
      */
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "访问规则")
+        val id = requireStringId(any, "access rule")
         val before = dao.get(id)
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的访问规则。",
-            failureMessage = "更新id为${id}的访问规则失败！",
+            successMessage = "Updated access rule id=$id.",
+            failureMessage = "Failed to update access rule id=$id!",
         ) {
             val after = dao.get(id) ?: return@completeCrudUpdate
             eventPublisher.publishEvent(
@@ -147,19 +147,19 @@ open class SysAccessRuleService(
     }
 
     /**
-     * 按主键删除访问规则；成功后发布 [SysAccessRuleDeleted]。
+     * Delete an access rule by primary key; on success publishes [SysAccessRuleDeleted].
      */
     @Transactional
     override fun deleteById(id: String): Boolean {
         val existing = dao.get(id) ?: run {
-            log.warn("删除id为${id}的访问规则时，发现其已不存在！")
+            log.warn("Access rule id=$id no longer exists when attempting delete!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的访问规则。",
-            failureMessage = "删除id为${id}的访问规则失败！",
+            successMessage = "Deleted access rule id=$id.",
+            failureMessage = "Failed to delete access rule id=$id!",
         ) {
             eventPublisher.publishEvent(
                 SysAccessRuleDeleted(
@@ -172,7 +172,7 @@ open class SysAccessRuleService(
     }
 
     /**
-     * 批量删除访问规则；若有成功删除行，则发布 [SysAccessRuleBatchDeleted] 携带所有受影响维度。
+     * Batch delete access rules; if any rows are deleted, publishes [SysAccessRuleBatchDeleted] carrying all affected dimensions.
      */
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {

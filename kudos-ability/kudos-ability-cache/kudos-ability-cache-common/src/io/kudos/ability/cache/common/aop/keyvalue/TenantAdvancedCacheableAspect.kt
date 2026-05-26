@@ -13,13 +13,14 @@ import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
 
 /**
- * 租户高级缓存切面（hash 结构 + TTL）。
+ * Advanced tenant cache aspect (hash structure + TTL).
  *
- * 与普通 `@Cacheable` 的差异：用 [IRemoteCacheProcessor] 走 Redis hash 结构，
- * 一个 (cacheKey, dataKey) 二元组对应一个缓存项，且支持单项 TTL。
- * `cacheKey` 自动追加租户 id 后缀实现多租户隔离。
+ * Difference from a plain `@Cacheable`: uses [IRemoteCacheProcessor] to go through a Redis hash structure where each
+ * (cacheKey, dataKey) tuple maps to one cache entry, with per-entry TTL support.
+ * `cacheKey` automatically appends a tenant id suffix to enforce multi-tenant isolation.
  *
- * `remoteCacheProcess` 缺失时静默 proceed（注入设为 required=false），让上层应用没引入远程缓存实现时仍能启动。
+ * When `remoteCacheProcess` is missing, the aspect silently proceeds (the injection is `required=false`), so upper-layer
+ * applications can still start without a remote cache implementation.
  *
  * @author K
  * @since 1.0.0
@@ -27,15 +28,16 @@ import org.springframework.stereotype.Component
 @Aspect
 @Lazy(false)
 @Component
-@Order(0) // 单条 Cacheable 类切面，与其他 Cacheable 注解互斥，相对顺序不关键；显式标 0 避免与 Spring 默认 LOWEST_PRECEDENCE 混。
+@Order(0) // Single-record Cacheable-class aspect; mutually exclusive with other Cacheable annotations, so the relative
+          // order is not critical. Explicitly marked 0 to avoid clashing with Spring's default LOWEST_PRECEDENCE.
 class TenantAdvancedCacheableAspect {
 
-    /** 远程缓存处理器；为 null 时切面降级为无操作 */
+    /** Remote cache processor; the aspect degrades to a no-op when null. */
     @Autowired(required = false)
     private val remoteCacheProcess: IRemoteCacheProcessor? = null
 
     /**
-     * 定义切入点
+     * Defines the pointcut.
      *
      * @author K
      * @since 1.0.0
@@ -45,12 +47,14 @@ class TenantAdvancedCacheableAspect {
     }
 
     /**
-     * 主流程：从 hash 结构取 (cacheKey, dataKey) 命中即返回；miss 时 proceed 后写回（带 TTL）。
+     * Main flow: fetch (cacheKey, dataKey) from the hash structure and return on hit; on miss, proceed and write back
+     * (with TTL).
      *
-     * `cacheKey` 拼上当前租户 id 实现租户隔离；空结果不写回，避免缓存"无意义的 null"占位。
+     * `cacheKey` is appended with the current tenant id to enforce tenant isolation; empty results are not written back,
+     * to avoid caching "meaningless null" placeholders.
      *
-     * @param joinPoint 切入点
-     * @return 命中或方法执行结果
+     * @param joinPoint join point
+     * @return cache hit value or method execution result
      * @author K
      * @since 1.0.0
      */
@@ -66,7 +70,7 @@ class TenantAdvancedCacheableAspect {
         val dataKey = cacheable.dataKey
         val timeOut = cacheable.timeOut
         remoteCacheProcess.getCacheData(cacheKey, dataKey)?.let { return it }
-        //加载数据，并存入到hash里
+        // Load the data and store it into the hash.
         return joinPoint.proceed()?.also {
             remoteCacheProcess.writeCacheData(cacheKey, dataKey, it, timeOut)
         }

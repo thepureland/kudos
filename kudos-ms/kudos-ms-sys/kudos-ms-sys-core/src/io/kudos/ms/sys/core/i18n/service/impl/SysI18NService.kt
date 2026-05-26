@@ -23,7 +23,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 国际化业务
+ * Business service for i18n entries.
  *
  * @author K
  * @author AI: Cursor
@@ -82,7 +82,7 @@ open class SysI18NService(
     @Transactional
     override fun batchSaveOrUpdate(i18ns: List<SysI18nFormUpdate>): Int {
         val count = i18ns.count(::saveOrUpdateI18n)
-        log.debug("批量保存或更新国际化内容，期望处理${i18ns.size}条，实际处理${count}条。")
+        log.debug("Batch save or update of i18n entries: expected ${i18ns.size}, actually processed $count.")
         return count
     }
 
@@ -95,8 +95,8 @@ open class SysI18NService(
         return completeCrudUpdate(
             success = dao.update(i18n),
             log = log,
-            successMessage = "更新id为${id}的国际化内容的启用状态为${active}。",
-            failureMessage = "更新id为${id}的国际化内容的启用状态为${active}失败！",
+            successMessage = "Updated active status of i18n entry with id $id to $active.",
+            failureMessage = "Failed to update active status of i18n entry with id $id to $active!",
         ) {
             eventPublisher.publishEvent(SysI18nUpdated(id = id))
         }
@@ -105,7 +105,7 @@ open class SysI18NService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的国际化内容。") {
+        completeCrudInsert(log, "Inserted i18n entry with id $id.") {
             eventPublisher.publishEvent(SysI18nInserted(id = id))
         }
         return id
@@ -113,12 +113,12 @@ open class SysI18NService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "国际化内容")
+        val id = requireStringId(any, "i18n entry")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的国际化内容。",
-            failureMessage = "更新id为${id}的国际化内容失败！",
+            successMessage = "Updated i18n entry with id $id.",
+            failureMessage = "Failed to update i18n entry with id $id!",
         ) {
             eventPublisher.publishEvent(SysI18nUpdated(id = id))
         }
@@ -127,14 +127,14 @@ open class SysI18NService(
     @Transactional
     override fun deleteById(id: String): Boolean {
         if (dao.get(id) == null) {
-            log.warn("删除id为${id}的国际化内容时，发现其已不存在！")
+            log.warn("Tried to delete i18n entry with id $id, but it no longer exists!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的国际化内容。",
-            failureMessage = "删除id为${id}的国际化内容失败！",
+            successMessage = "Deleted i18n entry with id $id.",
+            failureMessage = "Failed to delete i18n entry with id $id!",
         ) {
             eventPublisher.publishEvent(SysI18nDeleted(id = id))
         }
@@ -143,7 +143,7 @@ open class SysI18NService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
-        log.debug("批量删除国际化内容，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete of i18n entries: expected ${ids.size}, actually deleted $count.")
         if (count > 0) {
             eventPublisher.publishEvent(SysI18nBatchDeleted(ids = ids))
         }
@@ -151,28 +151,28 @@ open class SysI18NService(
     }
 
     /**
-     * 标准化命名空间和 key：namespace 为空时退化为 `i18nTypeDictCode`（即把"类型"当默认命名空间）。
+     * Normalize namespace and key: when namespace is blank, fall back to `i18nTypeDictCode` (i.e. use the "type" as the default namespace).
      *
-     * @param payload 表单入参
-     * @return `(namespace, key)` 对
-     * @throws IllegalArgumentException key 或 i18nTypeDictCode 为空时
+     * @param payload form input
+     * @return `(namespace, key)` pair
+     * @throws IllegalArgumentException when key or i18nTypeDictCode is null
      * @author K
      * @since 1.0.0
      */
     private fun resolveNamespaceAndKey(payload: SysI18nFormUpdate): Pair<String, String> {
-        val key = requireNotNull(payload.key) { "key不能为空。" }
-        val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "i18nTypeDictCode不能为空。" }
+        val key = requireNotNull(payload.key) { "key must not be null." }
+        val i18nTypeDictCode = requireNotNull(payload.i18nTypeDictCode) { "i18nTypeDictCode must not be null." }
         val namespace = payload.namespace.takeIf { it.isNotBlank() } ?: i18nTypeDictCode
         return namespace to key
     }
 
     /**
-     * upsert 入口：根据 `form.id` 是否为空切换"insert + 发 Inserted 事件" 或 "update + 发 Updated 事件"。
+     * Upsert entry point: based on whether `form.id` is blank, switches between "insert + publish Inserted event" and "update + publish Updated event".
      *
-     * 注意：update 路径成功时才发事件，否则不发——避免下游基于事件做缓存失效却没真改库。
+     * Note: the update path publishes the event only on success, to avoid downstream cache invalidations triggered by events that did not actually change the database.
      *
-     * @param form 入参（含可选 id）
-     * @return 是否成功；insert 路径只要不抛异常即返回 true
+     * @param form input (with optional id)
+     * @return whether the operation succeeded; the insert path returns true as long as no exception is thrown
      * @author K
      * @since 1.0.0
      */
@@ -187,34 +187,34 @@ open class SysI18NService(
         }
 
     /**
-     * 把 [SysI18nFormUpdate] 表单映射成 PO [SysI18n]：
-     * - creating=false 时强制要求 id 非空（更新场景必须知道目标行）
-     * - 其余字段统一校验非空，error message 区分"新增/更新"语境便于运维定位
+     * Map [SysI18nFormUpdate] to PO [SysI18n]:
+     * - when creating=false, id must be non-null (update needs to know the target row)
+     * - all other fields are uniformly validated to be non-null; error messages distinguish "insert/update" context to help with troubleshooting
      *
-     * @param form 表单入参
-     * @param creating true=新增场景，false=更新场景
-     * @return PO 对象
-     * @throws IllegalArgumentException 必填字段为空时
+     * @param form form input
+     * @param creating true=insert case, false=update case
+     * @return PO object
+     * @throws IllegalArgumentException when a required field is null
      * @author K
      * @since 1.0.0
      */
     private fun toI18n(form: SysI18nFormUpdate, creating: Boolean): SysI18n {
-        val operation = if (creating) "新增" else "更新"
+        val operation = if (creating) "insert" else "update"
         val (namespace, key) = resolveNamespaceAndKey(form)
         return SysI18n {
             if (!creating) {
-                this.id = requireNotNull(form.id) { "更新国际化内容时，id不能为空。" }
+                this.id = requireNotNull(form.id) { "id must not be null when updating an i18n entry." }
             }
-            this.locale = requireNotNull(form.locale) { "${operation}国际化内容时，locale不能为空。" }
+            this.locale = requireNotNull(form.locale) { "locale must not be null when $operation of an i18n entry." }
             this.atomicServiceCode = requireNotNull(form.atomicServiceCode) {
-                "${operation}国际化内容时，atomicServiceCode不能为空。"
+                "atomicServiceCode must not be null when $operation of an i18n entry."
             }
             this.i18nTypeDictCode = requireNotNull(form.i18nTypeDictCode) {
-                "${operation}国际化内容时，i18nTypeDictCode不能为空。"
+                "i18nTypeDictCode must not be null when $operation of an i18n entry."
             }
             this.namespace = namespace
             this.key = key
-            this.value = requireNotNull(form.value) { "${operation}国际化内容时，value不能为空。" }
+            this.value = requireNotNull(form.value) { "value must not be null when $operation of an i18n entry." }
             this.remark = form.remark
         }
     }

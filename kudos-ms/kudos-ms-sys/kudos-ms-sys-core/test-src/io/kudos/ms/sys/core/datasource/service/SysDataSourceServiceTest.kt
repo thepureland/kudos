@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysDataSourceService
  *
- * 测试数据来源：`SysDataSourceServiceTest.sql`
+ * Test data source: `SysDataSourceServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -39,7 +39,7 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
     private val seededSubSystemCode = "svc-subsys-ds-test-1_7618"
     private val seededMicroServiceCode = "svc-ms-ds-test-1_7618"
 
-    /** 按主键调用 `get(id)` 能取到 PO，且 `id` 与主键列一致。 */
+    /** Calling `get(id)` by primary key returns the PO, and `id` matches the primary key column. */
     @Test
     fun get_byId_primaryKey_entityIdEqualsId() {
         val row = sysDataSourceService.get(seededDataSourceId)
@@ -47,7 +47,7 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededDataSourceId, row.id)
     }
 
-    /** `get(id, SysDataSourceCacheEntry::class)` 与 `getDataSourceFromCache(id)` 结果一致，且走 Hash 缓存前需 `reloadAll` 与测试 SQL 对齐。 */
+    /** `get(id, SysDataSourceCacheEntry::class)` and `getDataSourceFromCache(id)` return consistent results; the hash cache must be `reloadAll`-ed beforehand to align with the test SQL. */
     @Test
     fun get_withCacheEntryReturnType_delegatesToHashCache() {
         sysDataSourceHashCache.reloadAll(clear = true)
@@ -59,7 +59,7 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededDataSourceId, fromGet.id)
     }
 
-    /** 按主键从缓存读取 [SysDataSourceCacheEntry]，校验 id、tenantId。 */
+    /** Reads [SysDataSourceCacheEntry] from cache by primary key and verifies id and tenantId. */
     @Test
     fun getDataSourceFromCache_byId() {
         sysDataSourceHashCache.reloadAll(clear = true)
@@ -69,7 +69,7 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededTenantId, entry.tenantId)
     }
 
-    /** 按租户 + 子系统 + 微服务三条件从缓存查列表，应包含种子数据源。 */
+    /** Querying the cache list by tenant + sub-system + microservice should include the seeded data source. */
     @Test
     fun getDataSourcesFromCache() {
         sysDataSourceHashCache.reloadAll(clear = true)
@@ -82,7 +82,7 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(list.any { it.id == seededDataSourceId })
     }
 
-    /** 两参 `getDataSourceFromCache(tenantId, microServiceCode)`（内部 subSystem=null）能命中种子行。 */
+    /** Two-arg `getDataSourceFromCache(tenantId, microServiceCode)` (internal subSystem=null) hits the seeded row. */
     @Test
     fun getDataSourceFromCache_byTenantAndAtomicMicroServiceCode() {
         sysDataSourceHashCache.reloadAll(clear = true)
@@ -91,7 +91,7 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededDataSourceId, entry.id)
     }
 
-    /** 详情 [SysDataSourceDetail] 在 Service 层补充 `tenantName`（来自租户 API）。 */
+    /** [SysDataSourceDetail] is enriched at the service layer with `tenantName` (from tenant API). */
     @Test
     fun getDetail_tenantNamePopulated() {
         val detail = sysDataSourceService.get(seededDataSourceId, SysDataSourceDetail::class)
@@ -100,34 +100,34 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals("svc-tenant-ds-test-1", detail.tenantName)
     }
 
-    /** 按租户 id 走 DAO 条件查询 [SysDataSourceRow]，应包含种子行。 */
+    /** Conditional DAO query of [SysDataSourceRow] by tenant id should include the seeded row. */
     @Test
     fun getDataSourcesByTenantId() {
         val dataSources = sysDataSourceService.getDataSourcesByTenantId(seededTenantId)
         assertTrue(dataSources.any { it.id == seededDataSourceId })
     }
 
-    /** 按子系统编码走 DAO 条件查询。 */
+    /** Conditional DAO query by sub-system code. */
     @Test
     fun getDataSourcesBySubSystemCode() {
         val dataSources = sysDataSourceService.getDataSourcesBySubSystemCode(seededSubSystemCode)
         assertTrue(dataSources.any { it.subSystemCode == seededSubSystemCode })
     }
 
-    /** 启用状态更新成功并可写回 true（验证写库 + 缓存同步链路）。 */
+    /** Active flag is updated successfully and toggles back to true (verifying DB write + cache sync chain). */
     @Test
     fun updateActive() {
         assertTrue(sysDataSourceService.updateActive(seededDataSourceId, false))
         assertTrue(sysDataSourceService.updateActive(seededDataSourceId, true))
     }
 
-    /** 删除不存在的主键时返回 false（与先查再删的实现一致）。 */
+    /** Returns false when deleting a non-existent primary key (consistent with the check-then-delete implementation). */
     @Test
     fun deleteById_returnsFalseWhenRowMissing() {
         assertFalse(sysDataSourceService.deleteById("00000000-0000-0000-0000-000000000001"))
     }
 
-    /** 插入唯一 (tenant, subSystem, microService) 后按 id 删除，库中不再可查。 */
+    /** After inserting a unique (tenant, subSystem, microService) row and deleting by id, it can no longer be queried. */
     @Test
     fun deleteById_afterInsert_removesRow() {
         val unique = UUID.randomUUID().toString()
@@ -149,7 +149,7 @@ class SysDataSourceServiceTest : RdbAndRedisCacheTestBase() {
         assertNull(sysDataSourceService.get(id))
     }
 
-    /** 批量删除两条新插入记录，返回删除条数 2 且主键均不可再查。 */
+    /** Batch deletes two newly inserted records, returns delete count 2, and neither key can be queried again. */
     @Test
     fun batchDelete_deletesInsertedRows() {
         val u1 = UUID.randomUUID().toString()

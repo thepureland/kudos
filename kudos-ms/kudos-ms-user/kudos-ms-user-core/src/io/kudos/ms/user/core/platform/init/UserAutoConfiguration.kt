@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration
 
 
 /**
- * user原子服务自动配置类
+ * User atomic service auto-configuration class.
  *
  * @author K
  * @since 1.0.0

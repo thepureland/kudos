@@ -20,11 +20,11 @@ import java.time.LocalTime
 import java.time.ZoneId
 
 /**
- * 集中放置 [JsonKit] 用到的两个 [Json] 实例和共享的序列化器。
+ * Centralized holder for the two [Json] instances and shared serializers used by [JsonKit].
  *
- * 设计为 [JsonKit] 的实现细节，避免外部直接依赖此对象——通过 [JsonKit.defaultJson] /
- * [JsonKit.preserveJson] 访问。声明为 `@PublishedApi internal` 是为了让 [JsonKit] 的
- * inline 函数能跨文件访问。
+ * Treated as an implementation detail of [JsonKit]; do not depend on this object directly --
+ * access it via [JsonKit.defaultJson] / [JsonKit.preserveJson]. Declared as `@PublishedApi internal`
+ * so that the inline functions in [JsonKit] can reach it across files.
  *
  * @author K
  * @since 1.0.0
@@ -33,8 +33,8 @@ import java.time.ZoneId
 internal object JsonAdapters {
 
     /**
-     * LocalDate / LocalTime / LocalDateTime 的序列化模块，供 [defaultJson] 与 [preserveJson] 共用，
-     * 避免配置漂移。
+     * Serializer module for LocalDate / LocalTime / LocalDateTime, shared by [defaultJson] and [preserveJson]
+     * to avoid configuration drift.
      */
     private val javaTimeSerializersModule = SerializersModule {
         contextual(LocalDate::class, LocalDateSerializer)
@@ -43,22 +43,24 @@ internal object JsonAdapters {
     }
 
     /**
-     * 用户通过 [registerSerializersModule] 注册的额外 SerializersModule。
-     * 主要用于 polymorphic 配置——sealed 层级 kotlinx 自动处理无需注册；
-     * open 多态需要在这里显式 `polymorphic(Base) { subclass(...) }`。
+     * Additional SerializersModules registered by the user via [registerSerializersModule].
+     * Primarily used for polymorphic configuration -- sealed hierarchies are handled automatically by
+     * kotlinx and need no registration; open polymorphism requires an explicit
+     * `polymorphic(Base) { subclass(...) }` here.
      */
     private val customSerializersModules = mutableListOf<SerializersModule>()
 
     /**
-     * Json 实例构建用的锁。所有 [registerSerializersModule] 注册与 lazy 构建在同一把锁下，
-     * 保证：注册一定对后续读可见、Json 实例对每个状态最多构建一次。
+     * Lock used when building Json instances. All [registerSerializersModule] calls and lazy builds happen
+     * under the same lock, guaranteeing that registrations are visible to subsequent reads and that each
+     * Json instance is built at most once per state.
      */
     private val rebuildLock = Any()
 
     @Volatile private var cachedDefaultJson: Json? = null
     @Volatile private var cachedPreserveJson: Json? = null
 
-    /** 默认 Json 引擎：忽略未知字段，不输出 null，支持 LocalDate */
+    /** Default Json engine: ignores unknown fields, omits nulls, supports LocalDate. */
     @PublishedApi
     internal val defaultJson: Json
         get() {
@@ -68,7 +70,7 @@ internal object JsonAdapters {
             }
         }
 
-    /** 保留 null 值 Json 引擎 */
+    /** Json engine that preserves null values. */
     @PublishedApi
     internal val preserveJson: Json
         get() {
@@ -79,11 +81,12 @@ internal object JsonAdapters {
         }
 
     /**
-     * 注册额外 SerializersModule（典型用法：polymorphic 注册）。
+     * Registers an additional SerializersModule (typically used for polymorphic registration).
      *
-     * 注册后已缓存的 Json 实例会被丢弃，下一次访问 [defaultJson] / [preserveJson]
-     * 时按新配置重建。**应当在应用启动阶段、首次走 JSON 序列化之前调用**——
-     * 在运行中切换可能让正在进行的解码遇到不同模块，行为不定义。
+     * After registration the cached Json instances are discarded and rebuilt with the new configuration
+     * on the next access to [defaultJson] / [preserveJson]. **Call this during application start-up,
+     * before the first JSON serialization** -- swapping modules at runtime may let in-flight decoding
+     * see different modules and the behavior is undefined.
      */
     fun registerSerializersModule(module: SerializersModule) {
         synchronized(rebuildLock) {
@@ -94,23 +97,25 @@ internal object JsonAdapters {
     }
 
     /**
-     * 把内建 java.time module 与用户注册的所有自定义 module 合并后构造 [Json] 实例。
-     * `explicitNulls` 控制 "JSON 中显式 null 时是否退回属性默认值"，由两个缓存路径（default / preserve）共用本方法。
+     * Builds a [Json] instance by merging the built-in java.time module with all user-registered modules.
+     * `explicitNulls` controls "whether to fall back to property defaults when JSON contains an explicit
+     * null"; this method is shared by both cache paths (default / preserve).
      *
-     * @param explicitNulls true 保留显式 null；false 退回默认值
-     * @return 配置完毕的 [Json]
+     * @param explicitNulls true to preserve explicit nulls; false to fall back to defaults
+     * @return the configured [Json]
      * @author K
      * @since 1.0.0
      */
     private fun buildJson(explicitNulls: Boolean): Json {
-        // 把内建的 java.time module 和用户注册的所有 module 合并起来
+        // Merge the built-in java.time module with all user-registered modules.
         val combinedModule = SerializersModule {
             include(javaTimeSerializersModule)
             customSerializersModules.forEach { include(it) }
         }
         return Json {
             encodeDefaults = true
-            // JSON 中显式 null 且属性有默认值时，用默认值替代（如 "id":null -> id=""）
+            // When JSON contains explicit null and the property has a default, substitute the default
+            // (e.g. "id":null -> id="").
             coerceInputValues = true
             serializersModule = combinedModule
             ignoreUnknownKeys = true
@@ -120,7 +125,7 @@ internal object JsonAdapters {
 }
 
 // ============================================================
-// 时间类型序列化器：支持 ISO 字符串或 epoch 毫秒数字
+// Time-type serializers: accept ISO strings or epoch-millisecond numbers
 // ============================================================
 
 private object LocalDateSerializer : KSerializer<LocalDate> {

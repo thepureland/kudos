@@ -7,7 +7,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 角色-用户关系数据库表-实体关联对象
+ * Role-User relation database table-entity association object
  *
  * @author K
  * @author AI: Cursor
@@ -15,28 +15,28 @@ import org.ktorm.schema.varchar
  */
 object AuthRoleUsers : StringIdTable<AuthRoleUser>("auth_role_user") {
 
-    /** 角色id */
+    /** Role id */
     var roleId = varchar("role_id").bindTo { it.roleId }
 
-    /** 用户id */
+    /** User id */
     var userId = varchar("user_id").bindTo { it.userId }
 
-    /** 创建者id */
+    /** Creator id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 创建者名称 */
+    /** Creator name */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 创建时间 */
+    /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新者id */
+    /** Updater id */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 更新者名称 */
+    /** Updater name */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 

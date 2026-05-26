@@ -34,7 +34,7 @@ import javafx.scene.control.SkinBase
 import javafx.scene.layout.Pane
 
 /**
- * Wizard 内部节点遍历工具。
+ * Wizard internal node-traversal utility.
  *
  * @author K
  * @author AI: Codex

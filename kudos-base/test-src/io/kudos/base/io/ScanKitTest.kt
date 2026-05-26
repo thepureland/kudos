@@ -12,7 +12,7 @@ import kotlin.test.Test
 
 
 /**
- * ScanKit测试用例
+ * ScanKit test cases.
  *
  * @author K
  * @since 1.0.0
@@ -27,71 +27,71 @@ internal class ScanKitTest {
         val timeMillis = measureTimeMillis {
             classes = ScanKit.findClassesWithAnnotation(basePackage, annoClass)
         }
-        println("findClassesWithAnnotation-1耗时${timeMillis}ms")
+        println("findClassesWithAnnotation-1 took ${timeMillis}ms")
         assert(classes.contains(Person::class))
     }
 
     @Test
     fun findSubclassesOf() {
-        // 类
+        // class
         var basePackage = "io.kudos.base"
         val clazz = RuntimeException::class
         var classes: List<KClass<*>>
         var timeMillis = measureTimeMillis {
             classes = ScanKit.findSubclassesOf(basePackage, clazz)
         }
-        println("findSubclassesOf-1耗时${timeMillis}ms")
+        println("findSubclassesOf-1 took ${timeMillis}ms")
         assert(classes.contains(ObjectNotFoundException::class))
 
-        // 接口,不通过
+        // interface, should not pass
         basePackage = "io.kudos.base"
         val iClazz = ILogCreator::class
         timeMillis = measureTimeMillis {
             classes = ScanKit.findSubclassesOf(basePackage, iClazz)
         }
-        println("findSubclassesOf-2耗时${timeMillis}ms")
+        println("findSubclassesOf-2 took ${timeMillis}ms")
         assert(!classes.contains(Slf4jLoggerCreator::class))
     }
 
     @Test
     fun findImplementations() {
-        // 接口
+        // interface
         var basePackage = "io.kudos.base"
         val iClazz = ILogCreator::class
         var classes: List<KClass<*>>
         var timeMillis = measureTimeMillis {
             classes = ScanKit.findImplementations(basePackage, iClazz)
         }
-        println("findImplementations-1耗时${timeMillis}ms")
+        println("findImplementations-1 took ${timeMillis}ms")
         assert(classes.contains(Slf4jLoggerCreator::class))
 
-        // 类,不通过
+        // class, should not pass
         basePackage = "io.kudos.base"
         val clazz = RuntimeException::class
         timeMillis = measureTimeMillis {
             classes = ScanKit.findImplementations(basePackage, clazz)
         }
-        println("findImplementations-2耗时${timeMillis}ms")
+        println("findImplementations-2 took ${timeMillis}ms")
         assert(!classes.contains(ObjectNotFoundException::class))
     }
 
     @Test
     fun findClassesMatching() {
-        // 递归
+        // recursive
         val basePackage = "io.kudos.base"
         val pattern = "V.+Kit"
         var classes: List<KClass<*>>
         var timeMillis = measureTimeMillis {
             classes = ScanKit.findClassesMatching(basePackage, pattern)
         }
-        println("findClassesMatching-1耗时${timeMillis}ms")
+        println("findClassesMatching-1 took ${timeMillis}ms")
         assert(classes.contains(ValidationKit::class))
 
-        // 不递归
+        // non-recursive
         timeMillis = measureTimeMillis {
             classes = ScanKit.findClassesMatching(basePackage, pattern, false)
         }
-        println("findClassesMatching-2耗时${timeMillis}ms")
+        println("findClassesMatching-2 took ${timeMillis}ms")
         assert(!classes.contains(ValidationKit::class))
     }
 
@@ -101,7 +101,7 @@ internal class ScanKitTest {
         val timeMillis = measureTimeMillis {
             paths = ScanKit.findResourcesMatching("", "logo.*")
         }
-        println("findResourcesMatching耗时${timeMillis}ms")
+        println("findResourcesMatching took ${timeMillis}ms")
         assert(paths.any { it.endsWith(".png") })
     }
 }

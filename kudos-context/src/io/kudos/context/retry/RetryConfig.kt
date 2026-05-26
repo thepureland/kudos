@@ -3,45 +3,45 @@ package io.kudos.context.retry
 import java.io.File
 
 /**
- * 失败数据重试框架的路径配置。
+ * Path configuration for the failed-data retry framework.
  *
- * **重构动因**：原 [IFailedDataHandler.filePath] 与下游 `StreamProducerExceptionHandler.filePath()`
- * 各自硬编码 `/var/data/failed`——
- * - 在 Windows 上路径无效
- * - 在没有挂载 volume 的容器里不可写
- * - 两处独立硬编码，修改时容易漏改一处
+ * **Refactoring motivation**: previously, [IFailedDataHandler.filePath] and the downstream `StreamProducerExceptionHandler.filePath()`
+ * each hard-coded `/var/data/failed` —
+ * - invalid path on Windows
+ * - not writable in containers without a mounted volume
+ * - two independent hard-codes, easy to miss one when changing
  *
- * 现统一从此对象解析。优先级：
- * 1. 系统属性 `kudos.retry.failed-data-path`
- * 2. 环境变量 `KUDOS_RETRY_FAILED_DATA_PATH`
- * 3. 默认 `${java.io.tmpdir}/kudos-failed-data`（跨平台安全）
+ * They now resolve through this object uniformly. Priority order:
+ * 1. System property `kudos.retry.failed-data-path`
+ * 2. Environment variable `KUDOS_RETRY_FAILED_DATA_PATH`
+ * 3. Default `${java.io.tmpdir}/kudos-failed-data` (cross-platform safe)
  *
- * 解析结果只读，应用启动后不会变（`by lazy`，首次访问后冻结）。
+ * The resolved value is read-only and does not change after application startup (`by lazy`, frozen after first access).
  *
  * @author K
  * @since 1.0.0
  */
 object RetryConfig {
 
-    /** 系统属性 key */
+    /** System property key */
     const val SYS_PROP_BASE_PATH = "kudos.retry.failed-data-path"
 
-    /** 环境变量 key */
+    /** Environment variable key */
     const val ENV_VAR_BASE_PATH = "KUDOS_RETRY_FAILED_DATA_PATH"
 
     private const val DEFAULT_DIR_NAME = "kudos-failed-data"
 
     /**
-     * 失败数据持久化的根目录。
+     * Root directory for failed-data persistence.
      *
-     * 注意此处用 `by lazy`：首次访问时按上述优先级解析并缓存，**后续修改系统属性
-     * 或环境变量不会生效**。这是有意的——确保整个 JVM 生命周期内路径一致。
-     * 测试需要切换路径时请走 [resolveBasePath] 直接调用。
+     * Note the use of `by lazy`: resolved by the priority order above on first access and cached afterward,
+     * so **later modifications to the system property or environment variable have no effect**. This is intentional — it keeps the path consistent for the entire JVM lifetime.
+     * When tests need to switch paths, call [resolveBasePath] directly.
      */
     val baseFailedDataPath: String by lazy { resolveBasePath() }
 
     /**
-     * 按当前优先级解析根目录（用于测试或显式刷新场景）。
+     * Resolves the root directory using the current priority order (for tests or explicit refresh scenarios).
      */
     internal fun resolveBasePath(): String {
         System.getProperty(SYS_PROP_BASE_PATH)?.takeIf { it.isNotBlank() }?.let { return it }
@@ -51,10 +51,10 @@ object RetryConfig {
     }
 
     /**
-     * 为指定原子服务构建持久化根目录。
+     * Builds the persistence root directory for a specific atomic service.
      *
-     * @param atomicServiceCode 原子服务编码，可为 null（如非 HTTP 请求线程上下文缺失）。
-     *                          null / 空白时用 `"default"` 作占位子目录，避免拼出 `.../null` 之类的脏路径。
+     * @param atomicServiceCode the atomic service code; may be null (e.g. non-HTTP request threads where the context is missing).
+     *                          When null or blank, the placeholder subdirectory `"default"` is used to avoid building a dirty path such as `.../null`.
      */
     fun pathFor(atomicServiceCode: String?): String {
         val service = atomicServiceCode?.takeIf { it.isNotBlank() } ?: "default"

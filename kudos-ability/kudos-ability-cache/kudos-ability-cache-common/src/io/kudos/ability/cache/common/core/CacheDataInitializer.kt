@@ -6,33 +6,33 @@ import org.springframework.beans.factory.config.BeanPostProcessor
 
 
 /**
- * 缓存数据初始化器
- * 
- * 用于在系统启动时加载所有配置为启动加载的缓存数据。
- * 
- * 核心功能：
- * 1. 收集缓存处理器：在Bean初始化后收集所有AbstractCacheHandler实例
- * 2. 延迟加载缓存：在所有单例Bean初始化完成后，加载配置为启动加载的缓存
- * 
- * 工作流程：
- * 1. Bean后处理：在postProcessAfterInitialization中收集所有缓存处理器
- * 2. 延迟初始化：实现SmartInitializingSingleton，在所有单例Bean初始化完成后执行
- * 3. 检查配置：遍历所有缓存处理器，检查是否配置了writeOnBoot=true
- * 4. 加载缓存：对于配置了启动加载的缓存，调用reloadAll(false)加载数据
- * 
- * 加载条件：
- * - 缓存配置存在（cacheConfig != null）
- * - 配置了启动加载（writeOnBoot == true）
- * 
- * 延迟加载原因：
- * - 确保数据库等依赖已初始化完成（如Flyway已执行）
- * - 避免在数据库未就绪时尝试加载缓存导致失败
- * - 保证所有Bean都已准备就绪
- * 
- * 注意事项：
- * - 只加载配置了writeOnBoot=true的缓存
- * - reloadAll(false)表示不清除现有缓存，直接加载
- * - 如果缓存配置不存在，会跳过该缓存处理器
+ * Cache data initializer.
+ *
+ * Loads, at system startup, the data for all caches configured to be loaded on boot.
+ *
+ * Core capabilities:
+ * 1. Collect cache handlers: gathers all AbstractCacheHandler instances after bean initialization.
+ * 2. Deferred cache loading: loads the boot-loaded caches after all singleton beans have been initialized.
+ *
+ * Workflow:
+ * 1. Bean post-processing: collects all cache handlers in postProcessAfterInitialization.
+ * 2. Deferred init: implements SmartInitializingSingleton, executed once all singleton beans are initialized.
+ * 3. Check configuration: iterates the handlers and checks whether writeOnBoot=true is configured.
+ * 4. Load caches: for caches with boot-load enabled, calls reloadAll(false) to load the data.
+ *
+ * Load conditions:
+ * - The cache configuration exists (cacheConfig != null).
+ * - Boot loading is configured (writeOnBoot == true).
+ *
+ * Why deferred:
+ * - Ensures dependencies such as the database are initialized (e.g. Flyway has run).
+ * - Avoids attempting to load the cache before the database is ready.
+ * - Ensures all beans are ready.
+ *
+ * Caveats:
+ * - Only caches configured with writeOnBoot=true are loaded.
+ * - reloadAll(false) means do not clear the existing cache, just load.
+ * - If the cache configuration does not exist, the handler is skipped.
  *
  * @author K
  * @since 1.0.0
@@ -42,13 +42,13 @@ class CacheDataInitializer : BeanPostProcessor, SmartInitializingSingleton {
     private var cacheHandlers = mutableListOf<AbstractCacheHandler<*>>()
 
     /**
-     * Bean初始化后的处理
-     * 
-     * 收集所有AbstractCacheHandler实例，用于后续的缓存数据加载。
-     * 
-     * @param bean Bean实例
-     * @param beanName Bean名称
-     * @return 处理后的Bean实例
+     * Post-initialization processing for beans.
+     *
+     * Collects every AbstractCacheHandler instance for later cache data loading.
+     *
+     * @param bean the bean instance
+     * @param beanName the bean name
+     * @return the processed bean instance
      */
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
         if (bean is AbstractCacheHandler<*>) {
@@ -58,31 +58,32 @@ class CacheDataInitializer : BeanPostProcessor, SmartInitializingSingleton {
     }
 
     /**
-     * 在所有单例Bean初始化完成后加载缓存数据
-     * 
-     * 遍历所有收集的缓存处理器，对于配置了启动加载的缓存，执行数据加载。
-     * 
-     * 工作流程：
-     * 1. 遍历缓存处理器：对每个收集的AbstractCacheHandler执行检查
-     * 2. 获取缓存配置：通过CacheKit获取缓存配置
-     * 3. 检查启动加载标志：如果writeOnBoot为true，执行加载
-     * 4. 加载缓存数据：调用reloadAll(false)加载数据（不清除现有缓存）
-     * 
-     * 延迟加载原因：
-     * - 确保数据库等依赖已初始化完成
-     * - 避免在Flyway等数据库初始化工具执行前加载缓存
-     * - 保证所有Bean都已准备就绪
-     * 
-     * 加载策略：
-     * - reloadAll(false)：不清除现有缓存，直接加载新数据
-     * - 如果缓存已存在，会被新数据覆盖
-     * 
-     * 注意事项：
-     * - 只加载配置了writeOnBoot=true的缓存
-     * - 如果缓存配置不存在，会跳过该处理器
-     * - 加载过程可能耗时，建议合理配置启动加载的缓存
+     * Loads cache data once all singleton beans are initialized.
+     *
+     * Iterates the collected handlers and, for caches with boot-load configured, performs the data load.
+     *
+     * Workflow:
+     * 1. Iterate handlers: check each collected AbstractCacheHandler.
+     * 2. Fetch cache configuration: via CacheKit.
+     * 3. Check the boot-load flag: if writeOnBoot is true, perform the load.
+     * 4. Load cache data: call reloadAll(false) to load (without clearing existing data).
+     *
+     * Why deferred:
+     * - Ensures dependencies such as the database are initialized.
+     * - Avoids loading the cache before tools such as Flyway have initialized the database.
+     * - Ensures all beans are ready.
+     *
+     * Loading strategy:
+     * - reloadAll(false): does not clear existing data; loads new data directly.
+     * - Existing cache entries are overwritten by the new data.
+     *
+     * Caveats:
+     * - Only caches configured with writeOnBoot=true are loaded.
+     * - Handlers whose cache config is missing are skipped.
+     * - Loading can be time-consuming; configure boot-loaded caches with that in mind.
      */
-    // 所有非懒加载的单例 bean 都实例化完成后，再加载缓存数据。防止类似flyway还未初始化数据库, 就可能有地方先去库里加载缓存的事情发生。
+    // Load cache data only after all non-lazy singleton beans have been instantiated. This prevents,
+    // for example, code from querying the database for cache data before Flyway has initialized the database.
     override fun afterSingletonsInstantiated() {
         cacheHandlers.forEach {
             val cacheConfig = KeyValueCacheKit.getCacheConfig(it.cacheName())

@@ -16,12 +16,12 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * 用户组ID列表（by user id）缓存处理器
+ * Cache handler for the list of group ids keyed by user id.
  *
- * 1.数据来源表：auth_group_user
- * 2.缓存各用户拥有的所有用户组ID列表
- * 3.缓存的key为：userId
- * 4.缓存的value为：用户组ID集合（List<String>）
+ * 1. Source table: auth_group_user
+ * 2. Caches the list of group ids that each user belongs to
+ * 3. Cache key: userId
+ * 4. Cache value: list of group ids (List<String>)
  *
  * @author K
  * @author AI: Codex
@@ -46,37 +46,37 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() 
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有用户的用户组ID！")
+            log.info("Cache disabled; not loading or caching group ids for all users!")
             return
         }
 
         val users = userAccountDao.searchActiveUsersForCache()
         val userIdToGroupIdsMap = authGroupUserDao.searchAllUserIdToGroupIdsForCache()
 
-        log.debug("从数据库加载了${users.size}条用户、用户组-用户关系分组${userIdToGroupIdsMap.size}。")
+        log.debug("Loaded ${users.size} users and ${userIdToGroupIdsMap.size} group-user groupings from DB.")
 
-        // 清除缓存
+        // Clear the cache.
         if (clear) {
             clear()
         }
 
-        // 缓存用户组ID列表
+        // Cache the group id lists.
         users.forEach { user ->
             val userId = user.id
             if (userId.isBlank()) return@forEach
             val groupIds = userIdToGroupIdsMap[userId] ?: emptyList()
             if (groupIds.isNotEmpty()) {
                 KeyValueCacheKit.put(CACHE_NAME, userId, groupIds)
-                log.debug("缓存了用户${userId}的${groupIds.size}条用户组ID。")
+                log.debug("Cached ${groupIds.size} group ids for user ${userId}.")
             }
         }
     }
 
     /**
-     * 根据用户ID从缓存中获取该用户拥有的所有用户组ID，如果缓存中不存在，则从数据库中加载，并回写缓存
+     * Get all group ids a user belongs to keyed by user id; on cache miss, load from DB and write back.
      *
-     * @param userId 用户ID
-     * @return Set<用户组ID>
+     * @param userId user id
+     * @return list of group ids
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -85,49 +85,49 @@ open class GroupIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() 
     )
     open fun getGroupIds(userId: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在用户${userId}的用户组ID，从数据库中加载...")
+            log.debug("Group ids for user ${userId} not in cache; loading from DB...")
         }
 
         val groupIds = authGroupUserDao.searchGroupIdsByUserId(userId)
-        log.debug("从数据库加载了用户${userId}的${groupIds.size}条用户组ID。")
+        log.debug("Loaded ${groupIds.size} group ids from DB for user ${userId}.")
         return groupIds.toList()
     }
 
     /**
-     * 用户-用户组关系变更后同步缓存
+     * Sync the cache after a user-group association changes.
      *
-     * @param userId 用户ID
+     * @param userId user id
      */
     open fun syncOnGroupUserChange(userId: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("用户${userId}的用户组关系变更后，同步${CACHE_NAME}缓存...")
+            log.debug("After user ${userId} group associations changed, syncing ${CACHE_NAME} cache...")
             evict(userId)
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<GroupIdsByUserIdCache>().getGroupIds(userId)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 批量用户-用户组关系变更后同步缓存
+     * Sync the cache after a batch of user-group associations changes.
      *
-     * @param userIds 用户ID集合
+     * @param userIds user id collection
      */
     open fun syncOnBatchGroupUserChange(userIds: Collection<String>) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("批量用户用户组关系变更后，同步${CACHE_NAME}缓存...")
+            log.debug("After batch user-group association change, syncing ${CACHE_NAME} cache...")
             userIds.forEach { userId ->
                 KeyValueCacheKit.evict(CACHE_NAME, userId)
                 if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<GroupIdsByUserIdCache>().getGroupIds(userId)
                 }
             }
-            log.debug("${CACHE_NAME}缓存同步完成，共影响${userIds.size}个用户。")
+            log.debug("${CACHE_NAME} cache sync complete; ${userIds.size} users affected.")
         }
     }
 
-    /** 用户删除后清掉该 userId 下的 groupId 列表。 */
+    /** Clear the group id list for the userId after a user delete. */
     private fun evictByUserId(userId: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         KeyValueCacheKit.evict(CACHE_NAME, userId)

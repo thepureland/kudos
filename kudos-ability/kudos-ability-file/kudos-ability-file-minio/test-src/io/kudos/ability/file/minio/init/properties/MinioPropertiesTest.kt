@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * MinIO 属性配置测试。
+ * Tests for MinIO property configuration.
  *
  * @author K
  * @author AI: Codex

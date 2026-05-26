@@ -10,16 +10,16 @@ import javax.crypto.spec.SecretKeySpec
 import kotlin.experimental.and
 
 /**
- * 谷歌动态验证器
+ * Google Authenticator dynamic verifier.
  *
  * @since 1.0.0
  */
 class GoogleAuthenticator {
     /**
-     * TOTP 验证时允许的“时间窗口”半径（每个窗口 30 秒）。
-     * 默认 3 表示前后各允许 3 个窗口的时钟漂移；Google 文档建议最大值 17。
+     * Radius of "time windows" allowed during TOTP verification (each window is 30 seconds).
+     * The default of 3 allows clock drift of 3 windows on either side; Google docs recommend a maximum of 17.
      */
-    var windowSize = 3 // default 3 - max 17 (from google docs)最多可偏移的时间
+    var windowSize = 3 // default 3 - max 17 (from google docs); maximum allowed time drift
 
         /**
          * set the windows size. This is an integer value representing the number of 30 second windows
@@ -66,11 +66,11 @@ class GoogleAuthenticator {
 
     companion object {
         // taken from Google pam docs - we probably don't need to mess with these
-        /** 共享密钥的字节长度（来自 Google pam 推荐值），Base32 编码后约 16 字符 */
+        /** Byte length of the shared secret (per Google pam recommendation); about 16 chars when Base32-encoded. */
         const val SECRET_SIZE = 10
-        /** SecureRandom 的初始化种子（Base64 编码），用于派生密钥生成器 */
+        /** Initialization seed for SecureRandom (Base64-encoded), used to derive the key generator. */
         const val SEED = "g8GjEvTbW5oVSV7avLBdwIHqGlUYNzKFI7izOF8GwLDVKs2m0QN7vxRs2im5MDaNCWGmcD2rvcZx"
-        /** 随机数发生器算法名 */
+        /** Random number generator algorithm name. */
         const val RANDOM_NUMBER_ALGORITHM = "SHA1PRNG"
 
         /**
@@ -111,17 +111,17 @@ class GoogleAuthenticator {
         }
 
         /**
-         * 按 RFC 6238 (TOTP) / RFC 4226 (HOTP) 计算指定时间窗口的 6 位动态码。
+         * Compute the 6-digit dynamic code for a given time window per RFC 6238 (TOTP) / RFC 4226 (HOTP).
          *
-         * 关键细节：`hash[i]` 直接 `toLong()` 会做符号扩展，必须先 `toInt() and 0xFF`
-         * 拼成无符号字节，否则当某个字节 ≥ 0x80 时上位会被污染，最终得出的数字
-         * 会与 Google Authenticator / Authy / 1Password 等标准客户端不一致。
+         * Key detail: calling `toLong()` on `hash[i]` directly will sign-extend; we must first do `toInt() and 0xFF`
+         * to assemble an unsigned byte. Otherwise, when a byte is >= 0x80, the high bits get polluted and the
+         * resulting code will not match standard clients (Google Authenticator / Authy / 1Password, etc.).
          *
-         * @param key 已经解码的共享密钥
-         * @param t 当前时间窗口序号（毫秒 / 1000 / 30）
-         * @return 6 位整数动态码（0..999999）
-         * @throws NoSuchAlgorithmException 当前 JDK 不支持 HmacSHA1 时
-         * @throws InvalidKeyException 密钥不可用于 HmacSHA1 初始化时
+         * @param key the decoded shared secret
+         * @param t the current time-window number (milliseconds / 1000 / 30)
+         * @return the 6-digit integer dynamic code (0..999999)
+         * @throws NoSuchAlgorithmException if the current JDK does not support HmacSHA1
+         * @throws InvalidKeyException if the key cannot be used to initialize HmacSHA1
          */
         @Throws(NoSuchAlgorithmException::class, InvalidKeyException::class)
         internal fun verifyCode(key: ByteArray, t: Long): Int {
@@ -139,12 +139,12 @@ class GoogleAuthenticator {
             mac.init(signKey)
             val hash = mac.doFinal(data)
             val offset: Int = hash[20 - 1].and(0xF).toInt()
-            // RFC 6238 dynamic truncation：取 offset 起 4 字节作为 31-bit 无符号整数。
-            // 注意：`hash[i].toLong()` 会做符号扩展，必须先 `.toInt() and 0xFF` 转成无符号字节再拼。
-            // 之前的写法 `hash[i].and(0xFF.toByte()).toLong()` 中 `0xFF.toByte()` 是 -1（仍是有符号字节），
-            // byte AND 等于 byte 本身，再 toLong 仍然 sign-extend——导致 byte ≥ 0x80 时上位被污染、
-            // 与所有标准 TOTP App（Google Authenticator / Authy / 1Password 等）算出的码不一致。
-            // bug 详见 PassportServiceTest.currentTotpCode 注释。
+            // RFC 6238 dynamic truncation: take 4 bytes starting from `offset` as a 31-bit unsigned integer.
+            // Note: `hash[i].toLong()` sign-extends; must first do `.toInt() and 0xFF` to obtain an unsigned byte before assembling.
+            // The previous form `hash[i].and(0xFF.toByte()).toLong()` is wrong because `0xFF.toByte()` is -1 (still a signed byte),
+            // byte AND yields the byte itself, and `toLong` still sign-extends -- so bytes >= 0x80 pollute the high bits,
+            // producing codes that do not match standard TOTP apps (Google Authenticator / Authy / 1Password, etc.).
+            // See the PassportServiceTest.currentTotpCode comment for details on the bug.
             val truncatedHash: Long =
                 ((hash[offset].toInt() and 0x7F).toLong() shl 24) or
                 ((hash[offset + 1].toInt() and 0xFF).toLong() shl 16) or

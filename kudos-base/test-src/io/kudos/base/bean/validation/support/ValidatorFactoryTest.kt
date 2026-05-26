@@ -13,7 +13,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * ValidatorFactory测试用例
+ * Test cases for ValidatorFactory.
  *
  * @author AI: cursor
  * @author K
@@ -23,7 +23,7 @@ internal class ValidatorFactoryTest {
 
     @BeforeTest
     fun clearCache() {
-        // 各 case 之间不共享缓存，避免相互干扰
+        // Do not share the cache across test cases to avoid interference
         ValidatorFactory.clearCacheForTest()
     }
 
@@ -103,7 +103,7 @@ internal class ValidatorFactoryTest {
             .getAnnotation(org.hibernate.validator.constraints.Range::class.java)
         if (annotation != null) {
             val validators = ValidatorFactory.getValidator(annotation, 25)
-            // Range约束会返回两个验证器（Min和Max）
+            // The Range constraint returns two validators (Min and Max)
             assertTrue(validators.size >= 2)
         }
     }
@@ -124,28 +124,28 @@ internal class ValidatorFactoryTest {
             fun annotationType() = javaClass
         }
         val validators = ValidatorFactory.getValidator(annotation, "test")
-        // 不支持的注解应该返回空列表
+        // Unsupported annotations should return an empty list
         assertTrue(validators.isEmpty())
     }
 
     private fun ageAnnotation(klass: Class<out Annotation>): Annotation =
         TestBean::class.java.getDeclaredMethod("getAge").getAnnotation(klass)
-            ?: error("TestBean.age 上找不到注解 $klass")
+            ?: error("annotation $klass not found on TestBean.age")
 
     /**
-     * 同一个 (annotation, valueClass) 应命中缓存，返回同一个 validator 实例。
+     * The same (annotation, valueClass) should hit the cache and return the same validator instance.
      */
     @Test
     fun testCacheReturnsSameInstanceForSameKey() {
         val annotation = ageAnnotation(Min::class.java)
         val v1 = ValidatorFactory.getValidator(annotation, 25)
         val v2 = ValidatorFactory.getValidator(annotation, 25)
-        assertSame(v1, v2, "缓存应返回同一个 List 实例")
-        assertSame(v1[0], v2[0], "缓存应返回同一个 validator 实例")
+        assertSame(v1, v2, "the cache should return the same List instance")
+        assertSame(v1[0], v2[0], "the cache should return the same validator instance")
     }
 
     /**
-     * 同一注解但不同 value class 应触发独立的 builder 实例化。
+     * The same annotation with different value classes should trigger independent builder instantiation.
      */
     @Test
     fun testCacheDistinguishesByValueClass() {
@@ -155,21 +155,22 @@ internal class ValidatorFactoryTest {
         assertNotSame(
             intValidators[0],
             longValidators[0],
-            "Int 与 Long 应该分别用 MinValidatorForInteger / MinValidatorForLong"
+            "Int and Long should use MinValidatorForInteger / MinValidatorForLong respectively"
         )
     }
 
     /**
-     * 内容相等的两个动态构造注解应命中同一缓存项（依赖 JDK Annotation 的内容相等契约）。
-     * Range 内部用反射构造 Min/Max 注解，缓存能短路掉反射开销。
+     * Two dynamically constructed annotations with equal content should hit the same cache entry (relying on the JDK
+     * Annotation content-equality contract).
+     * Range internally constructs Min/Max annotations reflectively; the cache can short-circuit the reflection cost.
      */
     @Test
     fun testCacheHitsForRangeBetweenCalls() {
         val annotation = ageAnnotation(Range::class.java)
         val v1 = ValidatorFactory.getValidator(annotation, 25)
         val v2 = ValidatorFactory.getValidator(annotation, 25)
-        assertSame(v1, v2, "Range 整体应被缓存")
-        assertEquals(2, v1.size, "Range 应返回 Min + Max 两个 validator")
+        assertSame(v1, v2, "the whole Range result should be cached")
+        assertEquals(2, v1.size, "Range should return Min + Max validators (2 total)")
         assertSame(v1[0], v2[0])
         assertSame(v1[1], v2[1])
     }

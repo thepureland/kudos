@@ -15,12 +15,12 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 机构ID列表（by user id）缓存处理器
+ * Org ID list (by user id) cache handler
  *
- * 1.数据来源表：user_org_user
- * 2.缓存各用户所属的所有机构ID列表
- * 3.缓存的key为：userId
- * 4.缓存的value为：机构ID列表（List<String>）
+ * 1. Source table: user_org_user
+ * 2. Caches the list of all org IDs each user belongs to
+ * 3. Cache key: userId
+ * 4. Cache value: list of org IDs (List<String>)
  *
  * @author K
  * @author AI: Cursor
@@ -45,37 +45,37 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有用户的机构ID！")
+            log.info("Cache is not enabled; skip loading and caching all users' org IDs!")
             return
         }
 
         val users = userAccountDao.searchActiveUsersForCache()
         val userIdToOrgIdsMap = userOrgUserDao.searchAllUserIdToOrgIds()
 
-        log.debug("从数据库加载了${users.size}条用户、机构-用户关系分组${userIdToOrgIdsMap.size}。")
+        log.debug("Loaded ${users.size} users from database, ${userIdToOrgIdsMap.size} org-user relation groups.")
 
-        // 清除缓存
+        // Clear the cache
         if (clear) {
             clear()
         }
 
-        // 缓存用户机构ID列表
+        // Cache the org ID list per user
         users.forEach { user ->
             val userId = user.id
             if (userId.isBlank()) return@forEach
             val orgIds = userIdToOrgIdsMap[userId] ?: emptyList()
             if (orgIds.isNotEmpty()) {
                 KeyValueCacheKit.put(CACHE_NAME, userId, orgIds)
-                log.debug("缓存了用户${userId}的${orgIds.size}条机构ID。")
+                log.debug("Cached ${orgIds.size} org IDs for user ${userId}.")
             }
         }
     }
 
     /**
-     * 根据用户ID从缓存中获取该用户所属的所有机构ID，如果缓存中不存在，则从数据库中加载，并回写缓存
+     * Get the org IDs of the given user from the cache; if missing, load from the database and write back.
      *
-     * @param userId 用户ID
-     * @return List<机构ID>
+     * @param userId user ID
+     * @return list of org IDs
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -84,49 +84,49 @@ open class OrgIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
     )
     open fun getOrgIds(userId: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在用户${userId}的机构ID，从数据库中加载...")
+            log.debug("No org IDs for user ${userId} in the cache; loading from the database...")
         }
 
         val orgIds = userOrgUserDao.searchOrgIdsByUserId(userId)
-        log.debug("从数据库加载了用户${userId}的${orgIds.size}条机构ID。")
+        log.debug("Loaded ${orgIds.size} org IDs for user ${userId} from the database.")
         return orgIds
     }
 
     /**
-     * 用户-机构关系变更后同步缓存
+     * Sync the cache after a user-org relation change
      *
-     * @param userId 用户ID
+     * @param userId user ID
      */
     open fun syncOnOrgUserChange(userId: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("用户${userId}的机构关系变更后，同步${CACHE_NAME}缓存...")
+            log.debug("Org relations for user ${userId} changed; syncing ${CACHE_NAME} cache...")
             evict(userId)
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<OrgIdsByUserIdCache>().getOrgIds(userId)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync completed.")
         }
     }
 
     /**
-     * 批量用户-机构关系变更后同步缓存
+     * Sync the cache after batch user-org relation changes
      *
-     * @param userIds 用户ID集合
+     * @param userIds user ID collection
      */
     open fun syncOnBatchOrgUserChange(userIds: Collection<String>) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("批量用户机构关系变更后，同步${CACHE_NAME}缓存...")
+            log.debug("Batch user-org relations changed; syncing ${CACHE_NAME} cache...")
             userIds.forEach { userId ->
                 KeyValueCacheKit.evict(CACHE_NAME, userId)
                 if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<OrgIdsByUserIdCache>().getOrgIds(userId)
                 }
             }
-            log.debug("${CACHE_NAME}缓存同步完成，共影响${userIds.size}个用户。")
+            log.debug("${CACHE_NAME} cache sync completed; ${userIds.size} users affected.")
         }
     }
 
-    /** 用户删除后清掉该 userId 下的 orgId 列表。 */
+    /** Clear the orgId list for the given userId after a user is deleted. */
     private fun evictByUserId(userId: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         KeyValueCacheKit.evict(CACHE_NAME, userId)

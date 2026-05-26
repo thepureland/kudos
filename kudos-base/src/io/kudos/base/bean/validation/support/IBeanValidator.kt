@@ -1,17 +1,17 @@
 package io.kudos.base.bean.validation.support
 
 /**
- * Bean验证器接口
+ * Bean validator interface.
  *
  * @author K
  * @since 1.0.0
  */
 interface IBeanValidator<T> {
     /**
-     * 执行校验
+     * Execute validation.
      *
-     * @param bean 待验证的bean
-     * @return 是否验证通过
+     * @param bean the bean to validate
+     * @return whether validation passes
      * @author K
      * @since 1.0.0
      */

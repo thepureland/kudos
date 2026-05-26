@@ -7,7 +7,7 @@ import io.kudos.ms.sys.core.param.model.po.SysParam
 
 
 /**
- * 参数业务接口
+ * Parameter business interface.
  *
  * @author K
  * @author AI: Cursor
@@ -16,17 +16,17 @@ import io.kudos.ms.sys.core.param.model.po.SysParam
 interface ISysParamService : IBaseCrudService<String, SysParam> {
 
     /**
-     * 按原子服务编码 + 参数名从按模块缓存读取（仅 active=true 会写入该缓存）
+     * Read from the by-module cache using atomic service code + parameter name (only active=true entries are written into this cache).
      */
     fun getParamFromCache(atomicServiceCode: String, paramName: String): SysParamCacheEntry?
 
     /**
-     * 按原子服务编码直查库得到参数列表行
+     * Query the parameter list rows directly from the DB by atomic service code.
      */
     fun getParamsByAtomicServiceCode(atomicServiceCode: String): List<SysParamRow>
 
     /**
-     * 读取参数取值：优先 [SysParamCacheEntry.paramValue]，其次 [SysParamCacheEntry.defaultValue]，否则 [defaultValue]
+     * Read the parameter value: prefer [SysParamCacheEntry.paramValue], then [SysParamCacheEntry.defaultValue], otherwise [defaultValue].
      */
     fun getParamValueFromCache(
         atomicServiceCode: String,
@@ -35,7 +35,7 @@ interface ISysParamService : IBaseCrudService<String, SysParam> {
     ): String?
 
     /**
-     * 更新启用状态，并同步按模块缓存
+     * Update active state and sync the by-module cache.
      */
     fun updateActive(id: String, active: Boolean): Boolean
 

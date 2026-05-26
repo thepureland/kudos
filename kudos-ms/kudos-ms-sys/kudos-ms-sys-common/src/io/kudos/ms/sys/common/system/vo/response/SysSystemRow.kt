@@ -1,35 +1,35 @@
 package io.kudos.ms.sys.common.system.vo.response
 
 /**
- * 系统列表查询结果响应VO
+ * System list query result response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysSystemRow (
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 编码 */
+    /** Code */
     val code: String = "",
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
-    /** 是否子系统 */
+    /** Whether it is a subsystem */
     val subSystem: Boolean = true,
 
-    /** 父系统编号 */
+    /** Parent system code */
     val parentCode: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = false,
 
 )

@@ -21,7 +21,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 
 /**
- * seata分布式事务测试用例基类
+ * Base class for Seata distributed-transaction test cases.
  *
  * @author K
  * @since 1.0.0
@@ -39,11 +39,13 @@ abstract class SeataTestBase {
     private lateinit var service: IService
 
     /**
-     * AT 模式必须 autoCommit=true（让 Seata ConnectionProxy 拦截每条 SQL 的自动 commit
-     * 来写 undo log / register branch / 真正提交业务数据）；XA 模式必须 autoCommit=false
-     * （XA 协议要求整段 SQL 在同一 XA 事务里，autoCommit=true 会把 XA 状态打散）。
-     * yml 里的 `is-auto-commit` 是默认值，这里按测试 mode 通过 CLI arg 显式覆盖到 sub-app，
-     * 主侧通过各测试类的 `@DynamicPropertySource` 同步覆盖。
+     * AT mode requires autoCommit=true (so Seata's ConnectionProxy can intercept each SQL's
+     * auto-commit to write the undo log / register the branch / actually commit business data);
+     * XA mode requires autoCommit=false (the XA protocol requires the whole SQL block to live
+     * inside a single XA transaction; autoCommit=true would shatter XA state).
+     * The `is-auto-commit` value in yml is the default; here it is explicitly overridden per
+     * test mode for the sub-app via CLI args, and overridden symmetrically on the main side
+     * via each test class's `@DynamicPropertySource`.
      */
     protected open fun autoCommitForMode(): Boolean = dataSourceProxyMode() == "AT"
 
@@ -58,13 +60,15 @@ abstract class SeataTestBase {
             add("--spring.datasource.dynamic.datasource.postgres.url=$url")
             add("--spring.datasource.dynamic.hikari.is-auto-commit=${autoCommitForMode()}")
             add("--spring.datasource.dynamic.datasource.postgres.hikari.is-auto-commit=${autoCommitForMode()}")
-            // Seata auto-proxy 是 AT 模式拿到 ConnectionProxy 拦截链的关键，AT 下必须开 (true)。
-            // XA 下 baomidou dynamic.seata=true 已经包装了 DataSourceProxyXA，再让 Seata 自动包一次
-            // 会让 ConnectionProxyXA.init ↔ DataSourceProxyXA.getConnection 互调到 StackOverflowError，
-            // 所以 XA 必须关 (false)。
+            // Seata auto-proxy is the key to obtaining the ConnectionProxy interception chain in
+            // AT mode; it MUST be on (true) under AT.
+            // Under XA, baomidou dynamic.seata=true has already wrapped DataSourceProxyXA; letting
+            // Seata wrap a second time makes ConnectionProxyXA.init <-> DataSourceProxyXA.getConnection
+            // call each other into StackOverflowError, so XA MUST keep it off (false).
             add("--seata.enable-auto-data-source-proxy=${dataSourceProxyMode() != "XA"}")
-            // XA 模式下还要告诉 baomidou：用 XA 代理而不是默认的 AT。AT 模式下保持默认行为
-            // —— 显式设 AT 反而会让 baomidou 走与默认不同的代码路径，把 AT 拆掉（实测过）。
+            // Under XA we also tell baomidou: use the XA proxy instead of the default AT. Under AT,
+            // keep the default behavior — explicitly setting AT would make baomidou take a different
+            // code path that breaks AT (verified empirically).
             if (dataSourceProxyMode() == "XA") {
                 add("--spring.datasource.dynamic.seata-mode=XA")
             }
@@ -87,16 +91,18 @@ abstract class SeataTestBase {
 
     @Test
     fun globalTxId() {
-        Assertions.assertNotNull(service.getGlobalTxId()) // 全局事务id为null很有可能是环境问题
+        Assertions.assertNotNull(service.getGlobalTxId()) // A null global tx id is most likely an environment issue
     }
 
     @Test
     fun autoCommit() {
-        // AT 模式：autoCommit 必须为 true —— Seata ConnectionProxy 是靠每条 SQL 自动 commit 时的
-        //          拦截链来"写 undo log + register branch + 真正 commit"。autoCommit=false 时
-        //          每条 SQL 进入隐式开放事务永不显式 commit，最后被 Hikari 还池时回滚，数据丢失。
-        // XA 模式：autoCommit 必须为 false —— XA 协议要求整段 SQL 在同一 XA 事务内，autoCommit=true
-        //          会把 XA 状态打散。
+        // AT mode: autoCommit MUST be true — Seata's ConnectionProxy relies on the interception
+        //          chain triggered by each SQL's auto-commit to "write the undo log + register
+        //          the branch + actually commit". With autoCommit=false, each SQL enters an
+        //          implicit open transaction that is never explicitly committed and gets rolled
+        //          back when Hikari returns the connection to the pool, losing data.
+        // XA mode: autoCommit MUST be false — the XA protocol requires the entire SQL block to
+        //          live in a single XA transaction; autoCommit=true would shatter XA state.
         val expectedAutoCommit = dataSourceProxyMode() == "AT"
         RdbKit.getDatabase().useConnection { conn ->
             kotlin.test.assertEquals(
@@ -107,40 +113,40 @@ abstract class SeataTestBase {
     }
 
     /**
-     * 本地事务测试
+     * Local transaction test.
      */
     open fun localTx() {
-        // 分支事务异常，全部回滚
+        // Branch transaction throws -> everything rolls back
 //        Assertions.assertThrows(Exception::class.java) { service.onBranchErrorLocal() }
 //        assertEquals(100.0, service.getById(1).balance)
 //        assertEquals(200.0, service.getById(2).balance)
 //
-//        // 全局事务异常，全部回滚
+//        // Global transaction throws -> everything rolls back
 //        Assertions.assertThrows(Exception::class.java) { service.onGlobalErrorLocal() }
 //        assertEquals(100.0, service.getById(1).balance)
 //        assertEquals(200.0, service.getById(2).balance)
 
-        // 无异常，分支事务全部提交
+        // No exception -> all branch transactions commit
         service.normalLocal()
         assertEquals(50.0, service.getById(1).balance)
         assertEquals(250.0, service.getById(2).balance)
     }
 
     /**
-     * 远程事务测试
+     * Remote transaction test.
      */
     open fun remoteTx() {
-        // 分支事务异常，全部回滚
+        // Branch transaction throws -> everything rolls back
         Assertions.assertThrows(Exception::class.java) { service.onBranchErrorRemote() }
         assertEquals(100.0, service.getById(1).balance)
         assertEquals(200.0, service.getById(2).balance)
 
-        // 全局事务异常，全部回滚
+        // Global transaction throws -> everything rolls back
         Assertions.assertThrows(Exception::class.java) { service.onGlobalErrorRemote() }
         assertEquals(100.0, service.getById(1).balance)
         assertEquals(200.0, service.getById(2).balance)
 
-        // 无异常，分支事务全部提交
+        // No exception -> all branch transactions commit
         service.normalRemote()
         assertEquals(50.0, service.getById(1).balance)
         assertEquals(250.0, service.getById(2).balance)
