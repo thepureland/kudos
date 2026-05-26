@@ -14,7 +14,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 /**
- * MQ 审计服务装配测试。
+ * Wiring tests for the MQ audit service.
  *
  * @author K
  * @author AI: Codex

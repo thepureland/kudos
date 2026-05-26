@@ -11,7 +11,7 @@ import io.kudos.base.lang.string.underscoreToHump
 import io.kudos.tools.codegen.model.vo.Config
 
 /**
- * 模板数据模型创建者，用户可继承此类自定义要填充模板的数据
+ * Template data-model creator. Users may subclass to customize the data fed into the templates.
  *
  * @author K
  * @since 1.0.0
@@ -19,10 +19,11 @@ import io.kudos.tools.codegen.model.vo.Config
 open class TemplateModelCreator {
 
     /**
-     * 构造与具体表无关的"基础模型"：包前缀、模块名、作者、版本等模板通用占位符。
-     * 这部分内容在批量生成多张表时可以复用。
+     * Builds the "base model" that is independent of any specific table: package prefix, module name, author,
+     * version and other template placeholders that are common across tables. This part can be reused when
+     * generating multiple tables in a batch.
      *
-     * @return 可继续追加 key 的模型 Map
+     * @return Model map that can be further appended
      * @author K
      * @since 1.0.0
      */
@@ -39,9 +40,9 @@ open class TemplateModelCreator {
     }
 
     /**
-     * 模板填充模型的对外入口：基础模型 + 表相关模型合并。
+     * Public entry point for the template-population model: merges the base model with the table-specific model.
      *
-     * @return 渲染模板需要的完整 Map
+     * @return Full map needed for template rendering
      * @author K
      * @since 1.0.0
      */
@@ -52,13 +53,13 @@ open class TemplateModelCreator {
     }
 
     /**
-     * 构造与具体表相关的模型：
-     * - 实体名（驼峰）、短名（去掉模块前缀）、表结构、所有列
-     * - 按 UI 勾选项把列拆分到 search/list/edit/detail/cache 五组
-     * - 调 [determinePoDaoSuperClass] 决定 PO/DAO 的父类
-     * - 调 [initOtherParameters] 计算各列类型的 import 标志位与 `serialVersionUID`
+     * Builds the table-specific model:
+     * - Entity name (camelCase), short name (module prefix stripped), table structure, all columns
+     * - Splits columns into five groups — search/list/edit/detail/cache — according to UI selections
+     * - Calls [determinePoDaoSuperClass] to decide the PO/DAO parent classes
+     * - Calls [initOtherParameters] to compute import flags per column type and `serialVersionUID`
      *
-     * @return 实体相关的模型片段
+     * @return Entity-related fragment of the model
      * @author K
      * @since 1.0.0
      */
@@ -81,19 +82,19 @@ open class TemplateModelCreator {
         templateModel["pkColumn"] = origColumns.first { it.primaryKey }
         val columnConfMap = columns.associateBy { it.getColumn() }
 
-        // 查询项
+        // Search items
         val searchItemColumns = mutableListOf<Column>()
         templateModel["searchItemColumns"] = searchItemColumns
-        // 列表项
+        // List items
         val listItemColumns = mutableListOf<Column>()
         templateModel["listItemColumns"] = listItemColumns
-        // 编辑项
+        // Edit items
         val editItemColumns = mutableListOf<Column>()
         templateModel["editItemColumns"] = editItemColumns
-        // 详情项
+        // Detail items
         val detailItemColumns = mutableListOf<Column>()
         templateModel["detailItemColumns"] = detailItemColumns
-        // 缓存项
+        // Cache items
         val cacheItemColumns = mutableListOf<Column>()
         templateModel["cacheItemColumns"] = cacheItemColumns
 
@@ -128,15 +129,17 @@ open class TemplateModelCreator {
     }
 
     /**
-     * 按主键 Kotlin 类型选择 PO 与 DAO（Ktorm Table）的父类。
+     * Selects parent classes for the PO and DAO (Ktorm Table) based on the primary-key Kotlin type.
      *
-     * - 主键 String 且含全部维护字段（createTime/updateTime/active/builtIn 等）→ `IManagedDbEntity` + `ManagedTable`，并把维护字段从模板 columns 中过滤掉（父类已声明）。
-     * - 主键 String 不带维护字段 → `StringIdTable`，过滤 id 列。
-     * - 主键 Int / Long → 对应的 `IntIdTable` / `LongIdTable`，过滤 id 列。
-     * - 其它类型 → 朴素 `Table`，不做列过滤。
+     * - String primary key with all maintenance fields (createTime/updateTime/active/builtIn, etc.) ->
+     *   `IManagedDbEntity` + `ManagedTable`, and the maintenance fields are filtered out of the template
+     *   `columns` (since the parent class already declares them).
+     * - String primary key without maintenance fields -> `StringIdTable`; the id column is filtered out.
+     * - Int / Long primary key -> the corresponding `IntIdTable` / `LongIdTable`; the id column is filtered out.
+     * - Other types -> the plain `Table`; columns are not filtered.
      *
-     * @param templateModel 上层模板模型；本方法会向其中写 `poSuperClass`/`daoSuperClass`，并可能改写 `columns`
-     * @param origColumns 原始数据库列集合（含 id/维护字段）
+     * @param templateModel Upper-level template model; this method writes `poSuperClass`/`daoSuperClass` and may rewrite `columns`
+     * @param origColumns Original DB column collection (including id / maintenance fields)
      * @author K
      * @since 1.0.0
      */
@@ -157,26 +160,26 @@ open class TemplateModelCreator {
                     ManagedTable<*>::remark.name,
                 )
                 if (origColumns.map { it.name }.containsAll(maintainColumns)) {
-                    // 包括所有维护字段，po实现IMaintainableDbEntity，dao实现MaintainableTable
+                    // All maintenance fields are present; the PO implements IMaintainableDbEntity and the DAO implements MaintainableTable.
                     poSuperClass = IManagedDbEntity::class.simpleName
                     daoSuperClass = requireNotNull(ManagedTable::class.simpleName) { "MaintainableTable simpleName is null" }
-                    // 过滤掉父类中已有的列
+                    // Filter out columns that the parent class already provides.
                     templateModel["columns"] = origColumns.filter { !maintainColumns.contains(it.name) }
                 } else {
                     daoSuperClass = requireNotNull(StringIdTable::class.simpleName) { "StringIdTable simpleName is null" }
                     templateModel["columns"] =
-                        origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
+                        origColumns.filter { it.name != "id" } // Filter out the id column already on the parent class
                 }
             }
 
             Int::class -> {
                 daoSuperClass = requireNotNull(IntIdTable::class.simpleName) { "IntIdTable simpleName is null" }
-                templateModel["columns"] = origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
+                templateModel["columns"] = origColumns.filter { it.name != "id" } // Filter out the id column already on the parent class
             }
 
             Long::class -> {
                 daoSuperClass = requireNotNull(LongIdTable::class.simpleName) { "LongIdTable simpleName is null" }
-                templateModel["columns"] = origColumns.filter { it.name != "id" } // 过滤掉父类中已有的id列
+                templateModel["columns"] = origColumns.filter { it.name != "id" } // Filter out the id column already on the parent class
             }
 
             else -> daoSuperClass = "Table"
@@ -186,20 +189,21 @@ open class TemplateModelCreator {
     }
 
     /**
-     * 计算各组列中是否包含特定 Kotlin 类型，供模板做条件式 import：
-     * 例如 `containsLocalDateTimeColumn` / `containsLocalDateTimeColumnInListItems` 等。
+     * Computes whether each column group contains specific Kotlin types so the template can do conditional imports
+     * (e.g. `containsLocalDateTimeColumn` / `containsLocalDateTimeColumnInListItems`).
      *
-     * 模板里据此决定 `import java.time.LocalDateTime` 是否真的需要写出，避免无脑 import 导致 lint 警告。
-     * 末尾再生成一个 `serialVersionUID`，让 PO 类拿到稳定可识别的版本号。
+     * The templates use these flags to decide whether `import java.time.LocalDateTime` is actually needed,
+     * avoiding blind imports that would trigger lint warnings. Finally, a `serialVersionUID` is generated so each
+     * PO class gets a stable, recognizable version number.
      *
-     * @param templateModel 上层模板模型，本方法只向其中写 key
-     * @param origColumns 原始列集合，用于 PO 自身的 import 判定
+     * @param templateModel Upper-level template model; this method only writes keys into it
+     * @param origColumns Original column collection, used for the PO's own import decisions
      * @author K
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
     open fun initOtherParameters(templateModel: MutableMap<String, Any?>, origColumns: Collection<Column>) {
-        // 为了模板中，非kotlin类型的import
+        // Used to drive imports of non-Kotlin types inside the templates
         val kotlinTypeMap = mapOf(
             "containsLocalDateTimeColumn" to java.time.LocalDateTime::class,
             "containsLocalDateColumn" to java.time.LocalDate::class,
@@ -212,36 +216,36 @@ open class TemplateModelCreator {
             "containsSQLXMLColumn" to java.sql.SQLXML::class
         )
 
-        // po中
+        // In the PO
         for ((key, value) in kotlinTypeMap)
             templateModel[key] = origColumns.any { it.kotlinType == value }
 
-        // 查询载体类中
+        // In the search payload class
         val searchItemColumns = templateModel["searchItemColumns"] as List<Column>
         for ((key, value) in kotlinTypeMap)
             templateModel["${key}InSearchItems"] = searchItemColumns.any { it.kotlinType == value }
 
-        // 列表记录类中
+        // In the list-record class
         val listItemColumns = templateModel["listItemColumns"] as List<Column>
         for ((key, value) in kotlinTypeMap)
             templateModel["${key}InListItems"] = listItemColumns.any { it.kotlinType == value }
 
-        // 编辑载体类中
+        // In the edit payload class
         val editItemColumns = templateModel["editItemColumns"] as List<Column>
         for ((key, value) in kotlinTypeMap)
             templateModel["${key}InEditItems"] = editItemColumns.any { it.kotlinType == value }
 
-        // 详情类中
+        // In the detail class
         val detailItemColumns = templateModel["detailItemColumns"] as List<Column>
         for ((key, value) in kotlinTypeMap)
             templateModel["${key}InDetailItems"] = detailItemColumns.any { it.kotlinType == value }
 
-        // 缓存项类中
+        // In the cache-item class
         val cacheItemColumns = templateModel["cacheItemColumns"] as List<Column>
         for ((key, value) in kotlinTypeMap)
             templateModel["${key}InCacheItems"] = cacheItemColumns.any { it.kotlinType == value }
 
-        // 缓存项中是否包含id
+        // Whether the cache items contain an id
         templateModel["containsIdColumnInCacheItems"] = cacheItemColumns.any { it.name.equals("id", true) }
 
         // serialVersionUID

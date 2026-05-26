@@ -8,7 +8,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for SysOutLineDao
  *
- * 测试数据来源：`SysOutLineDaoTest.sql`
+ * Test data source: `SysOutLineDaoTest.sql`
  *
  * @author K
  * @since 1.0.0

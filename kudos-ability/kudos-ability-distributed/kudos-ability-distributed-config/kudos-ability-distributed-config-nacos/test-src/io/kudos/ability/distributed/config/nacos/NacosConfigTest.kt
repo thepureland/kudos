@@ -17,7 +17,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * nacos作为配置中心的测试用例
+ * Test cases for Nacos as a configuration center.
  *
  * @author K
  * @author AI: Codex
@@ -48,10 +48,10 @@ open class NacosConfigTest {
         val group = "testGroup"
         val content = "testContent"
 
-        // 发布配置
+        // Publish config
         assertTrue(configService.publishConfig(dataId, group, content))
 
-        // 读取配置，因为客户端刷新需要时间，这里循环延迟读取
+        // Read config; since client refresh takes time, poll with a delay
         var remoteConfig: String?
         var count = 0
         while (true) {
@@ -63,7 +63,7 @@ open class NacosConfigTest {
             }
         }
 
-        // 校验
+        // Verify
         assertEquals(content, remoteConfig)
     }
 
@@ -73,7 +73,7 @@ open class NacosConfigTest {
         val group = "testGroup1"
         val content = "testContent1"
 
-        // 监听
+        // Subscribe
         var receiveConfig: String? = null
         NacosConfigServiceListener(serverAddr).addListener(dataId, group, object : AbstractConfigChangeListener() {
             override fun onConfigChanged(configInfo: String?) {
@@ -82,10 +82,10 @@ open class NacosConfigTest {
         })
         assertNull(receiveConfig)
 
-        // 发布配置
+        // Publish config
         assertTrue(configService.publishConfig(dataId, group, content))
 
-        // 读取配置，因为客户端刷新需要时间，这里循环延迟读取
+        // Read config; since client refresh takes time, poll with a delay
         var remoteConfig: String?
         var count = 0
         while (true) {
@@ -97,7 +97,7 @@ open class NacosConfigTest {
             }
         }
 
-        // 校验
+        // Verify
         assertEquals(content, remoteConfig)
     }
 

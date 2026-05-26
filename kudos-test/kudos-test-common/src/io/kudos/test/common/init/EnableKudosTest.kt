@@ -8,11 +8,12 @@ import kotlin.reflect.KClass
 
 
 /**
- * Kudos单元测试使能注解
+ * Annotation that enables Kudos unit tests.
  *
- * 添加于测试用例类上，为其构建必要的运行上下文。
- * 要排除特定的 IComponentInitializer，请在 [TestApplication] 子类或自定义启动类上用
- * `@EnableKudos(exclusions = [...])`，本注解仅负责 Spring Boot Test 的上下文装配。
+ * Applied to test case classes to build the runtime context they need.
+ * To exclude specific IComponentInitializer instances, use `@EnableKudos(exclusions = [...])` on a
+ * [TestApplication] subclass or custom bootstrap class; this annotation only wires up the Spring Boot
+ * Test context.
  *
  * @author K
  * @since 1.0.0
@@ -25,7 +26,7 @@ import kotlin.reflect.KClass
 annotation class EnableKudosTest(
 
     /**
-     * 设置SpringBootTest注解的classes值，用来指定测试的入口应用类
+     * Sets the SpringBootTest annotation's classes value, used to specify the entry application class for the test.
      *
      * @author K
      * @since 1.0.0
@@ -34,7 +35,7 @@ annotation class EnableKudosTest(
     val classes: Array<KClass<*>> = [TestApplication::class],
 
     /**
-     * 设置SpringBootTest注解的webEnvironment值，用来指定测试web环境类型
+     * Sets the SpringBootTest annotation's webEnvironment value, used to specify the test web environment type.
      *
      * @author K
      * @since 1.0.0
@@ -43,7 +44,7 @@ annotation class EnableKudosTest(
     val webEnvironment: WebEnvironment = WebEnvironment.MOCK,
 
     /**
-     * 设置SpringBootTest注解的properties值，用来定义properties的key-value
+     * Sets the SpringBootTest annotation's properties value, used to define properties key-value pairs.
      *
      * @author K
      * @since 1.0.0

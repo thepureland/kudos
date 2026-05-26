@@ -34,7 +34,7 @@ import org.springframework.context.annotation.PropertySource
 
 
 /**
- * 可联动的二级缓存自动配置类
+ * Auto-configuration for the linkable two-level cache.
  *
  * @author K
  * @since 1.0.0
@@ -76,8 +76,9 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     open fun mixCacheInitializing(): MixCacheInitializing = MixCacheInitializing()
 
     /**
-     * 见 [companion object] 中的 `cacheDataInitialize`：返回 `BeanPostProcessor` 的 @Bean 必须 static，
-     * 否则强制配置类自身提前实例化，跳过其它 BPP 的处理。
+     * See `cacheDataInitialize` in the [companion object]: an @Bean factory that returns a `BeanPostProcessor`
+     * must be static; otherwise the configuration class is forced to instantiate early and skip processing by
+     * other BPPs.
      */
 
     @Bean
@@ -85,9 +86,9 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
     open fun batchCacheableAspect(): BatchCacheableAspect = BatchCacheableAspect()
 
     /**
-     * `@DistributedCacheGuard` 切面。原本类只 `@Aspect` 标注却没有 @Bean 注册，
-     * 导致注解在运行时是 no-op；本注册修复该疏漏。受 [ConditionalOnMissingBean] 保护，
-     * 业务侧覆盖时不冲突。
+     * `@DistributedCacheGuard` aspect. The class was previously annotated with `@Aspect` but never registered
+     * as an @Bean, so the annotation was a no-op at runtime; this registration fixes that oversight.
+     * Guarded by [ConditionalOnMissingBean] so business-side overrides do not conflict.
      */
     @Bean
     @ConditionalOnMissingBean
@@ -125,10 +126,11 @@ open class LinkableCacheAutoConfiguration : IComponentInitializer {
 
     companion object {
         /**
-         * `CacheDataInitializer` 实现了 `BeanPostProcessor`。返回 BPP 的 @Bean 工厂方法
-         * 必须声明为 static（Kotlin 用 `companion object` + `@JvmStatic`），否则 Spring 强制
-         * 提前实例化 `LinkableCacheAutoConfiguration`，让该配置类自身跳过 BPP 处理，
-         * 同时拖累其它依赖它的 AutoConfiguration（日志中能看到 ContextAutoConfiguration / 各 CacheAutoConfiguration 被牵连）。
+         * `CacheDataInitializer` implements `BeanPostProcessor`. An @Bean factory method returning a BPP
+         * must be declared static (in Kotlin, via `companion object` + `@JvmStatic`); otherwise Spring is
+         * forced to instantiate `LinkableCacheAutoConfiguration` early, making the configuration class itself
+         * skip BPP processing and dragging along other AutoConfigurations that depend on it (the logs will
+         * show ContextAutoConfiguration / various CacheAutoConfiguration instances affected).
          */
         @Bean
         @ConditionalOnMissingBean

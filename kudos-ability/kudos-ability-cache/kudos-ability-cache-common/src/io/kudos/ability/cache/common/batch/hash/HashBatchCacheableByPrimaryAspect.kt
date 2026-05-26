@@ -26,7 +26,7 @@ import kotlin.reflect.full.isSuperclassOf
 import kotlin.reflect.jvm.kotlinFunction
 
 /**
- * [HashBatchCacheableByPrimary] 切面：先按一批主属性（id）查 Hash 缓存（findByIds），未命中的再调方法，结果 saveBatch 回写（可带副属性索引）并合并返回。
+ * Aspect for [HashBatchCacheableByPrimary]: first batch-loads from Hash cache by primary attribute (id) via findByIds, then invokes the method for misses, writes the result back via saveBatch (optionally with secondary attribute indexes) and returns the merged result.
  *
  * @author K
  * @author AI: Cursor
@@ -36,7 +36,7 @@ import kotlin.reflect.jvm.kotlinFunction
 @Component
 @Lazy(false)
 @ConditionalOnBean(MixHashCacheManager::class)
-@Order(10) // 与 [BatchCacheableAspect] 同序：批量 Cacheable 类切面统一标 10。
+@Order(10) // Same order as [BatchCacheableAspect]: batch Cacheable aspects are uniformly tagged 10.
 class HashBatchCacheableByPrimaryAspect {
 
     @Pointcut("@annotation(io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary)")
@@ -92,7 +92,7 @@ class HashBatchCacheableByPrimaryAspect {
     }
 
     /**
-     * 解析 cache 名：注解 cacheNames > 类上 `@CacheConfig.cacheNames` > null。
+     * Resolves the cache name: annotation cacheNames > class-level `@CacheConfig.cacheNames` > null.
      * @author K
      * @since 1.0.0
      */
@@ -104,21 +104,21 @@ class HashBatchCacheableByPrimaryAspect {
     }
 
     /**
-     * 校验目标方法返回值必须是 [Map]，否则切面拼装"批量结果"会出错。
-     * 不合规直接抛错让开发期立即发现。
+     * Verifies the target method's return type must be [Map]; otherwise the aspect's "batch result" assembly will be wrong.
+     * Throws immediately on non-compliance so the issue is caught at development time.
      *
-     * @throws IllegalStateException 返回值不是 Map 时
+     * @throws IllegalStateException when the return type is not Map
      * @author K
      * @since 1.0.0
      */
     private fun validateReturnType(function: KFunction<*>, ann: HashBatchCacheableByPrimary) {
         if (!Map::class.isSuperclassOf(function.returnType.classifier as KClass<*>)) {
-            error("@HashBatchCacheableByPrimary 标注的方法【${function}】返回值类型必须是 Map！")
+            error("The @HashBatchCacheableByPrimary-annotated method [${function}] must have a Map return type!")
         }
     }
 
     /**
-     * 解析 [HashBatchCacheableByPrimary.keysGenerator] 指定的 keys 生成器；缺失时降级到 [DefaultHashBatchKeysGenerator]。
+     * Resolves the keys generator specified by [HashBatchCacheableByPrimary.keysGenerator]; falls back to [DefaultHashBatchKeysGenerator] if missing.
      * @author K
      * @since 1.0.0
      */
@@ -127,8 +127,8 @@ class HashBatchCacheableByPrimaryAspect {
             ?: DefaultHashBatchKeysGenerator()
 
     /**
-     * `joinPoint.proceed()` 后调 [validatedMap] 强校验返回值为 `Map<String, Any?>`。
-     * 抽出来是为了让 around 主流程更紧凑。
+     * After `joinPoint.proceed()`, delegates to [validatedMap] to strictly verify the return value is `Map<String, Any?>`.
+     * Extracted to keep the around main flow compact.
      * @author K
      * @since 1.0.0
      */
@@ -136,37 +136,37 @@ class HashBatchCacheableByPrimaryAspect {
         validatedMap(joinPoint.proceed())
 
     /**
-     * 校验 proceed 的返回值符合 `Map<String, Any?>`：返回类型擦除后任何 Map 都能通过强转，
-     * 实际 key 类型不对会在下游"按字符串 key 取值"时静默 miss。这里把校验集中起来。
+     * Validates that the proceed return value conforms to `Map<String, Any?>`: due to type erasure any Map passes the cast,
+     * but if actual key types are wrong, the downstream "lookup by String key" silently misses. Centralize validation here.
      */
     private fun validatedMap(proceeded: Any?): Map<String, Any?> {
         if (proceeded !is Map<*, *>) {
-            error("HashBatchCacheableByPrimary 期望方法返回 Map<String, Any?>，实际返回: ${proceeded?.let { it::class.qualifiedName } ?: "null"}")
+            error("HashBatchCacheableByPrimary expects the method to return Map<String, Any?>, actual: ${proceeded?.let { it::class.qualifiedName } ?: "null"}")
         }
         require(proceeded.keys.all { it == null || it is String }) {
-            "HashBatchCacheableByPrimary 期望方法返回 Map<String, Any?>，但检测到非 String key。"
+            "HashBatchCacheableByPrimary expects the method to return Map<String, Any?>, but detected a non-String key."
         }
         @Suppress("UNCHECKED_CAST")
         return proceeded as Map<String, Any?>
     }
 
     /**
-     * 把缓存未命中的 key 列表反算出"该走 DB 的入参"，再 proceed 到目标方法回源。
+     * Reconstructs the "args that should hit the DB" from the cache-missed key list, then proceeds to the target method to backfill.
      *
-     * 核心难点：业务方法的入参可能是 `Collection<T>` / `Array<T>`，且每个缓存 key 是多段组合
-     * （例：`tenantId:userId`），需要：
-     * 1. 把每个 noExistKey 按 [IKeysGenerator.getDelimiter] 拆段
-     * 2. 取第 `paramIndex` 段，用集合中第一个元素的类型作样本调 [toType] 反序列化回原类型
-     * 3. 按原参数声明类型（List/Set/Array<X>）重新装回集合并替换 args[paramIndex]
+     * Core challenge: the business method's input may be `Collection<T>` / `Array<T>`, and each cache key is a multi-segment composition
+     * (e.g. `tenantId:userId`), so we must:
+     * 1. Split each noExistKey by [IKeysGenerator.getDelimiter]
+     * 2. Take the segment at `paramIndex`, use the first element of the original collection as a sample to call [toType] and deserialize back to the original type
+     * 3. Re-wrap into the originally declared parameter type (List/Set/Array<X>) and replace args[paramIndex]
      *
-     * 不能直接传 String 列表——目标方法的签名可能要求 `List<Long>` / `Array<Int>` 等具体类型，
-     * 不做类型还原会在 reflection invoke 时抛 ClassCastException。
+     * We cannot just pass a String list: the target method's signature may require concrete types like `List<Long>` or `Array<Int>`,
+     * and skipping the type restoration would throw ClassCastException at reflective invoke.
      *
-     * @param noExistKeys 缓存中未命中的 key 列表（已格式化为 `seg1:seg2:...`）
-     * @param joinPoint AOP 切入点（拿原始 args）
-     * @param function 目标 KFunction（拿参数索引元信息）
-     * @param keysGenerator key 生成器（提供 delimiter + paramIndexes 反查）
-     * @return 重新跑目标方法后的 key→value map；null 表示无需回源
+     * @param noExistKeys list of cache-missed keys (already formatted as `seg1:seg2:...`)
+     * @param joinPoint AOP join point (provides original args)
+     * @param function target KFunction (provides parameter index metadata)
+     * @param keysGenerator key generator (provides delimiter + paramIndexes lookup)
+     * @return key->value map after re-running the target method; null means no backfill is needed
      * @author K
      * @since 1.0.0
      */
@@ -191,11 +191,11 @@ class HashBatchCacheableByPrimaryAspect {
                         is Collection<*> -> paramValue.first()
                         else -> (paramValue as Array<*>).first()
                     }
-                    val sample = requireNotNull(first) { "批量缓存参数集合中存在 null 元素，无法推断类型。" }
+                    val sample = requireNotNull(first) { "Batch cache parameter collection contains null elements; cannot infer type." }
                     segStr.toType(sample::class)
                 }
                 val clazz = parameterTypes[paramIndex].kotlin
-                // 下面 `as List<X>` 是确定安全的：elemValues 来自 `toType(sample::class)`，元素类型已对齐。
+                // The `as List<X>` casts below are definitely safe: elemValues comes from `toType(sample::class)`, with aligned element types.
                 @Suppress("UNCHECKED_CAST")
                 args[paramIndex] = when (clazz) {
                     List::class, Collection::class -> elemValues
@@ -216,7 +216,7 @@ class HashBatchCacheableByPrimaryAspect {
             }
         }
 
-        // 走与 [proceedAsStringAnyMap] 一样的强校验路径，避免 `as? Map<String, Any?>` 在 key 类型错时静默返回错误结构。
+        // Go through the same strict validation path as [proceedAsStringAnyMap] to avoid `as? Map<String, Any?>` silently returning an incorrect structure when key types are wrong.
         return validatedMap(joinPoint.proceed(args))
     }
 }

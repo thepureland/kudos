@@ -24,7 +24,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 微服务业务
+ * Microservice service implementation.
  *
  * @author K
  * @author AI: Cursor
@@ -93,8 +93,8 @@ open class SysMicroServiceService(
         return completeCrudUpdate(
             success = dao.update(microService),
             log = log,
-            successMessage = "更新编码为${code}的微服务的启用状态为${active}。",
-            failureMessage = "更新编码为${code}的微服务的启用状态为${active}失败！",
+            successMessage = "Updated active=${active} for microservice with code ${code}.",
+            failureMessage = "Failed to update active=${active} for microservice with code ${code}!",
         ) {
             eventPublisher.publishEvent(SysMicroServiceUpdated(id = code))
         }
@@ -103,7 +103,7 @@ open class SysMicroServiceService(
     @Transactional
     override fun insert(any: Any): String {
         val code = super.insert(any)
-        completeCrudInsert(log, "新增编码为${code}的微服务。") {
+        completeCrudInsert(log, "Inserted microservice with code ${code}.") {
             eventPublisher.publishEvent(SysMicroServiceInserted(id = code))
         }
         return code
@@ -115,8 +115,8 @@ open class SysMicroServiceService(
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新编码为${code}的微服务。",
-            failureMessage = "更新编码为${code}的微服务失败！",
+            successMessage = "Updated microservice with code ${code}.",
+            failureMessage = "Failed to update microservice with code ${code}!",
         ) {
             eventPublisher.publishEvent(SysMicroServiceUpdated(id = code))
         }
@@ -126,14 +126,14 @@ open class SysMicroServiceService(
     override fun deleteById(id: String): Boolean {
         val microService = dao.get(id)
         if (microService == null) {
-            log.warn("删除编码为${id}的微服务时，发现其已不存在！")
+            log.warn("Attempt to delete microservice with code ${id}, but it no longer exists!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除编码为${id}的微服务成功！",
-            failureMessage = "删除编码为${id}的微服务失败！",
+            successMessage = "Successfully deleted microservice with code ${id}!",
+            failureMessage = "Failed to delete microservice with code ${id}!",
         ) {
             eventPublisher.publishEvent(SysMicroServiceDeleted(id = id))
         }
@@ -142,7 +142,7 @@ open class SysMicroServiceService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
-        log.debug("批量删除微服务，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete microservices: expected ${ids.size}, actually deleted ${count}.")
         if (count > 0) {
             eventPublisher.publishEvent(SysMicroServiceBatchDeleted(ids = ids))
         }
@@ -150,10 +150,10 @@ open class SysMicroServiceService(
     }
 
     /**
-     * 把缓存条目映射为树节点：code 作为节点 id，parentCode 作为 parent 链。
+     * Map a cache entry to a tree node: code is the node id, parentCode is the parent link.
      *
-     * @param microService 微服务缓存条目
-     * @return 树节点
+     * @param microService Microservice cache entry
+     * @return Tree node
      * @author K
      * @since 1.0.0
      */
@@ -161,15 +161,15 @@ open class SysMicroServiceService(
         IdAndNameTreeNode(microService.code, microService.name, microService.parentCode)
 
     /**
-     * 从 update 入参抽 code（这里 id 即 code）；要求实现 [IIdEntity] 且 id 是 String。
+     * Extract code from the update payload (id == code here); requires the payload to implement [IIdEntity] with a String id.
      *
-     * @param any 更新入参
-     * @return 微服务 code
-     * @throws IllegalStateException 入参类型不被支持
+     * @param any Update payload
+     * @return Microservice code
+     * @throws IllegalStateException Payload type is not supported
      * @author K
      * @since 1.0.0
      */
     private fun requireMicroServiceCode(any: Any): String =
         (any as? IIdEntity<*>)?.id as? String
-            ?: error("更新微服务时不支持的入参类型: ${any::class.qualifiedName}")
+            ?: error("Unsupported payload type when updating microservice: ${any::class.qualifiedName}")
 }

@@ -7,7 +7,7 @@ import java.util.Date
 
 
 /**
- * 定义 java.time.LocalDateTime 的扩展函数
+ * Defines extension functions for java.time.LocalDateTime.
  *
  * @author K
  * @since 1.0.0
@@ -15,19 +15,19 @@ import java.util.Date
 
 
 /**
- * 格式化
+ * Formats the value.
  *
- * @param pattern 格式模式串，常见的可用DateTimeFormatPattern类中的常量
- * @return 格式化后的字符串
+ * @param pattern Format pattern string; common patterns are available as constants in the DateTimeFormatPattern class
+ * @return The formatted string
  * @author K
  * @since 1.0.0
  */
 fun LocalDateTime.format(pattern: String): String = this.format(DateTimeFormatter.ofPattern(pattern))
 
 /**
- * 返回当前时间对应的quartz的cron表达式
+ * Returns the Quartz cron expression corresponding to the current time.
  *
- * @return quartz的cron表达式
+ * @return Quartz cron expression
  * @author K
  * @since 1.0.0
  */
@@ -37,9 +37,9 @@ fun LocalDateTime.toCronExp(): String =
     }
 
 /**
- * 转化为Date
+ * Converts to a Date.
  *
- * @param zoneId 时区ID，缺省为系统默认时区
+ * @param zoneId Time zone ID; defaults to the system default time zone
  * @return Date
  * @author K
  * @since 1.0.0

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 /**
- * 微服务应用1的service
+ * Service for microservice application 1.
  *
  * @author K
  * @since 1.0.0
@@ -27,20 +27,20 @@ open class Service1 : IService1 {
     override fun getById(id: Int): TestTable =
         requireNotNull(testTableDao.get(id)) { "TestTable not found: $id" }
 
-    @Transactional // 可加可不加
+    @Transactional // Optional
     override fun decrease(id: Int, money: Double) {
         val ds = KudosContextHolder.currentDataSource()
         ds.connection.use { conn ->
             println("conn.class = ${conn.javaClass.name}")
         }
-        log.info("seata全局事务id【${RootContext.getXID()}】")
+        log.info("Seata global transaction id [${RootContext.getXID()}]")
         val entity = requireNotNull(testTableDao.get(id)) { "TestTable not found: $id" }
-        log.info("用户【$id】当前余额【${entity.balance}】")
-        log.info("为用户【$id】扣减余额【${money}】")
+        log.info("User [$id] current balance [${entity.balance}]")
+        log.info("Deducting balance [${money}] for user [$id]")
         entity.balance = entity.balance.minus(money)
         testTableDao.update(entity)
         val after = requireNotNull(testTableDao.get(id)) { "TestTable not found: $id" }
-        log.info("用户【$id】当前余额【${after.balance}】")
+        log.info("User [$id] current balance [${after.balance}]")
     }
 
 }

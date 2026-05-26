@@ -45,12 +45,12 @@ class HttpClientKitTest {
 
     @BeforeAll
     fun start_server() {
-        // 读取测试资源 kudos.png（放在 test resources 根目录）
+        // Load the test resource logo.png (placed at the test resources root)
         val url = this::class.java.getResource("/logo.png")
-            ?: error("测试资源 /logo.png 未找到，请确保放在 test resources 下")
+            ?: error("Test resource /logo.png not found; make sure it is under test resources")
         pngBytes = url.readBytes()
 
-        // 启动 JDK 内置 HttpServer（随机端口，避免冲突）
+        // Start the JDK built-in HttpServer (random port to avoid conflicts)
         server = HttpServer.create(InetSocketAddress(0), 0)
 
         // GET /text -> "hello"
@@ -88,28 +88,28 @@ class HttpClientKitTest {
             ex.close()
         }
 
-        // 任意方法：回显方法名
+        // Any method: echo the method name
         server.createContext("/method-echo") { ex ->
             ex.respond(200, ex.requestMethod, "text/plain; charset=utf-8")
         }
 
-        // 表单回显
+        // Form echo
         server.createContext("/form-echo") { ex ->
             val body = ex.requestBody.readAllBytes()
             ex.respondBytes(200, body, "text/plain; charset=utf-8")
         }
 
-        // 200 全量下载
+        // 200 full download
         server.createContext("/logo.png") { ex ->
             ex.respond_ok_full(pngBytes, "image/png")
         }
 
-        // 206 断点续传（仅处理单一 Range: bytes=start- 或 bytes=start-end）
+        // 206 resume download (handles a single Range: bytes=start- or bytes=start-end)
         server.createContext("/kudos-range") { ex ->
             ex.respond_with_range(pngBytes, "image/png")
         }
 
-        // 200 + Content-Disposition（用于自动文件名）
+        // 200 + Content-Disposition (for automatic filename detection)
         server.createContext("/kudos-cd") { ex ->
             ex.responseHeaders.add("Content-Type", "image/png")
             ex.responseHeaders.add("Content-Disposition", """attachment; filename="kudos-from-header.png"""")
@@ -124,7 +124,7 @@ class HttpClientKitTest {
         baseUrl = "http://127.0.0.1:$port"
         println("Test server started at $baseUrl")
 
-        // 临时目录
+        // Temp directory
         tmpDir = Files.createTempDirectory("dl-test-")
     }
 
@@ -138,7 +138,7 @@ class HttpClientKitTest {
     private fun url(path: String) = "$baseUrl$path"
 
     /* =========================
-       同步请求：GET，基础类型
+       Sync requests: GET, primitive types
        ========================= */
 
     @Test
@@ -187,7 +187,7 @@ class HttpClientKitTest {
     }
 
     /* =========================
-       同步请求：默认 JSON 映射
+       Sync requests: default JSON mapping
        ========================= */
 
     @Test
@@ -209,18 +209,18 @@ class HttpClientKitTest {
     }
 
     /* =========================
-       异步请求：方法与表单
+       Async requests: methods and form data
        ========================= */
     @Test
     fun async_post_with_form_data() {
         val form: Map<Any, Any> = mapOf("a b" to "中 文", "x" to "1+2=3")
         val resp = HttpClientKit.asyncPost<String>(url("/form-echo")) {
             header("Content-Type", "application/x-www-form-urlencoded; charset=utf-8")
-            // 关键：直接传 Publisher，不要做任何类型转换或 toString()
+            // Important: pass the Publisher directly; do not perform any type conversion or toString()
             method("POST", HttpClientKit.ofFormData(form))
         }
         assertEquals(200, resp.statusCode())
-        // 服务器回显请求体，断言编码结果
+        // Server echoes the request body; assert the encoded result
         val expected = "a+b=%E4%B8%AD+%E6%96%87&x=1%2B2%3D3"
         assertEquals(expected, resp.body())
     }
@@ -287,8 +287,8 @@ class HttpClientKitTest {
             overwrite = true
         )
         assertEquals(200, resp.statusCode())
-        assertTrue(target.exists(), "文件应已落盘")
-        assertContentEquals(pngBytes, target.readBytes(), "下载内容应与资源一致")
+        assertTrue(target.exists(), "File should have been written to disk")
+        assertContentEquals(pngBytes, target.readBytes(), "Downloaded content should match the resource")
     }
 
     @Test
@@ -314,29 +314,29 @@ class HttpClientKitTest {
         )
         assertEquals(200, resp.statusCode())
         val saved = resp.body()
-        assertTrue(saved.fileName.toString() == "kudos-from-header.png", "应根据 Content-Disposition 自动取名")
+        assertTrue(saved.fileName.toString() == "kudos-from-header.png", "Filename should be derived from Content-Disposition")
         assertContentEquals(pngBytes, saved.readBytes())
     }
 
     @Test
     fun resume_download_from_existing_part_file() {
-        // 先人工制造一个 .part（写入前半段）
+        // Manually create a .part file (write the first half)
         val target = tmpDir.resolve("kudos_partial.png")
         val part = target.resolveSibling(target.name + ".part")
         val half = (pngBytes.size / 2).coerceAtLeast(1)
         part.writeBytes(pngBytes.copyOfRange(0, half))
 
-        // 继续下载（服务器支持 Range）
+        // Resume download (server supports Range)
         val resp = HttpClientKit.download(
             url = url("/kudos-range"),
             target = target,
             resume = true,
             overwrite = true
         )
-        // 续传时服务端返回 206，这里沿用底层状态码
-        assertEquals(206, resp.statusCode(), "续传应返回 206 Partial Content")
+        // On resume the server returns 206; surface the underlying status code
+        assertEquals(206, resp.statusCode(), "Resume should return 206 Partial Content")
         assertTrue(target.exists())
-        assertContentEquals(pngBytes, target.readBytes(), "最终文件应与原文件一致")
+        assertContentEquals(pngBytes, target.readBytes(), "Final file should match the original")
     }
 
     @Test
@@ -351,13 +351,13 @@ class HttpClientKitTest {
             resume = false,
             overwrite = false
         )
-        // 我们的实现：当 overwrite=false 且文件存在时，不发请求，直接返回 200 并保持原文件
+        // Our implementation: when overwrite=false and the file exists, skip the request and return 200 with the original file intact
         assertEquals(200, resp.statusCode())
-        assertContentEquals(sentinel, target.readBytes(), "不应覆盖已存在文件")
+        assertContentEquals(sentinel, target.readBytes(), "Existing file should not be overwritten")
     }
 
     /* =========================
-       注意事项与已知差异
+       Notes and known differences
        ========================= */
 
     @Test
@@ -369,7 +369,7 @@ class HttpClientKitTest {
     }
 
     /* =========================
-       HttpExchange 扩展与工具
+       HttpExchange extensions and utilities
        ========================= */
 
     private fun HttpExchange.respond(status: Int, text: String, contentType: String) {
@@ -388,7 +388,7 @@ class HttpClientKitTest {
     }
 
 
-    // 200 全量
+    // 200 full body
     private fun HttpExchange.respond_ok_full(bytes: ByteArray, contentType: String) {
         responseHeaders.add("Content-Type", contentType)
         responseHeaders.add("Accept-Ranges", "bytes")
@@ -397,23 +397,23 @@ class HttpClientKitTest {
         close()
     }
 
-    // 支持 Range 的响应（只实现单一 range）
+    // Range-supporting response (only a single range is implemented)
     private fun HttpExchange.respond_with_range(bytes: ByteArray, contentType: String) {
         responseHeaders.add("Content-Type", contentType)
         responseHeaders.add("Accept-Ranges", "bytes")
         val range = requestHeaders.getFirst("Range")
         if (range == null) {
-            // 无 Range，当作全量
+            // No Range header; treat as full body
             sendResponseHeaders(200, bytes.size.toLong())
             responseBody.use { it.write(bytes) }
             close()
             return
         }
 
-        // 解析 Range: bytes=start-end?  （只处理单段）
+        // Parse Range: bytes=start-end?  (only single-range supported)
         val m = Regex("""bytes=(\d+)-(\d+)?""").find(range)
         if (m == null) {
-            // 不合法的 Range，简单回 200 全量
+            // Invalid Range; just respond with 200 full body
             sendResponseHeaders(200, bytes.size.toLong())
             responseBody.use { it.write(bytes) }
             close()

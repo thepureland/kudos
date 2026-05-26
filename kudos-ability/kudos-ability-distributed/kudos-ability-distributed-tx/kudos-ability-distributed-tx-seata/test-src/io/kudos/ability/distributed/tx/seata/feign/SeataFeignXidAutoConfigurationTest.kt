@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 /**
- * [SeataFeignXidAutoConfiguration] filter registration 测试。
+ * Tests for filter registration in [SeataFeignXidAutoConfiguration].
  *
  * @author K
  * @author AI: Codex

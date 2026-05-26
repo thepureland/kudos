@@ -4,7 +4,7 @@ import io.kudos.ability.distributed.stream.rocketmq.data.RocketMqSimpleMsg
 
 
 /**
- * RocketMQ测试生產者服务接口
+ * RocketMQ test producer service interface.
  *
  * @author shane
  * @author K

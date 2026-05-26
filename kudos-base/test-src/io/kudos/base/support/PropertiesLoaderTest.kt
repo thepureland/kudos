@@ -7,7 +7,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 /**
- * PropertiesLoader测试用例
+ * PropertiesLoader test cases
  *
  * @author AI: cursor
  * @author K
@@ -127,7 +127,7 @@ internal class PropertiesLoaderTest {
         val props = Properties()
         props.setProperty("invalid.bool", "maybe")
         val loader = PropertiesLoader(props)
-        // 根据实现，非true/false应该返回false
+        // Per the implementation, non true/false should return false
         assertEquals(false, loader.getBoolean("invalid.bool"))
     }
 
@@ -137,11 +137,11 @@ internal class PropertiesLoaderTest {
         props.setProperty("test.key", "file.value")
         val loader = PropertiesLoader(props)
         
-        // 设置系统属性
+        // Set the system property
         val originalValue = System.getProperty("test.key")
         try {
             System.setProperty("test.key", "system.value")
-            // 系统属性应该优先
+            // System property should take precedence
             assertEquals("system.value", loader.getProperty("test.key"))
         } finally {
             if (originalValue != null) {

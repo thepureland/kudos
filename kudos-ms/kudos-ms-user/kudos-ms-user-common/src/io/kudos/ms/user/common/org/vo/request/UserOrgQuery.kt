@@ -5,32 +5,32 @@ import io.kudos.ms.user.common.org.vo.response.UserOrgRow
 
 
 /**
- * 机构列表查询条件请求VO
+ * Organization list query request VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserOrgQuery (
 
-    /** 机构名称 */
+    /** Organization name */
     val name: String? = null,
 
-    /** 机构简称 */
+    /** Organization short name */
     val shortName: String? = null,
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String? = null,
 
-    /** 父机构id */
+    /** Parent organization id */
     val parentId: String? = null,
 
-    /** 机构类型字典码 */
+    /** Organization type dict code */
     val orgTypeDictCode: String? = null,
 
-    /** 是否激活 */
+    /** Whether active */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean? = null,
 
 ) : ListSearchPayload() {

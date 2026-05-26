@@ -22,12 +22,12 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * 参数（by module & name）缓存处理器
+ * Parameter (by module & name) cache handler.
  *
- * 1.数据来源表：sys_param
- * 2.缓存所有active=true的参数
- * 3.缓存的key为：atomicServiceCode::paramName
- * 4.缓存的value为：SysParamCacheEntry对象
+ * 1. Source table: sys_param.
+ * 2. Caches every parameter with active=true.
+ * 3. Cache key: atomicServiceCode::paramName
+ * 4. Cache value: SysParamCacheEntry
  *
  * @author K
  * @since 1.0.0
@@ -46,7 +46,7 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
 
     override fun doReload(key: String): SysParamCacheEntry? {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
-            "缓存${CACHE_NAME}的key格式必须是 模块代码${Consts.CACHE_KEY_DEFAULT_DELIMITER}参数名称"
+            "Cache $CACHE_NAME key format must be moduleCode${Consts.CACHE_KEY_DEFAULT_DELIMITER}paramName"
         }
         val moduleAndParamName = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
         return getSelf<ParamByModuleAndNameCache>().getParam(
@@ -56,35 +56,35 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有启用状态的参数！")
+            log.info("Cache is not active; skipping load of all enabled parameters!")
             return
         }
 
-        // 加载所有可用的参数
+        // Load all enabled parameters
         val criteria = Criteria(SysParam::active eq true)
         val params = sysParamDao.searchAs<SysParamCacheEntry>(criteria)
-        log.debug("从数据库加载了${params.size}条参数信息。")
+        log.debug("Loaded ${params.size} parameter records from DB.")
 
-        // 清除缓存
+        // Clear cache
         if (clear) {
             clear()
         }
 
-        // 缓存参数
+        // Cache parameters
         params.forEach {
             val atomicServiceCode = it.atomicServiceCode
             val paramName = it.paramName
             KeyValueCacheKit.put(CACHE_NAME, getKey(atomicServiceCode, paramName), it)
         }
-        log.debug("缓存了${params.size}条参数信息。")
+        log.debug("Cached ${params.size} parameter records.")
     }
 
     /**
-     * 根据模块编号和参数名称从缓存获取对应的参数信息，如果缓存中不存在，则从数据库中加载，并写回缓存
+     * Fetch parameter info by module code and parameter name from cache; on miss, load from DB and write back to cache.
      *
-     * @param atomicServiceCode 模块编号
-     * @param paramName 参数名称
-     * @return SysParamCacheEntry，找不到返回null
+     * @param atomicServiceCode module code
+     * @param paramName parameter name
+     * @return SysParamCacheEntry, or null if not found
      */
     @Cacheable(
         value = [CACHE_NAME],
@@ -93,60 +93,60 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
     )
     open fun getParam(atomicServiceCode: String, paramName: String): SysParamCacheEntry? {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在模块为${atomicServiceCode}且名称为${paramName}的参数，从数据库中加载...")
+            log.debug("No cached parameter for module=$atomicServiceCode, name=$paramName; loading from DB...")
         }
         val param = sysParamDao.getActiveParamsForCache(atomicServiceCode, paramName)
         if (param == null) {
-            log.warn("数据库中不存在模块为${atomicServiceCode}且名称为${paramName}的active=true的参数！")
+            log.warn("No active=true parameter found in DB for module=$atomicServiceCode, name=$paramName!")
         }
         return param
     }
 
     /**
-     * 数据库插入记录后同步缓存
+     * Sync cache after a DB insert.
      *
-     * @param any 包含必要属性的对象
-     * @param id 参数id
+     * @param any object holding the required properties
+     * @param id parameter id
      */
     open fun syncOnInsert(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME) && KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
-            log.debug("新增id为${id}的参数后，同步${CACHE_NAME}缓存...")
+            log.debug("After inserting parameter id=$id, syncing $CACHE_NAME cache...")
             val atomicServiceCode = BeanKit.getProperty(any, SysParam::atomicServiceCode.name) as String
             val paramName = BeanKit.getProperty(any, SysParam::paramName.name) as String
-            getSelf<ParamByModuleAndNameCache>().getParam(atomicServiceCode, paramName) // 缓存
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            getSelf<ParamByModuleAndNameCache>().getParam(atomicServiceCode, paramName) // populate cache
+            log.debug("$CACHE_NAME cache sync complete.")
         }
     }
 
     /**
-     * 更新数据库记录后同步缓存
+     * Sync cache after a DB update.
      *
-     * @param any 包含必要属性的对象
-     * @param id 参数id
+     * @param any object holding the required properties
+     * @param id parameter id
      */
     open fun syncOnUpdate(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${id}的参数后，同步${CACHE_NAME}缓存...")
+            log.debug("After updating parameter id=$id, syncing $CACHE_NAME cache...")
             val atomicServiceCode = BeanKit.getProperty(any, SysParam::atomicServiceCode.name) as String
             val paramName = BeanKit.getProperty(any, SysParam::paramName.name) as String
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(atomicServiceCode, paramName)) // 踢除参数缓存
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(atomicServiceCode, paramName)) // evict parameter cache
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
-                getSelf<ParamByModuleAndNameCache>().getParam(atomicServiceCode, paramName) // 重新缓存
+                getSelf<ParamByModuleAndNameCache>().getParam(atomicServiceCode, paramName) // re-cache
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("$CACHE_NAME cache sync complete.")
         }
     }
 
     /**
-     * 更新启用状态后同步缓存
+     * Sync cache after the enabled state is updated.
      *
-     * @param id 参数id
-     * @param active 是否启用
+     * @param id parameter id
+     * @param active whether enabled
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${id}的参数的启用状态后，同步缓存...")
-            val sysParam = requireNotNull(sysParamDao.get(id)) { "更新参数启用状态缓存时找不到id=$id 的参数记录。" }
+            log.debug("After updating active state of parameter id=$id, syncing cache...")
+            val sysParam = requireNotNull(sysParamDao.get(id)) { "Cannot find parameter record id=$id when syncing active-state cache." }
             if (active) {
                 if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<ParamByModuleAndNameCache>().getParam(
@@ -154,50 +154,50 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
                     )
                 }
             } else {
-                KeyValueCacheKit.evict(CACHE_NAME, getKey(sysParam.atomicServiceCode, sysParam.paramName)) // 踢除参数缓存
+                KeyValueCacheKit.evict(CACHE_NAME, getKey(sysParam.atomicServiceCode, sysParam.paramName)) // evict parameter cache
             }
-            log.debug("缓存同步完成。")
+            log.debug("Cache sync complete.")
         }
     }
 
     /**
-     * 删除数据库记录后同步缓存
+     * Sync cache after a DB delete.
      *
-     * @param any 包含必要属性的对象
-     * @param id 参数id
+     * @param any object holding the required properties
+     * @param id parameter id
      */
     open fun syncOnDelete(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             val atomicServiceCode = BeanKit.getProperty(any, SysParam::atomicServiceCode.name) as String
             val paramName = BeanKit.getProperty(any, SysParam::paramName.name) as String
-            log.debug("删除id为${id}的参数后，同步从${CACHE_NAME}缓存中踢除...")
-            KeyValueCacheKit.evict(CACHE_NAME, getKey(atomicServiceCode, paramName)) // 踢除缓存
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("After deleting parameter id=$id, evicting from $CACHE_NAME cache...")
+            KeyValueCacheKit.evict(CACHE_NAME, getKey(atomicServiceCode, paramName)) // evict cache
+            log.debug("$CACHE_NAME cache sync complete.")
         }
     }
 
     /**
-     * 批量删除数据库记录后同步缓存
+     * Sync cache after batch deletion of DB records.
      *
-     * @param ids 参数id集合
-     * @param moduleAndNames List<Pair<原子服务编码，参数名称>>
+     * @param ids parameter id collection
+     * @param moduleAndNames List<Pair<atomicServiceCode, paramName>>
      */
     open fun syncOnBatchDelete(ids: Collection<String>, moduleAndNames: List<Pair<String, String>>) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("批量删除id为${ids}的参数后，同步从${CACHE_NAME}缓存中踢除...")
+            log.debug("After batch-deleting parameters ids=$ids, evicting from $CACHE_NAME cache...")
             moduleAndNames.forEach {
-                KeyValueCacheKit.evict(CACHE_NAME, getKey(it.first, it.second)) // 踢除缓存
+                KeyValueCacheKit.evict(CACHE_NAME, getKey(it.first, it.second)) // evict cache
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("$CACHE_NAME cache sync complete.")
         }
     }
 
     /**
-     * 返回参数拼接后的key
+     * Build the composite cache key for a parameter.
      *
-     * @param atomicServiceCode 原子服务编码
-     * @param paramName 参数名称
-     * @return 缓存key
+     * @param atomicServiceCode atomic service code
+     * @param paramName parameter name
+     * @return cache key
      */
     fun getKey(atomicServiceCode: String, paramName: String): String {
         return "${atomicServiceCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${paramName}"
@@ -205,7 +205,7 @@ open class ParamByModuleAndNameCache : AbstractKeyValueCacheHandler<SysParamCach
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysParamInserted) {
-        // AFTER_COMMIT 后 DB 行已可见，直接按 id 取 dims；避免事件需要携带模块+参数名
+        // After AFTER_COMMIT the DB row is visible; look up dims by id directly to avoid requiring module+name on the event.
         val param = sysParamDao.get(event.id) ?: return
         syncOnInsert(param, event.id)
     }

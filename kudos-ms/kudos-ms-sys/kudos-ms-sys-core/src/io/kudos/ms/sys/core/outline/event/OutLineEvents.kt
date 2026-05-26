@@ -1,9 +1,9 @@
 package io.kudos.ms.sys.core.outline.event
 
 /**
- * 出网白名单（`sys_out_line`）领域事件
+ * Outbound allowlist (`sys_out_line`) domain events.
  *
- * 删除事件携带 `systemCode` + `tenantId`，便于按缓存维度精确失效；DB 删除后已无法回查。
+ * The delete event carries `systemCode` + `tenantId` so cache entries can be precisely invalidated by dimension; after the DB delete it can no longer be looked up.
  *
  * @author K
  * @since 1.0.0
@@ -21,7 +21,7 @@ data class SysOutLineDeleted(
     val tenantId: String?,
 ) : SysOutLineEvent
 
-/** 批量删除：携带每条记录的维度集合用于精确失效。 */
+/** Batch delete: carries the dimension set of each record for precise invalidation. */
 data class SysOutLineBatchDeleted(
     val ids: Collection<String>,
     val dimensions: Set<Pair<String, String?>>,

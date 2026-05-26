@@ -16,7 +16,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息接收业务
+ * Message receive business service.
  *
  * @author K
  * @author AI: Codex
@@ -43,7 +43,7 @@ open class MsgReceiveService(
 
     override fun markRead(id: String): Boolean {
         val current = dao.get(id) ?: return false
-        // 跳过已经是 READ / DELETED 的记录，避免重复触发后续审计副作用
+        // Skip records already in READ / DELETED state to avoid repeatedly triggering downstream audit side effects
         if (current.receiveStatusDictCode !in MsgReceiveStatusEnum.UNREAD_CODES) return false
         return dao.updateProperties(
             id,

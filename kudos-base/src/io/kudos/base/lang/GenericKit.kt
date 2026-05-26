@@ -9,7 +9,7 @@ import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.jvm.jvmErasure
 
 /**
- * 泛型工具类
+ * Generic utility.
  *
  * @author K
  * @since 1.0.0
@@ -18,11 +18,11 @@ object GenericKit {
 
 
     /**
-     * 获取指定类的直接父类的泛型参数的实际类型, 如果没有非Any的父类，取实现的第一个接口。
+     * Get the actual type of the generic parameter of the direct superclass of the specified class; if there is no non-Any superclass, take the first implemented interface.
      *
-     * @param clazz 需要获取泛型参数实际类型的类, 该类必须继承泛型父类或实现泛型接口
-     * @param index 泛型参数所在索引, 从0开始.
-     * @return 泛型参数的实际类型。如果不支持泛型，将返回Nothing::class;泛型参数如果为"*"，将返回Any::class;如果索引越界将返回null
+     * @param clazz the class whose generic parameter's actual type is to be obtained; this class must extend a generic superclass or implement a generic interface
+     * @param index the index of the generic parameter, starting from 0.
+     * @return the actual type of the generic parameter. Returns Nothing::class if generics are unsupported; returns Any::class when the generic parameter is "*"; returns null when the index is out of bounds.
      * @author K
      * @since 1.0.0
      */
@@ -31,10 +31,10 @@ object GenericKit {
             return Nothing::class
         }
 
-        val directSuperClass = requireNotNull(clazz.getSuperClass()) { "类【$clazz】没有可用父类" }
+        val directSuperClass = requireNotNull(clazz.getSuperClass()) { "Class [$clazz] has no usable superclass" }
         var directSuperType = directSuperClass.firstMatchTypeOf(clazz.supertypes)
         if (directSuperType == Any::class.starProjectedType) {
-            // 没有非Any的父类，取实现的第一个接口
+            // No non-Any superclass; take the first implemented interface
             val genericInterfaces = clazz.getSuperInterfaces()
             if (genericInterfaces.isNotEmpty()) {
                 directSuperType = genericInterfaces[0].firstMatchTypeOf(clazz.supertypes)
@@ -43,30 +43,30 @@ object GenericKit {
 
         val args = directSuperType.arguments
         if(args.isEmpty()) {
-            // 可能是在父类做的参数化
-            return getSuperClassGenricClass(directSuperClass, index) // 往父类取
+            // Parameterization may be done on the parent class
+            return getSuperClassGenricClass(directSuperClass, index) // walk up to the parent
         }
 
         require(index in args.indices) {
-            "输入的索引${if (index < 0) "不能小于0" else "超出了参数的总数"}"
+            "The supplied index ${if (index < 0) "cannot be negative" else "exceeds the total number of parameters"}"
         }
         val type = args[index].type
-        return type?.jvmErasure ?: Any::class // 泛型参数为*时返回Any::class
+        return type?.jvmErasure ?: Any::class // returns Any::class when the generic parameter is *
     }
 
 
     /**
-     * 获取可调用对象第index个入参类型的所有泛型参数的实际类型
+     * Get the actual types of all generic parameters of the index-th input parameter type of the callable.
      *
-     * @param callable 可调用对象，比如：函数
-     * @param index 第几个输入参数。第0个输入参数为调用该函数的对象，隐式传递，所以显示的函数参数是从第1个算起
-     * @return 泛型参数的实际类型列表。如果不支持泛型，元素类型将为Nothing::class;泛型参数如果为"*"，元素类型将为Any::class;如果索引越界元素将为null
+     * @param callable the callable, e.g. a function
+     * @param index the position of the input parameter. The 0th parameter is the object on which the function is invoked (passed implicitly), so visible function parameters start from 1.
+     * @return the list of actual types of the generic parameters. If generics are unsupported, the element type is Nothing::class; if the generic parameter is "*", the element type is Any::class; if the index is out of bounds, the element is null.
      * @author K
      * @since 1.0.0
      */
     fun getParameterTypeGenericClass(callable: KCallable<*>, index: Int = 1): List<KClass<*>> {
         require(index in callable.parameters.indices) {
-            "输入的索引${if (index < 0) "不能小于0" else "超出了参数的总数"}"
+            "The supplied index ${if (index < 0) "cannot be negative" else "exceeds the total number of parameters"}"
         }
         val args = callable.parameters[index].type.arguments
         if (args.isEmpty()) return listOf(Nothing::class)
@@ -74,11 +74,11 @@ object GenericKit {
     }
 
     /**
-     * 获取可调用对象返回值泛型参数的实际类型.
+     * Get the actual type of the generic parameter of the callable's return type.
      *
-     * @param callable 可调用对象，比如：属性、函数
-     * @param index 泛型参数所在索引, 从0开始.
-     * @return 泛型参数的实际类型。如果不支持泛型，将返回Nothing::class;泛型参数如果为"*"，将返回Any::class;如果索引越界将返回null
+     * @param callable the callable, e.g. a property or function
+     * @param index the index of the generic parameter, starting from 0.
+     * @return the actual type of the generic parameter. Returns Nothing::class if generics are unsupported; returns Any::class when the generic parameter is "*"; returns null when the index is out of bounds.
      * @author K
      * @since 1.0.0
      */
@@ -88,10 +88,10 @@ object GenericKit {
             return Nothing::class
         }
         require(index in args.indices) {
-            "输入的索引${if (index < 0) "不能小于0" else "超出了泛型参数的总数"}"
+            "The supplied index ${if (index < 0) "cannot be negative" else "exceeds the total number of generic parameters"}"
         }
         val type = args[index].type
-        return type?.jvmErasure ?: Any::class // 泛型参数为*时返回Any::class
+        return type?.jvmErasure ?: Any::class // returns Any::class when the generic parameter is *
     }
 
 }

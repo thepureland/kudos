@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for UserAccountThirdService
  *
- * 测试数据来源：`UserAccountThirdServiceTest.sql`
+ * Test data source: `UserAccountThirdServiceTest.sql`.
  *
  * @author K
  * @author AI: Codex

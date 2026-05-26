@@ -6,20 +6,20 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 域名数据库表-实体关联对象
+ * Domain table-to-entity binding.
  *
  * @author K
  * @since 1.0.0
  */
 object SysDomains : ManagedTable<SysDomain>("sys_domain") {
 
-    /** 域名 */
+    /** Domain */
     var domain = varchar("domain").bindTo { it.domain }
 
-    /** 系统编码 */
+    /** System code */
     var systemCode = varchar("system_code").bindTo { it.systemCode }
 
-    /** 租户id */
+    /** Tenant id */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 
 

@@ -1,9 +1,9 @@
 package io.kudos.ability.distributed.stream.common.init.properties
 
 /**
- * producer 侧本地 in-flight 限流配置。
+ * Producer-side local in-flight rate limit configuration.
  *
- * 绑定前缀：`kudos.ability.distributed.stream.producer-limit`
+ * Binding prefix: `kudos.ability.distributed.stream.producer-limit`
  *
  * @author K
  * @author AI: Codex

@@ -33,7 +33,7 @@ import java.sql.SQLXML
 </#if>
 
 
-<@generateClassComment table.comment+"缓存项"/>
+<@generateClassComment table.comment+" cache item"/>
 data class ${entityName}CacheItem (
 
     <#if containsIdColumnInCacheItems>

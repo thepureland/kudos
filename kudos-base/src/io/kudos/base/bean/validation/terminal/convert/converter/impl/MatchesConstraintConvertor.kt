@@ -7,7 +7,7 @@ import io.kudos.base.bean.validation.terminal.convert.converter.AbstractConstrai
 import jakarta.validation.constraints.Pattern
 
 /**
- * [Matches] -> 终端 [Pattern] 规则（regexp / message / flags）
+ * [Matches] -> terminal [Pattern] rule (regexp / message / flags).
  *
  * @author K
  * @author AI: Cursor
@@ -22,7 +22,7 @@ class MatchesConstraintConvertor(annotation: Annotation) : AbstractConstraintCon
 
     public override fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any> {
         require(constraintAnnotation is Matches) {
-            "MatchesConstraintConvertor 仅支持 Matches 注解"
+            "MatchesConstraintConvertor only supports the Matches annotation"
         }
         val kind = constraintAnnotation.value
         val message = constraintAnnotation.message.ifBlank { kind.defaultMessageKey }

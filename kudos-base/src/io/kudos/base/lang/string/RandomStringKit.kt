@@ -8,7 +8,7 @@ import java.util.UUID
 import kotlin.math.abs
 
 /**
- * 随机字符串工具类
+ * Random string utilities.
  *
  * @author K
  * @since 1.0.0
@@ -18,37 +18,37 @@ object RandomStringKit {
     private val random = SecureRandom()
 
     /**
-     * 封装java的UUID
+     * Wraps Java's UUID.
      *
-     * @return 中间有"-"分割的UUID
+     * @return a UUID delimited with "-"
      * @author K
      * @since 1.0.0
      */
     fun uuid(): String = UUID.randomUUID().toString()
 
     /**
-     * 封装java的UUID, 中间无"-"分割.
+     * Wraps Java's UUID without "-" delimiters.
      *
-     * @return 中间无"-"分割的UUID
+     * @return a UUID without "-" delimiters
      * @author K
      * @since 1.0.0
      */
     fun uuidWithoutDelimiter(): String = UUID.randomUUID().toString().replace("-".toRegex(), "")
 
     /**
-     * 使用SecureRandom随机生成Long.
+     * Randomly generates a Long via SecureRandom.
      *
-     * @return 随机Long
+     * @return random Long
      * @author K
      * @since 1.0.0
      */
     fun randomLong(): String = abs(random.nextLong()).toString()
 
     /**
-     * 基于Base62编码的SecureRandom随机生成bytes.
+     * Randomly generates bytes via SecureRandom, encoded in Base62.
      *
-     * @param length 长度
-     * @return Base62编码的字符串
+     * @param length length
+     * @return Base62-encoded string
      * @author K
      * @since 1.0.0
      */
@@ -59,72 +59,72 @@ object RandomStringKit {
     }
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.lang3.RandomStringUtils
+    // Wrappers around org.apache.commons.lang3.RandomStringUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
     /**
-     * 创建一个指定长度的随机串
-     * 字符将从所有字符集中选择
+     * Creates a random string of the specified length.
+     * Characters are chosen from the entire character set.
      *
-     * @param count 要创建的随机串的长度
-     * @return 随机串
+     * @param count length of the random string to create
+     * @return the random string
      * @author K
      * @since 1.0.0
      */
     fun random(count: Int): String = RandomStringUtils.insecure().next(count)
 
     /**
-     * 创建一个指定长度的随机串
-     * 字符将从ASCII码的`32` 到 `126`中选择
+     * Creates a random string of the specified length.
+     * Characters are chosen from ASCII codes `32` to `126`.
      *
-     * @param count 要创建的随机串的长度
-     * @return 随机串
+     * @param count length of the random string to create
+     * @return the random string
      * @author K
      * @since 1.0.0
      */
     fun randomAscii(count: Int): String = RandomStringUtils.insecure().nextAscii(count)
 
     /**
-     * 创建一个指定长度的随机串
-     * 字符将从字母中选择
+     * Creates a random string of the specified length.
+     * Characters are chosen from letters.
      *
-     * @param count 要创建的随机串的长度
-     * @return 随机串
+     * @param count length of the random string to create
+     * @return the random string
      * @author K
      * @since 1.0.0
      */
     fun randomAlphabetic(count: Int): String = RandomStringUtils.insecure().nextAlphabetic(count)
 
     /**
-     * 创建一个指定长度的随机串
-     * 字符将从字母或数字中选择
+     * Creates a random string of the specified length.
+     * Characters are chosen from letters or digits.
      *
-     * @param count 要创建的随机串的长度
-     * @return 随机串
+     * @param count length of the random string to create
+     * @return the random string
      * @author K
      * @since 1.0.0
      */
     fun randomAlphanumeric(count: Int): String = RandomStringUtils.insecure().nextAlphanumeric(count)
 
     /**
-     * 创建一个指定长度的随机串
-     * 字符将从数字中选择
+     * Creates a random string of the specified length.
+     * Characters are chosen from digits.
      *
-     * @param count 要创建的随机串的长度
-     * @return 随机串
+     * @param count length of the random string to create
+     * @return the random string
      * @author K
      * @since 1.0.0
      */
     fun randomNumeric(count: Int): String = RandomStringUtils.insecure().nextNumeric(count)
 
     /**
-     * 创建一个指定长度的随机串
-     * 字符将从字母或数字中选择
+     * Creates a random string of the specified length.
+     * Characters are chosen from letters or digits.
      *
-     * @param count 要创建的随机串的长度
-     * @param letters 如果为 `true`, 生成的字符将从字母中选择
-     * @param numbers 如果为 `true`, 生成的字符将从数字中选择
-     * @return 随机串
+     * @param count length of the random string to create
+     * @param letters if `true`, generated characters are chosen from letters
+     * @param numbers if `true`, generated characters are chosen from digits
+     * @return the random string
      * @author K
      * @since 1.0.0
      */
@@ -132,15 +132,15 @@ object RandomStringKit {
         RandomStringUtils.insecure().next(count, letters, numbers)
 
     /**
-     * 创建一个指定长度的随机串
-     * 字符将从字母或数字中选择
+     * Creates a random string of the specified length.
+     * Characters are chosen from letters or digits.
      *
-     * @param count 要创建的随机串的长度
-     * @param start 字符集范围的开始位置
-     * @param end 字符集范围的结束位置
-     * @param letters 如果为 `true`, 生成的字符将从字母中选择
-     * @param numbers 如果为 `true`, 生成的字符将从数字中选择
-     * @return 随机串
+     * @param count length of the random string to create
+     * @param start start position of the character set range
+     * @param end end position of the character set range
+     * @param letters if `true`, generated characters are chosen from letters
+     * @param numbers if `true`, generated characters are chosen from digits
+     * @return the random string
      * @author K
      * @since 1.0.0
      */
@@ -148,18 +148,18 @@ object RandomStringKit {
         RandomStringUtils.insecure().next(count, start, end, letters, numbers)
 
     /**
-     * 创建一个随机串, 使用默认的随机源
-     * 该方法与[.random]具有相同的语义,
-     * 但是不使用外部提供的随机源, 它使用内部静态的[Random]实例.
+     * Creates a random string using the default random source.
+     * This method has the same semantics as [.random], but does not use a user-provided random source;
+     * instead it uses an internal static [Random] instance.
      *
-     * @param count 要创建的随机串的长度
-     * @param start 字符集范围的开始位置
-     * @param end 字符集范围的结束位置
-     * @param letters 只允许字母?
-     * @param numbers 只允许数字?
-     * @param chars 字符可变数组 如果为 `null`, 将使用所有字符
-     * @return 随机串
-     * @throws ArrayIndexOutOfBoundsException 如果指定字符集中的元素不足`(end - start) + 1` 个
+     * @param count length of the random string to create
+     * @param start start position of the character set range
+     * @param end end position of the character set range
+     * @param letters allow letters only?
+     * @param numbers allow digits only?
+     * @param chars vararg of characters; if `null`, all characters are used
+     * @return the random string
+     * @throws ArrayIndexOutOfBoundsException if the specified character set contains fewer than `(end - start) + 1` elements
      * @author K
      * @since 1.0.0
      */
@@ -168,24 +168,24 @@ object RandomStringKit {
     ): String = RandomStringUtils.insecure().next(count, start, end, letters, numbers, *chars)
 
     /**
-     * 创建一个随机串, 使用提供的随机源
-     * 如果`start` 和 `end`都为`0`, `start` 和 `end`
-     * 将分别被设置为 `' '` 和 `'z'`, ASCII码可打印字段将被使用, 除非`letters` 和
-     * `numbers`都为`false`, 这样`start` 和 `end`将 分别被设置为
-     * `0` 和 `Integer.MAX_VALUE`. 如果`chars`不为`null`,
-     * `start` 到 `end` 间的字符将被选择
-     * 该方法接受一个用户提供的随机源[Random]实例. 每次调用时使用同一个随机源和固定的种子, 相同的随机串将重复产生并且是可预见的.
+     * Creates a random string using the provided random source.
+     * If both `start` and `end` are `0`, they will be set to `' '` and `'z'` respectively,
+     * and the printable ASCII range will be used, unless both `letters` and `numbers` are `false`,
+     * in which case `start` and `end` are set to `0` and `Integer.MAX_VALUE` respectively.
+     * If `chars` is not `null`, characters between `start` and `end` are chosen from it.
+     * This method accepts a user-provided [Random] instance. Using the same random source with a fixed seed on each call
+     * will reproduce the same random string in a predictable manner.
      *
-     * @param count 要创建的随机串的长度
-     * @param start 字符集范围的开始位置
-     * @param end 字符集范围的结束位置
-     * @param letters 只允许字母?
-     * @param numbers 只允许数字?
-     * @param chars 字符数组 如果为 `null`, 将使用所有字符
-     * @param random 随机源
-     * @return 随机串
-     * @throws ArrayIndexOutOfBoundsException 如果指定字符集中的元素不足`(end - start) + 1` 个
-     * @throws IllegalArgumentException 如果 `count` &lt; 0.
+     * @param count length of the random string to create
+     * @param start start position of the character set range
+     * @param end end position of the character set range
+     * @param letters allow letters only?
+     * @param numbers allow digits only?
+     * @param chars character array; if `null`, all characters are used
+     * @param random the random source
+     * @return the random string
+     * @throws ArrayIndexOutOfBoundsException if the specified character set contains fewer than `(end - start) + 1` elements
+     * @throws IllegalArgumentException if `count` &lt; 0.
      * @author K
      * @since 1.0.0
      */
@@ -194,33 +194,33 @@ object RandomStringKit {
     ): String = RandomStringUtils.random(count, start, end, letters, numbers, chars, random)
 
     /**
-     * 创建一个指定长度的随机串
-     * 字符将从指定的字符串中选择
+     * Creates a random string of the specified length.
+     * Characters are chosen from the given string.
      *
-     * @param count 要创建的随机串的长度
-     * @param chars 提供字符的字符串
-     * @return 随机串
-     * @throws IllegalArgumentException 如果 `count` &lt; 0.
+     * @param count length of the random string to create
+     * @param chars string providing the character set
+     * @return the random string
+     * @throws IllegalArgumentException if `count` &lt; 0.
      * @author K
      * @since 1.0.0
      */
     fun random(count: Int, chars: String? = null): String = RandomStringUtils.insecure().next(count, chars)
 
     /**
-     * 创建一个指定长度的随机串
-     * 字符将从指定的字符数组中选择
+     * Creates a random string of the specified length.
+     * Characters are chosen from the given character array.
      *
-     * @param count 要创建的随机串的长度
-     * @param chars 提供字符的字符数组, 可以为 null
-     * @return 随机串
-     * @throws IllegalArgumentException 如果 `count` &lt; 0.
+     * @param count length of the random string to create
+     * @param chars character array providing the character set; may be null
+     * @return the random string
+     * @throws IllegalArgumentException if `count` &lt; 0.
      * @author K
      * @since 1.0.0
      */
     fun random(count: Int, vararg chars: Char): String = RandomStringUtils.insecure().next(count, *chars)
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.lang3.RandomStringUtils
+    // Wrappers around org.apache.commons.lang3.RandomStringUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

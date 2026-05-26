@@ -5,7 +5,7 @@ import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleRow
 
 
 /**
- * 访问规则列表查询条件请求 VO。
+ * Access rule list query criteria request VO.
  *
  * @author K
  * @author AI: Cursor
@@ -13,16 +13,16 @@ import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleRow
  */
 data class SysAccessRuleQuery (
 
-    /** 租户id */
+    /** Tenant id */
     val tenantId: String? = null,
 
-    /** 系统编码 */
+    /** System code */
     val systemCode: String? = null,
 
-    /** 规则类型字典代码 */
+    /** Rule type dict code */
     val accessRuleTypeDictCode: String? = null,
 
-    /** 是否启用；为 null 时不按启用状态筛选 */
+    /** Whether active; when null no filter by active status */
     val active: Boolean? = null,
 
 ) : ListSearchPayload() {

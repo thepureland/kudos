@@ -33,7 +33,7 @@ class KeyLockRegistryTest {
         val t1 = pool.submit {
             barrier.await()
             registry.withLock(key) {
-                val start = System.nanoTime()   // ← 进入临界区后再记时
+                val start = System.nanoTime()   // <- start timing after entering the critical section
                 Thread.sleep(150)
                 val end = System.nanoTime()
                 i1.set(Interval(start, end))
@@ -43,7 +43,7 @@ class KeyLockRegistryTest {
         val t2 = pool.submit {
             barrier.await()
             registry.withLock(key) {
-                val start = System.nanoTime()   // ← 进入临界区后再记时
+                val start = System.nanoTime()   // <- start timing after entering the critical section
                 Thread.sleep(150)
                 val end = System.nanoTime()
                 i2.set(Interval(start, end))
@@ -59,10 +59,10 @@ class KeyLockRegistryTest {
 
         fun overlap(x: Interval, y: Interval) = !(x.end <= y.start || y.end <= x.start)
 
-        // 现在应该不重叠：同一个 key 的访问被串行化
+        // Should not overlap now: access to the same key is serialized
         assertFalse(overlap(a, b))
 
-        // 可选：再断言顺序
+        // Optional: assert ordering as well
         assertTrue(a.end <= b.start || b.end <= a.start)
 
         assertEquals(0, registry.getActiveLockCount())
@@ -167,33 +167,33 @@ class KeyLockRegistryTest {
 
     @Test
     fun blockExceptionShouldStillReleaseLockAndCleanup() {
-        // withLock 的 block 抛异常时，引用计数与锁映射必须被清理
+        // When withLock's block throws, the reference count and lock map must be cleaned up
         val key = "exception_test_key"
         val ex = runCatching {
             registry.withLock(key) {
                 throw IllegalStateException("boom")
             }
         }
-        assertTrue(ex.isFailure, "block 抛出的异常应原样向外传播")
+        assertTrue(ex.isFailure, "Exceptions thrown by the block should propagate unchanged")
         assertTrue(ex.exceptionOrNull() is IllegalStateException)
-        assertEquals(0, registry.getActiveLockCount(), "block 抛异常后锁映射应被清理")
+        assertEquals(0, registry.getActiveLockCount(), "Lock map should be cleaned up after the block throws")
     }
 
     @Test
     fun unlockUnknownKeyShouldThrow() {
-        // KDoc 约定 @throws IllegalStateException 当 key 不存在
+        // KDoc states @throws IllegalStateException when the key does not exist
         val outcome = runCatching { registry.unlock("never_locked_key") }
         assertTrue(outcome.isFailure)
         assertTrue(
             outcome.exceptionOrNull() is IllegalStateException,
-            "不存在的 key unlock 应抛 IllegalStateException"
+            "unlock with a non-existent key should throw IllegalStateException"
         )
     }
 
     @Test
     fun unlockFromNonHoldingThreadShouldNotThrow() {
-        // 设计：unlock 内部用 `if (wrapper.lock.isHeldByCurrentThread)` 守卫，
-        // 非持有线程调用 unlock 应安静返回，不抛锁状态异常
+        // By design: unlock guards with `if (wrapper.lock.isHeldByCurrentThread)`;
+        // calling unlock from a non-holding thread should return quietly without throwing a lock-state exception
         val key = "non_holding_thread_test"
         val pool = Executors.newFixedThreadPool(2)
         val holdingStarted = CountDownLatch(1)
@@ -207,12 +207,12 @@ class KeyLockRegistryTest {
         }
 
         assertTrue(holdingStarted.await(1, TimeUnit.SECONDS))
-        // 其它线程对同一个 key 调 unlock：不持有锁，不应抛异常，但会扣引用计数
-        // 用 submit<Result<Unit>> 显式选 Callable 重载，避免被推断成 Runnable
+        // Another thread calls unlock on the same key: it does not hold the lock, must not throw, but decrements the ref count
+        // Use submit<Result<Unit>> to explicitly pick the Callable overload, preventing inference as Runnable
         val outcome: Result<Unit> = pool.submit<Result<Unit>> {
             runCatching { registry.unlock(key) }
         }.get(2, TimeUnit.SECONDS)
-        assertTrue(outcome.isSuccess, "非持有线程 unlock 不应抛异常：${outcome.exceptionOrNull()}")
+        assertTrue(outcome.isSuccess, "unlock from a non-holding thread should not throw: ${outcome.exceptionOrNull()}")
 
         canFinish.countDown()
         holder.get(2, TimeUnit.SECONDS)
@@ -221,7 +221,7 @@ class KeyLockRegistryTest {
 
     @Test
     fun tryLockFailureShouldNotLeakLockMapEntry() {
-        // tryLock 失败时引用计数应被回滚（KDoc："如果获取失败，引用计数会自动释放"）
+        // When tryLock fails, the reference count should be rolled back (KDoc: "if acquisition fails, the reference count is released automatically")
         val key = "no_leak_on_failure_key"
         val pool = Executors.newSingleThreadExecutor()
         val holdingStarted = CountDownLatch(1)
@@ -234,17 +234,17 @@ class KeyLockRegistryTest {
         }
         assertTrue(holdingStarted.await(1, TimeUnit.SECONDS))
 
-        // 反复 tryLock 失败不应让 active count 持续增长
+        // Repeated tryLock failures should not let active count grow indefinitely
         repeat(10) {
             val attempt = registry.tryLock(key)
-            assertNull(attempt, "锁被占用时 tryLock 应失败")
+            assertNull(attempt, "tryLock should fail while the lock is held")
         }
-        // 持锁中：active = 1（holder 自己的引用），失败的 tryLock 们已经清理
-        assertEquals(1, registry.getActiveLockCount(), "tryLock 失败不应累积 active count")
+        // While holding: active = 1 (holder's own ref); the failed tryLocks have been cleaned up
+        assertEquals(1, registry.getActiveLockCount(), "Failed tryLock should not accumulate active count")
 
         holder.get(2, TimeUnit.SECONDS)
         pool.shutdown()
-        assertEquals(0, registry.getActiveLockCount(), "holder 完成后应彻底清理")
+        assertEquals(0, registry.getActiveLockCount(), "Should be fully cleaned up after holder completes")
     }
 
     @Test

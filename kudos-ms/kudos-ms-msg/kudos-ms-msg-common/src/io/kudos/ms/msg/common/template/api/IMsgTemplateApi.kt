@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 消息模板对外API
+ * Public API for message templates.
  *
  * @author K
  * @author AI: Codex
@@ -16,17 +16,18 @@ interface IMsgTemplateApi {
 
 
     /**
-     * 根据id获取模板。
+     * Get a template by id.
      *
-     * @param id 模板主键
-     * @return MsgTemplateCacheEntry，找不到返回 null
+     * @param id template primary key
+     * @return MsgTemplateCacheEntry, or null if not found
      */
     @GetMapping("/api/internal/msg/template/getTemplateById")
     fun getTemplateById(@RequestParam id: String): MsgTemplateCacheEntry?
 
     /**
-     * 按 (tenantId, eventType, msgType, locale) 找模板。
-     * `localeDictCode` 可空：调用方应先尝试携带 locale，找不到再以 null 兜底默认语言。
+     * Look up a template by (tenantId, eventType, msgType, locale).
+     * `localeDictCode` is nullable: callers should try with a locale first, and fall back to null
+     * for the default language when no match is found.
      */
     @GetMapping("/api/internal/msg/template/getTemplateByEvent")
     fun getTemplateByEvent(

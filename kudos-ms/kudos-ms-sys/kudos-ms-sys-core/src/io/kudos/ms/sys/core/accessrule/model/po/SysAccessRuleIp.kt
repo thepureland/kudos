@@ -8,11 +8,11 @@ import java.math.BigDecimal
 import java.time.LocalDateTime
 
 /**
- * ip访问规则数据库实体（`sys_access_rule_ip`）。
+ * IP access rule database entity (`sys_access_rule_ip`).
  *
- * **列语义随 [ipTypeDictCode] 变化**（均为无符号整数，以 `NUMERIC(39,0)` 存十进制）：
- * - `ipv4`：`ipStart`/`ipEnd` 为 32 位起止（值 ≤ 2³²−1）。
- * - `ipv6`：`ipStart`/`ipEnd` 为 128 位起止（值 ≤ 2¹²⁸−1），各为完整地址的单一数值，不拆高低位。
+ * **Column semantics vary with [ipTypeDictCode]** (all are unsigned integers stored as decimal `NUMERIC(39,0)`):
+ * - `ipv4`: `ipStart`/`ipEnd` are 32-bit range start/end (value ≤ 2³²−1).
+ * - `ipv6`: `ipStart`/`ipEnd` are 128-bit range start/end (value ≤ 2¹²⁸−1); each is a single numeric value of the full address, not split into high/low halves.
  *
  * @author K
  * @author AI: Cursor
@@ -23,29 +23,30 @@ interface SysAccessRuleIp : IManagedDbEntity<String, SysAccessRuleIp> {
     @get:Sortable
     override var id: String
 
-    /** 区间起点：ipv4 为 32 位；ipv6 为 128 位无符号整数的十进制。 */
+    /** Range start: 32-bit for ipv4; decimal of a 128-bit unsigned integer for ipv6. */
     var ipStart: BigDecimal
 
-    /** 区间终点；比较与校验均按数值大小。 */
+    /** Range end; both comparison and validation use numeric magnitude. */
     var ipEnd: BigDecimal
 
-    /** ip类型字典代码 */
+    /** IP type dict code */
     var ipTypeDictCode: String
 
-    /** 过期时间 */
+    /** Expiration time */
     var expirationTime: LocalDateTime?
 
-    /** 父规则id */
+    /** Parent rule id */
     var parentRuleId: String
 
     companion object : DbEntityFactory<SysAccessRuleIp>() {
 
         /**
-         * 由表单创建载荷与父规则主键组装一条待持久化的实体（仅填充入参中已有字段，其余保持 Ktorm 默认）。
+         * Assemble an entity to be persisted from the form-create payload and the parent rule's primary key
+         * (only fills fields present in the input; the rest keep Ktorm defaults).
          *
-         * @param formCreate 创建表单
-         * @param parentRuleId 父访问规则主键
-         * @return 新实体实例
+         * @param formCreate create form
+         * @param parentRuleId parent access rule primary key
+         * @return new entity instance
          */
         fun of(formCreate: SysAccessRuleIpFormCreate, parentRuleId: String): SysAccessRuleIp {
             return SysAccessRuleIp {

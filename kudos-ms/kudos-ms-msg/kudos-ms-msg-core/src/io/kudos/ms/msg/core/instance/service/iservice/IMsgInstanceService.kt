@@ -6,7 +6,7 @@ import io.kudos.ms.msg.core.instance.model.po.MsgInstance
 
 
 /**
- * 消息实例业务接口
+ * Message instance business service interface.
  *
  * @author K
  * @author AI: Codex
@@ -16,10 +16,10 @@ interface IMsgInstanceService : IBaseCrudService<String, MsgInstance> {
 
 
     /**
-     * 根据id获取实例缓存项。
+     * Gets the instance cache entry by id.
      *
-     * @param id 实例主键
-     * @return MsgInstanceCacheEntry，找不到返回 null
+     * @param id instance primary key
+     * @return MsgInstanceCacheEntry, or null if not found
      */
     fun getInstanceById(id: String): MsgInstanceCacheEntry?
 

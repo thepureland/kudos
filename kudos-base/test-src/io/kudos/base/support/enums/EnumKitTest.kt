@@ -6,7 +6,7 @@ import io.kudos.base.lang.EnumKit
 import kotlin.test.*
 
 /**
- * EnumKit测试用例
+ * EnumKit test cases
  *
  * @author K
  * @since 1.0.0
@@ -107,15 +107,15 @@ internal class EnumKitTest {
     }
 
     internal enum class TimeUnit(codeStr: String, var transStr: String) : IDictEnum {
-        YEAR("1", "年"),
-        MONTH("2", "月"),
-        WEEK("3", "周"),
-        DAY("4", "日"),
-        HOUR("5", "小时"),
-        MINUTE("6", "分钟"),
-        SECOND("7", "秒"),
-        MILLISECOND("8", "毫秒"),
-        MICROSECOND("9", "微秒");
+        YEAR("1", "year"),
+        MONTH("2", "month"),
+        WEEK("3", "week"),
+        DAY("4", "day"),
+        HOUR("5", "hour"),
+        MINUTE("6", "minute"),
+        SECOND("7", "second"),
+        MILLISECOND("8", "millisecond"),
+        MICROSECOND("9", "microsecond");
 
         fun intValue(): Int {
             return Integer.valueOf(code)

@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for AuthRoleResourceDao
  *
- * 测试数据来源：`AuthRoleResourceDaoTest.sql`
+ * Test data source: `AuthRoleResourceDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -24,10 +24,10 @@ class AuthRoleResourceDaoTest : RdbTestBase() {
 
     @Test
     fun exists() {
-        // 测试存在的关系
+        // Test an existing relation
         assertTrue(authRoleResourceDao.exists("49748162-0000-0000-0000-000000000060", "49748162-0000-0000-0000-000000000062"))
-        
-        // 测试不存在的关系
+
+        // Test a non-existent relation
         assertFalse(authRoleResourceDao.exists("49748162-0000-0000-0000-000000000060", "non-existent-resource"))
         assertFalse(authRoleResourceDao.exists("non-existent-role", "49748162-0000-0000-0000-000000000062"))
     }
@@ -39,7 +39,7 @@ class AuthRoleResourceDaoTest : RdbTestBase() {
         assertTrue(roleIds.isNotEmpty())
         assertTrue(roleIds.contains("49748162-0000-0000-0000-000000000060"))
         
-        // 测试不存在的资源ID
+        // Test a non-existent resource ID
         val emptyRoleIds = authRoleResourceDao.searchRoleIdsByResourceId("non-existent-resource")
         assertTrue(emptyRoleIds.isEmpty())
     }

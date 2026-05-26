@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertNotNull
 
 /**
- * ClassPathScanner测试用例
+ * ClassPathScanner test cases
  *
  * @author AI: cursor
  * @author K
@@ -59,7 +59,7 @@ internal class ClassPathScannerTest {
 
     @Test
     fun testScanForClassesFiltersAbstract() {
-        // 测试应该过滤掉抽象类
+        // Test should filter out abstract classes
         val classes = ClassPathScanner.scanForClasses(
             "io.kudos.base",
             Any::class
@@ -90,7 +90,7 @@ internal class ClassPathScannerTest {
     @Test
     fun testScanForResourcesWithNonExistentPath() {
         val resources = ClassPathScanner.scanForResources("non/existent/path", "", "")
-        // 应该返回空数组而不是抛出异常
+        // Should return empty array instead of throwing an exception
         assertNotNull(resources)
     }
 }

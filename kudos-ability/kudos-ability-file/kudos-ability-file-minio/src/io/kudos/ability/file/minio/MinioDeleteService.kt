@@ -14,11 +14,12 @@ import org.springframework.beans.factory.annotation.Qualifier
 
 
 /**
- * MinIO（S3 兼容）文件删除服务。
+ * MinIO (S3-compatible) file deletion service.
  *
- * 删除流程：先调用 `statObject` 探测对象是否存在（精确区分 NoSuchKey vs NoSuchBucket），
- * 存在再 `removeObject`。`statObject` 那一次额外 RTT 是为了让 `delete()` 在文件不存在时
- * 抛 `FILE_NO_EXISTS` 而不是返回 false——和 file-local 版语义对齐。
+ * Deletion flow: first call `statObject` to probe whether the object exists (precisely distinguishing
+ * NoSuchKey vs NoSuchBucket), then `removeObject` if it exists. That extra RTT for `statObject` is so that
+ * `delete()` throws `FILE_NO_EXISTS` when the file does not exist rather than returning false - aligned
+ * with the semantics of the file-local version.
  *
  * @author K
  * @author AI: Codex
@@ -29,13 +30,13 @@ open class MinioDeleteService : IDeleteService {
     @Autowired
     private lateinit var minioClientBuilderFactory: MinioClientBuilderFactory
 
-    /** 静态客户端：来自 `kudos.ability.file.minio.{endpoint,accessKey,secretKey}` 装配。 */
+    /** Static client: assembled from `kudos.ability.file.minio.{endpoint,accessKey,secretKey}`. */
     @Autowired
     @Qualifier("minioClient")
     private lateinit var minioClientDefault: MinioClient
 
     /**
-     * 按 [DeleteFileModel.authServerParam] 决定使用静态 / 动态客户端。
+     * Picks the static or dynamic client based on [DeleteFileModel.authServerParam].
      */
     protected fun getMinioClient(model: DeleteFileModel): MinioClient {
         val auth = model.authServerParam ?: return minioClientDefault
@@ -44,9 +45,9 @@ open class MinioDeleteService : IDeleteService {
     }
 
     /**
-     * @param model 请求路径
-     * @return 删除是否成功；不合法路径直接 false
-     * @throws ServiceException 文件不存在 / 鉴权失败 / 删除失败等
+     * @param model request path
+     * @return whether deletion succeeded; returns false outright for invalid paths
+     * @throws ServiceException when the file does not exist, authentication fails, deletion fails, etc.
      */
     override fun delete(model: DeleteFileModel): Boolean {
         if (!isValid(model)) {

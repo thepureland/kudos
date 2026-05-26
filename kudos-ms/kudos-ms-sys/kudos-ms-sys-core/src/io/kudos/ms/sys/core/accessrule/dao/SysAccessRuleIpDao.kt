@@ -18,7 +18,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * ip访问规则数据访问对象
+ * IP access rule DAO.
  *
  * @author K
  * @since 1.0.0
@@ -28,9 +28,9 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
 
 
     /**
-     * 分页连接查询符合条件的ip访问规则明细和父访问规则
+     * Paged join query for IP access rule details and their parent access rules matching the criteria.
      *
-     * @param searchPayload 查询项载体
+     * @param searchPayload query criteria payload
      * @return List<SysAccessRuleIpRow>
      * @author K
      * @since 1.0.0
@@ -59,10 +59,10 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
                     columns = ColumnHelper.columnOf(SysAccessRuleIps, it.property)
                 }
                 if (columns.isEmpty()) {
-                    throw ObjectNotFoundException("根据属性【${it.property}】找不到对应的列!")
+                    throw ObjectNotFoundException("No column found for property [${it.property}]!")
                 }
                 val column = requireNotNull(columns[it.property]) {
-                    "根据属性【${it.property}】找不到对应的列!"
+                    "No column found for property [${it.property}]!"
                 }
                 if (it.isAscending()) {
                     orderExps.add(column.asc())
@@ -98,10 +98,10 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
     }
 
     /**
-     * 连接查询符合条件的ip访问规则明细和父访问规则的数量
+     * Count IP access rule details (joined with their parent access rules) matching the criteria.
      *
-     * @param searchPayload 查询参数
-     * @return 结果数
+     * @param searchPayload query criteria
+     * @return number of matching rows
      * @author K
      * @since 1.0.0
      */
@@ -110,9 +110,9 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
     }
 
     /**
-     * 构造SysAccessRuleIps左连接SysAccessRules的带有where查询条件的查询对象
+     * Build the query: SysAccessRuleIps LEFT JOIN SysAccessRules with WHERE clauses applied.
      *
-     * @param searchPayload 查询项载体
+     * @param searchPayload query criteria payload
      * @return Query
      * @author K
      * @since 1.0.0
@@ -171,10 +171,10 @@ open class SysAccessRuleIpDao : BaseCrudDao<String, SysAccessRuleIp, SysAccessRu
     }
 
     /**
-     * 按父规则ID删除IP规则
+     * Delete IP rules by parent rule ID.
      *
-     * @param ruleId 父规则ID
-     * @return 删除条数
+     * @param ruleId parent rule ID
+     * @return number of rows deleted
      */
     fun deleteByParentRuleId(ruleId: String): Int {
         val criteria = Criteria(SysAccessRuleIp::parentRuleId eq ruleId)

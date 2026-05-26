@@ -1,14 +1,14 @@
 package io.kudos.base.model.contract.common
 
 /**
- * 带有builtIn属性的模型的接口
+ * Model interface carrying a builtIn property.
  *
  * @author K
  * @since 1.0.0
  */
 interface IHasBuiltIn {
 
-    /** 是否内置 */
+    /** Whether the entry is built-in */
     var builtIn: Boolean
 
 }

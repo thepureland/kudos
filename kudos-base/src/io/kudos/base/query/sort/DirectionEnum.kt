@@ -3,7 +3,7 @@ package io.kudos.base.query.sort
 import java.util.Locale
 
 /**
- * 排序方向
+ * Sort direction.
  *
  * @author K
  * @since 1.0.0
@@ -19,7 +19,7 @@ enum class DirectionEnum {
             return try {
                 valueOf(value.uppercase(Locale.US))
             } catch (_: IllegalArgumentException) {
-                val msg = "非法排序值${value}！取值必须为 'desc' 或 'asc' (大小写不敏感)。"
+                val msg = "Illegal sort value ${value}! Value must be 'desc' or 'asc' (case insensitive)."
                 error(msg)
             }
         }

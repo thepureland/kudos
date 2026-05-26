@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysDictItemDao
  *
- * 测试数据来源：`SysDictItemDaoTest.sql`
+ * Test data source: `SysDictItemDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -30,7 +30,7 @@ class SysDictItemDaoTest : RdbTestBase() {
         assertTrue(items.size >= 2)
         assertTrue(items.any { it.itemCode == "svc-item-ditem-dao-test-1" })
         assertTrue(items.any { it.itemCode == "svc-item-ditem-dao-test-2" })
-        // 验证按orderNum排序
+        // Verify ordering by orderNum
         val firstOrder = assertNotNull(items[0].orderNum)
         val secondOrder = assertNotNull(items[1].orderNum)
         assertTrue(firstOrder <= secondOrder)

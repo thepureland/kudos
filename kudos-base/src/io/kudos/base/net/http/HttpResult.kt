@@ -1,7 +1,7 @@
 package io.kudos.base.net.http
 
 /**
- * http调用结果
+ * HTTP call result.
  *
  * @author K
  * @since 1.0.0

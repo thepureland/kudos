@@ -24,17 +24,18 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KType
 
 /**
- * Json 工具类 (基于 kotlinx.serialization)
+ * JSON utility class (based on kotlinx.serialization).
  *
- * 实现拆分为三个文件：
- * - [JsonAdapters]：两个 [Json] 实例 + LocalDate/Time/DateTime 序列化器
- * - [JsonFallbackEncoder]：当类没有 `@Serializable` 时，用反射把任意对象转 [JsonElement] 的兜底
- * - 本文件：对外的公开 API 门面
+ * Implementation split across three files:
+ * - [JsonAdapters]: two [Json] instances plus LocalDate/Time/DateTime serializers
+ * - [JsonFallbackEncoder]: reflection-based fallback that converts arbitrary objects to [JsonElement]
+ *   when the class lacks `@Serializable`
+ * - This file: the public API facade
  *
- * 注意事项：
- * 1. 支持 Kotlin @Serializable 数据类与普通类
- * 2. 反序列化时忽略多余字段，默认不输出 null
- * 3. 如需保留 null，请设置 preserveNull = true
+ * Notes:
+ * 1. Supports Kotlin @Serializable data classes as well as plain classes.
+ * 2. Deserialization ignores unknown fields; nulls are omitted by default.
+ * 3. To preserve nulls, set preserveNull = true.
  *
  * @author AI: ChatGPT
  * @author K
@@ -42,23 +43,23 @@ import kotlin.reflect.KType
  */
 object JsonKit {
 
-    /** 日志记录器 */
+    /** Logger. */
     @PublishedApi
     internal val log = LogFactory.getLog(this::class)
 
-    /** 默认 Json 引擎：忽略未知字段，不输出 null，支持 LocalDate */
+    /** Default Json engine: ignores unknown fields, omits nulls, supports LocalDate. */
     val defaultJson: Json get() = JsonAdapters.defaultJson
 
-    /** 保留 null 值的 Json 引擎 */
+    /** Json engine that preserves null values. */
     val preserveJson: Json get() = JsonAdapters.preserveJson
 
     /**
-     * 注册额外的 [SerializersModule]，主要用于 polymorphic（开放多态）。
+     * Registers an additional [SerializersModule], primarily for open polymorphism.
      *
-     * Sealed 层级 kotlinx 已自动处理，无需注册——`@Serializable sealed class Base` +
-     * `@Serializable class Sub : Base()` 直接 [toJson] 即可。
+     * Sealed hierarchies are handled automatically by kotlinx and need no registration --
+     * `@Serializable sealed class Base` + `@Serializable class Sub : Base()` can be passed to [toJson] directly.
      *
-     * Open 多态（非 sealed）必须通过这里注册：
+     * Open polymorphism (non-sealed) must be registered here:
      *
      * ```kotlin
      * JsonKit.registerSerializersModule(SerializersModule {
@@ -69,19 +70,19 @@ object JsonKit {
      * })
      * ```
      *
-     * 注意：应在应用启动阶段、首次走 JSON 序列化之前调用。运行中切换可能让正在进行的
-     * 解码看到不同模块，行为不定义。
+     * Note: call this during application start-up, before the first JSON serialization. Swapping at
+     * runtime may expose decoding-in-progress to a different module and behavior is undefined.
      */
     fun registerSerializersModule(module: SerializersModule) {
         JsonAdapters.registerSerializersModule(module)
     }
 
     /**
-     * 返回 json 串中指定属性名的属性值
+     * Returns the value of the given property name from the JSON string.
      *
-     * @param jsonStr 待解析的 json 串
-     * @param propertyName 属性名
-     * @return 属性值，如果找不到属性或出错，则返回 null
+     * @param jsonStr JSON string to parse
+     * @param propertyName property name
+     * @return the property value, or null if the property is missing or an error occurs
      */
     fun getPropertyValue(jsonStr: String, propertyName: String): Any? = try {
         val root = JsonAdapters.defaultJson.parseToJsonElement(jsonStr)
@@ -96,10 +97,10 @@ object JsonKit {
     }
 
     /**
-     * 将简单的 Json 串格式化成页面显示的字符串(去掉花括号、引号及最后面可能的逗号)
+     * Formats a simple JSON string into a display-friendly string (strips braces, quotes, and any trailing comma).
      *
-     * @param simpleJsonStr 简单的 Json 串格式化(如：{"A":"b","B":'b'}), 为空将返回空串
-     * @return 页面显示的字符串(如：A:b, B:b)
+     * @param simpleJsonStr simple JSON string (e.g. {"A":"b","B":'b'}); returns an empty string when blank
+     * @return display string (e.g. A:b, B:b)
      */
     fun jsonToDisplay(simpleJsonStr: String): String = simpleJsonStr
         .takeIf { it.isNotBlank() }
@@ -110,11 +111,11 @@ object JsonKit {
         ?: ""
 
     /**
-     * 反序列化, 将 json 串解析为指定类型
+     * Deserializes the JSON string into the specified type.
      *
-     * @param T 目标类型
-     * @param json json 串
-     * @return 目标类型的实例，出错时返回 null
+     * @param T target type
+     * @param json JSON string
+     * @return an instance of the target type, or null on error
      */
     inline fun <reified T> fromJson(json: String): T? = try {
         JsonAdapters.defaultJson.decodeFromString<T>(json)
@@ -127,16 +128,17 @@ object JsonKit {
     }
 
     /**
-     * 序列化，将对象转为 json 串
+     * Serializes the object into a JSON string.
      *
-     * 规则：
-     * 1) 若类上有 @Serializable（或在 module 中可解析到），直接用对应 KSerializer。
-     * 2) 否则对常见类型(Map/List/数组/枚举/Java Time/data class)递归转 JsonElement（[JsonFallbackEncoder]）。
-     * 3) 仍无法处理则抛出 SerializationException，提示加 @Serializable 或改成 data class。
+     * Rules:
+     * 1) If the class is `@Serializable` (or its serializer is resolvable from the module), use the corresponding KSerializer.
+     * 2) Otherwise recursively convert common types (Map/List/array/enum/java.time/data class) to JsonElement
+     *    via [JsonFallbackEncoder].
+     * 3) If still unsupported, throw SerializationException asking the caller to add @Serializable or use a data class.
      *
-     * @param obj 要序列化的对象，可以是一般对象，也可以是 Collection 或数组，如果集合为空集合, 返回"[]"
-     * @param preserveNull 是否保留 null 值，默认为否
-     * @return 序列化后的 json 串，obj为null或出错时返回空串
+     * @param obj object to serialize; may be a regular object, a Collection, or an array; an empty collection returns "[]"
+     * @param preserveNull whether to keep null values; defaults to false
+     * @return the serialized JSON string; an empty string when obj is null or on error
      */
     inline fun <reified T> toJson(obj: T, preserveNull: Boolean = false): String {
         if (obj == null) return ""
@@ -144,7 +146,7 @@ object JsonKit {
             val engine = if (preserveNull) JsonAdapters.preserveJson else JsonAdapters.defaultJson
             engine.encodeToString<T>(obj)
         } catch (_: SerializationException) {
-            // 触发纯 kotlinx 兜底
+            // Trigger the pure-kotlinx fallback.
             val engine = if (preserveNull) JsonAdapters.preserveJson else JsonAdapters.defaultJson
             val elem = JsonFallbackEncoder.encodeAnyToJsonElement(engine, obj as Any?)
             engine.encodeToString(JsonElement.serializer(), elem)
@@ -158,23 +160,24 @@ object JsonKit {
     }
 
     /**
-     * 输出 jsonP 格式的数据
+     * Outputs data in JSONP format.
      *
-     * @param functionName 函数名
-     * @param obj 待序列化的对象，其 json 对象将作为函数的参数
-     * @param preserveNull 是否保留 null 值，默认为否
-     * @return jsonP 字符串
+     * @param functionName function name
+     * @param obj object to serialize; its JSON form is used as the function argument
+     * @param preserveNull whether to keep null values; defaults to false
+     * @return the JSONP string
      */
     inline fun <reified T> toJsonP(functionName: String, obj: T, preserveNull: Boolean = false): String =
         "${functionName}(${toJson<T>(obj, preserveNull)})"
 
     /**
-     * 当 json 里含有 bean 的部分属性时，用 json 串中的值更新该 bean 的该部分属性
+     * Updates the matching properties of the given bean from values in the JSON string when the JSON
+     * contains only a subset of the bean's properties.
      *
-     * @param T bean 类型
-     * @param jsonStr json 串
-     * @param obj 待更新的 bean
-     * @return 更新后的 bean，失败时返回 null
+     * @param T bean type
+     * @param jsonStr JSON string
+     * @param obj bean to update
+     * @return the updated bean, or null on failure
      */
     inline fun <reified T : Any> updateBean(jsonStr: String, obj: T): T? = try {
         val decoded: T = JsonAdapters.defaultJson.decodeFromString<T>(jsonStr)
@@ -189,12 +192,12 @@ object JsonKit {
     }
 
     /**
-     * 编译期已知类型版本（推荐优先使用）：
-     * 直接通过编译器提供的 KSerializer<T> 编码为 JSON，再转 UTF-8 字节。
+     * Compile-time-known type variant (preferred):
+     * uses the KSerializer<T> provided by the compiler to encode to JSON and convert to UTF-8 bytes.
      *
-     * @param data           待序列化对象
-     * @param preserveNull   是否保留 null 字段
-     * @return 字节数组
+     * @param data           object to serialize
+     * @param preserveNull   whether to keep null fields
+     * @return the byte array
      */
     inline fun <reified T> writeValueAsBytes(data: T, preserveNull: Boolean = false): ByteArray {
         val engine = if (preserveNull) JsonAdapters.preserveJson else JsonAdapters.defaultJson
@@ -208,12 +211,12 @@ object JsonKit {
     }
 
     /**
-     * 运行期才知道类型（Any 版本）：
-     * 尝试从运行时类型获取序列化器；若失败则递归转为 JsonElement。
+     * Runtime-typed variant (Any):
+     * looks up a serializer from the runtime type; on failure recursively converts to JsonElement.
      *
-     * @param data           待序列化对象（允许为 null）
-     * @param preserveNull   是否保留 null 字段
-     * @return 字节数组
+     * @param data           object to serialize (null allowed)
+     * @param preserveNull   whether to keep null fields
+     * @return the byte array
      */
     fun writeAnyAsBytes(data: Any?, preserveNull: Boolean = false): ByteArray {
         val engine = if (preserveNull) JsonAdapters.preserveJson else JsonAdapters.defaultJson
@@ -230,21 +233,21 @@ object JsonKit {
     }
 
     /**
-     * 反序列化：编译期已知目标类型。
+     * Deserialization: compile-time-known target type.
      *
-     * 等价于 Jackson 的 `readValue(bytes, T.class)`，但基于 kotlinx.serialization。
+     * Equivalent to Jackson's `readValue(bytes, T.class)`, but based on kotlinx.serialization.
      *
-     * 行为说明：
-     * - 使用与编码一致的 `defaultJson` 配置（如：ignoreUnknownKeys=true）。
-     * - 假设输入是 UTF-8 编码的 JSON 字节。
-     * - 需要 `T`（及其嵌套类型）具备可用的序列化器：
-     *   - 标注 `@Serializable`；或
-     *   - 属于 `sealed` 多态层级并 `@Serializable`；或
-     *   - 在 `SerializersModule` 中已注册（开放多态）。
+     * Behavior:
+     * - Uses the same `defaultJson` configuration as encoding (e.g. ignoreUnknownKeys=true).
+     * - Assumes the input is UTF-8 encoded JSON bytes.
+     * - Requires `T` (and its nested types) to have available serializers:
+     *   - annotated with `@Serializable`; or
+     *   - part of a `sealed` polymorphic hierarchy that is `@Serializable`; or
+     *   - registered in `SerializersModule` (open polymorphism).
      *
-     * @param bytes  UTF-8 编码的 JSON 字节数组
-     * @return       反序列化后的 T 实例
-     * @throws kotlinx.serialization.SerializationException 当 JSON 结构不匹配或找不到序列化器时抛出
+     * @param bytes  UTF-8 encoded JSON byte array
+     * @return       the deserialized instance of T
+     * @throws kotlinx.serialization.SerializationException when the JSON structure does not match or no serializer can be found
      */
     inline fun <reified T> readValue(bytes: ByteArray): T {
         val engine: Json = JsonAdapters.defaultJson
@@ -253,17 +256,18 @@ object JsonKit {
     }
 
     /**
-     * 反序列化：运行期只有 `KClass<T>`（不包含泛型参数）。
+     * Deserialization: only `KClass<T>` is available at runtime (no generic parameters).
      *
-     * 适用场景：
-     * - 目标类型 **不是** 泛型（例如 `User`），且类本身有可用序列化器（`@Serializable` 或 sealed 多态自动）。
-     * - 如果目标是 `List<User>` / `Map<String, User>` 这类 **带泛型** 的类型，请使用 `readValue(bytes, kType)`。
+     * Use when:
+     * - The target type is **not** generic (e.g. `User`) and the class has an available serializer
+     *   (`@Serializable` or automatic via sealed polymorphism).
+     * - If the target is a **generic** type such as `List<User>` or `Map<String, User>`, use `readValue(bytes, kType)` instead.
      *
-     * @param bytes   UTF-8 编码的 JSON 字节数组
-     * @param kClass  目标类型的 `KClass<T>`（不含泛型信息）
-     * @return        反序列化后的 T 实例
+     * @param bytes   UTF-8 encoded JSON byte array
+     * @param kClass  `KClass<T>` of the target type (without generic info)
+     * @return        the deserialized instance of T
      * @throws kotlinx.serialization.SerializationException
-     *         找不到 `@Serializable` 等可用序列化器；或目标结构与 JSON 不匹配。
+     *         when no `@Serializable` or other usable serializer is found, or the target structure does not match the JSON.
      */
     @OptIn(InternalSerializationApi::class)
     fun <T : Any> readValue(bytes: ByteArray, kClass: KClass<T>): T {
@@ -272,8 +276,8 @@ object JsonKit {
 
         val ser = kClass.serializerOrNull()
             ?: throw SerializationException(
-                "无法反序列化到 ${kClass.qualifiedName}：该类缺少序列化器或为泛型类型。" +
-                        "如需支持 List<T>/Map<K,V> 等，请改用 readValue(bytes, kType)。"
+                "Cannot deserialize to ${kClass.qualifiedName}: the class lacks a serializer or is a generic type. " +
+                        "For List<T>/Map<K,V> and similar, use readValue(bytes, kType) instead."
             )
 
         val decoded = engine.decodeFromString(ser, text)
@@ -281,16 +285,16 @@ object JsonKit {
     }
 
     /**
-     * 反序列化：运行期携带完整类型信息的 `KType`（支持泛型）。
+     * Deserialization: full runtime type information via `KType` (supports generics).
      *
-     * 适用场景：
-     * - 需要反序列化到 `List<User>`、`Map<String, User>`、`Array<Foo>` 等 **带泛型** 的目标类型。
+     * Use when:
+     * - The target type is **generic**, such as `List<User>`, `Map<String, User>`, or `Array<Foo>`.
      *
-     * @param bytes  UTF-8 编码的 JSON 字节数组
-     * @param kType  目标类型的 `KType`（可由 `typeOf<List<User>>()` 等获得）
-     * @return       反序列化得到的对象实例（需在调用处 cast）
+     * @param bytes  UTF-8 encoded JSON byte array
+     * @param kType  `KType` of the target type (can be obtained from `typeOf<List<User>>()` etc.)
+     * @return       the deserialized object instance (cast at the call site)
      * @throws kotlinx.serialization.SerializationException
-     *         当 JSON 结构不匹配或某些参与类型缺少序列化器时抛出
+     *         when the JSON structure does not match or a participating type lacks a serializer
      */
     @OptIn(ExperimentalSerializationApi::class)
     fun readValue(bytes: ByteArray, kType: KType): Any? {
@@ -301,11 +305,11 @@ object JsonKit {
     }
 
     /**
-     * 递归把 [JsonElement] 转回 Kotlin 基础类型（用于 [getPropertyValue]）。
+     * Recursively converts a [JsonElement] back to Kotlin primitive types (used by [getPropertyValue]).
      *
-     * 类型优先级（按 [JsonPrimitive] 解析顺序）：Boolean → Long → Int → Double → String content。
-     * 即字符串 "100" 会优先被解析为 Long 而非保留为 String——本工具仅适用于动态/脚本场景，
-     * 类型敏感的反序列化请走 [readValue]。
+     * Type-resolution order (matching [JsonPrimitive] parsing): Boolean -> Long -> Int -> Double -> String content.
+     * That is, the string "100" is parsed as Long rather than kept as String -- this helper is intended only for
+     * dynamic/scripting scenarios. For type-sensitive deserialization use [readValue].
      */
     private fun unwrap(elem: JsonElement): Any? = when (elem) {
         is JsonPrimitive -> elem.booleanOrNull

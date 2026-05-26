@@ -5,53 +5,53 @@ import java.time.LocalDateTime
 
 
 /**
- * 角色列表查询结果响应VO
+ * Response VO row for the role list query result.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthRoleRow (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String = "",
 
-    /** 角色编码 */
+    /** Role code. */
     val code: String? = null,
 
-    /** 角色名称 */
+    /** Role name. */
     val name: String? = null,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 子系统编码 */
+    /** Subsystem code. */
     val subsysCode: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否激活 */
+    /** Whether the role is active. */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether the role is built-in. */
     val builtIn: Boolean? = null,
 
-    /** 创建者id */
+    /** Creator user id. */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator user name. */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Creation time. */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater user id. */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater user name. */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Last update time. */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

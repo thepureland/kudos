@@ -16,12 +16,12 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * 用户ID列表（by tenant & group code）缓存处理器
+ * Cache handler for the list of user ids keyed by (tenantId, groupCode).
  *
- * 1.数据来源表：auth_group + auth_group_user
- * 2.缓存各租户下指定用户组的用户ID集合
- * 3.缓存的key为：tenantId::groupCode
- * 4.缓存的value为：用户ID集合（List<String>）
+ * 1. Source tables: auth_group + auth_group_user
+ * 2. Caches the user id set of the specified group per tenant
+ * 3. Cache key: tenantId::groupCode
+ * 4. Cache value: list of user ids (List<String>)
  *
  * @author K
  * @author AI: Codex
@@ -47,7 +47,7 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
 
     override fun doReload(key: String): List<String> {
         require(key.contains(Consts.CACHE_KEY_DEFAULT_DELIMITER)) {
-            "缓存${CACHE_NAME}的key格式必须是 租户ID${Consts.CACHE_KEY_DEFAULT_DELIMITER}用户组编码"
+            "Cache ${CACHE_NAME} key format must be tenantId${Consts.CACHE_KEY_DEFAULT_DELIMITER}groupCode"
         }
         val tenantAndGroupCode = key.split(Consts.CACHE_KEY_DEFAULT_DELIMITER)
         return getSelf<UserIdsByTenantIdAndGroupCodeCache>().getUserIds(
@@ -57,21 +57,21 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有用户组下的用户ID！")
+            log.info("Cache disabled; not loading or caching user ids for all groups!")
             return
         }
 
         val groups = authGroupDao.searchActiveGroupsForCache()
         val groupIdToUserIdsMap = authGroupUserDao.searchAllGroupIdToUserIdsForCache()
 
-        log.debug("从数据库加载了${groups.size}条用户组、用户组-用户关系分组${groupIdToUserIdsMap.size}。")
+        log.debug("Loaded ${groups.size} groups and ${groupIdToUserIdsMap.size} group-user groupings from DB.")
 
-        // 清除缓存
+        // Clear the cache.
         if (clear) {
             clear()
         }
 
-        // 缓存用户ID列表
+        // Cache the user id lists.
         groups.forEach { group ->
             val groupId = group.id
             if (groupId.isBlank()) return@forEach
@@ -79,16 +79,16 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
             val groupCode = group.code ?: return@forEach
             val userIds = groupIdToUserIdsMap[groupId] ?: emptyList()
             KeyValueCacheKit.put(CACHE_NAME, getKey(tenantId, groupCode), userIds)
-            log.debug("缓存了租户${group.tenantId}用户组${group.code}的${userIds.size}条用户ID。")
+            log.debug("Cached ${userIds.size} user ids for tenant=${group.tenantId} group=${group.code}.")
         }
     }
 
     /**
-     * 根据租户ID和用户组编码从缓存中获取该用户组下所有用户ID，如果缓存中不存在，则从数据库中加载，并回写缓存
+     * Get all user ids under a group keyed by (tenantId, groupCode); on cache miss, load from DB and write back.
      *
-     * @param tenantId 租户ID
-     * @param groupCode 用户组编码
-     * @return Set<用户ID>
+     * @param tenantId tenant id
+     * @param groupCode group code
+     * @return list of user ids
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -97,92 +97,92 @@ open class UserIdsByTenantIdAndGroupCodeCache : AbstractKeyValueCacheHandler<Lis
     )
     open fun getUserIds(tenantId: String, groupCode: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在租户${tenantId}用户组${groupCode}的用户ID，从数据库中加载...")
+            log.debug("User ids for tenant=${tenantId} group=${groupCode} not in cache; loading from DB...")
         }
 
-        // 1. 从缓存中获取用户组ID（避免查询数据库）
+        // 1. Look up the group id from the cache (avoid hitting the DB).
         val groupId = authGroupHashCache.getGroupByTenantIdAndGroupCode(tenantId, groupCode)?.id
 
         if (groupId == null) {
-            log.debug("找不到租户${tenantId}的用户组${groupCode}。")
+            log.debug("Group not found for tenant=${tenantId} code=${groupCode}.")
             return emptyList()
         }
 
         val userIds = authGroupUserDao.searchUserIdsByGroupId(groupId)
-        log.debug("从数据库加载了租户${tenantId}用户组${groupCode}的${userIds.size}条用户ID。")
+        log.debug("Loaded ${userIds.size} user ids from DB for tenant=${tenantId} group=${groupCode}.")
         return userIds.toList()
     }
 
     /**
-     * 用户组-用户关系插入后同步缓存
+     * Sync the cache after a group-user association is inserted.
      *
-     * @param tenantId 租户ID
-     * @param groupCode 用户组编码
+     * @param tenantId tenant id
+     * @param groupCode group code
      */
     open fun syncOnGroupUserInsert(tenantId: String, groupCode: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("新增租户${tenantId}用户组${groupCode}的用户关系后，同步${CACHE_NAME}缓存...")
+            log.debug("After inserting group-user association tenant=${tenantId} group=${groupCode}, syncing ${CACHE_NAME} cache...")
             evict(getKey(tenantId, groupCode))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<UserIdsByTenantIdAndGroupCodeCache>().getUserIds(tenantId, groupCode)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 用户组-用户关系删除后同步缓存
+     * Sync the cache after a group-user association is deleted.
      *
-     * @param tenantId 租户ID
-     * @param groupCode 用户组编码
+     * @param tenantId tenant id
+     * @param groupCode group code
      */
     open fun syncOnGroupUserDelete(tenantId: String, groupCode: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("删除租户${tenantId}用户组${groupCode}的用户关系后，同步${CACHE_NAME}缓存...")
+            log.debug("After deleting group-user association tenant=${tenantId} group=${groupCode}, syncing ${CACHE_NAME} cache...")
             evict(getKey(tenantId, groupCode))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<UserIdsByTenantIdAndGroupCodeCache>().getUserIds(tenantId, groupCode)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 用户组信息更新后同步缓存（用户组编码或状态变更）
+     * Sync the cache after group info is updated (group code or active flag changed).
      *
-     * @param oldTenantId 旧租户ID
-     * @param oldGroupCode 旧用户组编码
-     * @param newTenantId 新租户ID（如果未变更则与旧值相同）
-     * @param newGroupCode 新用户组编码（如果未变更则与旧值相同）
+     * @param oldTenantId previous tenant id
+     * @param oldGroupCode previous group code
+     * @param newTenantId new tenant id (equal to the old one if unchanged)
+     * @param newGroupCode new group code (equal to the old one if unchanged)
      */
     open fun syncOnGroupUpdate(oldTenantId: String, oldGroupCode: String, newTenantId: String, newGroupCode: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("用户组信息更新后，同步${CACHE_NAME}缓存...")
+            log.debug("After group info update, syncing ${CACHE_NAME} cache...")
 
-            // 踢除旧的缓存
+            // Evict the old cache entry.
             KeyValueCacheKit.evict(CACHE_NAME, getKey(oldTenantId, oldGroupCode))
 
-            // 如果编码或租户改变，也要踢除新的缓存（如果存在）
+            // If code or tenant changed, also evict the new cache entry (if present).
             if (oldTenantId != newTenantId || oldGroupCode != newGroupCode) {
                 KeyValueCacheKit.evict(CACHE_NAME, getKey(newTenantId, newGroupCode))
             }
 
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 返回参数拼接后的key
+     * Build the cache key by joining the given parameters.
      *
-     * @param tenantId 租户ID
-     * @param groupCode 用户组编码
-     * @return 缓存key
+     * @param tenantId tenant id
+     * @param groupCode group code
+     * @return cache key
      */
     fun getKey(tenantId: String, groupCode: String): String {
         return "${tenantId}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${groupCode}"
     }
 
-    /** 仅做本地 (tenantId, groupCode) 失效；AuthGroupHashCache 已独立订阅 AuthGroupDeleted。 */
+    /** Local (tenantId, groupCode) eviction only; AuthGroupHashCache subscribes to AuthGroupDeleted separately. */
     private fun evictBy(tenantId: String, groupCode: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         KeyValueCacheKit.evict(CACHE_NAME, getKey(tenantId, groupCode))

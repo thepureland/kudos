@@ -7,10 +7,10 @@ import io.kudos.base.model.contract.common.IHasRemark
 import org.ktorm.entity.Entity
 
 /**
- * 带有管理字段的数据库实体接口
+ * Database entity interface that includes management fields.
  *
- * @param ID 主键类型
- * @param E 实体类型
+ * @param ID Primary key type
+ * @param E Entity type
  * @author K
  * @author AI: Codex
  * @since 1.0.0

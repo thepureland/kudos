@@ -1,8 +1,8 @@
 package io.kudos.ability.data.memdb.redis.aop
 
 /**
- * [RateLimiter] 的限流维度枚举。值决定 Redis 计数 key 的拼装方式（见
- * `RateLimiterAspect.getCombineKey`）。
+ * Rate-limit dimension enum for [RateLimiter]. The value determines how the Redis counter key is assembled
+ * (see `RateLimiterAspect.getCombineKey`).
  *
  * @author K
  * @author AI: Codex
@@ -10,17 +10,17 @@ package io.kudos.ability.data.memdb.redis.aop
  */
 enum class LimitType {
     /**
-     * 默认策略：按"方法签名"限流，整个进程内所有调用方共享同一计数。
+     * Default strategy: rate-limit by "method signature"; all callers within the process share the same counter.
      */
     DEFAULT,
 
     /**
-     * 按用户限流：每个 `user.id` 各自计数。要求 `KudosContextHolder.get().user.id` 非空。
+     * Rate-limit by user: each `user.id` has its own counter. Requires `KudosContextHolder.get().user.id` to be non-null.
      */
     USER,
 
     /**
-     * 按 IP 限流：每个客户端 IP 各自计数。要求 `KudosContextHolder.get().clientInfo.ip` 非空。
+     * Rate-limit by IP: each client IP has its own counter. Requires `KudosContextHolder.get().clientInfo.ip` to be non-null.
      */
     IP
 }

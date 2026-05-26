@@ -8,7 +8,7 @@ import io.kudos.tools.codegen.model.po.CodeGenObject
 import java.time.LocalDateTime
 
 /**
- * 生成的表对象历史信息服务
+ * Service for the history of generated table objects.
  *
  * @author K
  * @since 1.0.0
@@ -23,7 +23,7 @@ object CodeGenObjectService {
             .filter { (n, _) -> n !in EXCLUDED_TABLES && !n.startsWith("flyway_") }
             .toMap(mutableMapOf())
 
-        // from code_gen_object：覆盖元数据中已有条目的注释（用户自填注释优先）
+        // from code_gen_object: override comments from metadata (user-supplied comments take precedence)
         CodeGenObjectDao.allSearch()
             .filter { it.name in nameAndComments }
             .forEach { nameAndComments[it.name] = it.comment }

@@ -1,15 +1,15 @@
 package io.kudos.base.model.contract.entity
 
 /**
- * id可变的实体接口
+ * Entity interface with a mutable id.
  *
- * @param T 实体类型
+ * @param T the entity type
  * @author K
  * @since 1.0.0
  */
 interface IMutableIdEntity<T> : IIdEntity<T> {
 
-    /** 惟一标识 */
+    /** Unique identifier */
     override var id: T
 
 }

@@ -7,7 +7,7 @@ import jakarta.validation.constraints.Size
 import kotlin.test.*
 
 /**
- * ValidationKit测试用例
+ * Test cases for ValidationKit.
  *
  * @author AI: cursor
  * @author K
@@ -27,14 +27,14 @@ internal class ValidationKitTest {
         val bean = TestBean(null, 5)
         val violations = ValidationKit.validateBean(bean, failFast = false)
         assertFalse(violations.isEmpty())
-        assertEquals(2, violations.size) // name为null, age小于最小值
+        assertEquals(2, violations.size) // name is null, age is below the minimum
     }
 
     @Test
     fun testValidateBeanFailFast() {
         val bean = TestBean(null, 5)
         val violations = ValidationKit.validateBean(bean, failFast = true)
-        // 快速失败模式下，应该只返回第一个违规
+        // In fail-fast mode, only the first violation should be returned
         assertFalse(violations.isEmpty())
     }
 
@@ -82,7 +82,7 @@ internal class ValidationKitTest {
     fun testValidateBeanWithGroups() {
         val bean = TestBeanWithGroups("test", 25)
         val violations = ValidationKit.validateBean(bean, TestGroup1::class)
-        // 只验证TestGroup1组的约束
+        // Only validate constraints in the TestGroup1 group
         assertTrue(violations.isEmpty())
     }
 
@@ -101,20 +101,20 @@ internal class ValidationKitTest {
 
     @Test
     fun testComplexValidation() {
-        val bean = TestBean("a", 150) // name太短，age太大
+        val bean = TestBean("a", 150) // name too short, age too large
         val violations = ValidationKit.validateBean(bean, failFast = false)
         assertFalse(violations.isEmpty())
         assertEquals(2, violations.size)
     }
 
     data class TestBean(
-        @get:NotNull(message = "name不能为空")
-        @get:Size(min = 2, max = 10, message = "name长度必须在2到10之间")
+        @get:NotNull(message = "name must not be null")
+        @get:Size(min = 2, max = 10, message = "name length must be between 2 and 10")
         val name: String?,
-        
-        @get:NotNull(message = "age不能为空")
-        @get:Min(value = 18, message = "age必须大于等于18")
-        @get:Max(value = 100, message = "age必须小于等于100")
+
+        @get:NotNull(message = "age must not be null")
+        @get:Min(value = 18, message = "age must be >= 18")
+        @get:Max(value = 100, message = "age must be <= 100")
         val age: Int?
     )
 
@@ -122,10 +122,10 @@ internal class ValidationKitTest {
     interface TestGroup2
 
     data class TestBeanWithGroups(
-        @get:NotNull(message = "name不能为空", groups = [TestGroup1::class])
+        @get:NotNull(message = "name must not be null", groups = [TestGroup1::class])
         val name: String?,
-        
-        @get:NotNull(message = "age不能为空", groups = [TestGroup2::class])
+
+        @get:NotNull(message = "age must not be null", groups = [TestGroup2::class])
         val age: Int?
     )
 

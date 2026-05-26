@@ -1,9 +1,9 @@
 package io.kudos.ability.distributed.lock.common.exception
 
 /**
- * 分布式锁获取失败。
+ * Distributed lock acquisition failed.
  *
- * @property lockKey 未获取到的业务锁 key
+ * @property lockKey the business lock key that could not be acquired
  * @author K
  * @author AI: Codex
  * @since 1.0.0

@@ -4,29 +4,29 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 消息接收者群组编辑响应VO
+ * Message receiver group edit response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgReceiverGroupEdit (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String = "",
 
-    /** 接收者群组类型字典码 */
+    /** Receiver group type dict code. */
     val receiverGroupTypeDictCode: String? = null,
 
-    /** 群组定义的表 */
+    /** Table where the group is defined. */
     val defineTable: String? = null,
 
-    /** 群组名称在具体群组表中的字段名 */
+    /** Column name of the group name in the concrete group table. */
     val nameColumn: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether the group is active. */
     val active: Boolean? = null,
 
 ) : IIdEntity<String>

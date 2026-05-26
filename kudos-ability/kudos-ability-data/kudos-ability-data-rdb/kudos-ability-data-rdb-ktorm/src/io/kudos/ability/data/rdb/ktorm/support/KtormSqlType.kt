@@ -4,7 +4,7 @@ import java.util.UUID
 import kotlin.reflect.KClass
 
 /**
- * kotlin类型和Ktorm sql类型函数名(用于dao中作列绑定)的映射
+ * Mapping from Kotlin types to Ktorm SQL-type function names (used for column binding in DAOs).
  *
  * @author K
  * @author AI: Codex
@@ -13,10 +13,10 @@ import kotlin.reflect.KClass
 object KtormSqlType {
 
     /**
-     * 返回kotlin类型对应的Ktorm sql类型函数名
+     * Returns the Ktorm SQL-type function name corresponding to the Kotlin type.
      *
-     * @param clazz kotlin类型
-     * @return Ktorm sql类型函数名
+     * @param clazz Kotlin type
+     * @return Ktorm SQL-type function name
      * @author K
      * @since 1.0.0
      */

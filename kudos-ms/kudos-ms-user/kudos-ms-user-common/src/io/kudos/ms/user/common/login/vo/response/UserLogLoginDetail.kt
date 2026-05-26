@@ -5,59 +5,59 @@ import java.time.LocalDateTime
 
 
 /**
- * 登录日志详情响应VO
+ * Login log detail response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserLogLoginDetail (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 用户ID */
+    /** User ID */
     val userId: String? = null,
 
-    /** 用户名 */
+    /** Username */
     val username: String? = null,
 
-    /** 租户ID */
+    /** Tenant ID */
     val tenantId: String? = null,
 
-    /** 登录时间 */
+    /** Login time */
     val loginTime: LocalDateTime? = null,
 
-    /** 登录IP */
+    /** Login IP */
     val loginIp: Long? = null,
 
-    /** 登录地点 */
+    /** Login location */
     val loginLocation: String? = null,
 
-    /** 登录设备 */
+    /** Login device */
     val loginDevice: String? = null,
 
-    /** 浏览器 */
+    /** Browser */
     val loginBrowser: String? = null,
 
-    /** 操作系统 */
+    /** Operating system */
     val loginOs: String? = null,
 
-    /** 用户代理字符串 */
+    /** User agent string */
     val userAgent: String? = null,
 
-    /** 是否登录成功 */
+    /** Whether login succeeded */
     val loginSuccess: Boolean? = null,
 
-    /** 失败原因 */
+    /** Failure reason */
     val failureReason: String? = null,
 
-    /** 会话ID */
+    /** Session ID */
     val sessionId: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

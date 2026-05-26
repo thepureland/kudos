@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.core.datasource.event
 
 /**
- * 数据源（`sys_data_source`）领域事件。
+ * Data source (`sys_data_source`) domain events.
  *
  * @author K
  * @author AI: Cursor

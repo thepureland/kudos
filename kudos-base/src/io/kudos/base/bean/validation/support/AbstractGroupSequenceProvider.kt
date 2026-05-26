@@ -5,10 +5,10 @@ import org.hibernate.validator.spi.group.DefaultGroupSequenceProvider
 import kotlin.reflect.KClass
 
 /**
- * 抽象的分组顺序提供者。
- * 该类可以不让用户关注以下点：
- * 1."分组必须添加Bean类自己"这一规则。
- * 2.bean必须判空
+ * Abstract group sequence provider.
+ * Frees subclasses from caring about the following:
+ * 1. The rule that "the group sequence must include the bean class itself".
+ * 2. Null-checking the bean.
  *
  * @author K
  * @since 1.0.0
@@ -17,17 +17,17 @@ abstract class AbstractGroupSequenceProvider<T> : DefaultGroupSequenceProvider<T
 
     override fun getValidationGroups(klass: Class<*>?, bean: T?): List<Class<*>?>? {
         val beanClass = GenericKit.getSuperClassGenricClass(this::class)
-        // 必须添加Bean类自己，否则Default分组都不会执行了，会抛错
+        // The bean class itself must be added; otherwise the Default group will not execute and an error will be thrown
         val defaultGroupSequence = mutableListOf<Class<*>>(beanClass.java)
         bean?.let { getGroups(it).mapTo(defaultGroupSequence) { kc -> kc.java } }
         return defaultGroupSequence
     }
 
     /**
-     * 返回分组
+     * Return the groups.
      *
-     * @param bean 待校验的bean对象
-     * @return 分组列表
+     * @param bean the bean object to validate
+     * @return the list of groups
      */
     abstract fun getGroups(bean: T): List<KClass<*>>
 

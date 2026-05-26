@@ -1,46 +1,48 @@
 package io.kudos.ability.file.minio.init.properties
 
 /**
- * MinIO STS (Security Token Service) 简化版的 OAuth2 客户端配置。
+ * OAuth2 client configuration for a simplified MinIO STS (Security Token Service).
  *
- * 对应 yml 路径 `kudos.ability.file.minio.sts.access-token.*`。业务侧 token 通过
- * [io.kudos.ability.file.common.auth.AccessTokenServerParam.headerValue] 透传，
- * 框架拿 token 去本类配置的 OAuth2 端点换 MinIO 凭证。
+ * Corresponds to the yml path `kudos.ability.file.minio.sts.access-token.*`. The
+ * business token is passed through via
+ * [io.kudos.ability.file.common.auth.AccessTokenServerParam.headerValue]; the
+ * framework uses that token to exchange for MinIO credentials at the OAuth2
+ * endpoint configured here.
  *
- * @property enabled 是否启用 OAuth2 STS 模式
- * @property clientId OAuth2 客户端 id（写到 Basic Authorization header）
- * @property clientSecret OAuth2 客户端密码（同上；**不要落到日志**）
- * @property authorizationGrantType OAuth2 授权类型，典型 `client_credentials`
- * @property clientAuthenticationMethod 客户端认证方式（保留字段，当前实现总是用 Basic）
- * @property endpoint OAuth2 token 端点的完整 URL（POST 到这里换 JWT）
- * @property headerName 把业务侧的认证 token 透传给 OAuth2 服务器时使用的 header 名
+ * @property enabled whether the OAuth2 STS mode is enabled
+ * @property clientId OAuth2 client id (written into the Basic Authorization header)
+ * @property clientSecret OAuth2 client secret (same as above; **must not be logged**)
+ * @property authorizationGrantType OAuth2 grant type, typically `client_credentials`
+ * @property clientAuthenticationMethod client authentication method (reserved; the current implementation always uses Basic)
+ * @property endpoint full URL of the OAuth2 token endpoint (POST here to exchange for a JWT)
+ * @property headerName header name used when forwarding the business-side authentication token to the OAuth2 server
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 class AccessTokenServerProperties : AuthServerProperties() {
-    /** 是否启用 OAuth2 STS 模式；null 视为禁用 */
+    /** Whether the OAuth2 STS mode is enabled; null is treated as disabled. */
     var enabled: Boolean? = null
 
-    /** OAuth2 客户端 id（用于 Basic Authorization 头） */
+    /** OAuth2 client id (used in the Basic Authorization header). */
     var clientId: String? = null
 
-    /** OAuth2 客户端密码；**不要写入日志** */
+    /** OAuth2 client secret; **must not be written to logs**. */
     var clientSecret: String? = null
 
-    /** OAuth2 授权类型，典型 `client_credentials` */
+    /** OAuth2 grant type, typically `client_credentials`. */
     var authorizationGrantType: String? = null
 
-    /** 客户端认证方式（保留字段，当前实现总是用 Basic Authorization） */
+    /** Client authentication method (reserved; the current implementation always uses Basic Authorization). */
     var clientAuthenticationMethod: String? = null
 
     /**
-     * 获取Minio STS所需 JWT数据的端点
+     * Endpoint for obtaining the JWT data required by the MinIO STS.
      */
     var endpoint: String? = null
 
     /**
-     * 已经认证Token的请求头header名
+     * Name of the request header carrying the authenticated token.
      */
     var headerName: String? = null
 }

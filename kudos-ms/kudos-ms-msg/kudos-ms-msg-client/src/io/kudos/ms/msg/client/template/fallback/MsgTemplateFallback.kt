@@ -6,10 +6,10 @@ import io.kudos.ms.msg.common.template.vo.MsgTemplateCacheEntry
 
 
 /**
- * 消息模板 Feign 容错降级实现。读接口不可达时返回 null。
+ * Feign fallback implementation for message templates. Read endpoints return null when unreachable.
  *
- * 由 [MsgTemplateFallbackFactory] 在每次降级时构造一个实例并传入 [cause]，
- * 让日志能区分 4xx / 5xx / unreachable。
+ * Instantiated by [MsgTemplateFallbackFactory] on each fallback with [cause] supplied,
+ * so logs can distinguish 4xx / 5xx / unreachable.
  *
  * @author K
  * @author AI: Codex

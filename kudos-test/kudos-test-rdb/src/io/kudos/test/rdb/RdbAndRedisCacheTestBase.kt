@@ -7,47 +7,47 @@ import org.springframework.test.context.DynamicPropertySource
 import kotlin.concurrent.thread
 
 /**
- * 所有需要关系型数据库和Redis缓存环境的测试用例的父类
+ * Base class for all test cases that require both a relational database and Redis cache environment.
  *
- * ## 背景与使用场景
- * - 位于测试层，继承自[SqlTestBase]，为需要完整数据库和Redis环境的测试提供容器配置
- * - 由Service测试类等需要完整环境的测试类继承使用
- * - 注意：本类不继承 [RdbTestBase]——两者对 `kudos.ability.cache.enabled` 配置互斥，无法叠加
+ * ## Background and Use Cases
+ * - Located in the test layer, extends [SqlTestBase] to provide container configuration for tests needing a full database and Redis environment
+ * - Used by Service test classes and other tests that require a complete environment
+ * - Note: this class does NOT extend [RdbTestBase] — the two have mutually exclusive configuration for `kudos.ability.cache.enabled` and cannot be combined
  *
- * ## 责任边界
- * - 启动并配置H2TestContainer和RedisTestContainer
- * - 配置缓存策略
- * - 继承[SqlTestBase]的所有功能（测试数据加载、串行执行、事务回滚）
- * - 在 fixture 加载后通过 [CacheTestResetSupport] 重置 Redis + 应用缓存
+ * ## Responsibilities
+ * - Starts and configures H2TestContainer and RedisTestContainer
+ * - Configures cache strategy
+ * - Inherits all functionality of [SqlTestBase] (test data loading, serial execution, transaction rollback)
+ * - Resets Redis + application caches after fixture loading via [CacheTestResetSupport]
  *
- * ## 核心流程
- * 1. 在@DynamicPropertySource中并行启动H2TestContainer和RedisTestContainer
- * 2. 配置缓存相关属性（启用缓存，默认 SINGLE_LOCAL 策略）
- * 3. 继承[SqlTestBase]的测试数据加载和事务回滚功能
- * 4. 每次 fixture 加载完成后 flush Redis + reload 应用缓存
+ * ## Core Flow
+ * 1. Start H2TestContainer and RedisTestContainer in parallel inside @DynamicPropertySource
+ * 2. Configure cache-related properties (enable cache, default SINGLE_LOCAL strategy)
+ * 3. Inherit test data loading and transaction rollback functionality from [SqlTestBase]
+ * 4. Flush Redis + reload application caches after each fixture load completes
  *
- * ## 依赖与外部交互
- * - 依赖：[SqlTestBase]（提供测试数据加载、事务管理）
- * - 依赖：H2TestContainer, RedisTestContainer
- * - IO：启动Docker容器（如果未运行）
+ * ## Dependencies and External Interactions
+ * - Depends on: [SqlTestBase] (provides test data loading, transaction management)
+ * - Depends on: H2TestContainer, RedisTestContainer
+ * - IO: starts Docker containers (if not running)
  *
- * ## 资料/契约
- * - 输入：无
- * - 输出：配置Spring测试环境属性（H2、Redis和缓存相关）
- * - 错误：如果Docker未安装或容器启动失败，会抛出异常
+ * ## Contract
+ * - Input: none
+ * - Output: configures Spring test environment properties (H2, Redis, and cache related)
+ * - Errors: throws exceptions if Docker is not installed or container startup fails
  *
- * ## 交易与一致性
- * - 事务：继承[SqlTestBase]的@Transactional；fixture 数据由 @BeforeTransaction 在事务外提交
+ * ## Transactions and Consistency
+ * - Transactions: inherits @Transactional from [SqlTestBase]; fixture data is committed outside the transaction by @BeforeTransaction
  *
- * ## 并发与线程安全
- * - 容器启动使用同步机制，确保只启动一次
- * - 继承[SqlTestBase]的串行执行保证
+ * ## Concurrency and Thread Safety
+ * - Container startup uses synchronization to ensure each container is started only once
+ * - Inherits serial execution guarantees from [SqlTestBase]
  *
- * ## 性能特性
- * - 容器启动有一定开销，但会复用已运行的容器
+ * ## Performance Characteristics
+ * - Container startup has some overhead but already running containers are reused
  *
- * ## 安全与合规
- * - 仅用于测试环境，不涉及生产数据
+ * ## Security and Compliance
+ * - For test environments only, does not involve production data
  *
  * @author K
  * @author AI: Cursor
@@ -69,7 +69,7 @@ open class RdbAndRedisCacheTestBase : SqlTestBase() {
                 System.setProperty(ryukDisabledKey, "true")
             }
             registry.add("kudos.ability.cache.enabled") { "true" }
-            // 默认 SINGLE_LOCAL；要验 LOCAL_AND_REMOTE / SINGLE_REMOTE 时业务子类自己覆盖
+            // Default SINGLE_LOCAL; business subclasses should override when testing LOCAL_AND_REMOTE / SINGLE_REMOTE
             registry.add("cache.config.strategy") { "SINGLE_LOCAL" }
 
             val h2Thread = thread(name = "h2-testcontainer-start") { H2TestContainer.startIfNeeded(registry) }

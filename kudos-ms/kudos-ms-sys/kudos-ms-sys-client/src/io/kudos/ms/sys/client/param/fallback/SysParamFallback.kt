@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 参数 Feign 容错降级实现。
+ * Param Feign client fallback implementation.
  *
  * @author K
  * @since 1.0.0

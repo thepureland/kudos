@@ -10,13 +10,13 @@ import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 
 /**
- * 只读业务服务接口。
+ * Read-only business service interface.
  *
- * 该接口位于 Service 层，定义通用只读查询能力，覆盖主键查询、属性查询、复杂条件查询、
- * 分页查询、载体查询与聚合查询。通常由业务 Service 实现并委托 DAO 执行具体持久化访问。
+ * This interface resides at the Service layer and defines general-purpose read-only query capabilities, covering primary key queries, property queries, complex condition queries,
+ * paginated queries, payload-based queries, and aggregate queries. Typically implemented by business Services that delegate to the DAO for the actual persistence access.
  *
- * @param PK 主键类型
- * @param E 实体类型，需实现 [IIdEntity]
+ * @param PK Primary key type
+ * @param E Entity type; must implement [IIdEntity]
  * @since 1.0.0
  */
 interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
@@ -24,38 +24,38 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
     //region by id
 
     /**
-     * 查询指定主键值的实体
+     * Queries the entity with the specified primary key value.
      *
-     * @param id 主键值
-     * @return 命中实体；未命中返回 null
+     * @param id Primary key value
+     * @return The matched entity; returns null if not found
      */
     fun get(id: PK): E?
 
     /**
-     * 查询指定主键值的实体，可以指定返回的对象类型
+     * Queries the entity with the specified primary key value, allowing the return object type to be specified.
      *
-     * @param id 主键值
-     * @param returnType 返回对象类型
-     * @return 命中对象；未命中返回 null
+     * @param id Primary key value
+     * @param returnType Return object type
+     * @return The matched object; returns null if not found
      */
     fun <R : Any> get(id: PK, returnType: KClass<R>): R?
 
     /**
-     * 批量查询指定主键值的实体
+     * Batch-queries entities with the specified primary key values.
      *
-     * @param ids 主键集合
-     * @param countOfEachBatch 分批查询大小，防止超大 IN 导致 SQL 或内存压力
-     * @return 实体列表；入参为空时返回空列表
+     * @param ids Collection of primary keys
+     * @param countOfEachBatch Batch size for querying, to prevent oversized IN clauses from stressing SQL or memory
+     * @return List of entities; returns an empty list when the input is empty
      */
     fun getByIds(ids: Collection<PK>, countOfEachBatch: Int = 1000): List<E>
 
     /**
-     * 批量查询指定主键值的实体
+     * Batch-queries entities with the specified primary key values.
      *
-     * @param ids 主键集合
-     * @param returnItemClass 返回元素类型；为 null 时实现可按实体类型处理
-     * @param countOfEachBatch 分批查询大小
-     * @return 指定类型的结果列表
+     * @param ids Collection of primary keys
+     * @param returnItemClass Return element type; when null, the implementation may use the entity type
+     * @param countOfEachBatch Batch size for querying
+     * @return Result list of the specified type
      */
     fun <T: Any> getByIds(
         ids: Collection<PK>,
@@ -64,23 +64,23 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
     ): List<T>
 
     /**
-     * 单属性等值查询，返回实体列表。
+     * Single-property equality query, returning a list of entities.
      *
-     * @param property 查询属性
-     * @param value 查询值
-     * @param orders 排序规则
-     * @return 满足条件的实体列表
+     * @param property Query property
+     * @param value Query value
+     * @param orders Sort rules
+     * @return List of entities matching the condition
      */
     fun oneSearch(property: KProperty1<E, *>, value: Any?, vararg orders: Order): List<E>
 
     /**
-     * 单属性等值查询，仅返回指定属性列表。
+     * Single-property equality query, returning only the values of the specified property.
      *
-     * @param property 查询属性
-     * @param value 查询值
-     * @param returnProperty 返回属性
-     * @param orders 排序规则
-     * @return 指定属性值列表
+     * @param property Query property
+     * @param value Query value
+     * @param returnProperty Return property
+     * @param orders Sort rules
+     * @return List of the specified property values
      */
     fun <R> oneSearchProperty(
         property: KProperty1<E, *>,
@@ -90,13 +90,13 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
     ): List<R>
 
     /**
-     * 单属性等值查询，仅返回指定多属性映射。
+     * Single-property equality query, returning only the mapping of the specified multiple properties.
      *
-     * @param property 查询属性
-     * @param value 查询值
-     * @param returnProperties 返回属性集合
-     * @param orders 排序规则
-     * @return 多属性映射列表（每条记录一个 Map）
+     * @param property Query property
+     * @param value Query value
+     * @param returnProperties Collection of return properties
+     * @param orders Sort rules
+     * @return List of multi-property mappings (one Map per record)
      */
     fun oneSearchProperties(
         property: KProperty1<E, *>,
@@ -106,28 +106,28 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
     ): List<Map<String, *>>
 
     /**
-     * 查询全部数据。
+     * Queries all data.
      *
-     * @param orders 排序规则
-     * @return 全量实体列表
+     * @param orders Sort rules
+     * @return Full list of entities
      */
     fun allSearch(vararg orders: Order): List<E>
 
     /**
-     * 查询全部数据，仅返回单个属性。
+     * Queries all data, returning only a single property.
      *
-     * @param returnProperty 返回属性
-     * @param orders 排序规则
-     * @return 指定属性值列表
+     * @param returnProperty Return property
+     * @param orders Sort rules
+     * @return List of the specified property values
      */
     fun <R> allSearchProperty(returnProperty: KProperty1<E, R>, vararg orders: Order): List<R>
 
     /**
-     * 查询全部数据，仅返回多属性映射。
+     * Queries all data, returning only a mapping of multiple properties.
      *
-     * @param returnProperties 返回属性集合
-     * @param orders 排序规则
-     * @return 多属性映射列表（每条记录一个 Map）
+     * @param returnProperties Collection of return properties
+     * @param orders Sort rules
+     * @return List of multi-property mappings (one Map per record)
      */
     fun allSearchProperties(
         returnProperties: Collection<KProperty1<E, *>>,
@@ -135,69 +135,69 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
     ): List<Map<String, *>>
 
     /**
-     * 多属性 AND 查询，返回实体列表。
+     * Multi-property AND query, returning a list of entities.
      *
-     * @param properties 属性到值的映射
-     * @param orders 排序规则
-     * @return 满足 AND 条件的实体列表
+     * @param properties Property-to-value mapping
+     * @param orders Sort rules
+     * @return List of entities satisfying the AND conditions
      */
     fun andSearch(properties: Map<KProperty1<E, *>, *>, vararg orders: Order): List<E>
 
     /**
-     * 多属性 OR 查询，返回实体列表。
+     * Multi-property OR query, returning a list of entities.
      *
-     * @param properties 属性到值的映射
-     * @param orders 排序规则
-     * @return 满足 OR 条件的实体列表
+     * @param properties Property-to-value mapping
+     * @param orders Sort rules
+     * @return List of entities satisfying the OR conditions
      */
     fun orSearch(properties: Map<KProperty1<E, *>, *>, vararg orders: Order): List<E>
 
     /**
-     * IN 查询，返回实体列表。
+     * IN query, returning a list of entities.
      *
-     * @param property 参与 IN 的属性
-     * @param values IN 值集合
-     * @param orders 排序规则
-     * @return 满足 IN 条件的实体列表
+     * @param property Property participating in IN
+     * @param values Collection of IN values
+     * @param orders Sort rules
+     * @return List of entities satisfying the IN condition
      */
     fun inSearch(property: KProperty1<E, *>, values: Collection<*>, vararg orders: Order): List<E>
 
     /**
-     * 主键 IN 查询，返回实体列表。
+     * Primary key IN query, returning a list of entities.
      *
-     * @param values 主键集合
-     * @param orders 排序规则
-     * @return 主键命中的实体列表
+     * @param values Collection of primary keys
+     * @param orders Sort rules
+     * @return List of entities matched by primary keys
      */
     fun inSearchById(values: Collection<PK>, vararg orders: Order): List<E>
 
     /**
-     * 主键 IN 查询，仅返回单个属性（字符串属性名版本）。
+     * Primary key IN query, returning only a single property (string property name version).
      *
-     * @param values 主键集合
-     * @param returnProperty 返回属性名
-     * @param orders 排序规则
-     * @return 指定属性值列表
+     * @param values Collection of primary keys
+     * @param returnProperty Return property name
+     * @param orders Sort rules
+     * @return List of the specified property values
      */
     fun inSearchPropertyById(values: Collection<PK>, returnProperty: String, vararg orders: Order): List<*>
 
     /**
-     * 主键 IN 查询，仅返回单个属性（类型安全版本）。
+     * Primary key IN query, returning only a single property (type-safe version).
      *
-     * @param values 主键集合
-     * @param returnProperty 返回属性
-     * @param orders 排序规则
-     * @return 指定属性值列表
+     * @param values Collection of primary keys
+     * @param returnProperty Return property
+     * @param orders Sort rules
+     * @return List of the specified property values
      */
     fun <R> inSearchPropertyById(values: Collection<PK>, returnProperty: KProperty1<E, R>, vararg orders: Order): List<R>
 
     /**
-     * 主键 IN 查询，仅返回多属性映射。
+     * Primary key IN query, returning only a mapping of multiple properties.
      *
-     * @param values 主键集合
-     * @param returnProperties 返回属性名集合
-     * @param orders 排序规则
-     * @return 多属性映射列表（每条记录一个 Map）
+     * @param values Collection of primary keys
+     * @param returnProperties Collection of return property names
+     * @param orders Sort rules
+     * @return List of multi-property mappings (one Map per record)
      */
     fun inSearchPropertiesById(
         values: Collection<PK>, returnProperties: Collection<String>, vararg orders: Order
@@ -227,22 +227,22 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
     ): List<T>
 
     /**
-     * 按 [Criteria] 查询，仅返回单个属性列表。
+     * Queries by [Criteria], returning only a list of a single property.
      *
-     * @param criteria 查询条件
-     * @param returnProperty 返回属性
-     * @param orders 排序规则
-     * @return 指定属性值列表
+     * @param criteria Query conditions
+     * @param returnProperty Return property
+     * @param orders Sort rules
+     * @return List of the specified property values
      */
     fun <R> searchProperty(criteria: Criteria, returnProperty: KProperty1<E, R>, vararg orders: Order): List<R>
 
     /**
-     * 按 [Criteria] 查询，仅返回多属性映射。
+     * Queries by [Criteria], returning only a mapping of multiple properties.
      *
-     * @param criteria 查询条件
-     * @param returnProperties 返回属性集合
-     * @param orders 排序规则
-     * @return 多属性映射列表（每条记录一个 Map）
+     * @param criteria Query conditions
+     * @param returnProperties Collection of return properties
+     * @param orders Sort rules
+     * @return List of multi-property mappings (one Map per record)
      */
     fun searchProperties(
         criteria: Criteria,
@@ -251,14 +251,14 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
     ): List<Map<String, Any?>>
 
     /**
-     * 按 [Criteria] 分页查询，仅返回单个属性列表。
+     * Paginated query by [Criteria], returning only a list of a single property.
      *
-     * @param criteria 查询条件
-     * @param returnProperty 返回属性
-     * @param pageNo 页码（从 1 开始）
-     * @param pageSize 每页条数
-     * @param orders 排序规则
-     * @return 当前页的指定属性值列表
+     * @param criteria Query conditions
+     * @param returnProperty Return property
+     * @param pageNo Page number (starting at 1)
+     * @param pageSize Page size
+     * @param orders Sort rules
+     * @return List of the specified property values for the current page
      */
     fun <R> pagingReturnProperty(
         criteria: Criteria,
@@ -269,14 +269,14 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
     ): List<R>
 
     /**
-     * 按 [Criteria] 分页查询，仅返回多属性映射。
+     * Paginated query by [Criteria], returning only a mapping of multiple properties.
      *
-     * @param criteria 查询条件
-     * @param returnProperties 返回属性集合
-     * @param pageNo 页码（从 1 开始）
-     * @param pageSize 每页条数
-     * @param orders 排序规则
-     * @return 当前页的多属性映射列表（每条记录一个 Map）
+     * @param criteria Query conditions
+     * @param returnProperties Collection of return properties
+     * @param pageNo Page number (starting at 1)
+     * @param pageSize Page size
+     * @param orders Sort rules
+     * @return List of multi-property mappings for the current page (one Map per record)
      */
     fun pagingReturnProperties(
         criteria: Criteria,
@@ -287,75 +287,75 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
     ): List<Map<String, *>>
 
     /**
-     * 按查询载体执行分页查询，返回结果与总数。
+     * Performs a paginated query according to the search payload, returning the results and total count.
      *
-     * @param listSearchPayload 列表查询载体
+     * @param listSearchPayload List search payload
      * @return PagingSearchResult
      */
     fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*>
 
     /**
-     * 根据列表查询载体查询结果列表。
+     * Queries the result list according to the list search payload.
      *
-     * 返回类型由 `listSearchPayload.returnProperties` 与 `listSearchPayload.returnEntityClass` 决定，
-     * 可能为实体列表、单属性值列表或属性映射列表。
+     * The return type is determined by `listSearchPayload.returnProperties` and `listSearchPayload.returnEntityClass`,
+     * and may be a list of entities, a list of single-property values, or a list of property mappings.
      *
-     * @return 查询结果列表（元素类型由载体配置决定）
+     * @return Query result list (the element type is determined by the payload configuration)
      */
     fun search(listSearchPayload: ListSearchPayload): List<*>
 
     /**
-     * 根据列表查询载体查询，并指定返回元素类型。
+     * Queries according to the list search payload and specifies the return element type.
      *
-     * 仅当 `listSearchPayload.returnProperties` 为空时可安全使用该方法。
+     * This method can only be used safely when `listSearchPayload.returnProperties` is empty.
      *
-     * @return 指定类型的结果列表
+     * @return Result list of the specified type
      */
     fun <T : Any> search(listSearchPayload: ListSearchPayload, returnItemClass: KClass<T>): List<T>
 
     fun count(criteria: Criteria? = null): Int
 
     /**
-     * 按查询载体计算记录数。
+     * Counts records according to the search payload.
      *
-     * @param searchPayload 查询载体
-     * @return 记录数
+     * @param searchPayload Search payload
+     * @return Number of records
      */
     fun count(searchPayload: ISearchPayload): Int
 
     /**
-     * 求和聚合。
+     * Sum aggregation.
      *
-     * @param property 求和属性
-     * @param criteria 过滤条件，为 null 表示全量
-     * @return 求和结果
+     * @param property Property to sum
+     * @param criteria Filter condition; null means all data
+     * @return Sum result
      */
     fun sum(property: KProperty1<E, *>, criteria: Criteria? = null): Number
 
     /**
-     * 平均值聚合。
+     * Average aggregation.
      *
-     * @param property 平均值属性
-     * @param criteria 过滤条件，为 null 表示全量
-     * @return 平均值结果
+     * @param property Property to average
+     * @param criteria Filter condition; null means all data
+     * @return Average result
      */
     fun avg(property: KProperty1<E, *>, criteria: Criteria? = null): Number
 
     /**
-     * 最大值聚合。
+     * Maximum aggregation.
      *
-     * @param property 目标属性
-     * @param criteria 过滤条件，为 null 表示全量
-     * @return 最大值；无数据时返回 null
+     * @param property Target property
+     * @param criteria Filter condition; null means all data
+     * @return Maximum value; returns null when there is no data
      */
     fun <R : Comparable<R>> max(property: KProperty1<E, R?>, criteria: Criteria? = null): R?
 
     /**
-     * 最小值聚合。
+     * Minimum aggregation.
      *
-     * @param property 目标属性
-     * @param criteria 过滤条件，为 null 表示全量
-     * @return 最小值；无数据时返回 null
+     * @param property Target property
+     * @param criteria Filter condition; null means all data
+     * @return Minimum value; returns null when there is no data
      */
     fun <R : Comparable<R>> min(property: KProperty1<E, R?>, criteria: Criteria? = null): R?
 }

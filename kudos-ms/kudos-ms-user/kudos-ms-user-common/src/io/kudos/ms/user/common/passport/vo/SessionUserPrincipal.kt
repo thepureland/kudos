@@ -5,15 +5,15 @@ import java.io.Serializable
 
 
 /**
- * 登录会话中存放的"当前用户"快照。
+ * Snapshot of the "current user" stored in the login session.
  *
- * 落地后两个用途：
- *   1) 序列化到 `HttpSession[KudosContext.SESSION_KEY_USER]`（servlet session 默认 java 序列化）
- *   2) [io.kudos.ms.user.api.public.filter.UserContextWebFilter] 读出后填到
- *      [io.kudos.context.core.KudosContext.user]，给 `KudosContextHolder.get().user?.id`
- *      这类既有调用者用
+ * Two purposes after persistence:
+ *   1) Serialized into `HttpSession[KudosContext.SESSION_KEY_USER]` (servlet session uses Java serialization by default)
+ *   2) Read out by [io.kudos.ms.user.api.public.filter.UserContextWebFilter] and populated into
+ *      [io.kudos.context.core.KudosContext.user], for existing callers such as
+ *      `KudosContextHolder.get().user?.id`
  *
- * 实现 [IIdEntity] 是因为 `KudosContext.user` 字段是 `IIdEntity<String>?` 类型。
+ * Implements [IIdEntity] because the `KudosContext.user` field is of type `IIdEntity<String>?`.
  *
  * @author K
  * @since 1.0.0

@@ -6,7 +6,7 @@ import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.ability.cache.remote.redis.keyvalue.TestCacheConfigProvider
 
 /**
- * 为 Hash 缓存测试提供配置：在 [TestCacheConfigProvider] 基础上增加 hash 缓存 "testHash"（REMOTE 策略）。
+ * Provides configuration for hash cache tests: extends [TestCacheConfigProvider] by adding the hash cache "testHash" (REMOTE strategy).
  *
  * @author K
  * @author AI: Codex

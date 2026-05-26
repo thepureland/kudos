@@ -5,7 +5,7 @@ import io.kudos.base.net.http.HttpResult
 import org.springframework.cloud.openfeign.FallbackFactory
 
 /**
- * 全局 Feign 降级工厂：按异常类型映射 HTTP 状态码，避免一律返回 404。
+ * Global Feign fallback factory: maps exception types to HTTP status codes to avoid always returning 404.
  * @author K
  * @author AI: Codex
  * @since 1.0.0

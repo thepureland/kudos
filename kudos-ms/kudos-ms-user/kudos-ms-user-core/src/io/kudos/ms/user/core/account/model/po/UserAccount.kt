@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 用户基本信息数据库实体
+ * User account database entity.
  *
  * @author K
  * @author AI: Cursor
@@ -15,103 +15,103 @@ interface UserAccount : IDbEntity<String, UserAccount> {
 
     companion object : DbEntityFactory<UserAccount>()
 
-    /** 用户名 */
+    /** Username. */
     var username: String
 
-    /** 租户ID */
+    /** Tenant id. */
     var tenantId: String
 
-    /** 登录密码 */
+    /** Login password. */
     var loginPassword: String
 
-    /** 安全密码 */
+    /** Security password. */
     var securityPassword: String?
 
-    /** 用户类型字典码 */
+    /** Account type dict code. */
     var accountTypeDictCode: String?
 
-    /** 用户状态字典码 */
+    /** Account status dict code. */
     var accountStatusDictCode: String?
 
-    /** 默认语言环境 */
+    /** Default locale. */
     var defaultLocale: String?
 
-    /** 默认时区 */
+    /** Default timezone. */
     var defaultTimezone: String?
 
-    /** 默认货币 */
+    /** Default currency. */
     var defaultCurrency: String?
 
-    /** 最后登录时间 */
+    /** Last login time. */
     var lastLoginTime: LocalDateTime?
 
-    /** 最后登录IP */
+    /** Last login IP. */
     var lastLoginIp: Long?
 
-    /** 最后登出时间 */
+    /** Last logout time. */
     var lastLogoutTime: LocalDateTime?
 
-    /** 登录错误次数 */
+    /** Login error count. */
     var loginErrorTimes: Int?
 
-    /** 安全密码错误次数 */
+    /** Security-password error count. */
     var securityPasswordErrorTimes: Int?
 
-    /** 会话密钥 */
+    /** Session key. */
     var sessionKey: String?
 
-    /** 认证密钥 */
+    /** Authentication key. */
     var authenticationKey: String?
 
-    /** 所属机构ID */
+    /** Organization id. */
     var orgId: String?
 
-    /** 直属上级ID */
+    /** Direct supervisor id. */
     var supervisorId: String
 
-    /** 备注 */
+    /** Remark. */
     var remark: String?
 
-    /** 冻结类型字典码；非空表示存在一条冻结记录 */
+    /** Freeze type dict code; non-null indicates a freeze record exists. */
     var freezeType: String?
 
-    /** 冻结记录创建时刻 */
+    /** Freeze record creation time. */
     var freezeTime: LocalDateTime?
 
-    /** 冻结生效起点；null 视为立即生效 */
+    /** Freeze effective start time; null means effective immediately. */
     var freezeStartTime: LocalDateTime?
 
-    /** 冻结失效时刻；null 视为永久冻结 */
+    /** Freeze expiration time; null means permanent freeze. */
     var freezeEndTime: LocalDateTime?
 
-    /** 冻结原因标题 */
+    /** Freeze reason title. */
     var freezeTitle: String?
 
-    /** 冻结详细说明 */
+    /** Freeze detailed description. */
     var freezeContent: String?
 
-    /** 是否激活 */
+    /** Active flag. */
     var active: Boolean
 
-    /** 是否内置 */
+    /** Built-in flag. */
     var builtIn: Boolean?
 
-    /** 创建者id */
+    /** Creator id. */
     var createUserId: String?
 
-    /** 创建者名称 */
+    /** Creator name. */
     var createUserName: String?
 
-    /** 创建时间 */
+    /** Create time. */
     var createTime: LocalDateTime?
 
-    /** 更新者id */
+    /** Updater id. */
     var updateUserId: String?
 
-    /** 更新者名称 */
+    /** Updater name. */
     var updateUserName: String?
 
-    /** 更新时间 */
+    /** Update time. */
     var updateTime: LocalDateTime?
 
 

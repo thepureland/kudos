@@ -8,24 +8,24 @@ import io.kudos.ms.sys.common.accessrule.enums.SysAccessRuleErrorCodeEnum
 import java.math.BigDecimal
 
 /**
- * 支持将人可读的String表示的ip串转为其BigDecimal表示，以便DB进行存储和查询，兼容ipv4和ipv6
+ * Supports converting a human-readable String IP into its BigDecimal representation for DB storage and query; compatible with both IPv4 and IPv6.
  *
  * @author K
  * @since 1.0.0
  */
 interface IIpStringToBigDecimalSupport {
 
-    /** 返回起始ip(字符串表达) */
+    /** Returns the start IP (string representation). */
     fun getIpStartString(): String?
 
-    /** 返回结束ip(字符串表达) */
+    /** Returns the end IP (string representation). */
     fun getIpEndString(): String?
 
-    /** 返回 ip 类型字典代码 */
+    /** Returns the IP type dictionary code. */
     fun getIpTypeDictCodeString(): String?
 
     /**
-     * 返回ip起始值的BigDecimal表示，兼容ipv4和ipv6
+     * Returns the BigDecimal representation of the start IP, compatible with IPv4 and IPv6.
      */
     fun getIpStart(): BigDecimal? {
         val ip = getIpStartString()?.takeIf { it.isNotBlank() } ?: return null
@@ -34,7 +34,7 @@ interface IIpStringToBigDecimalSupport {
     }
 
     /**
-     * 返回ip结束值的BigDecimal表示，兼容ipv4和ipv6
+     * Returns the BigDecimal representation of the end IP, compatible with IPv4 and IPv6.
      */
     fun getIpEnd(): BigDecimal? {
         val ip = getIpEndString()?.takeIf { it.isNotBlank() } ?: return null

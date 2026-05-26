@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * [AbstractConfigChangeListener] hook 顺序与异常回调测试。
+ * Tests for [AbstractConfigChangeListener] hook ordering and exception callback.
  *
  * @author K
  * @author AI: Codex

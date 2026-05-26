@@ -27,7 +27,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 缓存业务
+ * Cache configuration service.
  *
  * @author K
  * @author AI: Cursor
@@ -55,7 +55,7 @@ open class SysCacheService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的缓存配置。") {
+        completeCrudInsert(log, "Inserted cache configuration id=$id.") {
             eventPublisher.publishEvent(SysCacheInserted(id))
         }
         return id
@@ -63,12 +63,12 @@ open class SysCacheService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "缓存配置")
+        val id = requireStringId(any, "cache configuration")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的缓存配置。",
-            failureMessage = "更新id为${id}的缓存配置失败！",
+            successMessage = "Updated cache configuration id=$id.",
+            failureMessage = "Failed to update cache configuration id=$id!",
         ) {
             eventPublisher.publishEvent(SysCacheUpdated(id))
         }
@@ -83,8 +83,8 @@ open class SysCacheService(
         return completeCrudUpdate(
             success = dao.update(cache),
             log = log,
-            successMessage = "更新id为${id}的缓存配置的启用状态为${active}。",
-            failureMessage = "更新id为${id}的缓存配置的启用状态为${active}失败！",
+            successMessage = "Updated cache configuration id=$id active=$active.",
+            failureMessage = "Failed to update cache configuration id=$id active=$active!",
         ) {
             eventPublisher.publishEvent(SysCacheUpdated(id))
         }
@@ -94,14 +94,14 @@ open class SysCacheService(
     override fun deleteById(id: String): Boolean {
         val sysCache = dao.get(id)
         if (sysCache == null) {
-            log.warn("删除id为${id}的缓存配置时，发现其已不存在！")
+            log.warn("Cache configuration id=$id no longer exists when attempting delete!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的缓存配置成功！",
-            failureMessage = "删除id为${id}的缓存配置失败！",
+            successMessage = "Deleted cache configuration id=$id.",
+            failureMessage = "Failed to delete cache configuration id=$id!",
         ) {
             eventPublisher.publishEvent(SysCacheDeleted(id))
         }
@@ -110,7 +110,7 @@ open class SysCacheService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
-        log.debug("批量删除缓存配置，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete cache configurations: expected ${ids.size}, actually deleted $count.")
         if (count > 0 && ids.isNotEmpty()) {
             eventPublisher.publishEvent(SysCacheBatchDeleted(ids))
         }
@@ -204,19 +204,19 @@ open class SysCacheService(
         return JsonKit.toJson(value)
     }
 
-    /** 按 id 获取缓存配置，不存在则抛异常 */
+    /** Fetch cache configuration by id; throws if not found. */
     private fun getCacheConfigById(id: String): SysCacheCacheEntry =
         sysCacheHashCache.getCacheById(id) ?: throw ServiceException(SysCacheErrorCodeEnum.CACHE_CONFIG_NOT_FOUND)
 
     /**
-     * 取 id 对应的缓存配置后执行 [block]：上层 reload / evict / getValue 等 6 处用它做
-     * "拿 config → 分流 keyValue/hash" 的样板；曾被 docs commit 误删，导致 main 编译挂。
+     * Fetch the cache configuration by id and run [block]: shared by 6 call sites (reload / evict / getValue / ...) as the
+     * "load config → dispatch keyValue/hash" template; was once accidentally removed by a docs commit which broke main.
      *
-     * @param T block 返回类型
-     * @param id 缓存配置 id
-     * @param block 执行块，参数为命中的 [SysCacheCacheEntry]
-     * @return [block] 的返回值
-     * @throws ServiceException 缓存配置不存在
+     * @param T block return type
+     * @param id cache configuration id
+     * @param block execution block; the parameter is the resolved [SysCacheCacheEntry]
+     * @return the value returned by [block]
+     * @throws ServiceException when the cache configuration does not exist
      */
     private inline fun <T> withCacheConfig(id: String, block: (SysCacheCacheEntry) -> T): T =
         block(getCacheConfigById(id))
@@ -226,12 +226,12 @@ open class SysCacheService(
     }
 
     /**
-     * 按缓存形态分流 existsKey 调用：keyValue 走 [KeyValueCacheKit.existsKey]，hash 走 [HashCacheKit.existsById]。
+     * Dispatch existsKey by cache shape: keyValue goes through [KeyValueCacheKit.existsKey], hash through [HashCacheKit.existsById].
      *
-     * @param name 缓存区名
-     * @param key 缓存 key（或 hash 的字段名）
-     * @param keyValueCache true 表示 KV 缓存，false 表示 Hash 缓存
-     * @return 是否存在
+     * @param name cache region name
+     * @param key cache key (or hash field name)
+     * @param keyValueCache true for KV cache, false for Hash cache
+     * @return whether the key exists
      * @author K
      * @since 1.0.0
      */
@@ -239,10 +239,10 @@ open class SysCacheService(
         if (keyValueCache) KeyValueCacheKit.existsKey(name, key) else HashCacheKit.existsById(name, key)
 
     /**
-     * 判定缓存形态：`hash=false` 即视为 KeyValue 缓存。
+     * Determine cache shape: `hash=false` means a KeyValue cache.
      *
-     * @param cache 缓存配置缓存条目
-     * @return true 表示 KV 缓存
+     * @param cache cache configuration entry
+     * @return true if it is a KV cache
      * @author K
      * @since 1.0.0
      */

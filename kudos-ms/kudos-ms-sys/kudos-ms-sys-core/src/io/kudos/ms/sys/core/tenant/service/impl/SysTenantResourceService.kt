@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 租户-资源关系业务
+ * Tenant-resource relation service.
  *
  * @author K
  * @since 1.0.0
@@ -33,12 +33,12 @@ open class SysTenantResourceService(
     override fun batchBind(tenantId: String, resourceIds: Collection<String>): Int {
         if (resourceIds.isEmpty()) return 0
 
-        // 一次 SELECT 把已存在的关系拿全，差集只对新增 ID 做一次 batchInsert，把原 N+1 (1 exists + 1 insert per id)
-        // 折叠到 2 次 SQL。
+        // One SELECT for the full set of existing relations, then a single batchInsert for the diff;
+        // collapses the original N+1 (1 exists + 1 insert per id) into 2 statements.
         val existing = dao.searchResourceIdsByTenantId(tenantId)
         val newResourceIds = resourceIds.toSet() - existing
         if (newResourceIds.isEmpty()) {
-            log.debug("批量绑定租户${tenantId}与${resourceIds.size}个资源的关系，全部已存在，无新增。")
+            log.debug("Batch bind tenant=$tenantId to ${resourceIds.size} resources: all already exist, nothing to insert.")
             return 0
         }
         val relations = newResourceIds.map {
@@ -48,7 +48,7 @@ open class SysTenantResourceService(
             }
         }
         dao.batchInsert(relations)
-        log.debug("批量绑定租户${tenantId}与${resourceIds.size}个资源的关系，成功绑定${newResourceIds.size}条。")
+        log.debug("Batch bind tenant=$tenantId to ${resourceIds.size} resources: successfully inserted ${newResourceIds.size}.")
         return newResourceIds.size
     }
 
@@ -57,9 +57,9 @@ open class SysTenantResourceService(
         val count = dao.deleteByTenantIdAndResourceId(tenantId, resourceId)
         val success = count > 0
         if (success) {
-            log.debug("解绑租户${tenantId}与资源${resourceId}的关系。")
+            log.debug("Unbound tenant=$tenantId from resource=$resourceId.")
         } else {
-            log.warn("解绑租户${tenantId}与资源${resourceId}的关系失败，关系不存在。")
+            log.warn("Failed to unbind tenant=$tenantId from resource=$resourceId: relation does not exist.")
         }
         return success
     }

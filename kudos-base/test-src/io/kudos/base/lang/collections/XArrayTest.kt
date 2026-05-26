@@ -6,7 +6,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * XArray测试用例
+ * XArray test cases.
  *
  * @author K
  * @since 1.0.0

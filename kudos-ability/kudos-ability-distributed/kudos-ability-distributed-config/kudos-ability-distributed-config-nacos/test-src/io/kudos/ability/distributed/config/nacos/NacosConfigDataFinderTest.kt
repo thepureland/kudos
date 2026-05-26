@@ -18,18 +18,19 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * [NacosConfigDataFinder] 单测——**不启动 Nacos**，直接往
- * [NacosPropertySourceRepository] 的静态 map 注入测试数据。
+ * Unit tests for [NacosConfigDataFinder] — **without starting Nacos**; test data is injected
+ * directly into the static map of [NacosPropertySourceRepository].
  *
- * 覆盖：
- *  - 按 `dataId` 命中：finder 返回对应 PropertySource
- *  - 没命中：返回 null
- *  - 同时挂多份 nacos source：按 dataId 匹配的那一份胜出
- *  - **SPI 注册**：`ServiceLoader.load(IConfigDataFinder::class.java)` 能找到 [NacosConfigDataFinder]
- *    （守护 `resources/META-INF/services/...` 文件没被误删）
+ * Coverage:
+ *  - Hit by `dataId`: finder returns the corresponding PropertySource
+ *  - Miss: returns null
+ *  - Multiple nacos sources registered: the one matching the dataId wins
+ *  - **SPI registration**: `ServiceLoader.load(IConfigDataFinder::class.java)` finds [NacosConfigDataFinder]
+ *    (guards against accidental removal of `resources/META-INF/services/...`)
  *
- * `NacosPropertySourceRepository` 的静态 map 在整个 JVM 内共享、无 clear API——本测试
- * 用反射在每个用例前后清理，避免泄漏到同一 JVM 的其他测试。
+ * The static map in `NacosPropertySourceRepository` is shared JVM-wide and has no clear API —
+ * this test clears it via reflection before/after each case to avoid leaking into other tests
+ * sharing the same JVM.
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -60,13 +61,13 @@ internal class NacosConfigDataFinderTest {
 
         val source = finder.findConfigData("not-registered.yaml")
 
-        assertNull(source, "查找不存在的 dataId 应返回 null")
+        assertNull(source, "Looking up a non-existent dataId should return null")
     }
 
     @Test
     fun findConfigData_nullName_returnsNull() {
         register(dataId = "app.yaml", group = "DEFAULT_GROUP", payload = mapOf("k" to "v"))
-        // dataId 字段非空，传入 null 不应命中任何条目
+        // The dataId field is non-null; passing null should not match any entry
         assertNull(finder.findConfigData(null))
     }
 
@@ -87,7 +88,7 @@ internal class NacosConfigDataFinderTest {
         val loaded = ServiceLoader.load(IConfigDataFinder::class.java).toList()
         assertTrue(
             loaded.any { it::class == NacosConfigDataFinder::class },
-            "META-INF/services/io.kudos.context.config.IConfigDataFinder 应当注册 NacosConfigDataFinder，实际加载到: ${loaded.map { it::class.qualifiedName }}",
+            "META-INF/services/io.kudos.context.config.IConfigDataFinder should register NacosConfigDataFinder; actually loaded: ${loaded.map { it::class.qualifiedName }}",
         )
     }
 
@@ -102,7 +103,7 @@ internal class NacosConfigDataFinderTest {
     }
 
     /**
-     * 将 `ENC(...)` 字符串转换为明文标记的测试解密器。
+     * Test decryptor that converts `ENC(...)` strings into a plain-text marker.
      *
      * @author K
      * @author AI: Codex
@@ -115,10 +116,11 @@ internal class NacosConfigDataFinderTest {
     }
 
     /**
-     * 用反射清空 [NacosPropertySourceRepository] 的静态 ConcurrentHashMap。
+     * Clear the static ConcurrentHashMap of [NacosPropertySourceRepository] via reflection.
      *
-     * 公开 API 没提供 clear——nacos 在生产中假设 PropertySource 只增不减、与 spring 配置上
-     * 下文生命周期对齐。测试场景下必须 between-test 清理，否则用例顺序影响断言。
+     * The public API exposes no clear method — in production Nacos assumes PropertySources are
+     * only added and align with the spring config-context lifecycle. Tests must clean up between
+     * cases, otherwise execution order affects assertions.
      */
     private fun clearRepoViaReflection() {
         val field = NacosPropertySourceRepository::class.java
@@ -129,7 +131,7 @@ internal class NacosConfigDataFinderTest {
         map.clear()
     }
 
-    /** 构造一份 [NacosPropertySource] 并塞进 repository。 */
+    /** Build a [NacosPropertySource] and push it into the repository. */
     private fun register(dataId: String, group: String, payload: Map<String, Any>) {
         val inner: PropertySource<*> = MapPropertySource(dataId, payload)
         val src = NacosPropertySource(listOf(inner), group, dataId, Date(), /* refreshable = */ false)

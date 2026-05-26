@@ -6,74 +6,74 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户账号保护缓存项
+ * User account protection cache entry
  *
  * @author K
  * @since 1.0.0
  */
 data class UserAccountProtectionCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 用户ID */
+    /** User ID */
     val userId: String?,
 
-    /** 问题1 */
+    /** Question 1 */
     val question1: String?,
 
-    /** 答案1 */
+    /** Answer 1 */
     val answer1: String?,
 
-    /** 问题2 */
+    /** Question 2 */
     val question2: String?,
 
-    /** 答案2 */
+    /** Answer 2 */
     val answer2: String?,
 
-    /** 问题3 */
+    /** Question 3 */
     val question3: String?,
 
-    /** 答案3 */
+    /** Answer 3 */
     val answer3: String?,
 
-    /** 安全联系方式ID */
+    /** Safe contact way ID */
     val safeContactWayId: String?,
 
-    /** 总的找回密码次数 */
+    /** Total password recovery attempts allowed */
     val totalValidateCount: Int?,
 
-    /** 必须答对的问题数 */
+    /** Number of questions that must be answered correctly */
     val matchQuestionCount: Int?,
 
-    /** 错误次数 */
+    /** Error count */
     val errorTimes: Int?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean?,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean?,
 
-    /** 创建者ID */
+    /** Creator ID */
     val createUserId: String?,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String?,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime?,
 
-    /** 更新者ID */
+    /** Updater ID */
     val updateUserId: String?,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String?,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {

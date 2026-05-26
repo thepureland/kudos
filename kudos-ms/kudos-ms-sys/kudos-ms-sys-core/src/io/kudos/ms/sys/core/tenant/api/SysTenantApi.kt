@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 租户 API本地实现
+ * Local implementation of the tenant API
  *
  * @author K
  * @author AI: Cursor

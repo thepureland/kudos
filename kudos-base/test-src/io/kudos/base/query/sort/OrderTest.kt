@@ -6,7 +6,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Order测试用例
+ * Order test cases
  *
  * @author AI: cursor
  * @author K
@@ -98,8 +98,8 @@ internal class OrderTest {
     fun testHashCodeDifferentProperty() {
         val order1 = Order("name", DirectionEnum.ASC)
         val order2 = Order("age", DirectionEnum.ASC)
-        // hashCode可能相同，但equals应该不同
-        // 这里只验证equals已经测试过
+        // hashCode may be the same, but equals should differ
+        // Just verifying equals here (already tested)
         assertFalse(order1 == order2)
     }
 

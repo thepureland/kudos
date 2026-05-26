@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 
 /**
- * [StreamProducerExceptionHandler] 失败消息体反序列化测试。
+ * Tests for [StreamProducerExceptionHandler] failed-message body deserialization.
  *
  * @author K
  * @author AI: Codex
@@ -49,7 +49,7 @@ internal class StreamProducerExceptionHandlerTest {
 }
 
 /**
- * stream producer 重试 payload 测试 DTO。
+ * Test DTO for stream producer retry payloads.
  *
  * @author K
  * @author AI: Codex

@@ -1,44 +1,44 @@
 package io.kudos.ms.sys.common.platform.consts
 
 /**
- * Sys中所有定义的字典类型常量
+ * Constants for all dict types defined in Sys.
  *
  * @author K
  * @since 1.0.0
  */
 object SysDictTypes {
 
-    /** 数据源用途 */
+    /** Data source usage */
     const val DS_USE  = "ds_use"
 
-    /** 数据源类型 */
+    /** Data source type */
     const val DS_TYPE = "ds_type"
 
-    /** 资源类型 */
+    /** Resource type */
     const val RESOURCE_TYPE = "resource_type"
 
-    /** 缓存策略 */
+    /** Cache strategy */
     const val CACHE_STRATEGY = "cache_strategy"
 
-    /** 语言 */
+    /** Locale */
     const val LOCALE = "locale"
 
-    /** 国际化类型 */
+    /** I18n type */
     const val I18N_TYPE = "i18n_type"
 
-    /** 时区 */
+    /** Time zone */
     const val TIMEZONE = "timezone"
 
-    /** 域名类型 */
+    /** Domain type */
     const val DOMAIN_TYPE = "domain_type"
 
-    /** 终端类型 */
+    /** Terminal type */
     const val TERMINAL_TYPE = "terminal_type"
 
-    /** 访问规则类型 */
+    /** Access rule type */
     const val ACCESS_RULE_TYPE = "access_rule_type"
 
-    /** ip类型 */
+    /** IP type */
     const val IP_TYPE = "ip_type"
 
 }

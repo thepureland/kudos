@@ -6,7 +6,7 @@ import jakarta.validation.ConstraintValidatorContext
 import java.util.regex.Pattern
 
 /**
- * [Matches] 校验器
+ * [Matches] validator.
  *
  * @author K
  * @author AI: Cursor

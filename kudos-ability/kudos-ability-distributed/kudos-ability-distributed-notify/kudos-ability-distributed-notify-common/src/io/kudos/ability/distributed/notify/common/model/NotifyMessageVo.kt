@@ -4,21 +4,22 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 跨节点通知消息载体。
+ * Payload for cross-node notification messages.
  *
- * @param T messageBody 的具体类型，必须 [Serializable]——会被 MQ 序列化跨进程传递
+ * @param T concrete type of messageBody; must be [Serializable]—it will be serialized by MQ and transmitted across processes
  * @author Younger
  * @author K
  * @since 1.0.0
  */
 class NotifyMessageVo<T : Serializable> : Serializable {
     /**
-     * 通知类型——派发依据。默认为空串，让 producer / consumer 可以用 `isBlank()` 做统一防御。
+     * Notification type—the dispatch key. Defaults to an empty string so both producer and consumer can apply
+     * a uniform `isBlank()` defensive check.
      */
     var notifyType: String = ""
 
     /**
-     * 消息内容
+     * Message content.
      */
     var messageBody: T? = null
 

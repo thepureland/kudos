@@ -8,7 +8,7 @@ import org.ktorm.schema.int
 import org.ktorm.schema.varchar
 
 /**
- * 字典项视图（v_sys_dict_item）表-实体关联对象，只读。
+ * Dictionary item view (v_sys_dict_item) table-entity binding object, read-only.
  *
  * @author K
  * @author AI: Cursor
@@ -16,54 +16,54 @@ import org.ktorm.schema.varchar
  */
 object VSysDictItems : StringIdTable<VSysDictItem>("v_sys_dict_item") {
 
-    /** 字典项代码 */
+    /** Dictionary item code */
     var itemCode = varchar("item_code").bindTo { it.itemCode }
 
-    /** 字典项名称 */
+    /** Dictionary item name */
     var itemName = varchar("item_name").bindTo { it.itemName }
 
-    /** 字典id */
+    /** Dictionary id */
     var dictId = varchar("dict_id").bindTo { it.dictId }
 
-    /** 字典项排序 */
+    /** Dictionary item order */
     var orderNum = int("order_num").bindTo { it.orderNum }
 
-    /** 父id */
+    /** Parent id */
     var parentId = varchar("parent_id").bindTo { it.parentId }
 
-    /** 备注 */
+    /** Remark */
     var remark = varchar("remark").bindTo { it.remark }
 
-    /** 是否启用 */
+    /** Whether active */
     var active = boolean("active").bindTo { it.active }
 
-    /** 是否内置 */
+    /** Whether built-in */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
 
-    /** 记录创建者id */
+    /** Record creator id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 记录创建者名称 */
+    /** Record creator name */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 记录创建时间 */
+    /** Record creation time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 记录更新者id */
+    /** Record updater id */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 记录更新者名称 */
+    /** Record updater name */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 记录更新时间 */
+    /** Record update time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
-    /** 字典类型（来自 sys_dict） */
+    /** Dictionary type (from sys_dict) */
     var dictType = varchar("dict_type").bindTo { it.dictType }
 
-    /** 字典名称（来自 sys_dict） */
+    /** Dictionary name (from sys_dict) */
     var dictName = varchar("dict_name").bindTo { it.dictName }
 
-    /** 原子服务编码（来自 sys_dict） */
+    /** Atomic service code (from sys_dict) */
     var atomicServiceCode = varchar("atomic_service_code").bindTo { it.atomicServiceCode }
 }

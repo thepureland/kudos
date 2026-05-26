@@ -9,7 +9,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertSame
 
 /**
- * [LogAuditContext] 的 ThreadLocal 语义测试。
+ * ThreadLocal semantics tests for [LogAuditContext].
  *
  * @author K
  * @author AI: Codex

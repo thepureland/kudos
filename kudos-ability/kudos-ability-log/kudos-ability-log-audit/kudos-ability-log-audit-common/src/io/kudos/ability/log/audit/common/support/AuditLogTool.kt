@@ -24,13 +24,16 @@ import java.util.LinkedList
 import kotlin.reflect.KClass
 
 /**
- * 审计日志构造 / 上下文写入工具。
+ * Audit-log construction / context-write utility.
  *
- * Aspect 调用栈：
- *  - `LogAuditAspect.before` / `WebLogAuditAspect.before` → [createLogVo] 构造 [LogVo] 塞到 [LogAuditContext]
- *  - `*.after` → [createSysAuditLogModel] 合并方法参数 / Web request body 后交给 [IAuditService.submit]
+ * Aspect call stack:
+ *  - `LogAuditAspect.before` / `WebLogAuditAspect.before` -> [createLogVo]
+ *    constructs a [LogVo] and pushes it into [LogAuditContext].
+ *  - `*.after` -> [createSysAuditLogModel] merges method parameters / web request
+ *    body and hands the result to [IAuditService.submit].
  *
- * 描述格式化器分发逻辑：见 [descriptionFormatter] 的 kdoc（含历史 bug 说明）。
+ * Description-formatter dispatch logic: see the kdoc on [descriptionFormatter]
+ * (includes notes on a historical bug).
  *
  * @author K
  * @author AI: Codex
@@ -44,19 +47,24 @@ object AuditLogTool {
     private var cachedTenantProvider: ILogSourceTenantProvider? = null
 
     /**
-     * 懒加载 + 缓存的 [ILogSourceTenantProvider] 查找。
+     * Lazy + cached lookup for [ILogSourceTenantProvider].
      *
-     * 旧实现在 `object` 的 `init` 块里一次性查 Spring bean——但 [AuditLogTool] 是 Kotlin
-     * `object`，其 init 在**首次访问**时执行；这个时间点通常是 Spring 上下文还没装好（切面
-     * 注册阶段就被引用），所以查 bean 失败、`tenantProvider` 永远为 null、且无重试。
+     * The old implementation queried the Spring bean once in the `object`'s `init`
+     * block — but [AuditLogTool] is a Kotlin `object`, whose init runs on **first
+     * access**; that moment is typically before the Spring context is ready (the
+     * aspect registration phase already references it), so the bean lookup failed,
+     * `tenantProvider` was permanently null, and there was no retry.
      *
-     * 改成每次按需查 + 拿到后缓存：bean 还没就绪时返回 null（按现有契约用 `entity.tenantId`
-     * 作为 sourceTenantId 兜底）；bean 就绪后第一次成功查到立即缓存，后续不再走 Spring 反射。
+     * Changed to look up on demand and cache: when the bean is not yet ready,
+     * returns null (falls back to `entity.tenantId` as sourceTenantId per the
+     * existing contract); once the first successful lookup succeeds after the
+     * bean is ready, the value is cached so subsequent calls do not go through
+     * Spring reflection.
      */
     private fun tenantProvider(): ILogSourceTenantProvider? {
         cachedTenantProvider?.let { return it }
         val resolved = runCatching { SpringKit.getBeanOrNull(ILogSourceTenantProvider::class) }
-            .onFailure { LOG.debug("查找 ILogSourceTenantProvider 失败：{0}", it.message) }
+            .onFailure { LOG.debug("Failed to look up ILogSourceTenantProvider: {0}", it.message) }
             .getOrNull()
         if (resolved != null) {
             cachedTenantProvider = resolved
@@ -65,10 +73,10 @@ object AuditLogTool {
     }
 
     /**
-     * 加载详情用的旧数据
+     * Loads the old data used for the detail view.
      *
-     * @param baseLog
-     * @param joinPoint 切片点
+     * @param baseLog audit log entry
+     * @param joinPoint aspect join point
      */
     private fun processBizData(
         baseLog: BaseLog,
@@ -85,10 +93,11 @@ object AuditLogTool {
         baseLog: BaseLog,
         formatterClazz: KClass<out IAuditLogDetailDescriptionFormatter>
     ): IAuditLogDetailDescriptionFormatter? {
-        // 历史 bug：比较 KClass 与 ::class.java（Java Class），始终 false。结果：默认 formatter 的
-        // "通过 needFormat() 自动选择业务侧实现"分支从来不进；所有调用都退化到走 SpringKit.getBean
-        // 拿默认实现 → 业务自定义的 formatter 必须显式在 `@Audit(descriptionFormatter = MyFmt::class)`
-        // 才会被用到。修正为 KClass 与 KClass 比较，恢复 auto-pick 路径。
+        // Historical bug: comparing KClass to ::class.java (Java Class) is always false.
+        // As a result, the default formatter's "auto-pick a business-side implementation via needFormat()" branch was never entered;
+        // all calls degenerated to fetching the default implementation via SpringKit.getBean, so custom business formatters
+        // were only used when explicitly specified in `@Audit(descriptionFormatter = MyFmt::class)`.
+        // Fixed by comparing KClass to KClass, restoring the auto-pick path.
         if (formatterClazz == DefaultAuditLogDetailDescriptionFormatter::class) {
             val formatterMap = SpringKit.getBeansOfType<IAuditLogDetailDescriptionFormatter>()
             return formatterMap.values.firstOrNull { it.needFormat(baseLog) }
@@ -98,16 +107,19 @@ object AuditLogTool {
     }
 
     /**
-     * 从请求里抓出 body bytes（被 `ContentCachingRequestWrapper` 包过才有缓存内容；否则返回 ""）。
+     * Extracts body bytes from the request (only available when wrapped by
+     * `ContentCachingRequestWrapper`; otherwise returns "").
      *
-     * 安全：旧实现 `request as HttpServletRequestWrapper` 是无条件强制类型转换，对未被
-     * Spring Security 等包过的原始请求会 `ClassCastException`。改为 `as?` 安全转换 +
-     * 早返回 ""，让没启用 [io.kudos.ability.log.audit.common.filter.WebLogAuditFilter]
-     * 的部署不会因 audit 切面挂掉整条请求路径。
+     * Safety: the old implementation's `request as HttpServletRequestWrapper`
+     * was an unconditional cast that would `ClassCastException` on raw requests
+     * not wrapped by Spring Security and the like. Changed to safe `as?` casting
+     * plus an early "" return, so deployments without
+     * [io.kudos.ability.log.audit.common.filter.WebLogAuditFilter] do not have
+     * their entire request path broken by the audit aspect.
      */
     fun getRequestData(request: HttpServletRequest?): String {
         if (request == null) return ""
-        // 直接是 ContentCachingRequestWrapper 或被它包过一层都接受
+        // Accept either a direct ContentCachingRequestWrapper or something wrapped around one.
         val cached = when {
             request is ContentCachingRequestWrapper -> request
             request is HttpServletRequestWrapper && request.request is ContentCachingRequestWrapper ->
@@ -118,10 +130,10 @@ object AuditLogTool {
     }
 
     /**
-     * 创建日志对象
+     * Creates a log object.
      *
-     * @param audit 日志注解
-     * @param model web请求
+     * @param audit audit annotation
+     * @param model web request payload
      */
     fun createLogVo(audit: Audit, model: Any, joinPoint: JoinPoint): LogVo {
         val logVo = LogVo()
@@ -136,16 +148,16 @@ object AuditLogTool {
                 baseLog.entityId = entityId
             }
         } catch (e: Exception) {
-            LOG.debug("记录日志找不到id属性，忽略..")
+            LOG.debug("Recording log: id property not found, ignored..")
         }
         return logVo
     }
 
     /**
-     * 创建日志对象
+     * Creates a log object.
      *
-     * @param audit   日志注解
-     * @param request web请求
+     * @param audit   audit annotation
+     * @param request web request
      */
     fun createLogVo(audit: WebAudit, request: HttpServletRequest, joinPoint: JoinPoint): LogVo {
         val logVo = LogVo()
@@ -154,7 +166,7 @@ object AuditLogTool {
             val body: String = getRequestData(request)
             KudosContextHolder.get().clientInfo?.requestContentString = body
         }
-        // request.getParameter 在缺该参数时返回 null（Java API），用 isNullOrBlank 守住 NPE
+        // request.getParameter returns null when the parameter is missing (Java API); use isNullOrBlank to guard against NPE.
         val entityId: String? = request.getParameter("id")
         if (!entityId.isNullOrBlank()) {
             baseLog.entityId = entityId
@@ -164,10 +176,10 @@ object AuditLogTool {
     }
 
     /**
-     * 创建 日志模型
+     * Creates the log model.
      *
-     * @param logVo     日志对象
-     * @param argString
+     * @param logVo     log object
+     * @param argString serialized method arguments
      */
     fun createSysAuditLogModel(logVo: LogVo, argString: String): SysAuditLogModel? {
         val vos = logVo.logs.takeIf { it.isNotEmpty() } ?: return null
@@ -182,7 +194,7 @@ object AuditLogTool {
                 ?.get("id")?.toString()
                 ?.takeIf { NumberKit.isNumber(it) }
         } catch (_: Exception) {
-            LOG.debug("转换参数失败，不设置实体ID.")
+            LOG.debug("Failed to convert parameters; entity id will not be set.")
             null
         }
         for (vo in vos) {
@@ -201,9 +213,9 @@ object AuditLogTool {
     }
 
     /**
-     * 当前线程中增加日志详情描述
+     * Adds a log detail description for the current thread.
      *
-     * @param desc
+     * @param desc description text
      */
     fun addLogDetailDescription(desc: String?) {
         KudosContextHolder.get().addOtherInfos(SysAuditDetailLogVo.AUDIT_LOG_DESC to desc)
@@ -225,10 +237,9 @@ object AuditLogTool {
     }
 
     /**
-     * 设置日志的操作者
-     * 设置日志数据源
+     * Sets the log operator and the log data source.
      *
-     * @param modelAudit
+     * @param modelAudit the audit log model to populate
      */
     fun setOperator(modelAudit: SysAuditLogModel) {
         val context = KudosContextHolder.get()
@@ -237,8 +248,8 @@ object AuditLogTool {
             entity.operateTime = Date()
             clientInfo?.ip?.let { entity.operateIp = IpKit.ipv4StringToLong(it) }
 
-            // 历史 TODO: operateIpDictCode / operator(username) / operatorUserType 需要从
-            // context 拿到对应字段才能填——目前 KudosContext 上没有这几个属性，留空即可。
+            // Historical TODO: operateIpDictCode / operator(username) / operatorUserType need their corresponding
+            // fields on the context to be populated. KudosContext currently does not carry these properties, so leave them empty.
             entity.operatorId = context.user?.id
 
             entity.clientBrowser = clientInfo?.browser?.first

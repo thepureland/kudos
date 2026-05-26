@@ -1,7 +1,7 @@
 package io.kudos.base.error
 
 /**
- * 非法操作异常
+ * Thrown for illegal operations.
  *
  * @author K
  * @since 1.0.0

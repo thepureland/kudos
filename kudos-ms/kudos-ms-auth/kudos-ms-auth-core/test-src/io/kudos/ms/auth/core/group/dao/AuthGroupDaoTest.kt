@@ -7,7 +7,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for AuthGroupDao
  *
- * 测试数据来源：`AuthGroupDaoTest.sql`
+ * Test data source: `AuthGroupDaoTest.sql`
  *
  * @author K
  * @author AI: Codex

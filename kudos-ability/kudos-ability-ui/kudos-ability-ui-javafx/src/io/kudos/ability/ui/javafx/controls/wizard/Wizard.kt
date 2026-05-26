@@ -40,13 +40,14 @@ import java.util.Optional
 import java.util.Stack
 
 /**
- * 多步骤向导（Wizard）控件。
+ * Multi-step wizard control.
  *
- * 移植自 ControlsFX，按 [Flow] 决定页面流转顺序；维护 [pageHistory] 支持"上一步"，
- * 自带"上一步/下一步/完成"按钮。通过 [WizardPane] 子类自定义每一页内容并实现进入/离开回调。
+ * Ported from ControlsFX; the [Flow] determines page navigation order. Maintains [pageHistory]
+ * to support "previous", and provides built-in "previous / next / finish" buttons. Subclass
+ * [WizardPane] to customize each page's content and implement enter/exit callbacks.
  *
- * @param title 对话框标题
- * @author Oracle (原始)
+ * @param title Dialog title
+ * @author Oracle (original)
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -65,20 +66,20 @@ class Wizard(title: String = "") {
     private var dialog: Dialog<ButtonType?>? = null
 
     // --- settings
-    /** 各页填写结果的共享存储，向导完成后由调用方读取 */
+    /** Shared storage for values filled in across pages; read by the caller after the wizard completes. */
     val settings: ObservableMap<String, in Any> = FXCollections.observableHashMap()
     private val pageHistory = Stack<WizardPane>()
     private var currentPage: Optional<WizardPane> = Optional.empty()
 
     //    private final ValidationSupport validationSupport = new ValidationSupport();
     //
-    private val BUTTON_PREVIOUS = ButtonType("上一步", ButtonData.BACK_PREVIOUS)
+    private val BUTTON_PREVIOUS = ButtonType("Previous", ButtonData.BACK_PREVIOUS)
     private val BUTTON_PREVIOUS_ACTION_HANDLER = EventHandler { actionEvent: ActionEvent ->
         actionEvent.consume()
         currentPage = Optional.ofNullable(pageHistory.takeUnless { it.isEmpty() }?.pop())
         updatePage(dialog, false)
     }
-    private val BUTTON_NEXT = ButtonType("下一步", ButtonData.NEXT_FORWARD)
+    private val BUTTON_NEXT = ButtonType("Next", ButtonData.NEXT_FORWARD)
     private val BUTTON_NEXT_ACTION_HANDLER = EventHandler { actionEvent: ActionEvent ->
         actionEvent.consume()
         currentPage.ifPresent { pageHistory.push(it) }
@@ -101,7 +102,7 @@ class Wizard(title: String = "") {
      *
      */
     /**
-     * 非阻塞展示向导对话框。
+     * Show the wizard dialog non-blocking.
      *
      * @author K
      * @author AI: Codex
@@ -112,9 +113,9 @@ class Wizard(title: String = "") {
     }
 
     /**
-     * 阻塞展示向导对话框直到关闭。
+     * Show the wizard dialog blocking until it is closed.
      *
-     * @return 用户点击的 [ButtonType]（取消时为 empty）
+     * @return The [ButtonType] the user clicked (empty on cancel)
      * @author K
      * @author AI: Codex
      * @since 1.0.0
@@ -122,10 +123,11 @@ class Wizard(title: String = "") {
     fun showAndWait(): Optional<ButtonType?> = requireDialog().showAndWait()
 
     /**
-     * 取已初始化的 dialog；未初始化时抛 [IllegalArgumentException]，避免后续 NPE 难定位。
+     * Get the initialized dialog; throws [IllegalArgumentException] when it has not yet been
+     * initialized, to avoid a later NPE that is hard to trace.
      *
-     * @return 当前 dialog
-     * @throws IllegalArgumentException dialog 未初始化时
+     * @return The current dialog
+     * @throws IllegalArgumentException when the dialog has not been initialized
      * @author K
      * @author AI: Codex
      * @since 1.0.0
@@ -249,11 +251,13 @@ class Wizard(title: String = "") {
     }
 
     /**
-     * 根据当前流程是否可继续 (`Flow.canAdvance`) 动态增删 Next / Finish 按钮。
+     * Dynamically add/remove the Next / Finish buttons based on whether the current flow can
+     * advance (`Flow.canAdvance`).
      *
-     * 把 Next 按钮插到 buttonTypes 列表首位让它成为默认按钮（回车响应），优先级高于 Cancel。
-     * 注册 BUTTON_NEXT_ACTION_HANDLER 事件过滤器：拦截 Next 按钮的 ACTION 事件交由本类处理，
-     * 避免 JavaFX Dialog 默认行为直接关闭对话框。
+     * Inserts the Next button at the head of buttonTypes so it becomes the default button
+     * (responds to Enter), taking priority over Cancel. Registers BUTTON_NEXT_ACTION_HANDLER as
+     * an event filter: it intercepts the Next button's ACTION event and lets this class handle it,
+     * preventing JavaFX Dialog's default behavior of closing the dialog.
      *
      * @author K
      * @author AI: Codex
@@ -283,16 +287,17 @@ class Wizard(title: String = "") {
         }
     }
 
-    /** 当前页内已记录的 setting 数量，用于给无 id 节点生成 `page_.setting_N` 形式的默认 key。 */
+    /** Number of settings already recorded on the current page; used to generate default keys of the form `page_.setting_N` for nodes without an id. */
     private var settingCounter = 0
 
     /**
-     * 把当前页上所有值型节点的值收集到 [settings] 里。
+     * Collect values from all value-bearing nodes on the current page into [settings].
      *
-     * 由于不知道 page 内部结构，从 page.content 起做 DFS 全遍历 [checkNode]，
-     * 遇到 [io.kudos.ability.ui.javafx.controls.wizard.ValueExtractor] 能取值的节点就记下来。
+     * Since the page's internal structure is unknown, do a full DFS [checkNode] starting from
+     * page.content, recording every node from which
+     * [io.kudos.ability.ui.javafx.controls.wizard.ValueExtractor] can read a value.
      *
-     * @param page 当前向导页
+     * @param page The current wizard page
      * @author K
      * @author AI: Codex
      * @since 1.0.0
@@ -308,13 +313,15 @@ class Wizard(title: String = "") {
     }
 
     /**
-     * 深度优先遍历节点：当前节点能取值就记下并递归；不能就继续往下走。
+     * Depth-first node traversal: record this node if a value can be extracted, then recurse;
+     * otherwise continue downward.
      *
-     * 注意 `fold(false) { acc, child -> checkNode(child) || acc }`——这里**不能**短路（用 `||` 在
-     * acc 后面是关键），必须遍历每个孩子让所有 value-bearing 节点都被记录。
+     * Note the `fold(false) { acc, child -> checkNode(child) || acc }` -- short-circuiting
+     * **must not** happen here (putting `||` after acc is the key); every child must be visited
+     * so every value-bearing node gets recorded.
      *
-     * @param n 当前节点；null 视为遍历到底
-     * @return 当前子树是否记录到任何 setting
+     * @param n The current node; null is treated as the end of traversal
+     * @return Whether this subtree recorded any setting
      * @author K
      * @author AI: Codex
      * @since 1.0.0
@@ -327,12 +334,12 @@ class Wizard(title: String = "") {
     }
 
     /**
-     * 试图从单个节点取值并存入 settings map：
-     * - 节点带 id 用 id 作 key
-     * - 无 id 退化为 `page_.setting_<counter>` 命名
+     * Try to extract a value from a single node and store it in the settings map:
+     * - if the node has an id, use the id as the key
+     * - otherwise fall back to `page_.setting_<counter>` naming
      *
-     * @param n 节点；null 直接返回 false
-     * @return 是否成功取到值
+     * @param n The node; null returns false immediately
+     * @return Whether a value was successfully extracted
      * @author K
      * @since 1.0.0
      */
@@ -356,9 +363,11 @@ class Wizard(title: String = "") {
      *
      */
     /**
-     * 向导单页基类。继承本类并重写 [onEnteringPage]/[onExitingPage] 实现页面级回调。
+     * Base class for a single wizard page. Subclass and override
+     * [onEnteringPage]/[onExitingPage] to implement page-level callbacks.
      *
-     * 注：目前还是基于 override 而非事件订阅；未来计划改为事件式 API。
+     * Note: currently based on overrides rather than event subscription; planned to switch to an
+     * event-based API in the future.
      *
      * @author K
      * @author AI: Codex
@@ -367,25 +376,26 @@ class Wizard(title: String = "") {
     // TODO this should just contain a ControlsFX Form, but for now it is hand-coded
     open class WizardPane : DialogPane() {
         /**
-         * 进入本页时回调（点击"下一步"导航过来或首次进入）。
-         * @param wizard 关联的 [Wizard]，可为 null
+         * Callback invoked when this page is entered (navigated to via "Next" or on first entry).
+         * @param wizard The associated [Wizard]; may be null
          */
         // TODO we want to change this to an event-based API eventually
         open fun onEnteringPage(wizard: Wizard?) {}
 
         /**
-         * 离开本页时回调（点击"上一步/下一步"导航走时）。
-         * 注意 Wizard 控件有"从 N+1 回到 N 时再触发一次 N-1 的 onExitingPage"的已知 bug，
-         * 调用方需在子类内部用 try/catch 兜底。
-         * @param wizard 关联的 [Wizard]，可为 null
+         * Callback invoked when leaving this page (navigated away via "Previous" or "Next").
+         * Note the Wizard control has a known bug where going back from N+1 to N also re-triggers
+         * onExitingPage for N-1; the caller must guard against this with try/catch in the subclass.
+         * @param wizard The associated [Wizard]; may be null
          */
         // TODO same here - replace with events
         open fun onExitingPage(wizard: Wizard?) {}
     }
 
     /**
-     * 向导流程控制器：决定"哪一页 → 下一页"以及"能否继续"。
-     * 框架提供 [LinearWizardFlow] 实现线性顺序；分支场景下用户自行实现。
+     * Wizard flow controller: decides "which page -> next page" and "whether it can advance".
+     * The framework ships [LinearWizardFlow] for linear sequencing; users implement their own for
+     * branching scenarios.
      *
      * @author K
      * @author AI: Codex
@@ -393,16 +403,16 @@ class Wizard(title: String = "") {
      */
     interface Flow {
         /**
-         * 由当前页推导出下一页。
-         * @param currentPage 当前页，可为 null（首次进入）
-         * @return 下一页；返回 empty 表示流程结束
+         * Derive the next page from the current one.
+         * @param currentPage The current page; may be null (first entry)
+         * @return The next page; returning empty signals end of flow
          */
         fun advance(currentPage: WizardPane?): Optional<WizardPane>
 
         /**
-         * 判断"下一步"按钮是否应可点。
-         * @param currentPage 当前页
-         * @return true 表示允许前进
+         * Tell whether the "Next" button should be clickable.
+         * @param currentPage The current page
+         * @return true to allow advancing
          */
         fun canAdvance(currentPage: WizardPane?): Boolean
     }

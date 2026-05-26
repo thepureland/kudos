@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 数据源 对外API
+ * Data source external API.
  *
  * @author K
  * @author AI: Cursor
@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RequestParam
 interface ISysDataSourceApi {
 
     /**
-     * 返回指定租户ID和原子服务编码的数据源（从缓存）
+     * Returns the data source (from cache) for the given tenant id and atomic service code.
      *
-     * @param tenantId 租户ID
-     * @param atomicServiceCode 原子服务编码，缺省为 null；为空时请自行确保 tenantId 对应数据源的惟一性，否则将随机返回一条
-     * @return SysDataSourceCacheEntry，找不到时返回 null
+     * @param tenantId tenant id
+     * @param atomicServiceCode atomic service code; defaults to null. When null, the caller must ensure the data source is unique for the given tenantId, otherwise an arbitrary one will be returned.
+     * @return SysDataSourceCacheEntry, or null if not found
      */
     @GetMapping("/api/internal/sys/dataSource/getDataSource")
     fun getDataSourceFromCache(

@@ -13,7 +13,7 @@ import java.util.Collections
 import java.util.regex.Pattern
 
 /**
- * 系统工具类
+ * System utility.
  *
  * @author K
  * @author AI: ChatGPT
@@ -21,42 +21,42 @@ import java.util.regex.Pattern
  */
 object SystemKit {
 
-    /** 日志器 */
+    /** Logger */
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * 设置系统环境变量
+     * Set system environment variables.
      *
-     * 尝试先通过修改 ProcessEnvironment.theEnvironment，如果不允许（如模块化环境导致反射失败），
-     * 再回退到修改 Collections\$UnmodifiableMap 的方式。
+     * Tries to modify ProcessEnvironment.theEnvironment first; if that is not allowed
+     * (e.g. reflection fails in a modular environment), falls back to modifying Collections\$UnmodifiableMap.
      *
-     * @param vars Map(变量名，变量值)
+     * @param vars Map(variable name, variable value)
      * @author AI: ChatGPT
      * @author K
      * @since 1.0.0
      */
     fun setEnvVars(vars: Map<String, String>) {
-        // 第一种方式：尝试修改 java.lang.ProcessEnvironment.theEnvironment / theCaseInsensitiveEnvironment
+        // First approach: try to modify java.lang.ProcessEnvironment.theEnvironment / theCaseInsensitiveEnvironment
         try {
             val peClass = Class.forName("java.lang.ProcessEnvironment")
             val envField = peClass.getDeclaredField("theEnvironment").apply { isAccessible = true }
             val env = envField.get(null)
             require(updateMutableStringMap(env, vars, clearFirst = false)) {
-                "ProcessEnvironment.theEnvironment 类型不是 MutableMap<String, String>"
+                "ProcessEnvironment.theEnvironment is not a MutableMap<String, String>"
             }
 
             val cienvField = peClass.getDeclaredField("theCaseInsensitiveEnvironment").apply { isAccessible = true }
             val cienv = cienvField.get(null)
             require(updateMutableStringMap(cienv, vars, clearFirst = false)) {
-                "ProcessEnvironment.theCaseInsensitiveEnvironment 类型不是 MutableMap<String, String>"
+                "ProcessEnvironment.theCaseInsensitiveEnvironment is not a MutableMap<String, String>"
             }
 
-            return  // 如果这一段没有抛异常，就直接返回
+            return  // return directly if this branch did not throw
         } catch (_: Throwable) {
-            // 任何反射失败都走下面的备用分支
+            // any reflection failure falls through to the fallback branch below
         }
 
-        // 第二种方式：修改 Collections$UnmodifiableMap 底层的 m 字段
+        // Second approach: modify the underlying `m` field of Collections$UnmodifiableMap
         try {
             val env = System.getenv()
             val classes = Collections::class.java.declaredClasses
@@ -65,25 +65,25 @@ object SystemKit {
                     val mField = cl.getDeclaredField("m").apply { isAccessible = true }
                     val internal = mField.get(env)
                     require(updateMutableStringMap(internal, vars, clearFirst = true)) {
-                        "Collections\$UnmodifiableMap.m 类型不是 MutableMap<String, String>"
+                        "Collections\$UnmodifiableMap.m is not a MutableMap<String, String>"
                     }
                     return
                 }
             }
         } catch (_: Throwable) {
-            // 兜底：如果这里也失败，就不做任何事
+            // final fallback: if this also fails, do nothing
         }
     }
 
     /**
-     * 通过反射往 `MutableMap<String, String>` 中写入新的键值。
-     * 与 [setEnvVars] 配合：先 [clearFirst] 清空再 putAll，或保留原值后增量 putAll。
-     * 任何反射失败、键值类型不匹配或方法签名不符都返回 false，由上层兜底。
+     * Reflectively write new entries into a `MutableMap<String, String>`.
+     * Used by [setEnvVars]: either clear via [clearFirst] then putAll, or keep existing entries and putAll incrementally.
+     * Returns false on any reflection failure, key/value type mismatch, or method signature mismatch, so the caller can fall back.
      *
-     * @param target 反射拿到的 map 引用，可能为 null
-     * @param vars 待写入的键值
-     * @param clearFirst 是否在写入前先调用 map.clear()
-     * @return 写入成功返回 true，否则 false
+     * @param target the map reference obtained via reflection, may be null
+     * @param vars entries to write
+     * @param clearFirst whether to call map.clear() before writing
+     * @return true if writing succeeded, false otherwise
      * @author K
      * @since 1.0.0
      */
@@ -110,23 +110,23 @@ object SystemKit {
     }
 
     /**
-     * 执行单个系统命令
+     * Execute a single system command.
      *
-     * @param command 命令组成部分的可变数组
-     * @return Pair(是否执行成功，执行结果信息)
+     * @param command varargs of command components
+     * @return Pair(whether the execution succeeded, execution result message)
      * @author K
      * @since 1.0.0
      */
     fun executeCommand(vararg command: String): Pair<Boolean, String?> {
-        // 也可用ProcessBuilder构建
+        // ProcessBuilder can be used as an alternative
         val process = try {
             Runtime.getRuntime().exec(command)
         } catch (e: Throwable) {
-            log.error(e, "执行系统命令【${command.joinToString(" ")}】出错！")
+            log.error(e, "Failed to execute system command [${command.joinToString(" ")}]!")
             return false to e.message
         }
         return try {
-            // 两路 stream 都必须 drain，避免子进程阻塞写
+            // both streams must be drained to avoid the child process blocking on writes
             val stdout = loadStream(process.inputStream)
             val errorMsg = loadStream(process.errorStream)
             true to errorMsg.ifEmpty { stdout }
@@ -136,11 +136,11 @@ object SystemKit {
     }
 
     /**
-     * 把 [Process] 的输出流按 UTF-8 默认字符集读到一个字符串。
-     * 读取完成后自动关闭流，非空字符串会追加一个换行符以贴近终端输出习惯。
+     * Read the [Process] output stream into a string using the default UTF-8 charset.
+     * The stream is closed automatically once reading completes; a trailing newline is appended to non-empty output to mimic terminal behavior.
      *
-     * @param inputStream 进程标准输出或标准错误流
-     * @return 读取到的文本；流为空时返回空串
+     * @param inputStream the process stdout or stderr stream
+     * @return the text read; an empty string if the stream is empty
      * @author K
      * @since 1.0.0
      */
@@ -154,54 +154,54 @@ object SystemKit {
     }
 
     /**
-     * 判断当前运行环境是否具备 GUI（能否使用窗口/托盘等图形能力）
-     * 说明：
-     * 1) 首选 AWT 的 headless 判断；若为 headless，则基本视为无 GUI。
-     * 2) 对 Linux 再结合 X11/Wayland 环境变量做兜底判断（有 DISPLAY/WAYLAND_DISPLAY 通常有图形会话）。
-     * 3) Desktop.isDesktopSupported() 可作为“是否能做桌面集成（打开浏览器/文件管理器）”的补充能力判断。
+     * Determine whether the current runtime has a GUI (i.e., can use windows, tray icons, etc.).
+     * Notes:
+     * 1) Prefer AWT's headless check; if headless, treat it as having no GUI.
+     * 2) On Linux, additionally consult X11/Wayland environment variables as a fallback (DISPLAY/WAYLAND_DISPLAY usually indicates a graphical session).
+     * 3) Desktop.isDesktopSupported() can serve as a complementary check for "can perform desktop integration (open browser/file manager)".
      */
     fun hasGUI(): Boolean {
-        // 显式系统属性优先：-Djava.awt.headless=true 会强制“无头”
+        // Explicit system property takes precedence: -Djava.awt.headless=true forces headless mode
         System.getProperty("java.awt.headless")?.lowercase()?.let {
             if (it == "true") return false
         }
 
-        // AWT 权威判断：若返回 true = 无头（通常没有图形栈或当前会话不可用）
+        // AWT authoritative check: returns true = headless (usually no graphics stack or the current session is unavailable)
         if (GraphicsEnvironment.isHeadless()) {
-            // 尝试对 Linux 做环境变量兜底（有时容器/远程会误判）
+            // Try environment-variable fallback for Linux (containers/remote sessions are sometimes misdetected)
             val os = System.getProperty("os.name").lowercase()
             if (os.contains("linux") || os.contains("bsd")) {
                 val hasX11 = System.getenv("DISPLAY")?.isNotBlank() == true
                 val hasWayland = System.getenv("WAYLAND_DISPLAY")?.isNotBlank() == true
                 val sess = System.getenv("XDG_SESSION_TYPE")?.lowercase()
                 if ((hasX11 || hasWayland) && sess != "tty") {
-                    // 存在图形会话变量，但 AWT 仍认为 headless —— 多半是缺字体/缺本地窗口系统绑定
-                    // 从谨慎角度，仍按“无 GUI”处理，避免后续抛 AWTError
+                    // Graphical session variables exist but AWT still reports headless -- most likely missing fonts or native window-system bindings.
+                    // Err on the side of caution and still treat as "no GUI" to avoid later AWTError throws.
                     return false
                 }
             }
             return false
         }
 
-        // 能走到这里，一般已具备 GUI 能力
+        // Reaching here, GUI capabilities are generally available
         return true
     }
 
     /**
-     * 当前系统的回车换行符
+     * The line separator of the current system.
      *
      * @author K
      * @since 1.0.0
      */
     val LINE_SEPARATOR: String = System.lineSeparator()
 
-    /** 用于在 JVM 启动参数中识别调试模式（`-Xdebug` 或 `jdwp`）的正则 */
+    /** Regex used to detect debug mode (`-Xdebug` or `jdwp`) in JVM startup arguments. */
     private val debugPattern = Pattern.compile("-Xdebug|jdwp")
 
     /**
-     * 获取当前操作系统
+     * Get the current operating system.
      *
-     * @return 操作系统枚举
+     * @return the OS enum
      * @author AI: ChatGPT
      * @author K
      * @since 1.0.0
@@ -214,33 +214,33 @@ object SystemKit {
         fun hasKeyword(vararg keys: String): Boolean =
             keys.any { osName.contains(it) || osVersion.contains(it) }
 
-        // ---- 移动/嵌入式优先判定（避免被 Linux 兜底吞掉） ----
-        // Android: 常见 os.name = "Linux"，但 java.vm.name / java.runtime.name 里可能带 Android/ART/Dalvik
+        // ---- Mobile/embedded checks first (to avoid being swallowed by the Linux fallback) ----
+        // Android: os.name is commonly "Linux", but java.vm.name / java.runtime.name may contain Android/ART/Dalvik
         val vmName = (System.getProperty("java.vm.name") ?: "").lowercase()
         val runtimeName = (System.getProperty("java.runtime.name") ?: "").lowercase()
         val isAndroid = (vmName.contains("dalvik") || vmName.contains("art") ||
                 runtimeName.contains("android"))
 
-        if (isAndroid) return OsEnum.ANDROID // 如果没有该枚举，可映射到 LINUX 或 OTHER
+        if (isAndroid) return OsEnum.ANDROID // if this enum is missing, map to LINUX or OTHER
 
-        // HarmonyOS / OpenHarmony（NEXT/开源分支等）
+        // HarmonyOS / OpenHarmony (NEXT, open-source branches, etc.)
         if (hasKeyword("openharmony", "harmonyos", "harmony")) {
-            return OsEnum.HARMONY // 没有该枚举可映射到 LINUX 或 OTHER
+            return OsEnum.HARMONY // if this enum is missing, map to LINUX or OTHER
         }
 
-        // ---- 桌面/服务器主流 ----
+        // ---- Mainstream desktop / server ----
         if (hasKeyword("mac", "darwin", "os x", "mac os")) return OsEnum.MAC
 
         if (hasKeyword("windows")) return OsEnum.WINDOWS
-        // 某些 JVM/环境可能会出现这些写法
+        // Certain JVMs/environments may report these variants
         if (hasKeyword("mingw", "msys", "cygwin")) return OsEnum.WINDOWS
 
-        // Linux：包含很多发行版关键字（一般 os.name 就是 Linux，但加点兜底）
+        // Linux: include keywords for common distributions (os.name is generally Linux, but add fallbacks)
         if (hasKeyword("linux", "gnu/linux", "nux", "ubuntu", "debian", "fedora", "centos", "rhel", "red hat", "alpine")) {
             return OsEnum.LINUX
         }
 
-        // ---- BSD 家族 ----
+        // ---- BSD family ----
         if (hasKeyword("freebsd")) return OsEnum.FREEBSD
         if (hasKeyword("openbsd")) return OsEnum.OPENBSD
         if (hasKeyword("netbsd")) return OsEnum.NETBSD
@@ -250,25 +250,25 @@ object SystemKit {
         if (hasKeyword("sunos", "solaris")) return OsEnum.SOLARIS
         if (hasKeyword("illumos")) return OsEnum.ILLUMOS
 
-        // ---- IBM / UNIX 系 ----
+        // ---- IBM / UNIX family ----
         if (hasKeyword("aix")) return OsEnum.AIX
         if (hasKeyword("hp-ux", "hpux")) return OsEnum.HPUX
 
-        // ---- Apple 其他平台（理论上 JVM 很少直接跑）----
+        // ---- Other Apple platforms (rarely host a JVM directly) ----
         if (hasKeyword("ios")) return OsEnum.IOS
         if (hasKeyword("tvos")) return OsEnum.TVOS
         if (hasKeyword("watchos")) return OsEnum.WATCHOS
 
-        // ---- 兜底：一些极少见/自定义 ----
-        // 对于容器工具来说，这类通常当作 OTHER 处理即可
+        // ---- Fallback: rare / custom platforms ----
+        // For container tooling, these are typically treated as OTHER
         return OsEnum.OTHER
     }
 
 
     /**
-     * 是否调试模式
+     * Whether debug mode is enabled.
      *
-     * @return true:调试模式，反之为false
+     * @return true if in debug mode, false otherwise
      * @author K
      * @since 1.0.0
      */
@@ -277,22 +277,22 @@ object SystemKit {
 
 
     /**
-     * 得到系统当前用户
+     * Get the current system user.
      *
-     * @return 当前用户名
+     * @return the current user name
      * @author K
      * @since 1.0.0
      */
     fun getUser(): String = System.getProperty("user.name")
 
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    // 封装org.apache.commons.lang3.SystemUtils
+    // Wrapper for org.apache.commons.lang3.SystemUtils
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     /**
-     * 获取java home目录, 并以`File`返回
+     * Get the java home directory as a `File`.
      *
-     * @return 目录
-     * @throws SecurityException 如果安全管理器存在并且它的 `checkPropertyAccess` 方法不允许访问特别的系统属性
+     * @return the directory
+     * @throws SecurityException if a security manager exists and its `checkPropertyAccess` method does not allow access to the specified system property
      * @see System.getProperty
      * @author K
      * @since 1.0.0
@@ -300,10 +300,10 @@ object SystemKit {
     fun getJavaHome(): File = SystemUtils.getJavaHome()
 
     /**
-     * 获取IO临时目录, 并以`File`返回
+     * Get the IO temp directory as a `File`.
      *
-     * @return 目录
-     * @throws SecurityException 如果安全管理器存在并且它的 `checkPropertyAccess` 方法不允许访问特别的系统属性
+     * @return the directory
+     * @throws SecurityException if a security manager exists and its `checkPropertyAccess` method does not allow access to the specified system property
      * @see System.getProperty
      * @author K
      * @since 1.0.0
@@ -311,10 +311,10 @@ object SystemKit {
     fun getJavaIoTmpDir(): File = SystemUtils.getJavaIoTmpDir()
 
     /**
-     * 获取用户目录, 并以`File`返回
+     * Get the user directory as a `File`.
      *
-     * @return 目录
-     * @throws SecurityException 如果安全管理器存在并且它的 `checkPropertyAccess` 方法不允许访问特别的系统属性
+     * @return the directory
+     * @throws SecurityException if a security manager exists and its `checkPropertyAccess` method does not allow access to the specified system property
      * @see System.getProperty
      * @author K
      * @since 1.0.0
@@ -322,10 +322,10 @@ object SystemKit {
     fun getUserDir(): File = SystemUtils.getUserDir()
 
     /**
-     * 获取用户home目录, 并以`File`返回
+     * Get the user home directory as a `File`.
      *
-     * @return 目录
-     * @throws SecurityException 如果安全管理器存在并且它的 `checkPropertyAccess` 方法不允许访问特别的系统属性
+     * @return the directory
+     * @throws SecurityException if a security manager exists and its `checkPropertyAccess` method does not allow access to the specified system property
      * @see System.getProperty
      * @author K
      * @since 1.0.0
@@ -333,9 +333,9 @@ object SystemKit {
     fun getUserHome(): File = SystemUtils.getUserHome()
 
     /**
-     * 检测 [.JAVA_AWT_HEADLESS] 値是否为 `true`.
+     * Check whether [.JAVA_AWT_HEADLESS] is `true`.
      *
-     * @return `true` 如果 `JAVA_AWT_HEADLESS` 为 `"true"`, 否则返回 `false`.
+     * @return `true` if `JAVA_AWT_HEADLESS` is `"true"`, otherwise `false`.
      * @see .JAVA_AWT_HEADLESS
      * @author K
      * @since 1.0.0
@@ -343,7 +343,7 @@ object SystemKit {
     fun isJavaAwtHeadless(): Boolean = GraphicsEnvironment.isHeadless()
 
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    // 封装org.apache.commons.lang3.SystemUtils
+    // Wrapper for org.apache.commons.lang3.SystemUtils
     // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 }

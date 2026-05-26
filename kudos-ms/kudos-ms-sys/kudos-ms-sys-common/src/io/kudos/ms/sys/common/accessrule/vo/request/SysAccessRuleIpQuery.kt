@@ -5,52 +5,52 @@ import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleIpRow
 import java.time.LocalDateTime
 
 /**
- * IP访问规则列表查询条件请求VO
+ * IP access rule list query condition request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysAccessRuleIpQuery(
 
-    /** 主键 */
+    /** Primary key. */
     val id: String? = null,
 
-    /** ip 起（字符串表示） */
+    /** IP start (string representation). */
     val ipStartStr: String? = null,
 
-    /** ip 止（字符串表示）*/
+    /** IP end (string representation). */
     val ipEndStr: String? = null,
 
-    /** ip类型字典代码 */
+    /** IP type dictionary code. */
     val ipTypeDictCode: String? = null,
 
-    /** 过期时间 */
+    /** Expiration time. */
     val expirationDate: LocalDateTime? = null,
 
-    /** 父规则id */
+    /** Parent rule id. */
     val parentRuleId: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active. */
     val active: Boolean? = null,
 
-    /** 父规则是否启用 */
+    /** Whether the parent rule is active. */
     val parentRuleActive: Boolean? = null,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 系统编码 */
+    /** System code. */
     val systemCode: String? = null,
 
-    /** 规则类型字典代码 */
+    /** Rule type dictionary code. */
     val accessRuleTypeDictCode: String? = null,
 
     /**
-     * 值为 null 但仍需作为查询条件的属性名（例如配合 [tenantId] 为 null 时表示父规则租户 IS NULL）。
-     * 语义同 [io.kudos.base.model.payload.ISearchPayload.getNullProperties]。
+     * Property names that are null but should still be used as query conditions (e.g. when [tenantId] is null this indicates parent rule tenant IS NULL).
+     * Semantics same as [io.kudos.base.model.payload.ISearchPayload.getNullProperties].
      */
     val explicitNullProperties: List<String>? = null,
 

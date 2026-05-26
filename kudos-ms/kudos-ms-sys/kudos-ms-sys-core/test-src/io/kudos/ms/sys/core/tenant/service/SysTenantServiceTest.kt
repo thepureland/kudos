@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysTenantService
  *
- * 测试数据来源：`SysTenantServiceTest.sql`
+ * Test data source: `SysTenantServiceTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -39,7 +39,7 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
     private val seededTenantId = "20000000-0000-0000-0000-000000006144"
     private val seededSubSystemCode = "svc-subsys-tenant-test-1_2492"
 
-    /** 按主键调用 `get(id)` 能取到租户 PO，且 `id` 与主键列一致。 */
+    /** Calling `get(id)` by primary key returns the tenant PO, and `id` matches the primary key column. */
     @Test
     fun get_byId_primaryKey_entityIdEqualsId() {
         val row = sysTenantService.get(seededTenantId)
@@ -47,7 +47,7 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededTenantId, row.id)
     }
 
-    /** `get(id, SysTenantCacheEntry::class)` 与 `getTenantFromCache(id)` 结果一致；走 by-id 缓存前可 `reloadAll` 与测试 SQL 对齐。 */
+    /** `get(id, SysTenantCacheEntry::class)` and `getTenantFromCache(id)` return consistent results; the by-id cache can be `reloadAll`-ed beforehand to align with the test SQL. */
     @Test
     fun get_withCacheEntryReturnType_delegatesToTenantByIdCache() {
         tenantByIdCache.reloadAll(clear = true)
@@ -59,7 +59,7 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededTenantId, fromGet.id)
     }
 
-    /** 按主键从缓存读取 [SysTenantCacheEntry]，校验 id、name。 */
+    /** Reads [SysTenantCacheEntry] from cache by primary key and verifies id and name. */
     @Test
     fun getTenantFromCache_byId() {
         tenantByIdCache.reloadAll(clear = true)
@@ -69,7 +69,7 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals("svc-tenant-test-1", entry.name)
     }
 
-    /** `getTenantsFromCacheByIds` 对种子 id 返回非空映射，且与单条缓存一致。 */
+    /** `getTenantsFromCacheByIds` returns a non-empty map for the seeded id, consistent with the single-entry cache. */
     @Test
     fun getTenantsFromCacheByIds() {
         tenantByIdCache.reloadAll(clear = true)
@@ -78,7 +78,7 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededTenantId, map[seededTenantId]?.id)
     }
 
-    /** 按子系统编码从 Hash 缓存解析租户列表（含未启用语义由调用方过滤；此处校验能命中种子租户）。 */
+    /** Resolves the tenant list from the hash cache by sub-system code (inactive-inclusive semantics are filtered by the caller; here we verify the seeded tenant is hit). */
     @Test
     fun getTenantsForSubSystemFromCache() {
         sysTenantSystemHashCache.reloadAll(clear = true)
@@ -87,14 +87,14 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(list.any { it.id == seededTenantId })
     }
 
-    /** `getAllTenantsFromCache` 以库为源加载缓存载体列表，应包含种子租户。 */
+    /** `getAllTenantsFromCache` loads the cache-carrier list from DB and should include the seeded tenant. */
     @Test
     fun getAllTenantsFromCache_containsSeeded() {
         val all = sysTenantService.getAllTenantsFromCache()
         assertTrue(all.any { it.id == seededTenantId })
     }
 
-    /** 详情 [SysTenantDetail] 在 Service 层补充 `subSystemCodes`（逗号拼接子系统编码）。 */
+    /** [SysTenantDetail] is enriched at the service layer with `subSystemCodes` (comma-joined sub-system codes). */
     @Test
     fun getDetail_subSystemCodesPopulated() {
         sysTenantSystemHashCache.reloadAll(clear = true)
@@ -103,7 +103,7 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(detail.subSystemCodes.contains(seededSubSystemCode))
     }
 
-    /** 按 id 取列表行与按名称查询，与种子数据一致。 */
+    /** Fetch list row by id and query by name; results match seeded data. */
     @Test
     fun getTenantRecord_and_getTenantByName() {
         val record = sysTenantService.getTenantRecord(seededTenantId)
@@ -115,7 +115,7 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(seededTenantId, byName.id)
     }
 
-    /** 从租户-系统 Hash 缓存取该租户绑定的子系统编码集合。 */
+    /** Fetches the set of sub-system codes bound to this tenant from the tenant-system hash cache. */
     @Test
     fun getSubSystemCodesFromCache() {
         sysTenantSystemHashCache.reloadAll(clear = true)
@@ -123,20 +123,20 @@ class SysTenantServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(codes.contains(seededSubSystemCode))
     }
 
-    /** 启用状态更新成功并可写回 true（验证写库 + 缓存同步链路）。 */
+    /** Active flag is updated successfully and toggles back to true (verifying DB write + cache sync chain). */
     @Test
     fun updateActive() {
         assertTrue(sysTenantService.updateActive(seededTenantId, false))
         assertTrue(sysTenantService.updateActive(seededTenantId, true))
     }
 
-    /** 删除不存在的主键时返回 false（先查库再删）。 */
+    /** Returns false when deleting a non-existent primary key (check-then-delete). */
     @Test
     fun deleteById_returnsFalseWhenRowMissing() {
         assertFalse(sysTenantService.deleteById("00000000-0000-0000-0000-000000000001"))
     }
 
-    /** 没有关联任何系统关系的租户也应允许删除。 */
+    /** Tenants without any system relation should also be deletable. */
     @Test
     fun deleteById_succeedsWhenTenantHasNoSystemRelations() {
         val tenantId = sysTenantService.insert(

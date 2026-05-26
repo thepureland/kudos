@@ -8,15 +8,16 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.test.web.servlet.MockMvc
 
 /**
- * Spring Cloud Contract provider 端契约测试的基类。
+ * Base class for Spring Cloud Contract provider-side contract tests.
  *
- * 责任：
- * - 拉起 SpringBoot 上下文 + MockMvc（不真正起 servlet 容器，走 Spring 内嵌路由）
- * - 在每个测试方法前把 [RestAssuredMockMvc] 的全局 mockMvc 绑定到当前 Spring 容器的 [MockMvc]，
- *   让生成的契约测试代码（[io.restassured.module.mockmvc.RestAssuredMockMvc.given]）走同一套 mvc 栈
+ * Responsibilities:
+ * - Boots a Spring Boot context + MockMvc (no real servlet container; uses Spring's in-memory routing).
+ * - Before each test method, binds [RestAssuredMockMvc]'s global mockMvc to the current Spring
+ *   container's [MockMvc], so the generated contract test code
+ *   ([io.restassured.module.mockmvc.RestAssuredMockMvc.given]) goes through the same MVC stack.
  *
- * 子类按 `<group>.<artifact>.BaseContract<scenario>Test` 命名继承本类，
- * 由 Spring Cloud Contract Verifier 自动按 contract yml 生成具体 test 方法。
+ * Subclasses extend this class with names like `<group>.<artifact>.BaseContract<scenario>Test`, and the
+ * Spring Cloud Contract Verifier auto-generates concrete test methods from contract yml files.
  *
  * @author K
  * @since 1.0.0
@@ -25,12 +26,12 @@ import org.springframework.test.web.servlet.MockMvc
 @AutoConfigureMockMvc
 abstract class BaseContractTest {
 
-    /** Spring MVC 测试入口，由 [AutoConfigureMockMvc] 注入 */
+    /** Spring MVC test entry, injected by [AutoConfigureMockMvc]. */
     @Resource
     protected lateinit var mockMvc: MockMvc
 
     /**
-     * 把当前 [mockMvc] 绑到 RestAssured 的全局 mvc，确保生成的契约测试走同一上下文。
+     * Binds the current [mockMvc] to RestAssured's global mvc, ensuring generated contract tests run against the same context.
      * @author K
      * @since 1.0.0
      */

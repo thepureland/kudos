@@ -4,8 +4,10 @@ import io.kudos.ability.file.common.entity.UploadFileModel
 import io.kudos.ability.file.common.entity.UploadFileResult
 
 /**
- * 文件上传服务 SPI。具体存储后端（本地磁盘 / MinIO / OSS）各自实现。
- * 业务侧通过 `@Autowired IUploadService` 注入，框架按当前应用引入的子模块决定具体实现。
+ * SPI for the file upload service. Each concrete storage backend
+ * (local disk / MinIO / OSS) provides its own implementation.
+ * Business code injects it via `@Autowired IUploadService`, and the framework picks
+ * the concrete implementation based on the submodules the current application pulls in.
  *
  * @author K
  * @author AI: Codex
@@ -13,15 +15,15 @@ import io.kudos.ability.file.common.entity.UploadFileResult
  */
 interface IUploadService {
     /**
-     * 上传文件
+     * Uploads a file.
      *
-     * @param model m
-     * @return r
+     * @param model upload model
+     * @return upload result
      */
     fun fileUpload(model: UploadFileModel<*>): UploadFileResult
 
     /**
-     * 获取文件路径前缀：一般minio返回对应的url地址
+     * Returns the file path prefix; for MinIO this is typically the corresponding URL.
      */
     fun pathPrefix(): String
 }

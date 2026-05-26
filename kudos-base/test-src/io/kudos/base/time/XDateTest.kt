@@ -6,7 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * XDate单元测试类
+ * XDate unit-test class
  *
  * @author K
  * @since 1.0.0

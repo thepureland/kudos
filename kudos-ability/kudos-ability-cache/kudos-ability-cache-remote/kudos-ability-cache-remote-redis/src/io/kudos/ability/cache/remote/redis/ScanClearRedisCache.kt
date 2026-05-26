@@ -7,11 +7,12 @@ import org.springframework.data.redis.cache.RedisCacheWriter
 import org.springframework.data.redis.core.RedisTemplate
 
 /**
- * 从 Spring 容器中取一个可用的 [RedisTemplate]，给 [ScanClearRedisCache] 和
- * [RedisKeyValueCacheManager.evictByPattern] 共用——两者都需要绕过 Spring `cacheWriter.clear`
- * 不删 key 的 bug，直接走 `keys + delete`。优先取 `stringRedisTemplate`，其次任意一个。
+ * Grabs an available [RedisTemplate] from the Spring context, shared by [ScanClearRedisCache] and
+ * [RedisKeyValueCacheManager.evictByPattern] — both need to bypass the Spring `cacheWriter.clear`
+ * bug that fails to delete keys, and instead use `keys + delete` directly. Prefers `stringRedisTemplate`,
+ * falls back to any other.
  *
- * 返回 null 仅当容器里没有任何 [RedisTemplate] bean（纯单测 mock 等极少场景）。
+ * Returns null only when no [RedisTemplate] bean exists in the context (rare cases such as pure unit-test mocks).
  */
 @Suppress("UNCHECKED_CAST")
 internal fun findRedisTemplate(): RedisTemplate<String, Any>? =
@@ -20,36 +21,40 @@ internal fun findRedisTemplate(): RedisTemplate<String, Any>? =
         as? RedisTemplate<String, Any>
 
 /**
- * [RedisCache] 的 fix 子类：override [clear] 用 `RedisTemplate.keys(pattern) + delete(keys)` 直删，
- * 绕开 Spring Boot 4.0.6 自带 `RedisCache.clear()` 的 bug。
+ * A fix subclass of [RedisCache]: overrides [clear] to delete directly via
+ * `RedisTemplate.keys(pattern) + delete(keys)`, working around the bug in Spring Boot 4.0.6's
+ * built-in `RedisCache.clear()`.
  *
- * ## 背景
+ * ## Background
  *
- * Spring Boot 4.0.6 / Spring Data Redis 4.x 自带的 [RedisCache.clear] 调用最终走
- * `cacheWriter.clean(name, pattern)`，但实测在 kudos 的 Redis 配置下**永远不删除任何 key**——
- * SCAN+DEL 一遍下来 Redis 里依旧有所有匹配的 key（用 [RedisTemplate.keys] 直查可以确认）。
- * 推测是 Spring 内部 `pattern` bytes 与实际存储的 key bytes 不匹配（可能是不同的序列化路径），
- * 但社区上目前没有 fix。
+ * The built-in [RedisCache.clear] in Spring Boot 4.0.6 / Spring Data Redis 4.x ultimately calls
+ * `cacheWriter.clean(name, pattern)`, but in practice under kudos's Redis config it **never deletes any key** —
+ * after a full SCAN+DEL pass, all matching keys are still in Redis (verifiable with [RedisTemplate.keys]).
+ * The likely cause is that Spring's internal `pattern` bytes do not match the actual stored key bytes
+ * (probably different serialization paths), but there is no community fix yet.
  *
- * 这个 bug 直接导致 `DomainByNameCache.reloadAll(clear = true)` 之类的 "wipe and refill" 操作
- * 调完之后 Redis 里旧值还在，下次 `mixGet` 走 local-miss → remote-hit → 回填 local，缓存又脏了。
- * 一连串集成测试（SysDomainServiceTest / SysLocaleServiceTest / SysOutLineServiceTest 等）
- * 在 batchDelete + reloadAll 之后断言缓存 miss 时随机失败，根因都在这里。
+ * This bug directly caused "wipe and refill" operations such as `DomainByNameCache.reloadAll(clear = true)`
+ * to leave stale values in Redis after invocation; the next `mixGet` then went local-miss -> remote-hit ->
+ * backfill local, and the cache was dirty again. A whole series of integration tests
+ * (SysDomainServiceTest / SysLocaleServiceTest / SysOutLineServiceTest, etc.) randomly failed when asserting
+ * cache miss after batchDelete + reloadAll — all rooted in this bug.
  *
- * ## 修复
+ * ## Fix
  *
- * Override [clear] 改成：
- * 1. 用 `RedisTemplate.keys("$keyPrefix*")` 列出 Redis 里所有匹配本缓存名前缀的 key。
- * 2. 用 `RedisTemplate.delete(keys)` 一次性删除。
+ * Override [clear] to:
+ * 1. Use `RedisTemplate.keys("$keyPrefix*")` to list all keys in Redis matching this cache name's prefix.
+ * 2. Use `RedisTemplate.delete(keys)` to delete them in one shot.
  *
- * 这是 Spring 文档建议的"知道哪些 key 就直接 delete"的标准用法，行为可预测，跟测试基础设施已经
- * 使用的 `RedisTemplate` 走同一条路径。`RedisTemplate` 通过 [SpringKit] 懒查（每次 clear 都查一遍，
- * 开销可忽略——clear 是低频操作）。
+ * This is the standard "delete the keys you already know about" pattern recommended in Spring's docs;
+ * behavior is predictable and follows the same path as the test infrastructure's existing `RedisTemplate`.
+ * `RedisTemplate` is resolved lazily via [SpringKit] (looked up every clear; cost is negligible since clear
+ * is a low-frequency operation).
  *
- * ## 限制
+ * ## Limitations
  *
- * [RedisTemplate.keys] 在大库上会阻塞 Redis；本项目缓存键数量级很小（百级），可接受。如果未来缓存
- * 体量大了，可以改用 `SCAN`-based 迭代删除（见 [RedisKeyValueCacheManager.evictByPattern] 的写法）。
+ * [RedisTemplate.keys] blocks Redis on large datasets; cache key counts in this project are tiny (hundreds),
+ * so this is acceptable. If cache volume grows, switch to `SCAN`-based iterative deletion (see how
+ * [RedisKeyValueCacheManager.evictByPattern] does it).
  *
  * @author K
  * @author AI: Codex
@@ -63,7 +68,7 @@ internal class ScanClearRedisCache(
 
     override fun clear() {
         val template = findRedisTemplate() ?: run {
-            // 容器里没有 RedisTemplate（极少见，比如纯单元测试 mock）—— fallback 到 Spring 默认逻辑
+            // No RedisTemplate in the context (rare, e.g. pure unit-test mocks) — fall back to Spring's default logic
             super.clear()
             return
         }

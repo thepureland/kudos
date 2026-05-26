@@ -1,17 +1,21 @@
 package io.kudos.ability.data.rdb.jdbc.aop
 
 /**
- * 多租户场景下的方法级数据源切换注解，被 [TenantDsChangeAspect] 拦截。
+ * Method-level data-source-switching annotation for multi-tenant scenarios, intercepted by
+ * [TenantDsChangeAspect].
  *
- * 与 [DsChange] 的差别：[value] 不是直接当数据源 key 用，而是当成"服务编码"，由切面
- * 包装成 `_context::<value>` 形式写入 `DbParam.forcedDs`，再由 `DynamicDataSourceAspect`
- * 根据当前租户 + 服务编码动态解析出真正的数据源 key。
+ * Differs from [DsChange]: [value] is not used directly as a data source key; instead it is
+ * treated as a "service code", wrapped by the aspect into the form `_context::<value>` and
+ * written into `DbParam.forcedDs`, after which `DynamicDataSourceAspect` resolves the actual
+ * data source key dynamically based on the current tenant + service code.
  *
- * 适用场景：多租户应用里"业务方法应当走 当前租户 在 服务 X 名下的数据源"这类语义，由
- * 注解描述意图，路由查找由切面完成。
+ * Use case: in multi-tenant apps, semantics like "this business method should hit the data source
+ * belonging to the current tenant under service X" — the annotation expresses intent, and the
+ * aspect performs the routing lookup.
  *
- * @property value 服务编码；空串时不做任何切换。允许已带 `_context` 前缀的字符串直接透传。
- * @property readonly true 表示走只读副本。
+ * @property value service code; an empty string performs no switch. Strings already prefixed with
+ *   `_context` are forwarded as-is.
+ * @property readonly true means route to a read-only replica.
  *
  * @author K
  * @author AI: Codex

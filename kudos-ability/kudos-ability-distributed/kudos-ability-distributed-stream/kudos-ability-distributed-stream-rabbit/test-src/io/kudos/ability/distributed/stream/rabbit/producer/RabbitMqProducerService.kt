@@ -6,7 +6,7 @@ import io.kudos.base.logger.LogFactory
 import org.springframework.stereotype.Service
 
 /**
- * RabbitMq 生產者服务
+ * RabbitMQ producer service.
  *
  * @author shane
  * @author K
@@ -20,8 +20,9 @@ open class RabbitMqProducerService : IRabbitMqProducerService {
 //    @Bean
 //    fun contextParam(): ContextParam {
 //        val context = ContextParam()
-//        // 这个数据类型目前是Integer类型, 像配置文件定义的db1,db2这种字符串会有问题
-//        // jdbc模块也有相同问题, 后续建议统一调整为Object类型,并自动对String,Integer,Long等常用类型进行转换
+//        // This field type is currently Integer; strings like db1/db2 defined in config files cause issues.
+//        // The jdbc module has the same problem; recommend unifying to Object type and auto-converting
+//        // common types like String, Integer, Long, etc.
 //        context.username = "rabbitTestUser"
 //        CommonContext.set(context)
 //        return context

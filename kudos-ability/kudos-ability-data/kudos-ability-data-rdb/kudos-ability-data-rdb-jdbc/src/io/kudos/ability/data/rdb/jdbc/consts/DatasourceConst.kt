@@ -1,10 +1,11 @@
 package io.kudos.ability.data.rdb.jdbc.consts
 
 /**
- * 数据源相关字面量常量集合。
+ * Collection of literal constants related to data sources.
  *
- * 用接口 + companion 是单例常量在 Kotlin 里的传统打包方式；外部代码可以用
- * `DatasourceConst.MODE_MASTER` 直接引用。新增常量请保持"字符串字面量 + kdoc 说明语义"。
+ * Using an interface + companion is the traditional way to package singleton constants in Kotlin;
+ * external code can reference them directly as `DatasourceConst.MODE_MASTER`. When adding new
+ * constants, please keep the "string literal + kdoc describing the semantics" pattern.
  *
  * @author K
  * @author AI: Codex
@@ -13,13 +14,13 @@ package io.kudos.ability.data.rdb.jdbc.consts
 interface DatasourceConst {
     companion object {
 
-        /** 主库模式标记。Master 模式承担写 + 强一致性读，是数据源 key 的默认后缀。 */
+        /** Marker for master mode. Master mode handles writes + strongly consistent reads and is the default suffix for the data source key. */
         const val MODE_MASTER: String = "master"
 
-        /** 只读副本模式标记。只读路径附加为数据源 key 后缀，由 `DbParam.readonly=true` 触发。 */
+        /** Marker for read-only replica mode. The read-only path is appended as a data source key suffix; triggered by `DbParam.readonly=true`. */
         const val MODE_READONLY: String = "readonly"
 
-        /** "控制台租户"约定 id。代表全局管理员身份，跳过普通租户级数据源路由（直走主库）。 */
+        /** Conventional "console tenant" id. Represents the global administrator identity and bypasses normal tenant-level data source routing (goes directly to the master). */
         const val CONSOLE_TENANT_ID: String = "-99"
     }
 }

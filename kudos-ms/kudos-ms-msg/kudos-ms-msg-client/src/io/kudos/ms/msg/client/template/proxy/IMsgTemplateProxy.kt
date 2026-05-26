@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 消息模板客户端代理接口
+ * Message template client proxy interface.
  *
  * @author K
  * @author AI: Codex

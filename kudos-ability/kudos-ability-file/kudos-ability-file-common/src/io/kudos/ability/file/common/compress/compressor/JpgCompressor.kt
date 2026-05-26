@@ -11,10 +11,12 @@ import javax.imageio.IIOImage
 import javax.imageio.ImageIO
 
 /**
- * JPEG 图片压缩实现。
+ * JPEG image compression implementation.
  *
- * 用 Thumbnailator 缩放后通过 ImageIO 的 JPEG writer 输出，统一输出 quality 由 [CompressionConfig.quality] 控制。
- * 标 `open` 是为了让 [PngCompressor] 复用其 [support]，PNG 压缩走另一条 com.xqlee 链路。
+ * Uses Thumbnailator for resizing, then ImageIO's JPEG writer for output. Output
+ * quality is uniformly controlled by [CompressionConfig.quality]. Marked `open`
+ * so [PngCompressor] can reuse its [support]; PNG compression goes through a
+ * separate com.xqlee pipeline.
  *
  * @author K
  * @author AI: Codex
@@ -23,24 +25,28 @@ import javax.imageio.ImageIO
 open class JpgCompressor : ImageCompressor {
 
     /**
-     * 只要压缩功能整体打开就处理。具体决定是否走本压缩器由 [io.kudos.ability.file.common.compress.support.ImageCompressorFactory] 控制。
+     * Handles the image whenever the compression feature is enabled overall. Whether
+     * this specific compressor is actually used is decided by
+     * [io.kudos.ability.file.common.compress.support.ImageCompressorFactory].
      *
-     * @param config 压缩配置
-     * @return [CompressionConfig.enabled] 的值
+     * @param config compression configuration
+     * @return the value of [CompressionConfig.enabled]
      */
     override fun support(config: CompressionConfig): Boolean {
         return config.enabled
     }
 
     /**
-     * JPEG 压缩主流程：原图读入 → 按配置宽高（不超过原图）缩放 → 用 ImageIO JPEG writer 写出。
-     * 缩放只在配置值小于原图时生效，避免对小图做"放大"操作。
+     * Main JPEG compression flow: read original -> resize by configured width/height
+     * (capped at the original) -> write via the ImageIO JPEG writer. Resizing takes
+     * effect only when the configured value is smaller than the original, avoiding
+     * "upscaling" of small images.
      *
-     * @param inputStream 源图片输入流
-     * @param destination 目标路径（JPEG 不改名）
-     * @param config 压缩配置
-     * @return 包含压缩字节流、目标路径、`image/jpeg` 的结果
-     * @throws IOException IO 异常或编解码失败时
+     * @param inputStream source image input stream
+     * @param destination target path (JPEG does not rename)
+     * @param config compression configuration
+     * @return result containing the compressed byte stream, target path, and `image/jpeg` type
+     * @throws IOException on IO failure or encoding error
      * @author K
      * @since 1.0.0
      */

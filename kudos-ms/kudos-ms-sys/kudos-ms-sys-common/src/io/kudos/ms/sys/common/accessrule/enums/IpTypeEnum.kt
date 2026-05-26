@@ -3,7 +3,7 @@ package io.kudos.ms.sys.common.accessrule.enums
 import io.kudos.base.enums.ienums.IDictEnum
 
 /**
- * IP类型枚举
+ * IP type enum.
  *
  * @author K
  * @since 1.0.0

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 组-用户关系数据访问对象
+ * Group-user relation DAO.
  *
  * @author K
  * @author AI: Codex
@@ -20,11 +20,11 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
 
 
     /**
-     * 检查关系是否存在
+     * Checks whether a group-user relation exists.
      *
-     * @param groupId 组ID
-     * @param userId 用户ID
-     * @return 是否存在
+     * @param groupId group ID
+     * @param userId user ID
+     * @return true if the relation exists
      * @author AI: Codex
      * @since 1.0.0
      */
@@ -37,10 +37,10 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
     }
 
     /**
-     * 根据组ID查询用户ID集合
+     * Returns the user IDs bound to the given group.
      *
-     * @param groupId 组ID
-     * @return 用户ID集合
+     * @param groupId group ID
+     * @return set of user IDs
      * @author AI: Codex
      * @since 1.0.0
      */
@@ -51,10 +51,10 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
     }
 
     /**
-     * 根据用户ID查询组ID集合
+     * Returns the group IDs the given user belongs to.
      *
-     * @param userId 用户ID
-     * @return 组ID集合
+     * @param userId user ID
+     * @return set of group IDs
      * @author AI: Codex
      * @since 1.0.0
      */
@@ -65,9 +65,9 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
     }
 
     /**
-     * 全量用户组-用户关系，按用户ID分组为「用户ID -> 用户组ID列表」
+     * Loads every group-user relation grouped by user ID into a "userId -> groupIds" map.
      *
-     * @return Map<用户id，List<组id>>
+     * @return map of user id to its list of group ids
      */
     fun searchAllUserIdToGroupIdsForCache(): Map<String, List<String>> {
         val all = allSearch()
@@ -75,9 +75,9 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
     }
 
     /**
-     * 全量用户组-用户关系，按用户组ID分组为「用户组ID -> 用户ID列表」
+     * Loads every group-user relation grouped by group ID into a "groupId -> userIds" map.
      *
-     * @return Map<组ID, List<用户ID>>
+     * @return map of group id to its list of user ids
      */
     fun searchAllGroupIdToUserIdsForCache(): Map<String, List<String>> {
         val all = allSearch()
@@ -85,11 +85,11 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
     }
 
     /**
-     * 按组ID和用户ID删除关系
+     * Deletes the relation matching the given group and user IDs.
      *
-     * @param groupId 组ID
-     * @param userId 用户ID
-     * @return 删除条数
+     * @param groupId group ID
+     * @param userId user ID
+     * @return number of rows deleted
      */
     fun deleteByGroupIdAndUserId(groupId: String, userId: String): Int {
         val criteria = Criteria.and(

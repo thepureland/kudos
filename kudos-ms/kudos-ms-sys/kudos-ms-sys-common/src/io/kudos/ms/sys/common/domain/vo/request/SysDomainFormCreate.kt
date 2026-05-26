@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.domain.vo.request
 
 /**
- * 域名表单新建请求VO
+ * Domain create form request VO.
  *
  * @author K
  * @since 1.0.0

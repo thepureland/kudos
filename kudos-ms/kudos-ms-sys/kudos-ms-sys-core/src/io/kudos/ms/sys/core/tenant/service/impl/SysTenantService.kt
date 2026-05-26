@@ -34,7 +34,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 租户业务
+ * Tenant service.
  *
  * @author K
  * @author AI: Cursor
@@ -91,9 +91,9 @@ open class SysTenantService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的租户。") {
-            // insertTenantSystemsOnCreate 经 sysTenantSystemService.batchInsert 创建关系；
-            // SysTenantSystemHashCache 由其按需 lazy load 触发回填，无需此处主动 sync。
+        completeCrudInsert(log, "Inserted tenant id=$id.") {
+            // insertTenantSystemsOnCreate creates the relations via sysTenantSystemService.batchInsert;
+            // SysTenantSystemHashCache is lazily backfilled on demand, no explicit sync needed here.
             insertTenantSystemsOnCreate(any, id)
             eventPublisher.publishEvent(SysTenantInserted(id = id))
         }
@@ -101,13 +101,13 @@ open class SysTenantService(
     }
 
     /**
-     * 批量插入"租户 ↔ 子系统"关联表行。
+     * Batch insert rows into the "tenant ↔ sub-system" link table.
      *
-     * 把 `subSystemCodes` 每个 code 映射成 [SysTenantSystem] 实体后走 `batchInsert`，
-     * 一次写入避免 N+1。
+     * Maps each code in `subSystemCodes` to a [SysTenantSystem] entity and writes them via `batchInsert`
+     * in a single round trip to avoid N+1.
      *
-     * @param tenantId 租户 id
-     * @param subSystemCodes 子系统编码集合
+     * @param tenantId tenant id
+     * @param subSystemCodes sub-system code set
      * @author K
      * @since 1.0.0
      */
@@ -123,12 +123,12 @@ open class SysTenantService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "租户")
+        val id = requireStringId(any, "tenant")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的租户。",
-            failureMessage = "更新id为${id}的租户失败！",
+            successMessage = "Updated tenant id=$id.",
+            failureMessage = "Failed to update tenant id=$id!",
         ) {
             syncTenantSystemsOnUpdate(any)
             eventPublisher.publishEvent(SysTenantUpdated(id = id))
@@ -144,8 +144,8 @@ open class SysTenantService(
         return completeCrudUpdate(
             success = dao.update(tenant),
             log = log,
-            successMessage = "更新id为${id}的租户的启用状态为${active}。",
-            failureMessage = "更新id为${id}的租户的启用状态为${active}失败！",
+            successMessage = "Updated tenant id=$id active=$active.",
+            failureMessage = "Failed to update tenant id=$id active=$active!",
         ) {
             eventPublisher.publishEvent(SysTenantUpdated(id = id))
         }
@@ -154,7 +154,7 @@ open class SysTenantService(
     @Transactional
     override fun deleteById(id: String): Boolean {
         if (dao.get(id) == null) {
-            log.warn("删除id为${id}的租户时，发现其已不存在！")
+            log.warn("Tenant id=$id no longer exists when attempting delete!")
             return false
         }
 
@@ -163,8 +163,8 @@ open class SysTenantService(
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的租户成功！",
-            failureMessage = "删除id为${id}的租户失败！",
+            successMessage = "Deleted tenant id=$id.",
+            failureMessage = "Failed to delete tenant id=$id!",
         ) {
             eventPublisher.publishEvent(SysTenantDeleted(id = id))
         }
@@ -174,7 +174,7 @@ open class SysTenantService(
     override fun batchDelete(ids: Collection<String>): Int {
         if (sysTenantSystemService.batchDeleteByTenantIds(ids) < 0) return 0
         val count = super.batchDelete(ids)
-        log.debug("批量删除租户，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch delete tenants: expected ${ids.size}, actually deleted $count.")
         if (count > 0) {
             eventPublisher.publishEvent(SysTenantBatchDeleted(ids = ids))
         }
@@ -189,17 +189,17 @@ open class SysTenantService(
         dao.search(Criteria(SysTenant::name eq name)).firstOrNull()?.let(::toSysTenantRow)
 
     /**
-     * 租户更新时同步"租户↔子系统"绑定：仅 [SysTenantFormUpdate] 入参才会触发，
-     * 与缓存差异比对后才走 replace——避免无差异时空转 DB 和触发缓存失效抖动。
+     * On tenant update, sync the "tenant ↔ sub-system" bindings: only triggered for [SysTenantFormUpdate] payloads,
+     * and only after diffing against the cache—skips redundant DB writes and avoids needless cache invalidation churn.
      *
-     * @param any 更新入参，非 [SysTenantFormUpdate] 直接 no-op
+     * @param any update payload; no-op when not a [SysTenantFormUpdate]
      * @author K
      * @since 1.0.0
      */
     private fun syncTenantSystemsOnUpdate(any: Any) {
         if (any !is SysTenantFormUpdate) return
 
-        val tenantId = requireNotNull(any.id) { "更新租户时 id 不能为空" }
+        val tenantId = requireNotNull(any.id) { "tenant id must not be null on update" }
         val subSystemCodes = sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId)
         if (subSystemCodes != any.subSystemCodes) {
             replaceTenantSystems(tenantId, any.subSystemCodes)
@@ -207,11 +207,11 @@ open class SysTenantService(
     }
 
     /**
-     * "全量替换"语义：先清旧关联再插入新集合。
-     * 简单粗暴但避免了"增量 diff"的复杂度——绑定数量很小，性能可接受。
+     * "Full replace" semantics: drop old links, then insert the new set.
+     * Simple but avoids incremental diff complexity—binding count is small so performance is acceptable.
      *
-     * @param tenantId 租户 id
-     * @param subSystemCodes 新的子系统集合
+     * @param tenantId tenant id
+     * @param subSystemCodes new sub-system code set
      * @author K
      * @since 1.0.0
      */
@@ -221,25 +221,25 @@ open class SysTenantService(
     }
 
     /**
-     * 清除某租户名下所有子系统绑定。
-     * 缓存失效由 `sysTenantSystemService.deleteByTenantId` 内部发的
-     * `SysTenantSystemTenantsChanged` 事件驱动 `SysTenantSystemHashCache` 自动完成。
+     * Clear all sub-system bindings for a tenant.
+     * Cache invalidation is handled by the `SysTenantSystemTenantsChanged` event published inside
+     * `sysTenantSystemService.deleteByTenantId`, which `SysTenantSystemHashCache` subscribes to.
      *
-     * @param tenantId 租户 id
+     * @param tenantId tenant id
      * @author K
      * @since 1.0.0
      */
     private fun deleteTenantSystems(tenantId: String) {
-        // sysTenantSystemService.deleteByTenantId 已发布 SysTenantSystemTenantsChanged，
-        // 由 SysTenantSystemHashCache.on(...) 订阅完成失效。
+        // sysTenantSystemService.deleteByTenantId already publishes SysTenantSystemTenantsChanged,
+        // which SysTenantSystemHashCache.on(...) subscribes to in order to invalidate.
         sysTenantSystemService.deleteByTenantId(tenantId)
     }
 
     /**
-     * 租户新建时按入参类型选择性插入子系统绑定：仅 [SysTenantFormCreate] 入参触发。
+     * On tenant creation, conditionally insert sub-system bindings based on payload type: only triggers for [SysTenantFormCreate].
      *
-     * @param any 新建入参
-     * @param tenantId 已生成的租户 id
+     * @param any create payload
+     * @param tenantId generated tenant id
      * @author K
      * @since 1.0.0
      */
@@ -250,12 +250,12 @@ open class SysTenantService(
     }
 
     /**
-     * 详情对象的增强：仅 [SysTenantDetail] 类型才填充 `subSystemCodes` 字段，其他返回类型原样返回。
+     * Detail enrichment: only when the result is a [SysTenantDetail] do we fill the `subSystemCodes` field; other return types pass through unchanged.
      *
-     * @param R 返回类型
-     * @param result 待增强对象
-     * @param tenantId 租户 id
-     * @return 增强后的对象（可能未被修改）
+     * @param R return type
+     * @param result object to enrich
+     * @param tenantId tenant id
+     * @return enriched object (may be unchanged)
      * @author K
      * @since 1.0.0
      */
@@ -267,9 +267,9 @@ open class SysTenantService(
     }
 
     /**
-     * 列表行的增强：直接给 [SysTenantRow] 设 `subSystemCodes` 字符串字段（逗号分隔）。
+     * List row enrichment: sets the comma-separated `subSystemCodes` string field on [SysTenantRow].
      *
-     * @param row 待增强的列表行
+     * @param row list row to enrich
      * @author K
      * @since 1.0.0
      */
@@ -278,10 +278,10 @@ open class SysTenantService(
     }
 
     /**
-     * 把 PO [SysTenant] 拷成扁平 VO [SysTenantRow]，用于 list 接口。
+     * Copy a [SysTenant] PO into a flat [SysTenantRow] VO for the list endpoint.
      *
-     * @param tenant 租户 PO
-     * @return 租户 VO（`subSystemCodes` 字段未填，由 [enrichTenantRow] 后续补齐）
+     * @param tenant tenant PO
+     * @return tenant VO (`subSystemCodes` is left blank and filled later by [enrichTenantRow])
      * @author K
      * @since 1.0.0
      */
@@ -301,10 +301,10 @@ open class SysTenantService(
         sysTenantSystemHashCache.getSubSystemCodesByTenantId(tenantId)
 
     /**
-     * 把租户绑定的子系统集合拍扁成逗号分隔字符串，用于在列表/详情里直接展示。
+     * Flatten the sub-system codes bound to a tenant into a comma-separated string for direct display in list/detail views.
      *
-     * @param tenantId 租户 id
-     * @return 形如 `"sys, msg, user"` 的字符串；无绑定时为空串
+     * @param tenantId tenant id
+     * @return string like `"sys, msg, user"`; empty when there are no bindings
      * @author K
      * @since 1.0.0
      */

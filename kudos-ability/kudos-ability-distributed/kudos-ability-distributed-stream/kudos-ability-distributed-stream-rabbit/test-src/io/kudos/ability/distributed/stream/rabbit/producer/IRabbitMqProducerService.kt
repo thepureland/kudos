@@ -4,7 +4,7 @@ import io.kudos.ability.distributed.stream.rabbit.data.RabbitMqSimpleMsg
 
 
 /**
- * RabbitMq测试生產者服务接口
+ * RabbitMQ test producer service interface.
  *
  * @author shane
  * @author K

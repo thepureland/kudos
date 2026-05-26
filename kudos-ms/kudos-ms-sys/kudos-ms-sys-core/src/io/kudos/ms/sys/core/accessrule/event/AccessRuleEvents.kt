@@ -1,10 +1,11 @@
 package io.kudos.ms.sys.core.accessrule.event
 
 /**
- * 访问规则（`sys_access_rule`）领域事件。**只在数据库变更已提交后**由 Spring `@TransactionalEventListener(AFTER_COMMIT)`
- * 派发，确保事务回滚时不会污染缓存。
+ * Domain events for access rules (`sys_access_rule`). **Dispatched only after the database change is committed**
+ * via Spring `@TransactionalEventListener(AFTER_COMMIT)`, ensuring the cache is not polluted when the transaction rolls back.
  *
- * 事件携带足够的维度信息（systemCode、tenantId），让缓存订阅者可以**就地**完成 evict / refresh，无需再次反查 DB。
+ * Events carry enough dimension information (systemCode, tenantId) for cache subscribers to complete evict / refresh
+ * **in place**, without needing to re-query the database.
  *
  * @author K
  * @author AI: Cursor
@@ -14,17 +15,17 @@ sealed interface SysAccessRuleEvent {
     val id: String
 }
 
-/** 新增完成事件。订阅方应按 id 把缓存项写入。 */
+/** Insert completion event. Subscribers should write the cache entry by id. */
 data class SysAccessRuleInserted(
     override val id: String,
     val systemCode: String,
-    /** `null` 表示平台级（与库中 `tenant_id IS NULL` 对应） */
+    /** `null` indicates platform level (matches `tenant_id IS NULL` in the database) */
     val tenantId: String?,
 ) : SysAccessRuleEvent
 
 /**
- * 更新完成事件。携带变更前后维度键，便于订阅方判断维度迁移：
- * - 若 (beforeSystemCode, beforeTenantId) 与 (systemCode, tenantId) 不同，需同时刷新旧维度。
+ * Update completion event. Carries the dimension keys before and after the change so subscribers can detect dimension migration:
+ * - If (beforeSystemCode, beforeTenantId) differs from (systemCode, tenantId), the old dimension must also be refreshed.
  */
 data class SysAccessRuleUpdated(
     override val id: String,
@@ -38,7 +39,7 @@ data class SysAccessRuleUpdated(
                 (beforeSystemCode != systemCode || beforeTenantId != tenantId)
 }
 
-/** 删除完成事件。 */
+/** Delete completion event. */
 data class SysAccessRuleDeleted(
     override val id: String,
     val systemCode: String,
@@ -46,12 +47,12 @@ data class SysAccessRuleDeleted(
 ) : SysAccessRuleEvent
 
 /**
- * 批量删除完成事件。携带主键集合与涉及的所有维度键。
- * 注意：id 字段返回首个主键，仅满足 [SysAccessRuleEvent] 契约；订阅方应使用 [ids] 与 [dimensions]。
+ * Batch delete completion event. Carries the primary key collection and all affected dimension keys.
+ * Note: the id field returns the first primary key just to satisfy the [SysAccessRuleEvent] contract; subscribers should use [ids] and [dimensions].
  */
 data class SysAccessRuleBatchDeleted(
     val ids: Collection<String>,
-    /** 受影响的所有（systemCode, tenantId）维度对，已去重 */
+    /** All affected (systemCode, tenantId) dimension pairs, deduplicated */
     val dimensions: List<Pair<String, String?>>,
 ) : SysAccessRuleEvent {
     override val id: String get() = ids.first()

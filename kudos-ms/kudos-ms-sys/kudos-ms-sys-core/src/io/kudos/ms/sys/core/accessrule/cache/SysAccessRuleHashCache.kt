@@ -18,13 +18,14 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * `sys_access_rule` 的 Hash 缓存：主键 id 存全文，副属性 `systemCode`、`tenantId` 建二级索引，
- * 支持按 id 与按「系统编码 + 租户」等值查询（与表唯一约束 `(system_code, tenant_id)` 一致）。
+ * Hash cache for `sys_access_rule`: full record stored under primary key id; secondary indexes built on
+ * `systemCode` and `tenantId`. Supports equality lookups by id and by (systemCode + tenantId),
+ * matching the table's unique constraint `(system_code, tenant_id)`.
  *
- * 租户维度归一化由 [AccessRuleTenantKey.normalize] 统一处理：`null` / 空白一律映射为空串（平台级），
- * 与 [AccessRuleIpsBySubSysAndTenantIdCache] 的 KV key 取值保持一致。
+ * The tenant dimension is normalized uniformly via [AccessRuleTenantKey.normalize]: `null` / blank values map to
+ * empty string (platform-level), consistent with the KV key in [AccessRuleIpsBySubSysAndTenantIdCache].
  *
- * 使用前须在 `sys_cache` 中配置 [CACHE_NAME] 且 `hash = true`。
+ * Before use, [CACHE_NAME] must be configured in `sys_cache` with `hash = true`.
  *
  * @author K
  * @author AI: Cursor
@@ -41,7 +42,7 @@ open class SysAccessRuleHashCache : AbstractHashCacheHandler<SysAccessRuleCacheE
     companion object {
         const val CACHE_NAME = "SYS_ACCESS_RULE__HASH"
 
-        /** 副属性：按 systemCode、tenantId（空串 = 平台级）建 Set 索引 */
+        /** Secondary attributes: Set indexes built on systemCode and tenantId (empty string = platform-level) */
         val FILTERABLE_PROPERTIES = setOf(
             SysAccessRuleCacheEntry::systemCode.name,
             SysAccessRuleCacheEntry::tenantId.name,
@@ -58,10 +59,10 @@ open class SysAccessRuleHashCache : AbstractHashCacheHandler<SysAccessRuleCacheE
         sysAccessRuleDao.fetchCacheEntryById(id.toString())
 
     /**
-     * 按主键从缓存获取访问规则，未命中则查库并回写。
+     * Get access rule from cache by primary key; on miss, load from DB and write back.
      *
-     * @param id 主键，非空白
-     * @return 缓存项；不存在时返回 `null`
+     * @param id Primary key, non-blank
+     * @return Cache entry; `null` if not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -71,29 +72,29 @@ open class SysAccessRuleHashCache : AbstractHashCacheHandler<SysAccessRuleCacheE
         filterableProperties = ["systemCode", "tenantId"],
     )
     open fun getAccessRuleById(id: String): SysAccessRuleCacheEntry? {
-        require(id.isNotBlank()) { "按 id 获取访问规则时 id 不能为空" }
+        require(id.isNotBlank()) { "id must not be blank when fetching access rule by id" }
         return sysAccessRuleDao.fetchCacheEntryById(id)
     }
 
     /**
-     * 按系统编码与租户ID从缓存获取访问规则，未命中则查库并回写。
+     * Get access rule from cache by system code and tenant id; on miss, load from DB and write back.
      *
-     * @param systemCode 系统编码（子系统），非空白
-     * @param tenantId 租户 id；`null` / 空白一律视为平台级（与库中 `tenant_id IS NULL` 对应）。
-     *                 内部由 [AccessRuleTenantKey.normalize] 归一为空串后参与副属性索引匹配。
-     * @return 命中时返回该维度下唯一一行；不存在时返回 `null`
+     * @param systemCode System (sub-system) code, non-blank
+     * @param tenantId Tenant id; `null` / blank is treated as platform-level (corresponds to `tenant_id IS NULL` in DB).
+     *                 Internally normalized to empty string by [AccessRuleTenantKey.normalize] before secondary index matching.
+     * @return The single row for this dimension on hit; `null` if not found
      */
     open fun getAccessRuleBySystemCodeAndTenantId(systemCode: String, tenantId: String?): SysAccessRuleCacheEntry? {
-        require(systemCode.isNotBlank()) { "按系统编码获取访问规则时 systemCode 不能为空" }
-        // 通过 self-proxy 调用，确保 @HashCacheableBySecondary AOP 生效；
-        // tenantKey 在入口处统一归一化，避免 filterExpressions 出现表达式（框架要求单参数 SpEL）。
+        require(systemCode.isNotBlank()) { "systemCode must not be blank when fetching access rule by system code" }
+        // Call via self-proxy to ensure @HashCacheableBySecondary AOP takes effect;
+        // tenantKey is normalized at the entry point so filterExpressions stays free of expressions (the framework requires single-arg SpEL).
         return getSelf<SysAccessRuleHashCache>()
             .findBySystemCodeAndTenantKey(systemCode, AccessRuleTenantKey.normalize(tenantId))
     }
 
     /**
-     * 内部查询入口，仅供 [getAccessRuleBySystemCodeAndTenantId] 调用：
-     * 入参 [tenantKey] **必须已归一化**（`null` / 空白先转空串），供 `@HashCacheableBySecondary` 的副属性索引匹配。
+     * Internal query entry point, only called by [getAccessRuleBySystemCodeAndTenantId]:
+     * input [tenantKey] **must be normalized already** (`null` / blank converted to empty string) for `@HashCacheableBySecondary` secondary index matching.
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -106,46 +107,46 @@ open class SysAccessRuleHashCache : AbstractHashCacheHandler<SysAccessRuleCacheE
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载访问规则 Hash 缓存")
+            log.info("Cache is not enabled; skipping load of access rule Hash cache")
             return
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
         val list = sysAccessRuleDao.fetchAllCacheEntries()
-        log.debug("从数据库加载 ${list.size} 条访问规则，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} access rules from database; refreshing Hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    // region 事件订阅（由 SysAccessRuleService 在事务提交后派发） -------------------------------------
+    // region Event subscription (dispatched by SysAccessRuleService after transaction commit) -------------------------------------
 
-    /** 新增完成后写入 Hash 缓存。 */
+    /** Write to Hash cache after insert. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysAccessRuleInserted): Unit = syncOnInsert(event.id)
 
-    /** 更新完成后按库中最新行回写。 */
+    /** After update, write back the latest row from DB. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysAccessRuleUpdated): Unit = syncOnUpdate(event.id)
 
-    /** 删除完成后清缓存。 */
+    /** Evict cache after delete. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysAccessRuleDeleted): Unit = syncOnDelete(event.id)
 
-    /** 批量删除完成后逐条清缓存。 */
+    /** Evict cache one by one after batch delete. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysAccessRuleBatchDeleted): Unit = syncOnBatchDelete(event.ids)
 
     // endregion
 
-    // region 同步原语（保留为 internal 助手，供事件 listener 与现有测试直接调用） ----------------
+    // region Sync primitives (kept as internal helpers for event listeners and existing tests) ----------------
 
-    /** 按主键回写 Hash 缓存。 */
+    /** Write back to Hash cache by primary key. */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
         val item = sysAccessRuleDao.fetchCacheEntryById(id) ?: return
         hashCache().save(CACHE_NAME, item, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 按主键重新加载并回写。 */
+    /** Reload by primary key and write back. */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         val item = sysAccessRuleDao.fetchCacheEntryById(id) ?: return
@@ -154,13 +155,13 @@ open class SysAccessRuleHashCache : AbstractHashCacheHandler<SysAccessRuleCacheE
         }
     }
 
-    /** 按主键移除条目与副属性索引。 */
+    /** Remove entry and secondary indexes by primary key. */
     open fun syncOnDelete(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         hashCache().deleteById(CACHE_NAME, id, SysAccessRuleCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
     }
 
-    /** 批量移除。 */
+    /** Batch remove. */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(cacheName())) return
         val cache = hashCache()

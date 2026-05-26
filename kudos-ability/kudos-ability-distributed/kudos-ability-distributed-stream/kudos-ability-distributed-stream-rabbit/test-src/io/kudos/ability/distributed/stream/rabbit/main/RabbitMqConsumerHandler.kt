@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 import java.util.function.Consumer
 
 /**
- * RabbitMq测试消费者
+ * RabbitMQ test consumer.
  *
  * @author shane
  * @author  K
@@ -26,19 +26,19 @@ open class RabbitMqConsumerHandler {
     @MqConsumer(bindingName = "consumer-in-0")
     fun consumer(): Consumer<Message<StreamMessageVo<RabbitMqSimpleMsg>>?> {
         return Consumer { msg: Message<StreamMessageVo<RabbitMqSimpleMsg>>? ->
-            //获取消息体
+            // Extract payload
             val streamMsgVo = msg?.payload ?: return@Consumer
             val simpleMsg = streamMsgVo.data ?: return@Consumer
             log.info("receive message: ${simpleMsg.msg}")
-            //记录日志
+            // Log
             if (this.defaultMsg == simpleMsg.msg) {
                 flag = true
                 log.info("is Test Message: true")
             }
             log.info("before error: $errorFlag")
-            //模拟消费异常
+            // Simulate a consumer exception
             if (errorFlag) {
-                log.info("模拟消费异常: start up, true")
+                log.info("simulate consumer exception: start up, true")
                 throw RuntimeException("mock consumer exception")
             }
         }

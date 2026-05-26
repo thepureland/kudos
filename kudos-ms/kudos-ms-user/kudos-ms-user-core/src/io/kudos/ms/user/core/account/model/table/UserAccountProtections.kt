@@ -9,7 +9,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 用户账号保护数据库表-实体关联对象
+ * Account protection table-entity binding object
  *
  * @author K
  * @author AI: Codex
@@ -17,64 +17,64 @@ import org.ktorm.schema.varchar
  */
 object UserAccountProtections : StringIdTable<UserAccountProtection>("user_account_protection") {
 
-    /** 用户ID */
+    /** User ID */
     var userId = varchar("user_id").bindTo { it.userId }
 
-    /** 问题1 */
+    /** Question 1 */
     var question1 = varchar("question1").bindTo { it.question1 }
 
-    /** 答案1 */
+    /** Answer 1 */
     var answer1 = varchar("answer1").bindTo { it.answer1 }
 
-    /** 问题2 */
+    /** Question 2 */
     var question2 = varchar("question2").bindTo { it.question2 }
 
-    /** 答案2 */
+    /** Answer 2 */
     var answer2 = varchar("answer2").bindTo { it.answer2 }
 
-    /** 问题3 */
+    /** Question 3 */
     var question3 = varchar("question3").bindTo { it.question3 }
 
-    /** 答案3 */
+    /** Answer 3 */
     var answer3 = varchar("answer3").bindTo { it.answer3 }
 
-    /** 安全联系方式ID */
+    /** Safe contact way ID */
     var safeContactWayId = varchar("safe_contact_way_id").bindTo { it.safeContactWayId }
 
-    /** 总的找回密码次数 */
+    /** Total allowed password-recovery attempts */
     var totalValidateCount = int("total_validate_count").bindTo { it.totalValidateCount }
 
-    /** 必须答对的问题数 */
+    /** Number of questions that must be answered correctly */
     var matchQuestionCount = int("match_question_count").bindTo { it.matchQuestionCount }
 
-    /** 错误次数 */
+    /** Error count */
     var errorTimes = int("error_times").bindTo { it.errorTimes }
 
-    /** 备注 */
+    /** Remark */
     var remark = varchar("remark").bindTo { it.remark }
 
-    /** 是否启用 */
+    /** Whether enabled */
     var active = boolean("active").bindTo { it.active }
 
-    /** 是否内置 */
+    /** Whether built-in */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
 
-    /** 创建者ID */
+    /** Creator ID */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 创建者名称 */
+    /** Creator name */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 创建时间 */
+    /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新者ID */
+    /** Updater ID */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 更新者名称 */
+    /** Updater name */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 更新时间 */
+    /** Update time */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 

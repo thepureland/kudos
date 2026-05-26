@@ -21,16 +21,17 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 系统资源统一缓存处理器，基于 Hash 结构存储 [SysResourceCacheEntry]。
+ * Unified system resource cache handler backed by a Hash structure storing [SysResourceCacheEntry].
  *
- * 提供三类查询与回写能力：
- * - **按主键**：按 id 取单条或批量实体。
- * - **按子系统+URL**：按子系统编码、URL、启用状态取单条资源 id 或实体列表。
- * - **按子系统+资源类型**：按子系统编码、资源类型、启用状态取资源 id 列表或实体列表。
+ * Provides three query and write-back patterns:
+ * - **By primary key**: fetch single or batch entities by id.
+ * - **By subsystem + URL**: fetch a single resource id or entity list by subsystem code, URL and active state.
+ * - **By subsystem + resource type**: fetch resource id list or entity list by subsystem code, resource type and active state.
  *
- * 使用 [FILTERABLE_PROPERTIES] 中的副属性建立 Set 索引，支持多条件等值查询；所有写入、删除、全量刷新均需使用同一副属性集合以保持索引一致。
+ * Secondary properties listed in [FILTERABLE_PROPERTIES] are used to build Set indexes for multi-condition equality queries;
+ * writes, deletes and full reloads must all use the same set of secondary properties to keep the indexes consistent.
  *
- * 使用前需在缓存配置表sys_cache中增加名为 [CACHE_NAME] 的配置项。
+ * Before use, add a config item named [CACHE_NAME] to the cache configuration table sys_cache.
  *
  * @author K
  * @since 1.0.0
@@ -46,7 +47,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
     companion object {
         const val CACHE_NAME = "SYS_RESOURCE__HASH"
 
-        /** 用于等值筛选与 Set 索引的副属性名集合，写入/删除/全量刷新时须与此一致（不含 active，不建 active 二级索引） */
+        /** Secondary property names used for equality filtering and Set indexes; writes/deletes/full reloads must stay consistent (active not included, no secondary index on active) */
         val FILTERABLE_PROPERTIES = setOf(
             SysResourceCacheEntry::subSystemCode.name,
             SysResourceCacheEntry::url.name,
@@ -62,14 +63,14 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
 
     override fun doReload(id: Any): SysResourceCacheEntry? = sysResourceDao.getAs(id.toString())
 
-    // ---------- 1. 按主键 id ----------
+    // ---------- 1. By primary key id ----------
 
     /**
-     * 根据主键 id 获取单条资源实体。
-     * 先查缓存，未命中则查库并回写；回写时按 [FILTERABLE_PROPERTIES] 建立副属性索引。
+     * Fetch a single resource entity by primary key id.
+     * Reads from cache first; on miss, loads from database and writes back, building secondary property indexes per [FILTERABLE_PROPERTIES].
      *
-     * @param id 资源主键，非空
-     * @return 资源缓存项，不存在时 null
+     * @param id resource primary key, non-blank
+     * @return resource cache entry, or null when not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -79,16 +80,16 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
         filterableProperties = ["subSystemCode", "url", "resourceTypeDictCode"]
     )
     open fun getResourceById(id: String): SysResourceCacheEntry? {
-        require(id.isNotBlank()) { "获取资源时 id 不能为空" }
+        require(id.isNotBlank()) { "id must not be blank when fetching a resource" }
         return sysResourceDao.getAs<SysResourceCacheEntry>(id)
     }
 
     /**
-     * 根据主键 id 列表批量获取资源实体。
-     * 先查缓存，未命中的 id 再查库并回写；回写时按 [FILTERABLE_PROPERTIES] 建立副属性索引。
+     * Batch fetch resource entities by primary key id list.
+     * Reads from cache first; ids that miss are loaded from database and written back, building secondary property indexes per [FILTERABLE_PROPERTIES].
      *
-     * @param ids 资源主键列表，可为空
-     * @return id -> 实体 映射，仅包含能查到的 id
+     * @param ids resource primary key list, may be empty
+     * @return id -> entity mapping, containing only ids that were found
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -102,15 +103,15 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
         return ids.mapNotNull { id -> byId[id]?.let { id to it } }.toMap()
     }
 
-    // ---------- 2. 按子系统+URL ----------
+    // ---------- 2. By subsystem + URL ----------
 
     /**
-     * 按子系统编码、URL、启用状态多条件等值查询，返回匹配的资源实体列表（0 或 1 条）。
-     * 先按副属性索引查缓存，未命中则查库并回写。
+     * Multi-condition equality query by subsystem code, URL and active state; returns the matching resource entity list (0 or 1 row).
+     * Queries by secondary property index first; on miss, loads from database and writes back.
      *
-     * @param subSystemCode 子系统编码，非空
-     * @param url 资源 URL，非空
-     * @return 匹配的实体列表
+     * @param subSystemCode subsystem code, non-blank
+     * @param url resource URL, non-blank
+     * @return matching entity list
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -122,15 +123,15 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
         return sysResourceDao.fetchResourceBySubSysAndUrl(subSystemCode, url)
     }
 
-    // ---------- 3. 按子系统+资源类型 ----------
+    // ---------- 3. By subsystem + resource type ----------
 
     /**
-     * 按子系统编码、资源类型、启用状态多条件等值查询，返回匹配的资源实体列表。
-     * 先按副属性索引查缓存，未命中则查库并回写。
+     * Multi-condition equality query by subsystem code, resource type and active state; returns the matching resource entity list.
+     * Queries by secondary property index first; on miss, loads from database and writes back.
      *
-     * @param subSystemCode 子系统编码，非空
-     * @param resourceTypeDictCode 资源类型字典码，非空
-     * @return 匹配的实体列表
+     * @param subSystemCode subsystem code, non-blank
+     * @param resourceTypeDictCode resource type dictionary code, non-blank
+     * @return matching entity list
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -142,31 +143,31 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
         return sysResourceDao.searchBySubSysAndType(subSystemCode, resourceTypeDictCode)
     }
 
-    // ---------- 全量刷新 ----------
+    // ---------- Full reload ----------
 
     /**
-     * 从库全量加载资源并刷新 Hash 缓存。
+     * Load all resources from database and refresh the Hash cache.
      *
-     * @param clear 为 true 时先清空当前缓存再写入；为 false 时覆盖写入
+     * @param clear when true, clears the current cache before writing; when false, overwrites in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载资源 Hash 缓存")
+            log.info("Cache is disabled; skip loading resource Hash cache")
             return
         }
         val cache = hashCache()
         val list = sysResourceDao.searchAs<SysResourceCacheEntry>()
-        log.debug("从数据库加载 ${list.size} 条资源，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} resources from database, refreshing Hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
-        log.debug("资源 Hash 缓存刷新完成")
+        log.debug("Resource Hash cache refresh completed")
     }
 
-    // ---------- 写库后同步（供业务在新增/更新/删除后调用） ----------
+    // ---------- Post-write sync (called by business code after insert/update/delete) ----------
 
     /**
-     * 新增资源后同步：将指定 id 的实体从库加载并写入缓存，并建立副属性索引。
+     * Sync after insert: load the entity for the specified id from database, write to cache and build secondary property indexes.
      *
-     * @param id 新增的资源主键
+     * @param id primary key of the newly inserted resource
      */
     open fun syncOnInsert(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
@@ -175,19 +176,19 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
     }
 
     /**
-     * 新增资源后同步（重载，接收业务对象与 id）。行为同 [syncOnInsert(id)]。
+     * Sync after insert (overload, accepts business object and id). Same behavior as [syncOnInsert(id)].
      *
-     * @param any 业务对象，仅用于重载区分
-     * @param id 新增的资源主键
+     * @param any business object, used only for overload disambiguation
+     * @param id primary key of the newly inserted resource
      */
     open fun syncOnInsert(any: Any, id: String) {
         syncOnInsert(id)
     }
 
     /**
-     * 更新资源后同步：将指定 id 的实体从库重新加载并写入缓存，更新副属性索引。
+     * Sync after update: reload the entity for the specified id from database, write to cache and update secondary property indexes.
      *
-     * @param id 被更新的资源主键
+     * @param id primary key of the updated resource
      */
     open fun syncOnUpdate(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -198,42 +199,42 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
     }
 
     /**
-     * 更新资源后同步（重载，带旧 URL 等参数）。行为同 [syncOnUpdate(id)]，Hash 结构下直接覆盖即可。
+     * Sync after update (overload, includes old URL parameter). Same behavior as [syncOnUpdate(id)]; overwriting suffices under the Hash structure.
      */
     open fun syncOnUpdate(any: Any, id: String, oldUrl: String?) {
         syncOnUpdate(id)
     }
 
     /**
-     * 更新资源后同步（重载，带旧子系统、资源类型等参数）。行为同 [syncOnUpdate(id)]。
+     * Sync after update (overload, includes old subsystem and resource type parameters). Same behavior as [syncOnUpdate(id)].
      */
     open fun syncOnUpdate(any: Any, id: String, oldSubSystemCode: String, oldResourceTypeDictCode: String) {
         syncOnUpdate(id)
     }
 
     /**
-     * 更新资源启用状态后同步。行为同 [syncOnUpdate(id)]。
+     * Sync after updating a resource's active state. Same behavior as [syncOnUpdate(id)].
      *
-     * @param id 资源主键
-     * @param active 新的启用状态
+     * @param id resource primary key
+     * @param active new active state
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         syncOnUpdate(id)
     }
 
     /**
-     * 更新资源启用状态后同步（重载，无 active 参数）。行为同 [syncOnUpdate(id)]。
+     * Sync after updating active state (overload without the active parameter). Same behavior as [syncOnUpdate(id)].
      */
     open fun syncOnUpdateActive(id: String) {
         syncOnUpdate(id)
     }
 
     /**
-     * 删除资源后同步：从缓存中移除该 id，并从副属性 Set 索引中移除。
+     * Sync after delete: remove the id from cache and from secondary property Set indexes.
      *
-     * @param id 被删除的资源主键
-     * @param subSystemCode 该资源所属子系统编码（用于索引移除）
-     * @param urlOrResourceType URL 或资源类型，仅用于索引移除，可为 null
+     * @param id primary key of the deleted resource
+     * @param subSystemCode subsystem code the resource belongs to (used for index removal)
+     * @param urlOrResourceType URL or resource type, used only for index removal, may be null
      */
     open fun syncOnDelete(id: String, subSystemCode: String, urlOrResourceType: String?) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -241,9 +242,9 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
     }
 
     /**
-     * 批量删除资源后同步：从缓存中移除这些 id，并从副属性 Set 索引中移除。
+     * Sync after batch delete: remove the ids from cache and from secondary property Set indexes.
      *
-     * @param ids 被删除的资源主键集合
+     * @param ids primary keys of deleted resources
      */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -251,7 +252,7 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
         ids.forEach { cache.deleteById(CACHE_NAME, it, SysResourceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet()) }
     }
 
-    // region 事件订阅（由 SysResourceService 在事务提交后派发） ---------------------------
+    // region Event subscriptions (dispatched by SysResourceService after transaction commit) ---------------------------
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysResourceInserted): Unit = syncOnInsert(event.id)
@@ -271,16 +272,16 @@ open class SysResourceHashCache : AbstractHashCacheHandler<SysResourceCacheEntry
     // endregion
 
     /**
-     * 生成「子系统+URL」维度的组合 key，格式：子系统编码 + 分隔符 + URL。
-     * 用于外部需要与缓存 key 约定一致的场景。
+     * Build a composite key on the "subsystem + URL" dimension; format: subsystem code + delimiter + URL.
+     * Used by external callers that need to align with the cache key convention.
      */
     fun getKeySubSysAndUrl(subSystemCode: String, url: String?): String {
         return "${subSystemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${url}"
     }
 
     /**
-     * 生成「子系统+资源类型」维度的组合 key，格式：子系统编码 + 分隔符 + 资源类型字典码。
-     * 用于外部需要与缓存 key 约定一致的场景。
+     * Build a composite key on the "subsystem + resource type" dimension; format: subsystem code + delimiter + resource type dictionary code.
+     * Used by external callers that need to align with the cache key convention.
      */
     fun getKeySubSysAndType(subSystemCode: String, resourceTypeDictCode: String): String {
         return "${subSystemCode}${Consts.CACHE_KEY_DEFAULT_DELIMITER}${resourceTypeDictCode}"

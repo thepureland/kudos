@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component
 import java.util.UUID
 
 /**
- * Hash 缓存策略封装管理器：按配置为每个 hash 缓存名创建 [IHashCache] 视图（本地/远程/两级），
- * 与 key-value 的 [io.kudos.ability.cache.common.core.keyvalue.MixCacheManager] 一致，支持三种策略。
+ * Hash cache strategy wrapper manager: creates an [IHashCache] view (local / remote / two-tier) for each hash cache name based on configuration.
+ * Consistent with the key-value [io.kudos.ability.cache.common.core.keyvalue.MixCacheManager]; supports the same three strategies.
  *
  * @author K
  * @author AI: Cursor
@@ -41,7 +41,7 @@ class MixHashCacheManager {
     private var cacheConfigProvider: ICacheConfigProvider? = null
 
     /**
-     * 与 Redis 通知用的节点 ID 一致时，收消息端可过滤本节点发出的消息。若未提供 bean 则使用随机 UUID。
+     * When this matches the node ID used for Redis notifications, the receiver can filter out messages sent by this node. If no bean is provided, a random UUID is used.
      */
     @Autowired(required = false)
     @Qualifier("cacheNodeId")
@@ -51,7 +51,7 @@ class MixHashCacheManager {
     private val effectiveNodeId: String by lazy { nodeId ?: UUID.randomUUID().toString() }
 
     /**
-     * 在系统初始化完成后调用，加载所有 hash 缓存配置并创建策略封装视图。
+     * Invoked after system initialization completes; loads all hash cache configurations and creates the strategy wrapper views.
      */
     fun initHashCacheAfterSystemInit() {
         if (!isCacheEnabled) return
@@ -61,7 +61,7 @@ class MixHashCacheManager {
         val local = localHashCache
         val remote = remoteHashCache
         if (local == null && remote == null) {
-            log.warn("未找到 Hash 缓存实现（local/remote），不加载 Hash 缓存配置")
+            log.warn("No Hash cache implementation found (local/remote); Hash cache configuration will not be loaded.")
             return
         }
         val version = versionConfig ?: return
@@ -70,7 +70,7 @@ class MixHashCacheManager {
             val wrapper = MixHashCache(name, strategy, local, remote, effectiveNodeId)
             val realKey = version.getFinalCacheName(name)
             hashCaches[realKey] = wrapper
-            log.debug("初始化 Hash 缓存【{0}】策略={1}", name, strategy)
+            log.debug("Initialized Hash cache [{0}] strategy={1}", name, strategy)
         }
     }
 

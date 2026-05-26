@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * FixedLength 测试用例
+ * Test cases for FixedLength.
  *
  * @author AI: Cursor
  * @since 1.0.0
@@ -26,7 +26,7 @@ internal class FixedLengthTest {
         val bean = TestBean("abcd")
         val violations = ValidationKit.validateBean(bean, failFast = false)
         assertEquals(1, violations.size)
-        assertEquals("code须恰好3个字符", violations.first().message)
+        assertEquals("code must be exactly 3 characters", violations.first().message)
     }
 
     @Test
@@ -34,11 +34,11 @@ internal class FixedLengthTest {
         val bean = TestBean("ab")
         val violations = ValidationKit.validateBean(bean, failFast = false)
         assertEquals(1, violations.size)
-        assertEquals("code须恰好3个字符", violations.first().message)
+        assertEquals("code must be exactly 3 characters", violations.first().message)
     }
 
     internal data class TestBean(
-        @get:FixedLength(3, message = "code须恰好3个字符")
+        @get:FixedLength(3, message = "code must be exactly 3 characters")
         val code: String?
     )
 }

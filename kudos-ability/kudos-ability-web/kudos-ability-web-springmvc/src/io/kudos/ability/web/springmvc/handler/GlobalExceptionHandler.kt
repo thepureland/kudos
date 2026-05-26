@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 
 /**
- * 全局异常处理器。
+ * Global exception handler.
  *
- * 负责处理业务异常、通用参数异常以及未捕获异常，
- * 并统一转换为 ApiResponse 返回给调用方。
+ * Handles business exceptions, common parameter exceptions and uncaught exceptions,
+ * and uniformly converts them into ApiResponse returned to the caller.
  *
  * @author K
  * @author AI: Codex
@@ -29,7 +29,7 @@ class GlobalExceptionHandler {
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * 处理业务异常
+     * Handles business exceptions.
      */
     @ExceptionHandler(ServiceException::class)
     fun handleServiceException(ex: ServiceException): ApiResponse<Any> {
@@ -38,7 +38,7 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * 处理@RequestBody配合@Valid触发的参数校验异常
+     * Handles parameter validation exceptions triggered by @RequestBody combined with @Valid.
      */
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleMethodArgumentNotValidException(ex: MethodArgumentNotValidException): ApiResponse<Any> {
@@ -46,7 +46,7 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * 处理参数绑定阶段的校验异常
+     * Handles validation exceptions during the parameter binding stage.
      */
     @ExceptionHandler(BindException::class)
     fun handleBindException(ex: BindException): ApiResponse<Any> {
@@ -54,7 +54,7 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * 处理方法级参数校验异常
+     * Handles method-level parameter validation exceptions.
      */
     @ExceptionHandler(ConstraintViolationException::class)
     fun handleConstraintViolationException(ex: ConstraintViolationException): ApiResponse<Any> {
@@ -62,7 +62,7 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * 处理缺少必填请求参数的异常
+     * Handles exceptions for missing required request parameters.
      */
     @ExceptionHandler(MissingServletRequestParameterException::class)
     fun handleMissingServletRequestParameterException(ex: MissingServletRequestParameterException): ApiResponse<Any> {
@@ -70,7 +70,7 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * 处理参数类型转换失败的异常
+     * Handles exceptions for parameter type conversion failures.
      */
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handleMethodArgumentTypeMismatchException(ex: MethodArgumentTypeMismatchException): ApiResponse<Any> {
@@ -78,7 +78,7 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * 处理请求体无法解析的异常，例如非法JSON
+     * Handles exceptions when the request body cannot be parsed, e.g. invalid JSON.
      */
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleHttpMessageNotReadableException(ex: HttpMessageNotReadableException): ApiResponse<Any> {
@@ -86,7 +86,7 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * 处理 Kotlin require/check 触发的参数/状态断言异常
+     * Handles parameter/state assertion exceptions triggered by Kotlin require/check.
      */
     @ExceptionHandler(IllegalArgumentException::class, IllegalStateException::class)
     fun handleIllegalArgumentOrStateException(ex: RuntimeException): ApiResponse<Any> {
@@ -96,7 +96,7 @@ class GlobalExceptionHandler {
     }
 
     /**
-     * 处理未捕获的其他异常
+     * Handles other uncaught exceptions.
      */
     @ExceptionHandler(Exception::class)
     fun handleException(ex: Exception): ApiResponse<Any> {

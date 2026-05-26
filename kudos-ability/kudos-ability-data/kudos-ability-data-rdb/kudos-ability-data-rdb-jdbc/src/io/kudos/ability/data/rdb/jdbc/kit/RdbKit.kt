@@ -12,11 +12,13 @@ import java.sql.DriverManager
 import javax.sql.DataSource
 
 /**
- * 关系型数据库通用工具集合。
+ * Common utility set for relational databases.
  *
- * 包含从 [io.kudos.context.core.KudosContextHolder] 取当前数据源、按 url 推断 RDB 类型、
- * 新建 JDBC 连接、连接可用性测试、生成 ORDER BY 子句等高频操作。所有方法都是纯函数或
- * 围绕单个 DataSource 的轻封装，无内部状态。
+ * Includes high-frequency operations such as fetching the current data source from
+ * [io.kudos.context.core.KudosContextHolder], inferring RDB type from a url,
+ * creating new JDBC connections, testing connection liveness, and producing
+ * ORDER BY clauses. All methods are pure functions or thin wrappers around a single
+ * DataSource, with no internal state.
  *
  * @author K
  * @author AI: Codex
@@ -25,9 +27,9 @@ import javax.sql.DataSource
 object RdbKit {
 
     /**
-     * 取得当前上下文的数据源
+     * Returns the data source from the current context.
      *
-     * @return 当前上下文的数据源
+     * @return the current context data source
      * @author K
      * @since 1.0.0
      */
@@ -36,9 +38,9 @@ object RdbKit {
             ?: (SpringKit.getBean("dataSource") as DataSource)
 
     /**
-     * 取得当前上下文的数据库对象
+     * Returns the database object from the current context.
      *
-     * @return 当前上下文的数据库对象
+     * @return the current context database object
      * @author K
      * @since 1.0.0
      */
@@ -48,12 +50,12 @@ object RdbKit {
 //    }
 
     /**
-     * 新建一个数据源连接
+     * Creates a new data source connection.
      *
-     * @param url 连接url
-     * @param username 连接用户名
-     * @param password 连接密码
-     * @return 新建的连接
+     * @param url connection url
+     * @param username connection username
+     * @param password connection password
+     * @return the newly created connection
      * @author K
      * @since 1.0.0
      */
@@ -64,10 +66,12 @@ object RdbKit {
     }
 
     /**
-     * 测试连接是否可用
+     * Tests whether the connection is usable.
      *
-     * @param conn 数据库连接。为null将用当前上下文数据源新建一个连接，在使用完关掉。不为null时由用户自行处理连接的关闭。
-     * @return true: 连接可用，false: 连接不可用
+     * @param conn database connection. When null, a new connection is created from
+     *   the current context data source and closed after use. When non-null, the
+     *   caller is responsible for closing the connection.
+     * @return true: connection is usable; false: connection is not usable
      * @author K
      * @since 1.0.0
      */
@@ -76,8 +80,9 @@ object RdbKit {
         else getDataSource().connection.use { _testConnection(it) }
 
     /**
-     * 内部实现：按连接元数据推断 RDB 类型 → 选对应的 test SQL → execute。statement
-     * **不显式关闭**——历史遗留，调用方持有的连接关闭时会一并释放。
+     * Internal implementation: infers RDB type from connection metadata -> selects the
+     * matching test SQL -> executes it. The statement is **not explicitly closed** —
+     * historical behavior; it will be released when the caller-held connection closes.
      */
     private fun _testConnection(conn: Connection): Boolean {
         val dbMetaData = conn.metaData
@@ -87,10 +92,10 @@ object RdbKit {
     }
 
     /**
-     * 根据数据库连接url得到关系型数据库的类型
+     * Determines the relational database type from the connection url.
      *
-     * @param url 数据库连接url
-     * @return 关系型数据库的类型
+     * @param url database connection url
+     * @return the relational database type
      * @author K
      * @since 1.0.0
      */
@@ -100,32 +105,33 @@ object RdbKit {
     }
 
     /**
-     * 根据数据源确定关系型数据库的类型
+     * Determines the relational database type from the data source.
      *
-     * 通过获取数据源连接的元数据中的URL，解析出数据库类型。
-     * 如果传入的dataSource为null，则使用当前上下文的数据源（通过getDataSource()获取）。
+     * Parses the database type by reading the URL from the data source connection's
+     * metadata. When the passed `dataSource` is null, uses the current context data
+     * source (obtained via getDataSource()).
      *
-     * ## 核心流程
-     * 1. 如果dataSource为null，使用getDataSource()获取当前上下文的数据源
-     * 2. 从数据源的连接中获取DatabaseMetaData
-     * 3. 从DatabaseMetaData中获取连接URL
-     * 4. 调用determinRdbTypeByUrl()解析URL，返回对应的RdbTypeEnum
+     * ## Core flow
+     * 1. If `dataSource` is null, use getDataSource() to fetch the current context data source.
+     * 2. Acquire DatabaseMetaData from a connection to the data source.
+     * 3. Read the connection URL from DatabaseMetaData.
+     * 4. Call determinRdbTypeByUrl() to parse the URL and return the matching RdbTypeEnum.
      *
-     * ## 依赖与外部交互
-     * - 依赖：DataSource（通过参数传入或从上下文获取）
-     * - IO：获取数据库连接（会打开一个连接以获取元数据）
+     * ## Dependencies and external interactions
+     * - Dependency: DataSource (passed as a parameter or fetched from the context).
+     * - IO: acquires a database connection (opens one to read metadata).
      *
-     * ## 资料/契约
-     * - 输入：dataSource可为null，为null时使用当前上下文的数据源
-     * - 输出：返回RdbTypeEnum枚举值，表示数据库类型（如H2、MYSQL、POSTGRESQL等）
-     * - 错误：如果数据源连接失败或URL格式不正确，可能抛出异常
+     * ## Inputs / contract
+     * - Input: `dataSource` may be null; when null, the current context data source is used.
+     * - Output: an RdbTypeEnum value representing the database type (e.g. H2, MYSQL, POSTGRESQL).
+     * - Errors: may throw if the data source connection fails or the URL is malformed.
      *
-     * ## 性能特性
-     * - 需要打开一个数据库连接以获取元数据，有一定性能开销
-     * - 连接会在方法执行完毕后自动关闭（通过connection.use）
+     * ## Performance characteristics
+     * - Opens a database connection to read metadata, so has some overhead.
+     * - The connection is closed automatically after the method finishes (via connection.use).
      *
-     * @param dataSource 数据源，为null时使用当前上下文的数据源
-     * @return 关系型数据库的类型枚举
+     * @param dataSource data source; when null, the current context data source is used
+     * @return the relational database type enum
      * @author K
      * @since 1.0.0
      */
@@ -133,10 +139,10 @@ object RdbKit {
         (dataSource ?: getDataSource()).connection.use { determinRdbTypeByUrl(it.metaData.url) }
 
     /**
-     * 根据关系型数据库类型得到连接测试sql语句
+     * Returns the connection-test SQL statement for the given relational database type.
      *
-     * @param rdbType 关系型数据库类型
-     * @return 连接测试sql语句
+     * @param rdbType relational database type
+     * @return connection-test SQL statement
      * @author K
      * @since 1.0.0
      */
@@ -148,10 +154,10 @@ object RdbKit {
         }
 
     /**
-     * 返回排序规则的SQL
+     * Returns the SQL for the given sort orders.
      *
-     * @param orders 排序规则
-     * @return 排序规则SQL
+     * @param orders sort orders
+     * @return SQL for the sort orders
      * @author K
      * @since 1.0.0
      */

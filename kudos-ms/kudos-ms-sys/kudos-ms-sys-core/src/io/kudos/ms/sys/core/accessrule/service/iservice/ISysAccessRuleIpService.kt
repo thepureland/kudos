@@ -8,7 +8,7 @@ import java.math.BigDecimal
 
 
 /**
- * ip访问规则业务接口
+ * IP access rule service interface.
  *
  * @author K
  * @since 1.0.0
@@ -17,56 +17,57 @@ interface ISysAccessRuleIpService : IBaseCrudService<String, SysAccessRuleIp> {
 
 
     /**
-     * 获取规则的IP列表
+     * Get the IP list for a rule.
      *
-     * @param ruleId 规则id
-     * @return IP规则记录列表
+     * @param ruleId rule id
+     * @return list of IP rule records
      * @author K
      * @since 1.0.0
      */
     fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow>
 
     /**
-     * 根据系统编码和租户id从缓存获取IP规则列表
+     * Fetch the IP rule list from cache by system code and tenant id.
      *
-     * @param systemCode 系统编码
-     * @param tenantId 租户id，可以为null
-     * @return IP规则缓存项列表
+     * @param systemCode system code
+     * @param tenantId tenant id, may be null
+     * @return list of IP rule cache entries
      * @author K
      * @since 1.0.0
      */
     fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry>
 
     /**
-     * 检查 IP 是否允许访问（按缓存中规则做 32 位无符号区间包含判断）。
+     * Check whether an IP is allowed (treats cached `ip_start`/`ip_end` as an unsigned 32-bit interval).
      *
-     * **限制**：仅匹配可把 `ip_start`/`ip_end` 当作无符号 32 位上下界的规则；字典为 ipv6 的条目不参与本方法（需扩展 API 再支持）。
+     * **Limitation**: only rules whose `ip_start`/`ip_end` fit into unsigned 32-bit bounds participate;
+     * ipv6-dict entries are not handled by this method (extend the API to add support).
      *
-     * @param ip ip的BigDecimal表示
-     * @param systemCode 系统编码
-     * @param tenantId 租户 id，可以为 null（平台级）
-     * @return 是否落在任一未过期且启用的规则内
+     * @param ip BigDecimal representation of the IP
+     * @param systemCode system code
+     * @param tenantId tenant id, may be null (platform-level)
+     * @return whether the IP falls within any non-expired, active rule
      * @author K
      * @since 1.0.0
      */
     fun checkIpAccess(ip: BigDecimal, systemCode: String, tenantId: String?): Boolean
 
     /**
-     * 删除规则的所有IP
+     * Delete all IPs for a rule.
      *
-     * @param ruleId 规则id
-     * @return 删除的数量
+     * @param ruleId rule id
+     * @return number of rows deleted
      * @author K
      * @since 1.0.0
      */
     fun deleteByRuleId(ruleId: String): Int
 
     /**
-     * 仅更新单条 IP 访问规则的启用标记；成功后按父规则维度刷新 IP 规则缓存。
+     * Update only the enabled flag of a single IP access rule; on success, refreshes the IP rule cache at the parent-rule dimension.
      *
-     * @param id IP 规则主键（`sys_access_rule_ip.id`）
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id IP rule primary key (`sys_access_rule_ip.id`)
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     fun updateActive(id: String, active: Boolean): Boolean
 

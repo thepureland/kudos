@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component
 import java.util.function.Consumer
 
 /**
- * kafka测试消费者
+ * Kafka test consumer.
  *
  * @author shane
  * @author  K
@@ -26,19 +26,19 @@ open class KafkaConsumerHandler {
     @MqConsumer(bindingName = "consumer-in-0")
     fun consumer(): Consumer<Message<StreamMessageVo<KafkaSimpleMsg>>?> {
         return Consumer { msg: Message<StreamMessageVo<KafkaSimpleMsg>>? ->
-            //获取消息体
+            // Retrieve the message body
             val streamMsgVo = msg?.payload ?: return@Consumer
             val simpleMsg = streamMsgVo.data ?: return@Consumer
             log.info("receive message: ${simpleMsg.msg}")
-            //记录日志
+            // Log the result
             if (this.defaultMsg == simpleMsg.msg) {
                 flag = true
                 log.info("is Test Message: true")
             }
             log.info("before error: $errorFlag")
-            //模拟消费异常
+            // Simulate a consumer exception
             if (errorFlag) {
-                log.info("模拟消费异常: start up, true")
+                log.info("simulated consumer exception: start up, true")
                 throw RuntimeException("mock consumer exception")
             }
         }

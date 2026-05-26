@@ -8,12 +8,13 @@ import javafx.util.Callback
 import javafx.util.StringConverter
 
 /**
- * 整数输入 [TableCell] 工厂。
+ * Factory for an integer-input [TableCell].
  *
- * 用 [XTextFieldTableCell] + 整数 [StringConverter]，非数字串会被还原为 null（清空单元格），
- * 避免用户填错时把整列卡死在异常态。
+ * Uses [XTextFieldTableCell] + an integer [StringConverter]; non-numeric strings are restored to
+ * null (clearing the cell) to avoid stalling the whole column in an error state when the user
+ * mistypes.
  *
- * @param S 行数据类型
+ * @param S Row data type
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -21,10 +22,10 @@ import javafx.util.StringConverter
 class NumberTextFieldTableCellFactory<S> : Callback<TableColumn<S, Int>?, TableCell<S, Int>?> {
 
     /**
-     * 为列创建一个新的 cell 实例（JavaFX 在每行渲染时都会调）。
+     * Create a new cell instance for the column (JavaFX invokes this when rendering each row).
      *
-     * @param param 当前列
-     * @return 整数编辑用的 [XTextFieldTableCell]
+     * @param param The current column
+     * @return An [XTextFieldTableCell] for integer editing
      * @author K
      * @since 1.0.0
      */

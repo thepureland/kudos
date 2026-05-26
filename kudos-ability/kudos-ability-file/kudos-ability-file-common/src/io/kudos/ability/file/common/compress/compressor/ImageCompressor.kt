@@ -5,10 +5,12 @@ import io.kudos.ability.file.common.compress.support.CompressionResult
 import java.io.InputStream
 
 /**
- * 图片压缩协议。
+ * Image compression protocol.
  *
- * 由 [io.kudos.ability.file.common.compress.support.ImageCompressorFactory] 按 [CompressionConfig]
- * 挑选合适的实现（Jpg / Png / WebP）。新增压缩格式时实现本接口并在工厂里登记即可。
+ * [io.kudos.ability.file.common.compress.support.ImageCompressorFactory] selects the
+ * appropriate implementation (Jpg / Png / WebP) based on [CompressionConfig]. When
+ * adding a new compression format, implement this interface and register it in the
+ * factory.
  *
  * @author K
  * @author AI: Codex
@@ -17,21 +19,22 @@ import java.io.InputStream
 interface ImageCompressor {
 
     /**
-     * 判断当前压缩器是否处理这次任务。
-     * 例如 [WebPCompressor] 只在 `config.webp = true` 时返回 true，让上层在普通图片场景跳过 WebP。
+     * Determines whether the current compressor handles this task.
+     * For example, [WebPCompressor] only returns true when `config.webp = true`,
+     * letting the upper layer skip WebP in plain image scenarios.
      *
-     * @param config 压缩配置
-     * @return true 表示由本压缩器处理
+     * @param config compression configuration
+     * @return true if this compressor handles the task
      */
     fun support(config: CompressionConfig): Boolean
 
     /**
-     * 执行压缩。
+     * Performs compression.
      *
-     * @param inputStream 源图片输入流（调用方负责关闭）
-     * @param destination 期望的目标路径（具体实现可能改名，如 WebP 追加 `.webp` 后缀）
-     * @param config 压缩配置
-     * @return 含压缩字节流、最终路径、Content-Type 的结果
+     * @param inputStream source image input stream (the caller is responsible for closing it)
+     * @param destination expected target path (concrete implementations may rename, e.g. WebP appends `.webp`)
+     * @param config compression configuration
+     * @return result containing the compressed byte stream, final path, and Content-Type
      */
     fun compress(inputStream: InputStream, destination: String, config: CompressionConfig): CompressionResult
 

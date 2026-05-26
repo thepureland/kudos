@@ -8,7 +8,7 @@ import org.ktorm.entity.firstOrNull
 import org.springframework.stereotype.Repository
 
 /**
- * 代码生成-对象信息数据访问对象
+ * Code generation - object info data access object.
  *
  * @author K
  * @since 1.0.0

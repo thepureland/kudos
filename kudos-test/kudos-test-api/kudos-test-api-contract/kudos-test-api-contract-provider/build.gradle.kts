@@ -12,20 +12,20 @@ dependencies {
     testImplementation(libs.spring.boot.starter.web)
 }
 
-// Spring Cloud Contract 插件配置
+// Spring Cloud Contract plugin configuration
 contracts {
-    // 契约文件目录
+    // Contract files directory
 //    contractsDslDir.set(file("test-resources/contracts"))
     contractsDslDir.set(file("$projectDir/src/contractTest/resources/contracts"))
 
 
-    // 生成的测试使用哪个基类
+    // Base class used by generated tests
     baseClassForTests.set("io.kudos.test.api.contract.provider.BaseContractTest")
 
     testFramework.set(org.springframework.cloud.contract.verifier.config.TestFramework.JUNIT5)
     testMode.set(org.springframework.cloud.contract.verifier.config.TestMode.MOCKMVC)
 
-    // 是否生成 stubs
+    // Whether to generate stubs
     failOnNoContracts.set(true)
 }
 

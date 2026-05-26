@@ -12,7 +12,7 @@ import java.util.ServiceLoader
 
 
 /**
- * yml配置文件属性源工厂
+ * Property source factory for yml configuration files.
  *
  * @author https://zhuanlan.zhihu.com/p/99738603
  * @author hanson
@@ -31,11 +31,11 @@ class YamlPropertySourceFactory : PropertySourceFactory {
         val map: MutableMap<Any?, Any?> = when (val source = propertySource?.getSource()) {
             null -> mutableMapOf()
             is MutableMap<*, *> -> (source as MutableMap<Any?, Any?>).also {
-                //nacos与本地文件合并，如果nacos不包含所有配置的场景
-                log.info("加载配置文件:{0},size={1}", propertySource, it.size)
+                // Merge nacos with local file for the scenario where nacos does not contain all configurations
+                log.info("Loading configuration file: {0}, size={1}", propertySource, it.size)
             }
             else -> {
-                log.info("加载配置文件:{0}", propertySource)
+                log.info("Loading configuration file: {0}", propertySource)
                 return propertySource
             }
         }
@@ -44,7 +44,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
     }
 
     /**
-     * 从启动的config-data获取数据，比如nacos
+     * Fetch data from the bootstrap config-data, e.g. nacos.
      *
      * @param sourceName
      */
@@ -59,21 +59,21 @@ class YamlPropertySourceFactory : PropertySourceFactory {
     }
 
     /**
-     * 把"配置文件 sourceName → 所在 jar URI"对应关系记到 [SOURCE_MAP]，
-     * 便于后续诊断"配置来自哪个 jar"（典型用途：多模块 yml 冲突排查）。
-     * URI 获取失败时只 WARN 不抛异常——记录失败不应阻断配置加载本身。
+     * Record the "configuration file sourceName → containing jar URI" mapping in [SOURCE_MAP], to help later diagnose
+     * "which jar this configuration came from" (a typical use case is troubleshooting yml conflicts across modules).
+     * When URI retrieval fails, only WARN without throwing — a logging failure should not block configuration loading.
      *
-     * @param sourceName 配置源名（通常是 yml 路径）
-     * @param encodedRes 包装好的资源
+     * @param sourceName Configuration source name (usually the yml path)
+     * @param encodedRes The wrapped resource
      * @author K
      * @since 1.0.0
      */
     private fun initConfigJarMap(sourceName: String?, encodedRes: EncodedResource) {
         val url = runCatching {
-            // 例如 "jar:file:/…/libs/soul-foo.jar!/application.yml"
+            // e.g. "jar:file:/…/libs/soul-foo.jar!/application.yml"
             encodedRes.resource.uri.toString()
         }.getOrElse {
-            log.warn("设置config和jar关系失败！")
+            log.warn("Failed to set the config-to-jar relationship!")
             ""
         }
         SOURCE_MAP[sourceName] = url
@@ -83,7 +83,7 @@ class YamlPropertySourceFactory : PropertySourceFactory {
     companion object {
         private val SOURCE_MAP: MutableMap<String?, String?> = mutableMapOf()
 
-        /** 返回只读视图，避免外部篡改内部映射。 */
+        /** Return a read-only view to prevent external tampering with the internal map. */
         fun getSourceMap(): Map<String?, String?> = Collections.unmodifiableMap(SOURCE_MAP)
 
         fun allSourcePath(): List<String?> = SOURCE_MAP.keys.toList()

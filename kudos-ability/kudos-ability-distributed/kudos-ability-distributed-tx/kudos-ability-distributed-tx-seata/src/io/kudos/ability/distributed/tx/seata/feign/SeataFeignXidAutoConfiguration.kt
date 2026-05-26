@@ -12,21 +12,23 @@ import org.springframework.core.Ordered
 import org.springframework.web.filter.OncePerRequestFilter
 
 /**
- * Seata 全局事务 XID 通过 Feign 跨服务传播的自动装配。
+ * Auto-configuration that propagates the Seata global transaction XID across services via Feign.
  *
- * Apache Seata 2.x 自身**不带** Spring Cloud OpenFeign 集成：调用方发出 Feign 请求时不会
- * 自动把当前线程的 `RootContext.getXID()` 加到请求头，被调用方收到请求后也不会自动 bind
- * 回当前线程的 RootContext，结果就是跨服务的 `@GlobalTransactional` 拿不到分支，回滚什么
- * 都回滚不了。本模块自带一对协同组件解决这个：
- *  - [SeataFeignXidProcessor]：出站方向，把 `RootContext.getXID()` 写到请求头 `TX_XID`
- *    （`RootContext.KEY_XID`）。挂在 `IFeignRequestContextProcess` 扩展点上，
- *    `GlobalHeaderRequestInterceptor` 会循环调用所有此类处理器。
- *  - [SeataXidServletFilter]：入站方向，读 `TX_XID` 头并 `RootContext.bind`，请求结束
- *    `unbind`。`HIGHEST_PRECEDENCE` 确保任何 `@Transactional` 切面之前完成 bind。
+ * Apache Seata 2.x does **not** ship Spring Cloud OpenFeign integration: when the caller issues a
+ * Feign request it does not automatically add the current thread's `RootContext.getXID()` to the
+ * request headers, and the callee does not automatically bind it back to its own RootContext on
+ * receipt. The result is that cross-service `@GlobalTransactional` cannot see the branches and
+ * cannot roll anything back. This module ships a pair of cooperating components to fix that:
+ *  - [SeataFeignXidProcessor]: outbound, writes `RootContext.getXID()` into the request header
+ *    `TX_XID` (`RootContext.KEY_XID`). Hooks into the `IFeignRequestContextProcess` extension
+ *    point; `GlobalHeaderRequestInterceptor` invokes every such processor in turn.
+ *  - [SeataXidServletFilter]: inbound, reads the `TX_XID` header and calls `RootContext.bind`,
+ *    then `unbind` at the end of the request. `HIGHEST_PRECEDENCE` ensures the bind happens
+ *    before any `@Transactional` aspect.
  *
- * 仅当 classpath 同时具备 Feign (`feign.RequestInterceptor`) 与 Spring MVC 的
- * [OncePerRequestFilter] 时这套装配才激活；纯 Seata（无 Feign / 无 servlet 容器）的
- * 部署不会被影响。
+ * This wiring activates only when the classpath has both Feign (`feign.RequestInterceptor`) and
+ * Spring MVC's [OncePerRequestFilter]; deployments running pure Seata (no Feign / no servlet
+ * container) are unaffected.
  * @author K
  * @author AI: Codex
  * @since 1.0.0

@@ -1,7 +1,7 @@
 dependencies {
     api(project(":kudos-base"))
-    // 用于在 IMsgXxxApi 上挂方法级 @GetMapping/@PostMapping，让 Feign 代理可识别。
-    // 与 sys-common / user-common / auth-common 同模式：仅方法级，不在接口类型上放 @RequestMapping。
+    // Used to attach method-level @GetMapping/@PostMapping on IMsgXxxApi so Feign proxies can recognize them.
+    // Same pattern as sys-common / user-common / auth-common: method-level only; do not put @RequestMapping on the interface type.
     compileOnly(platform(libs.spring.boot.bom))
     compileOnly("org.springframework:spring-web")
 }

@@ -31,8 +31,8 @@ import javafx.scene.input.MouseButton
  * - so now we override the latter and try to terminate edits
  *
  *
- * @param S 行数据类型
- * @param T 列值类型
+ * @param S Row data type
+ * @param T Column value type
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -54,8 +54,9 @@ open class XTableCellBehavior<S, T>
     //        super.simpleSelect(e);
     //    }
     /**
-     * 仅当承载本 cell 的表为 [XTableView] 时调用 [XTableView.terminateEdit]，让其它正在编辑的 cell 先提交。
-     * 非 XTableView 没法做协调，静默跳过即可。
+     * Only when the table hosting this cell is an [XTableView], call [XTableView.terminateEdit]
+     * to let other cells currently being edited commit first. For non-XTableView there is no way
+     * to coordinate, so silently skip.
      *
      * @author K
      * @since 1.0.0
@@ -69,12 +70,13 @@ open class XTableCellBehavior<S, T>
     }
 
     /**
-     * 鼠标点击事件分发；先调 [tryTerminateEdit] 让其它 cell 提交编辑，再交给 super 处理选中/激活。
-     * 该方法是 jdk8_u20 从原 `simpleSelect` 拆出来的，签名也跟着变了，所以钩子改 override 这里。
+     * Mouse click event dispatch; first invoke [tryTerminateEdit] so other cells commit their edits,
+     * then delegate to super for selection/activation. This method was split out from the original
+     * `simpleSelect` in jdk8_u20 and its signature changed, so the hook is overridden here.
      *
-     * @param button 鼠标按钮
-     * @param clickCount 点击次数
-     * @param isAlreadySelected 该 cell 此前是否已被选中
+     * @param button Mouse button
+     * @param clickCount Click count
+     * @param isAlreadySelected Whether this cell was already selected previously
      * @author K
      * @since 1.0.0
      */

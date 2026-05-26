@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.dict.vo.request
 
 /**
- * 字典项表单新建请求VO
+ * Dictionary item create form request VO.
  *
  * @author K
  * @since 1.0.0

@@ -6,14 +6,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * IdJsonResult 测试用具体实现（抽象类不可实例化）
+ * Concrete implementation of IdJsonResult for testing (abstract class cannot be instantiated)
  */
 private class TestIdJsonResult<T> : IdJsonResult<T?>() {
     override var id: T? = null
 }
 
 /**
- * IdJsonResult测试用例
+ * IdJsonResult test cases
  *
  * @author AI: cursor
  * @author K

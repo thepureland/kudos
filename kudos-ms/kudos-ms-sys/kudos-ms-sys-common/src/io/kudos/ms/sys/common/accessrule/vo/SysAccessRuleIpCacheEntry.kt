@@ -8,25 +8,25 @@ import java.time.LocalDateTime
 
 
 /**
- * IP 访问规则缓存项：同时保留 `NUMERIC` 边界的 [BigDecimal]（[ipStart]/[ipEnd]）与十进制字符串（[ipStartStr]/[ipEndStr]）。
- * 是否为 IPv4/IPv6 由 [ipTypeDictCode] 区分；展示或定长格式可在使用方按类型从数值列解码。
+ * IP access rule cache entry: keeps both the `NUMERIC` boundary as [BigDecimal] ([ipStart]/[ipEnd]) and the decimal strings ([ipStartStr]/[ipEndStr]).
+ * Whether it is IPv4 or IPv6 is distinguished by [ipTypeDictCode]; for display or fixed-length formats, callers can decode from the numeric column based on type.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysAccessRuleIpCacheEntry (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String,
 
     val ipStart: BigDecimal,
 
     val ipEnd: BigDecimal,
 
-    /** ip类型字典代码 */
+    /** IP type dictionary code. */
     val ipTypeDictCode: String,
 
-    /** 过期时间 */
+    /** Expiration time. */
     val expirationTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable, IIpBigDecimalToStringSupport {

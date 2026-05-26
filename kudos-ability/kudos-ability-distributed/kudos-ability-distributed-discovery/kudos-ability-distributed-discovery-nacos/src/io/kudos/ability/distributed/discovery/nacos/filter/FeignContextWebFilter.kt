@@ -14,42 +14,42 @@ import jakarta.servlet.http.HttpServletRequest
 import java.util.Locale
 
 /**
- * Feign 上下文 Web 过滤器——provider 端的"反向适配器"。
+ * Feign context web filter — the "reverse adapter" on the provider side.
  *
- * 配套关系：`kudos-ability-distributed-client-feign` 的 `GlobalHeaderRequestInterceptor` 在 client
- * 端把当前线程的 [io.kudos.context.core.KudosContext] 写到出站请求头；本 filter 在 provider
- * 端把这些 header **写回到** provider 进程的 KudosContext，让被调用方业务代码"感觉自己在
- * 一条连续的调用链上"。
+ * Counterpart: `GlobalHeaderRequestInterceptor` in `kudos-ability-distributed-client-feign` writes
+ * the current thread's [io.kudos.context.core.KudosContext] into outbound request headers on the
+ * client side; this filter on the provider side **writes those headers back into** the provider
+ * process's KudosContext, so the callee's business code "feels like it's on a continuous call chain".
  *
- * **已通过 [io.kudos.ability.distributed.discovery.nacos.init.NacosDiscoveryAutoConfiguration]
- * 装配为 `FilterRegistrationBean<FeignContextWebFilter>`**——默认开启，可用配置
- * `kudos.ability.distributed.discovery.nacos.feign-context-filter.enabled=false` 关闭。
+ * **Already wired via [io.kudos.ability.distributed.discovery.nacos.init.NacosDiscoveryAutoConfiguration]
+ * as `FilterRegistrationBean<FeignContextWebFilter>`** — enabled by default, can be disabled with
+ * `kudos.ability.distributed.discovery.nacos.feign-context-filter.enabled=false`.
  *
- * 从HTTP请求头中提取Feign调用传递的上下文信息，并设置到KudosContext中。
+ * Extracts Feign call context info from HTTP request headers and sets it into KudosContext.
  *
- * 核心功能：
- * 1. 上下文提取：从HTTP请求头中提取租户ID、子系统代码、追踪键、数据源ID、语言环境等信息
- * 2. 上下文设置：将提取的信息设置到当前线程的KudosContext中，供后续业务逻辑使用
- * 3. 扩展支持：支持通过IFeignProviderContextProcess接口扩展上下文处理逻辑
- * 
- * 处理的请求头：
- * - TENANT_ID：租户ID
- * - SUB_SYS_CODE：子系统代码
- * - TRACE_KEY：追踪键，用于分布式链路追踪
- * - DATASOURCE_ID：数据源ID，用于动态数据源切换
- * - LOCAL：语言环境，格式为"语言代码_国家代码"（如zh_CN）
- * 
- * 工作流程：
- * - 判断请求是否带 Feign / 通知透传标记（[Consts.RequestHeader.FEIGN_REQUEST] 或 [Consts.RequestHeader.NOTIFY_REQUEST] 非空）
- * - 提取请求头中的上下文信息
- * - 设置到KudosContext中
- * - 调用扩展处理器进行额外的上下文处理
- * - 继续执行过滤器链
- * 
- * 注意事项：
- * - 无上述标记的普通 HTTP 请求直接放行
- * - 如果ClientInfo不存在，会自动创建
- * - 语言环境字符串会被解析为Locale对象
+ * Core features:
+ * 1. Context extraction: pulls tenant ID, subsystem code, trace key, datasource ID, locale, etc. from HTTP headers
+ * 2. Context setup: writes the extracted info into the current thread's KudosContext for downstream business logic
+ * 3. Extension support: allows extending the context handling via the IFeignProviderContextProcess SPI
+ *
+ * Handled request headers:
+ * - TENANT_ID: tenant ID
+ * - SUB_SYS_CODE: subsystem code
+ * - TRACE_KEY: trace key, used for distributed tracing
+ * - DATASOURCE_ID: datasource ID, used for dynamic datasource switching
+ * - LOCAL: locale, in the format "languageCode_countryCode" (e.g. zh_CN)
+ *
+ * Workflow:
+ * - Check whether the request carries a Feign / notification propagation marker ([Consts.RequestHeader.FEIGN_REQUEST] or [Consts.RequestHeader.NOTIFY_REQUEST] non-empty)
+ * - Extract context info from request headers
+ * - Set it into KudosContext
+ * - Invoke extension processors for extra context handling
+ * - Continue the filter chain
+ *
+ * Notes:
+ * - Plain HTTP requests without the above markers are passed through unchanged
+ * - If ClientInfo does not exist, it will be created automatically
+ * - The locale string is parsed into a Locale object
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -61,39 +61,39 @@ class FeignContextWebFilter(
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * 执行过滤：提取Feign请求的上下文信息
-     * 
-     * 从HTTP请求头中提取Feign调用传递的上下文信息，并设置到KudosContext中。
-     * 
-     * 请求判断逻辑：
-     * - 仅当 FEIGN_REQUEST 或 NOTIFY_REQUEST 任一请求头非空时解析上下文（二者为显式透传标记）
-     * 
-     * 上下文提取和设置：
-     * 1. 从请求头提取：租户ID、子系统代码、追踪键、数据源ID、语言环境
-     * 2. 获取或创建ClientInfo对象
-     * 3. 解析语言环境字符串（格式：语言代码_国家代码，如zh_CN）
-     * 4. 设置到KudosContext中
-     * 
-     * 扩展处理：
-     * - 调用所有IFeignProviderContextProcess实现类进行额外的上下文处理
-     * - 支持自定义扩展，例如添加额外的上下文信息
-     * 
-     * 注意事项：
-     * - 无透传标记的请求不修改上下文
-     * - 如果ClientInfo不存在，会自动创建
-     * - 语言环境字符串会被解析为Locale对象
-     * - 数据源ID如果为空，不会设置到上下文中
-     * 
-     * @param servletRequest HTTP请求对象
-     * @param servletResponse HTTP响应对象
-     * @param filterChain 过滤器链
+     * Run the filter: extract the Feign request's context info.
+     *
+     * Pulls Feign call context info from the HTTP request headers and sets it into KudosContext.
+     *
+     * Request gate:
+     * - Only parse context when either the FEIGN_REQUEST or NOTIFY_REQUEST header is non-empty (both are explicit propagation markers)
+     *
+     * Context extraction and setup:
+     * 1. Extract from headers: tenant ID, subsystem code, trace key, datasource ID, locale
+     * 2. Obtain or create the ClientInfo object
+     * 3. Parse the locale string (format: languageCode_countryCode, e.g. zh_CN)
+     * 4. Set it into KudosContext
+     *
+     * Extension handling:
+     * - Invoke all IFeignProviderContextProcess implementations for additional context processing
+     * - Supports custom extensions, e.g. adding extra context info
+     *
+     * Notes:
+     * - Requests without the propagation markers do not mutate the context
+     * - If ClientInfo does not exist, it will be created automatically
+     * - The locale string is parsed into a Locale object
+     * - A blank datasource ID is not written to the context
+     *
+     * @param servletRequest HTTP request object
+     * @param servletResponse HTTP response object
+     * @param filterChain filter chain
      */
     override fun doFilter(
         servletRequest: ServletRequest?,
         servletResponse: ServletResponse?,
         filterChain: FilterChain
     ) {
-        // 非 HTTP 请求（极少见，但 Filter 契约允许）直接放行——避免 ClassCastException 中断链路
+        // Non-HTTP requests (rare, but allowed by the Filter contract) pass through — avoid breaking the chain with ClassCastException
         val request = servletRequest as? HttpServletRequest ?: run {
             filterChain.doFilter(servletRequest, servletResponse)
             return
@@ -132,7 +132,7 @@ class FeignContextWebFilter(
             try {
                 processor.processContext(request, context)
             } catch (e: Exception) {
-                log.error(e, "IFeignProviderContextProcess 执行失败: {0}", processor.javaClass.name)
+                log.error(e, "IFeignProviderContextProcess execution failed: {0}", processor.javaClass.name)
             }
         }
         filterChain.doFilter(servletRequest, servletResponse)

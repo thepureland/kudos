@@ -26,51 +26,52 @@ import java.util.TreeSet
 import kotlin.reflect.KClass
 
 /**
- * 类路径扫描器
- * 
- * 用于扫描类路径（classpath）中的资源和类文件，支持文件系统和JAR包两种协议。
- * 
- * 核心功能：
- * 1. 资源扫描：根据路径、前缀和后缀扫描类路径中的资源文件
- * 2. 类扫描：扫描实现指定接口的类，自动过滤抽象类
- * 3. 协议支持：支持file协议（文件系统）和jar/zip/wsjar协议（JAR包）
- * 4. 路径解析：自动解析类路径URL，支持多个类路径位置
- * 
- * 扫描机制：
- * - 使用ClassLoader.getResources获取类路径下的所有URL
- * - 根据URL协议选择对应的扫描器（FileSystemClassPathLocationScanner或JarFileClassPathLocationScanner）
- * - 递归扫描子目录和子包
- * - 根据前缀和后缀过滤资源名称
- * 
- * 资源过滤：
- * - 支持前缀匹配：文件名以指定前缀开头
- * - 支持后缀匹配：文件名以指定后缀结尾
- * - 支持同时匹配前缀和后缀
- * - 如果前缀和后缀都为空，返回所有资源
- * 
- * 类扫描：
- * - 自动过滤抽象类，只返回可实例化的类
- * - 检查类是否实现指定接口
- * - 支持扫描子包中的类
- * - 返回Class数组，便于后续实例化
- * 
- * 使用场景：
- * - 国际化资源文件的扫描
- * - 插件类的自动发现
- * - 配置文件的位置查找
- * - 接口实现类的自动注册
- * 
- * 注意事项：
- * - 使用当前线程的ClassLoader进行扫描
- * - 不支持vfs、bundle等特殊协议（代码中有注释但未实现）
- * - 扫描结果按资源名称排序（使用TreeSet）
- * - 扫描失败不会抛出异常，只会记录日志
- * 
+ * Classpath scanner.
+ *
+ * Scans for resources and class files on the classpath; supports both the filesystem and JAR protocols.
+ *
+ * Core capabilities:
+ * 1. Resource scanning: scans the classpath for resource files by path, prefix, and suffix.
+ * 2. Class scanning: scans for classes implementing the specified interface; abstract classes are filtered out.
+ * 3. Protocol support: supports the `file` protocol (filesystem) and `jar`/`zip`/`wsjar` protocols (JARs).
+ * 4. Path resolution: resolves classpath URLs automatically and supports multiple classpath locations.
+ *
+ * Scanning mechanism:
+ * - Uses `ClassLoader.getResources` to obtain all URLs under the classpath.
+ * - Picks the appropriate scanner based on the URL protocol
+ *   (`FileSystemClassPathLocationScanner` or `JarFileClassPathLocationScanner`).
+ * - Recursively scans subdirectories and subpackages.
+ * - Filters resource names by prefix and suffix.
+ *
+ * Resource filtering:
+ * - Supports prefix matching: filename starts with the given prefix.
+ * - Supports suffix matching: filename ends with the given suffix.
+ * - Supports matching both prefix and suffix.
+ * - When both prefix and suffix are blank, returns all resources.
+ *
+ * Class scanning:
+ * - Filters out abstract classes; only returns instantiable classes.
+ * - Checks whether a class implements the specified interface.
+ * - Supports scanning classes in subpackages.
+ * - Returns an array of `Class`, ready for subsequent instantiation.
+ *
+ * Use cases:
+ * - Scanning i18n resource files.
+ * - Auto-discovery of plugin classes.
+ * - Locating configuration files.
+ * - Auto-registration of interface implementations.
+ *
+ * Notes:
+ * - Scans using the current thread's `ClassLoader`.
+ * - Does not support special protocols such as `vfs` or `bundle` (code has comments but no implementation).
+ * - Results are sorted by resource name (uses `TreeSet`).
+ * - Scan failures are logged rather than thrown.
+ *
  * @since 1.0.0
  */
 object ClassPathScanner {
-    
-    /** 日志器；扫描失败仅记日志、不抛出 */
+
+    /** Logger; scan failures are logged only, never thrown. */
     private val logger = LogFactory.getLog(this::class)
 
     /**

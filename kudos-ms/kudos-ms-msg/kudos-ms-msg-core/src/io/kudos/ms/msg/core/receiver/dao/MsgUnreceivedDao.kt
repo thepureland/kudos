@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 未送达消息数据访问对象
+ * Undelivered message data access object.
  *
  * @author K
  * @since 1.0.0

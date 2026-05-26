@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
 /**
- * AtLeast测试用例
+ * Test cases for AtLeast.
  *
  * @author K
  * @since 1.0.0
@@ -15,7 +15,7 @@ import kotlin.test.assertFailsWith
 internal class AtLeastTest {
 
     /**
-     * 测试参数非法情况
+     * Test illegal-argument scenarios.
      */
     @Test
     fun testIllegalArguments() {
@@ -24,25 +24,25 @@ internal class AtLeastTest {
     }
 
     /**
-     * 测试单个AtLeast
+     * Test a single AtLeast.
      */
     @Test
     fun testAtLeast() {
-        // 有2个不为null，通过
+        // Two values non-null: passes
         val bean1 = TestAtLeastBean("1", "2", null, null)
         assert(ValidationKit.validateBean(bean1).isEmpty())
 
-        // 有3个不为null，通过
+        // Three values non-null: passes
         val bean2 = TestAtLeastBean("1", "2", "3", null)
         assert(ValidationKit.validateBean(bean2).isEmpty())
 
-        // 只有1个不为null，失败
+        // Only one value non-null: fails
         val bean3 = TestAtLeastBean("1", null, null, null)
         assert(ValidationKit.validateBean(bean3).isNotEmpty())
     }
 
     /**
-     * 测试多个AtLeast
+     * Test multiple AtLeast constraints.
      */
     @Test
     fun testAtLeastList() {
@@ -50,12 +50,12 @@ internal class AtLeastTest {
         assert(ValidationKit.validateBean(bean1).isEmpty())
     }
 
-    @AtLeast(properties = ["p1", "p2", "p3"], count = 4, message = "p1、p2、p3三个至少四个不能为null")
+    @AtLeast(properties = ["p1", "p2", "p3"], count = 4, message = "at least four of p1, p2, p3 must be non-null")
     internal data class TestIllegalArgumentsBean(
         val p: String
     )
 
-    @AtLeast(properties = ["p1", "p2", "p3"], count = 2, message = "p1、p2、p3三个至少两个不能为null")
+    @AtLeast(properties = ["p1", "p2", "p3"], count = 2, message = "at least two of p1, p2, p3 must be non-null")
     internal data class TestAtLeastBean(
 
         val p1: String?,
@@ -69,8 +69,8 @@ internal class AtLeastTest {
     )
 
     @AtLeast.List(
-        AtLeast(properties = ["p1", "p2"], message = "p1、p2两个至少一个不能为null"),
-        AtLeast(properties = ["p3", "p4"], message = "p3、p4两个至少一个不能为null")
+        AtLeast(properties = ["p1", "p2"], message = "at least one of p1, p2 must be non-null"),
+        AtLeast(properties = ["p3", "p4"], message = "at least one of p3, p4 must be non-null")
     )
     internal data class TestAtLeastListBean(
 

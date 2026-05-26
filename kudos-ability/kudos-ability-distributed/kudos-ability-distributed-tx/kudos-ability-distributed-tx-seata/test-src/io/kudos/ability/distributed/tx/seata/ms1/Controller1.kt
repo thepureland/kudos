@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 微服务应用1的Controller
+ * Controller for microservice application 1.
  *
  * @author K
  * @since 1.0.0
@@ -23,7 +23,7 @@ open class Controller1 {
     fun getById(id: Int) = service1.getById(id)
 
     /**
-     * 扣减账户余额
+     * Deducts the account balance.
      */
     @RequestMapping("/decrease")
     fun decrease(@RequestParam("id") id: Int, @RequestParam("money") money: Double) {

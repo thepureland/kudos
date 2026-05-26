@@ -4,11 +4,13 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 邮件发送请求体。
+ * Email send request body.
  *
- * 字段语义参见各 var 的内联 kdoc；典型用法是业务层填好后交给 [io.kudos.ability.comm.email.handler.EmailHandler.send]。
+ * For field semantics see the inline kdoc on each var; the typical usage is for the business layer
+ * to populate it and pass it to [io.kudos.ability.comm.email.handler.EmailHandler.send].
  *
- * **不要把本类的实例输出到日志** —— `senderPassword` 是明文，序列化后会带出去。
+ * **Do not log instances of this class** - `senderPassword` is plaintext and will be exposed once
+ * serialized.
  *
  * @author paul
  * @author K
@@ -16,84 +18,86 @@ import java.io.Serializable
  */
 class EmailRequest : Serializable {
     /**
-     * 发送邮件的协议
+     * Protocol used to send the email.
      */
     var protocol: String = "smtp"
 
     /**
-     * 邮件主题
+     * Email subject.
      */
     var subject: String? = null
 
     /**
-     * 邮件正文
+     * Email body.
      */
     var body: String? = null
 
     /**
-     * 邮件接收人
+     * Email recipients.
      */
     var receivers = mutableSetOf<String>()
 
     /**
-     * 发送者邮箱账号
+     * Sender email account.
      */
     var senderAccount: String? = null
 
     /**
-     * 发送者邮箱密码
+     * Sender email password.
      */
     var senderPassword: String? = null
 
     /**
-     * 发件人所使用的邮箱的邮件服务器地址
+     * Mail server address of the sender's mailbox.
      */
     var serverHost: String? = null
 
     /**
-     * 发件人所使用的邮箱的邮件服务器端口
+     * Mail server port of the sender's mailbox.
      */
     var serverPort: Int? = null
 
     /**
-     * 是否需要SMTP服务器验证
+     * Whether SMTP server authentication is required.
      */
     var smtpAuth: Boolean = true
 
     /**
-     * 设置是否部分发送(当收件人列表中出现部分收件人地址错误时忽略这些错误地址)默认true
+     * Configure partial sending (when some recipient addresses in the list are invalid, ignore those
+     * invalid addresses). Default true.
      */
     var sendpartial: Boolean = true
 
     /**
-     * 以HTML格式发送
+     * Whether to send in HTML format.
      */
     var htmlFormat: Boolean = true
 
     /**
-     * 邮件正文编码
+     * Email body encoding.
      */
     var encoding: String? = "UTF-8"
 
     /**
-     * SSL加密
+     * SSL encryption.
      */
     var ssl: Boolean = true
 
     /**
-     * 扩展信息
+     * Extra information.
      */
     var extra: MutableMap<String, String>? = null
 
     /**
-     * 显示在邮件头 `From` 中的发件人邮箱地址。
-     * 与 [senderAccount] 区分：[senderAccount] 是用于鉴权登录 SMTP 的账号，[fromMailAddress] 是收件方实际看到的来源地址。
-     * 留空时大多数 SMTP 服务器会回退到 [senderAccount]。
+     * Sender email address shown in the email header `From`.
+     * Distinct from [senderAccount]: [senderAccount] is the account used to authenticate against
+     * SMTP, while [fromMailAddress] is the source address the recipient actually sees.
+     * If left empty, most SMTP servers fall back to [senderAccount].
      */
     var fromMailAddress: String? = null
 
     companion object {
-        /** Serializable 版本号 */
+        /** Serializable version UID. */
         @Serial
         private val serialVersionUID = -6829180589038163995L
     }

@@ -5,12 +5,12 @@ import java.io.Serial
 import java.io.Serializable
 
 /**
- * 邮件发送回调载体。`EmailHandler.send(...)` 的 callback 收到本对象——业务侧据此
- * 写"邮件发送记录"或触发重发。
+ * Email send callback payload. The callback of `EmailHandler.send(...)` receives this object;
+ * the business side uses it to write the "email send record" or trigger a resend.
  *
- * - [status] `SUCCESS` —— 全部收件人都发出
- * - [status] `SUCCESS_PART` —— 部分收件人发出，[successEmails] / [failEmails] 各非空
- * - [status] `FAIL` —— 全部失败（[failEmails] 即为原 receivers）
+ * - [status] `SUCCESS` - all recipients were sent to
+ * - [status] `SUCCESS_PART` - some recipients were sent to; [successEmails] / [failEmails] are both non-empty
+ * - [status] `FAIL` - all failed ([failEmails] equals the original receivers)
  *
  * @author paul
  * @author K
@@ -18,17 +18,17 @@ import java.io.Serializable
  */
 class EmailCallBackParam : Serializable {
     /**
-     * 发送状态
+     * Send status.
      */
     var status: EmailStatusEnum? = null
 
     /**
-     * 发送成功的邮箱帐号
+     * Email accounts that were sent successfully.
      */
     var successEmails: MutableSet<String>? = null
 
     /**
-     * 发送失败的邮箱帐号
+     * Email accounts that failed to send.
      */
     var failEmails: MutableSet<String>? = null
 

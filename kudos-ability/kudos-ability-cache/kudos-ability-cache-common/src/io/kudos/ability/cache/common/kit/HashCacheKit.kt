@@ -15,10 +15,11 @@ import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
 
 /**
- * Hash 缓存工具：按 cacheName 获取 [IHashCache]（策略封装后的统一抽象）。
+ * Hash cache toolkit: looks up [IHashCache] (the strategy-wrapped unified abstraction) by cacheName.
  *
- * 与 [KeyValueCacheKit] 类似，使用时通过配置自由选择三种策略（SINGLE_LOCAL / REMOTE / LOCAL_REMOTE）。
- * 若 [cacheName] 未在配置中注册，将抛出 [IllegalStateException]。
+ * Similar to [KeyValueCacheKit]; the caller can freely choose one of three strategies via configuration
+ * (SINGLE_LOCAL / REMOTE / LOCAL_REMOTE). Throws [IllegalStateException] if [cacheName] is not registered
+ * in the configuration.
  *
  * @author K
  * @author AI: Cursor
@@ -30,34 +31,34 @@ object HashCacheKit {
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * 是否开启 Hash 缓存。必须是全局开关和指定的缓存开关都开启，才算开启。
+     * Whether hash caching is enabled. Both the global switch and the cache-specific switch must be on.
      *
-     * @param cacheName 缓存名称
-     * @return true: 开启缓存，false：未开启缓存
+     * @param cacheName cache name
+     * @return true: enabled; false: disabled
      */
     fun isCacheActive(cacheName: String): Boolean =
         getConfigProvider()?.getHashCacheConfigs()?.get(cacheName)?.isActive == true
 
     /**
-     * 返回指定名称的 Hash 缓存配置信息。
+     * Returns the hash cache configuration by name.
      *
-     * @param cacheName 缓存名称
-     * @return 缓存配置信息。找不到返回 null
+     * @param cacheName cache name
+     * @return the cache configuration; null if not found
      */
     fun getCacheConfig(cacheName: String): CacheConfig? {
         val configProvider = getConfigProvider() ?: return null
         val config = configProvider.getHashCacheConfigs()[cacheName]
         if (config == null) {
-            log.warn("Hash 缓存【$cacheName】不存在！")
+            log.warn("Hash cache [$cacheName] does not exist!")
         }
         return config
     }
 
     /**
-     * 是否在新增或更新后，立即回写 Hash 缓存。
+     * Whether the hash cache is written back immediately after an insert or update.
      *
-     * @param cacheName 缓存名称
-     * @return true: 立即回写缓存, 反之为 false。缓存不存在也返回 false
+     * @param cacheName cache name
+     * @return true: write back immediately; otherwise false. Returns false when the cache does not exist.
      */
     fun isWriteInTime(cacheName: String): Boolean {
         if (!isCacheActive(cacheName)) return false
@@ -65,10 +66,11 @@ object HashCacheKit {
     }
 
     /**
-     * 踢除指定 id 的 Hash 缓存（若为 SINGLE_LOCAL 会发通知，否则直接删除）。
+     * Evicts the hash cache entry for the given id (broadcasts a notification under SINGLE_LOCAL,
+     * otherwise deletes directly).
      *
-     * @param cacheName 缓存名
-     * @param id        实体主键
+     * @param cacheName cache name
+     * @param id        entity primary key
      */
     fun evict(cacheName: String, id: Any) {
         if (!isCacheActive(cacheName)) return
@@ -81,10 +83,10 @@ object HashCacheKit {
     }
 
     /**
-     * 踢除指定 id 的 Hash 缓存（直接删除，不发通知）。
+     * Evicts the hash cache entry for the given id (direct delete, no notification).
      *
-     * @param cacheName 缓存名
-     * @param id        实体主键
+     * @param cacheName cache name
+     * @param id        entity primary key
      */
     fun doEvict(cacheName: String, id: Any) {
         if (!isCacheActive(cacheName)) return
@@ -92,9 +94,9 @@ object HashCacheKit {
     }
 
     /**
-     * 清空 Hash 缓存（若为 SINGLE_LOCAL 会发通知，否则直接清空）。
+     * Clears the hash cache (broadcasts a notification under SINGLE_LOCAL, otherwise clears directly).
      *
-     * @param cacheName 缓存名
+     * @param cacheName cache name
      */
     fun clear(cacheName: String) {
         if (!isCacheActive(cacheName)) return
@@ -107,9 +109,9 @@ object HashCacheKit {
     }
 
     /**
-     * 清空 Hash 缓存（直接清空，不发通知）。
+     * Clears the hash cache (direct clear, no notification).
      *
-     * @param cacheName 缓存名
+     * @param cacheName cache name
      */
     fun doClear(cacheName: String) {
         if (!isCacheActive(cacheName)) return
@@ -117,11 +119,13 @@ object HashCacheKit {
     }
 
     /**
-     * 重新加载指定 id 的 Hash 缓存。
-     * 委托该 cacheName 对应的 Handler：先从 Hash 中删除该 id，若配置了 writeOnBoot 且 Handler 实现了 [AbstractHashCacheHandler.doReload] 则从数据源加载并回写。
+     * Reloads the hash cache entry for the given id.
+     * Delegates to the Handler associated with this cacheName: first removes the id from the hash, then —
+     * if writeOnBoot is configured and the Handler implements [AbstractHashCacheHandler.doReload] — loads
+     * from the data source and writes it back.
      *
-     * @param cacheName 缓存名
-     * @param id        实体主键
+     * @param cacheName cache name
+     * @param id        entity primary key
      */
     fun reload(cacheName: String, id: Any) {
         if (!isCacheActive(cacheName)) return
@@ -129,9 +133,9 @@ object HashCacheKit {
     }
 
     /**
-     * 重新加载所有 Hash 缓存。
+     * Reloads all entries in the hash cache.
      *
-     * @param cacheName 缓存名
+     * @param cacheName cache name
      */
     fun reloadAll(cacheName: String) {
         if (!isCacheActive(cacheName)) return
@@ -144,11 +148,12 @@ object HashCacheKit {
     }
 
     /**
-     * 轻量级判断 Hash 缓存中是否存在指定 id 的实体（不反序列化 value，使用 containsKey/HEXISTS）。
+     * Lightweight check for whether the given id exists in the hash cache (does not deserialize the value;
+     * uses containsKey/HEXISTS).
      *
-     * @param cacheName 缓存名称
-     * @param id        实体 id
-     * @return true：存在，false：不存在
+     * @param cacheName cache name
+     * @param id        entity id
+     * @return true: present; false: absent
      */
     fun existsById(cacheName: String, id: Any): Boolean {
         if (!isCacheActive(cacheName)) return false
@@ -156,12 +161,12 @@ object HashCacheKit {
     }
 
     /**
-     * 获取 Hash 缓存中指定 id 的实体值（带类型）。
+     * Returns the entity value for the given id from the hash cache (typed).
      *
-     * @param cacheName  缓存名称
-     * @param id         实体主键
-     * @param valueClass 实体类型
-     * @return 实体，不存在时返回 null
+     * @param cacheName  cache name
+     * @param id         entity primary key
+     * @param valueClass entity type
+     * @return the entity, or null if absent
      */
     fun <PK, T : IIdEntity<PK>> getValue(cacheName: String, id: PK, valueClass: KClass<T>): T? {
         if (!isCacheActive(cacheName)) return null
@@ -169,12 +174,12 @@ object HashCacheKit {
     }
 
     /**
-     * 获取 Hash 缓存中指定 id 的实体值（无类型，返回 Any?）。
-     * 内部通过该 cacheName 对应的 Handler 的实体类型反序列化。
+     * Returns the entity value for the given id from the hash cache (untyped, returns Any?).
+     * Internally deserializes via the entity type exposed by the Handler associated with this cacheName.
      *
-     * @param cacheName 缓存名称
-     * @param id        实体主键
-     * @return 实体，不存在或未配置对应 Handler 时返回 null
+     * @param cacheName cache name
+     * @param id        entity primary key
+     * @return the entity, or null if absent or no Handler is configured
      */
     fun getValue(cacheName: String, id: Any): Any? {
         if (!isCacheActive(cacheName)) return null
@@ -185,14 +190,15 @@ object HashCacheKit {
     }
 
     /**
-     * 收口「按 cacheName 找 Handler」的样板：扫 [AbstractHashCacheHandler] 类型的全部 bean，
-     * 按 `cacheName()` 建索引。N 个调用点（evict / reload / reloadAll / getValue）之前各自
-     * 重复 `SpringKit.getBeansOfType<...>().values.filter { ... }` —— 每次缓存读写都遍历所有
-     * bean 不划算。
+     * Centralizes the "look up Handler by cacheName" boilerplate: scans all beans of type
+     * [AbstractHashCacheHandler] and indexes them by `cacheName()`. Previously each of the N callers
+     * (evict / reload / reloadAll / getValue) repeated `SpringKit.getBeansOfType<...>().values.filter { ... }`
+     * — iterating over all beans on every cache read/write is wasteful.
      *
-     * 索引使用 double-checked locking 懒建：首次调用扫一次 + groupBy 落到 [handlerIndex]，
-     * 后续调用直接 map 查；新增 handler bean 不会被自动感知，由 [resetForTesting]
-     * 或重启上下文触发重建。
+     * The index is lazily built with double-checked locking: the first call scans once and groupBy is
+     * stored in [handlerIndex], and subsequent calls do a direct map lookup. Newly added handler beans
+     * will not be picked up automatically; the index is rebuilt by [resetForTesting] or by restarting
+     * the context.
      */
     @Volatile private var handlerIndex: Map<String, List<AbstractHashCacheHandler<*>>>? = null
 
@@ -206,39 +212,42 @@ object HashCacheKit {
     }
 
     /**
-     * 根据名称获取 Hash 缓存（带 id 对象集合）。
+     * Returns the hash cache by name (an entity-id-keyed collection).
      *
-     * @param cacheName 缓存名称（逻辑名，会按版本前缀解析）
-     * @return 该名称对应的 IIdEntitiesHashCache
-     * @throws IllegalStateException 当 MixHashCacheManager 不可用或该 cacheName 未配置（需在配置中增加名为 cacheName 的项）时
+     * @param cacheName cache name (logical name, resolved with the version prefix)
+     * @return the IIdEntitiesHashCache for the given name
+     * @throws IllegalStateException when MixHashCacheManager is unavailable, or the cacheName is not configured
+     * (an entry with that cacheName must be added to the configuration)
      */
     fun getHashCache(cacheName: String): IHashCache {
         val manager = getManager()
             ?: throw IllegalStateException(
-                "MixHashCacheManager 不可用（缓存未启用或测试未继承 RdbAndRedisCacheTestBase 等启用缓存的基类）。" +
-                    " 请检查 kudos.ability.cache.enabled 或测试上下文。"
+                "MixHashCacheManager is unavailable (caching is disabled, or the test does not extend a cache-enabling base class such as RdbAndRedisCacheTestBase)." +
+                    " Check kudos.ability.cache.enabled or the test context."
             )
         return manager.getHashCache(cacheName)
-            ?: throw IllegalStateException("Hash 缓存未配置: 请在缓存配置表sys_cache中增加名为 [$cacheName]的配置项")
+            ?: throw IllegalStateException("Hash cache is not configured: add an entry named [$cacheName] in the sys_cache configuration table")
     }
 
     /**
-     * 判断指定 Hash 缓存是否启用本地缓存（即同一 key 再次获取可保证返回同一对象引用）。
-     * 仅当策略为 [CacheStrategy.LOCAL_REMOTE] 或 [CacheStrategy.SINGLE_LOCAL] 时为 true；
-     * [CacheStrategy.REMOTE] 下每次从远程反序列化为新实例，返回 false。
+     * Tells whether the given hash cache has the local layer enabled (i.e. retrieving the same key again
+     * is guaranteed to return the same object reference).
+     * Returns true only when the strategy is [CacheStrategy.LOCAL_REMOTE] or [CacheStrategy.SINGLE_LOCAL];
+     * under [CacheStrategy.REMOTE] each read deserializes a fresh instance from remote storage, so it returns false.
      *
-     * @param cacheName 缓存名称（逻辑名，与 [getHashCache] 一致）
-     * @return 若未配置或非 LOCAL_REMOTE/SINGLE_LOCAL 则 false
+     * @param cacheName cache name (logical name, same as in [getHashCache])
+     * @return false if not configured, or if not LOCAL_REMOTE/SINGLE_LOCAL
      */
     fun isLocalCacheEnabled(cacheName: String): Boolean {
         val strategy = getConfigProvider()?.getHashCacheConfigs()?.get(cacheName)?.resolvedStrategy ?: return false
         return strategy == CacheStrategy.LOCAL_REMOTE || strategy == CacheStrategy.SINGLE_LOCAL
     }
 
-    // ---- 测试注入钩子 ----------------------------------------------------------
-    // 与 [KeyValueCacheKit] 同样的模式：默认走 SpringKit 查找，测试可通过 override 注入 mock。
-    // 注意：基于类型遍历的 Handler 查找（reload / reloadAll / getValue(no type)）仍走 Spring，
-    //      因为按 cacheName 匹配 handler 的语义只在真实 bean 容器中清晰；要测这些路径建议起 Spring。
+    // ---- Test injection hooks --------------------------------------------------
+    // Same pattern as [KeyValueCacheKit]: defaults to SpringKit lookup; tests can override with mocks.
+    // Note: type-scan-based Handler lookup (reload / reloadAll / getValue(no type)) still goes through Spring,
+    //       because handler-by-cacheName matching only has clear semantics inside a real bean container; to test
+    //       those paths, prefer starting Spring.
 
     @Volatile private var managerOverride: MixHashCacheManager? = null
     @Volatile private var configProviderOverride: ICacheConfigProvider? = null
@@ -250,9 +259,9 @@ object HashCacheKit {
         configProviderOverride ?: SpringKit.getBeanOrNull(ICacheConfigProvider::class)
 
     /**
-     * 测试专用：临时注入依赖，避免单测启动完整 Spring 上下文。
-     * 任一参数为 null 表示该依赖回退到默认的 [SpringKit] 查找路径。
-     * 测试结束必须调用 [resetForTesting] 还原。
+     * Test-only: injects dependencies temporarily so unit tests do not need to start a full Spring context.
+     * Passing null for any parameter falls back to the default [SpringKit] lookup path.
+     * [resetForTesting] must be called at the end of the test to restore state.
      */
     fun overrideForTesting(
         manager: MixHashCacheManager? = null,
@@ -263,7 +272,7 @@ object HashCacheKit {
     }
 
     /**
-     * 测试专用：清掉 [overrideForTesting] 注入的 mock，回到 Spring 查找。
+     * Test-only: clears the mocks injected by [overrideForTesting] and restores Spring lookup.
      */
     fun resetForTesting() {
         managerOverride = null

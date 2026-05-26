@@ -1,43 +1,43 @@
 package io.kudos.ms.msg.common.template.vo.request
 
 /**
- * 消息模板表单基础字段（新建 / 更新共用）
+ * Common fields for message template forms (shared by create / update).
  *
  * @author K
  * @since 1.0.0
  */
 interface IMsgTemplateFormBase {
 
-    /** 发送类型字典码 */
+    /** Send type dict code. */
     val sendTypeDictCode: String?
 
-    /** 事件类型字典码 */
+    /** Event type dict code. */
     val eventTypeDictCode: String?
 
-    /** 消息类型字典码 */
+    /** Message type dict code. */
     val msgTypeDictCode: String?
 
-    /** 模板分组编码 */
+    /** Template group code. */
     val receiverGroupCode: String?
 
-    /** 国家-语言字典码 */
+    /** Country-language dict code. */
     val localeDictCode: String?
 
-    /** 模板标题 */
+    /** Template title. */
     val title: String?
 
-    /** 模板内容 */
+    /** Template content. */
     val content: String?
 
-    /** 是否启用默认值 */
+    /** Default active flag. */
     val defaultActive: Boolean?
 
-    /** 模板标题默认值 */
+    /** Default template title. */
     val defaultTitle: String?
 
-    /** 模板内容默认值 */
+    /** Default template content. */
     val defaultContent: String?
 
-    /** 租户ID */
+    /** Tenant id. */
     val tenantId: String?
 }

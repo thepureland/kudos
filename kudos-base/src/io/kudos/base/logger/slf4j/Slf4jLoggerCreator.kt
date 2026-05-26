@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory
 import kotlin.reflect.KClass
 
 /**
- * slf4j日志记录器创建者
+ * Creator for the SLF4J-backed logger.
  *
  * @author K
  * @since 1.0.0

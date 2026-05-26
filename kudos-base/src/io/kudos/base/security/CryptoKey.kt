@@ -1,9 +1,10 @@
 package io.kudos.base.security
 
 /**
- * 密钥常量与全局默认密钥配置入口。
+ * Crypto key constants and global default key configuration entry point.
  *
- * 生产环境应在启动阶段调用 [configureDefaultKey] 注入强随机密钥；未配置时使用占位默认值，仅便于本地开发/测试。
+ * In production, call [configureDefaultKey] at startup to inject a strong random key; when not configured, a
+ * placeholder default is used — for local development/testing only.
  *
  * @author K
  * @since 1.0.0
@@ -16,9 +17,11 @@ object CryptoKey {
     private var configuredKey: String? = null
 
     /**
-     * 当前全局默认密钥材料。
-     * 未通过 [configureDefaultKey] 或赋值写入时，使用内置占位串（勿用于生产）。
-     * 赋值接口为兼容旧代码保留；新代码请优先使用 [configureDefaultKey]（含非空校验）。
+     * Current global default key material.
+     * When not written via [configureDefaultKey] or by assignment, the built-in placeholder is used
+     * (do not use in production).
+     * The setter is retained for legacy compatibility; new code should prefer [configureDefaultKey]
+     * (which includes a non-blank check).
      */
     var KEY_DEFAULT: String
         get() = configuredKey ?: PLACEHOLDER_DEFAULT
@@ -27,9 +30,9 @@ object CryptoKey {
         }
 
     /**
-     * 在应用启动时配置全局默认密钥（推荐生产使用）。
+     * Configures the global default key at application startup (recommended for production).
      *
-     * @throws IllegalArgumentException 若 key 为空白
+     * @throws IllegalArgumentException if key is blank
      */
     fun configureDefaultKey(key: String) {
         require(key.isNotBlank()) { "Crypto default key must not be blank" }

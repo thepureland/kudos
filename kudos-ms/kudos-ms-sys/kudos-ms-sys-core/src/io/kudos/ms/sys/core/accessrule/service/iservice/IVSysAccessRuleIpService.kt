@@ -5,7 +5,7 @@ import io.kudos.ms.sys.common.accessrule.vo.response.VSysAccessRuleWithIpRow
 import io.kudos.ms.sys.core.accessrule.model.po.VSysAccessRuleWithIp
 
 /**
- * 视图 `v_sys_access_rule_with_ip`（父规则 LEFT JOIN IP 子表）的只读服务接口。
+ * Read-only service interface for the view `v_sys_access_rule_with_ip` (parent rule LEFT JOIN child IP table).
  *
  * @author K
  * @author AI: Cursor
@@ -14,17 +14,17 @@ import io.kudos.ms.sys.core.accessrule.model.po.VSysAccessRuleWithIp
 interface IVSysAccessRuleIpService : IBaseReadOnlyService<String, VSysAccessRuleWithIp> {
 
     /**
-     * 按父访问规则主键查询视图行列表。
+     * Query view rows by parent access rule primary key.
      *
      * @param parentId `sys_access_rule.id`
      */
     fun searchByParentId(parentId: String): List<VSysAccessRuleWithIpRow>
 
     /**
-     * 按系统编码与租户筛选视图行；`tenantId == null` 时表示父规则 `tenant_id IS NULL`。
+     * Filter view rows by system code and tenant; `tenantId == null` means the parent rule has `tenant_id IS NULL`.
      *
-     * @param systemCode 系统编码
-     * @param tenantId 租户 id，null 表示平台租户
+     * @param systemCode system code
+     * @param tenantId tenant id; null means the platform tenant
      */
     fun searchBySystemCodeAndTenantId(systemCode: String, tenantId: String?): List<VSysAccessRuleWithIpRow>
 }

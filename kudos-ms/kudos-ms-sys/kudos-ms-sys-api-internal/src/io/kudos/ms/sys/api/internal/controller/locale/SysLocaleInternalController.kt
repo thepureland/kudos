@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 语言/区域字典 内部 RPC 控制器。路径继承自 [ISysLocaleApi] 方法级注解。
+ * Language/locale dictionary internal RPC controller. Paths are inherited from method-level annotations on [ISysLocaleApi].
  *
  * @author K
  * @since 1.0.0

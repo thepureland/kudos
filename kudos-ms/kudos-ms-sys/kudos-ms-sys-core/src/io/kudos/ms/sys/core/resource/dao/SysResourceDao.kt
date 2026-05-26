@@ -9,7 +9,7 @@ import io.kudos.ms.sys.core.resource.model.table.SysResources
 import org.springframework.stereotype.Repository
 
 /**
- * 资源数据访问对象
+ * Resource data access object
  *
  * @author K
  * @since 1.0.0
@@ -18,11 +18,11 @@ import org.springframework.stereotype.Repository
 open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
 
     /**
-     * 按子系统编码+URL+启用状态查询资源（url 非空）
+     * Query a resource by subsystem code + URL + active state (URL is non-null).
      *
-     * @param subSystemCode 子系统编码
-     * @param url 资源url
-     * @return SysResourceCacheEntry，不存在返回null
+     * @param subSystemCode subsystem code
+     * @param url resource URL
+     * @return SysResourceCacheEntry, or null if not found
      */
     open fun fetchResourceBySubSysAndUrl(subSystemCode: String, url: String): SysResourceCacheEntry? {
         val criteria = Criteria.and(
@@ -34,10 +34,10 @@ open class SysResourceDao : BaseCrudDao<String, SysResource, SysResources>() {
     }
 
     /**
-     * 按子系统编码+资源类型代码查询资源列表
+     * Query resources by subsystem code + resource type code.
      *
-     * @param subSystemCode 子系统编码
-     * @param resourceTypeDictCode 资源类型字典码
+     * @param subSystemCode subsystem code
+     * @param resourceTypeDictCode resource type dictionary code
      * @return List<SysResourceCacheEntry>
      */
     open fun searchBySubSysAndType(subSystemCode: String, resourceTypeDictCode: String): List<SysResourceCacheEntry> {

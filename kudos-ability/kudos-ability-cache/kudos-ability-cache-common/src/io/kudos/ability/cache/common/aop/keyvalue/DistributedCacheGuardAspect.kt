@@ -17,10 +17,11 @@ import org.springframework.context.expression.MethodBasedEvaluationContext
 import org.springframework.core.annotation.Order
 
 /**
- * 分布式缓存防穿透守卫切面。
+ * Distributed cache breakdown-guard aspect.
  *
- * 与 `@Cacheable`/`@TenantCacheable` 配合：在缓存 miss 时通过分布式租约锁串行化回源，避免击穿。
- * 排在 `@Cacheable` 之前（`@Order(-999)`，比 Spring 默认 `0` 优先级高）。
+ * Works with `@Cacheable` / `@TenantCacheable`: on cache miss, serializes the source-of-truth load through a distributed
+ * lease lock to avoid cache breakdown.
+ * Ordered ahead of `@Cacheable` (`@Order(-999)`, higher priority than Spring's default `0`).
  *
  * @author K
  * @since 1.0.0
@@ -30,24 +31,27 @@ import org.springframework.core.annotation.Order
 @Order(-999)
 class DistributedCacheGuardAspect {
 
-    /** SpEL 表达式求值用的参数名发现器 */
+    /** Parameter name discoverer used for SpEL expression evaluation. */
     private val nameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
 
-    /** 切点：匹配标注 [DistributedCacheGuard] 的方法 */
+    /** Pointcut: matches methods annotated with [DistributedCacheGuard]. */
     @Pointcut("@annotation(io.kudos.ability.cache.common.aop.keyvalue.DistributedCacheGuard)")
     fun cut() {
     }
 
     /**
-     * 防穿透主流程：
+     * Main breakdown-guard flow:
      *
-     * 1. 无锁查缓存命中即返回；
-     * 2. miss 时用租约 [tryLock] 抢分布式锁——租约式而非阻塞 lock，避免进程崩溃后死锁；
-     * 3. 抢锁失败：短退避后再查一次缓存（命中复用别人加载结果），仍 miss 时放行 proceed；
-     * 4. 抢锁成功：锁内双重检查后 proceed，finally 释放锁；锁释放失败仅 WARN，靠租约过期兜底。
+     * 1. Query the cache without a lock; return on hit.
+     * 2. On miss, acquire a distributed lock with a lease via [tryLock] — lease-based rather than a blocking lock, to
+     *    avoid a deadlock if the process crashes.
+     * 3. Lock acquisition fails: back off briefly, then query the cache again (reuse another thread's loaded result on
+     *    hit); on persistent miss, fall through to proceed.
+     * 4. Lock acquisition succeeds: double-check inside the lock, then proceed; release the lock in finally. Lock release
+     *    failures only emit a WARN and rely on lease expiration as a fallback.
      *
-     * @param pjp AOP 切入点
-     * @return 缓存值或方法执行结果
+     * @param pjp AOP join point
+     * @return cache value or method execution result
      * @author K
      * @since 1.0.0
      */
@@ -58,94 +62,104 @@ class DistributedCacheGuardAspect {
         val cacheKey = cachePair.second
         val lockKey = "lock:$cacheName:$cacheKey"
 
-        // 1. 先无锁查一次缓存，命中就走人。
+        // 1. Query the cache once without a lock; return on hit.
         KeyValueCacheKit.getValue(cacheName, cacheKey)?.let { return it }
 
-        // 2. 缺失，竞争分布式锁。改用租约式 tryLock：
-        //    旧实现走 lockProvider.lock(key)，Redisson 路径下是 `RLock.lock()` 无 TTL 的阻塞调用 →
-        //    进程在加载方法中崩溃就把同一 key 卡死，需要人工到 Redis 删 key 才能恢复。
-        //    现在用 tryLock(key, leaseSec)：宕机后租约自动过期，最坏多读一次源；不再死锁。
+        // 2. Miss: compete for the distributed lock. Use a lease-based tryLock:
+        //    The previous implementation called lockProvider.lock(key), which under the Redisson path is `RLock.lock()`,
+        //    a blocking call with no TTL -> if the process crashed inside the loader, the same key would be stuck and
+        //    recovery would require manually deleting the key from Redis.
+        //    Now using tryLock(key, leaseSec): after a crash the lease expires automatically; the worst case is one
+        //    extra source-of-truth read, with no more deadlocks.
         val gotLock = lockProvider.tryLock(lockKey, lockLeaseSeconds)
         if (!gotLock) {
-            // 抢锁失败说明另一个线程/节点正在加载该 key；不阻塞等待，短退避后再查一次缓存：
-            //   - 命中：复用别人加载的结果，省一次 proceed。
-            //   - 仍 miss：放行 proceed，最坏退化为多读一次源（"防穿透"层面的最差容忍）。
-            // 旧实现的"无限期阻塞等锁"语义不在这里保留：那种语义放大了下游故障半径，且依赖锁有 TTL。
+            // Failing to acquire the lock means another thread/node is already loading this key; rather than blocking
+            // forever, back off briefly and then query the cache again:
+            //   - Hit: reuse the result loaded by the other thread, saving one proceed.
+            //   - Still miss: fall through to proceed; the worst case degrades to one extra source-of-truth read (the
+            //     worst-case tolerance at the "breakdown-guard" level).
+            // The old "block forever waiting for the lock" semantics are intentionally not preserved: they amplified
+            // the downstream failure blast radius and depended on the lock having a TTL.
             try {
                 Thread.sleep(lockBackoffMillis)
             } catch (e: InterruptedException) {
                 Thread.currentThread().interrupt()
-                log.debug("等待分布式缓存锁时被中断 lockKey={0}", lockKey)
+                log.debug("Interrupted while waiting for distributed cache lock lockKey={0}", lockKey)
             }
             return KeyValueCacheKit.getValue(cacheName, cacheKey) ?: pjp.proceed()
         }
         return try {
-            // 锁内双重检查
+            // Double-check inside the lock.
             KeyValueCacheKit.getValue(cacheName, cacheKey) ?: pjp.proceed()
         } finally {
             try {
                 lockProvider.unLock(lockKey)
             } catch (e: Exception) {
-                // 释放本身不应让业务路径报错；最坏情况靠租约过期兜底。
-                log.warn("释放分布式缓存锁失败（将依赖租约过期）lockKey={0}, err={1}", lockKey, e.message)
+                // The release itself should not propagate errors into the business path; in the worst case, the lease
+                // expiration acts as a fallback.
+                log.warn("Failed to release distributed cache lock (will rely on lease expiration) lockKey={0}, err={1}", lockKey, e.message)
             }
         }
     }
 
     /**
-     * 从方法的 `@Cacheable` / `@TenantCacheable` 注解中解析出 (cacheName, cacheKey)。
+     * Resolve (cacheName, cacheKey) from the method's `@Cacheable` / `@TenantCacheable` annotation.
      *
-     * 两种注解互斥但语义类似——`@Cacheable` 走 SpEL；`@TenantCacheable` 走 [TenantCacheKeyGenerator]
-     * 自动加租户前缀。本方法把两者归一化为 `Pair<cacheName, cacheKey>`，让 [around] 只关心防穿透逻辑。
+     * The two annotations are mutually exclusive but semantically similar — `@Cacheable` uses SpEL;
+     * `@TenantCacheable` uses [TenantCacheKeyGenerator] to automatically add a tenant prefix. This method normalizes
+     * both into `Pair<cacheName, cacheKey>` so that [around] only needs to focus on breakdown-guard logic.
      *
-     * @param pjp 切入点
+     * @param pjp join point
      * @return (cacheName, cacheKey)
-     * @throws IllegalStateException 未带任何注解时
+     * @throws IllegalStateException when neither annotation is present
      * @author K
      * @since 1.0.0
      */
     private fun getCachePair(pjp: ProceedingJoinPoint): Pair<String, Any> {
-        // 1. 获取目标方法和参数
+        // 1. Get the target method and arguments.
         val signature = pjp.signature as MethodSignature
         val method = signature.method
-        // 2. 获取方法上的 @Cacheable 注解
+        // 2. Get the @Cacheable annotation on the method.
         val cacheable = method.getAnnotation(Cacheable::class.java)
         val tenantCacheable = method.getAnnotation(TenantCacheable::class.java)
         if (cacheable != null) {
             val cacheName = cacheable.value.firstOrNull()
                 ?: cacheable.cacheNames.firstOrNull()
-                ?: error("@Cacheable 必须指定 value 或 cacheNames")
+                ?: error("@Cacheable must specify value or cacheNames")
             val keySpel = cacheable.key
-            require(keySpel.isNotEmpty()) { "@Cacheable.key 必须指定" }
+            require(keySpel.isNotEmpty()) { "@Cacheable.key must be specified" }
             val context = MethodBasedEvaluationContext(null, method, pjp.args, nameDiscoverer)
             val cacheKey = SpelExpressionCache.get(keySpel).getValue(context, String::class.java)
-                ?: error("@Cacheable.key 解析为空: $keySpel")
+                ?: error("@Cacheable.key resolved to empty: $keySpel")
             return cacheName to cacheKey
         }
-        checkNotNull(tenantCacheable) { "@DistributedCacheGuard 只能和 @Cacheable或@TenantCacheable 一起用！" }
+        checkNotNull(tenantCacheable) { "@DistributedCacheGuard can only be used together with @Cacheable or @TenantCacheable!" }
         val cacheName = tenantCacheable.value.firstOrNull()
             ?: tenantCacheable.cacheNames.firstOrNull()
-            ?: error("@TenantCacheable 必须指定 value 或 cacheNames")
+            ?: error("@TenantCacheable must specify value or cacheNames")
         val cacheKey = SpringKit.getBean<TenantCacheKeyGenerator>()
             .generalNormalKey(pjp.target, method, tenantCacheable.suffix, *pjp.args)
         return cacheName to cacheKey
     }
 
     companion object {
-        /** 复用全局 [LockTool.lockProvider]，避免每次切入都从容器拿 bean */
+        /** Reuse the global [LockTool.lockProvider] to avoid fetching the bean from the container on every advice. */
         private val lockProvider = LockTool.lockProvider
-        /** 日志器 */
+        /** Logger. */
         private val log = LogFactory.getLog(DistributedCacheGuardAspect::class)
 
         /**
-         * 租约时长（秒）：足以容纳一次"回源加载并写缓存"的耗时；上限决定宕机后死锁的最坏窗口。
-         * 30s 是经验值，业务侧若有显著慢加载请自行调整或考虑分桶。
+         * Lease duration (seconds): long enough to accommodate one "load from source and write to cache" round trip;
+         * the upper bound defines the worst-case dead-lock window after a crash.
+         * 30s is an empirical value; adjust or consider sharding if the business has significant slow loads.
          */
         private const val lockLeaseSeconds = 30
 
         /**
-         * 抢锁失败后的退避时长（毫秒），用于一次"短等待 + 再查缓存"。
-         * 不要做循环重试：那等价于把阻塞等锁的旧语义搬回来，反而扩大了下游故障半径。
+         * Backoff duration (milliseconds) after failing to acquire the lock; used for a single "short wait + re-read
+         * the cache".
+         * Do not retry in a loop: that is equivalent to restoring the old block-on-lock semantics and amplifies the
+         * downstream failure blast radius.
          */
         private const val lockBackoffMillis = 200L
     }

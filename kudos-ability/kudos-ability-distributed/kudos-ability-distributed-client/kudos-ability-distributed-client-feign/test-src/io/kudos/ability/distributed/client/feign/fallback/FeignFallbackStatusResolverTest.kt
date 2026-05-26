@@ -7,7 +7,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [FeignFallbackStatusResolver] 状态码映射测试。
+ * [FeignFallbackStatusResolver] status code mapping tests.
  *
  * @author K
  * @author AI: Codex

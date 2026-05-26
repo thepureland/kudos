@@ -7,7 +7,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for UserAccountProtectionDao
  *
- * 测试数据来源：`UserAccountProtectionDaoTest.sql`
+ * Test data source: `UserAccountProtectionDaoTest.sql`.
  *
  * @author K
  * @author AI: Codex

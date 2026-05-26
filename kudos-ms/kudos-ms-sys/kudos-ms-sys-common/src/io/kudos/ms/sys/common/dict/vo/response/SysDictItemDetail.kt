@@ -5,57 +5,57 @@ import java.time.LocalDateTime
 
 
 /**
- * 字典项详情响应VO
+ * Dictionary item detail response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDictItemDetail (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
 
-    /** 字典项代码 */
+    /** Dictionary item code */
     val itemCode: String = "",
 
-    /** 字典项名称 */
+    /** Dictionary item name */
     val itemName: String = "",
 
-    /** 字典id */
+    /** Dictionary id */
     val dictId: String = "",
 
-    /** 字典项排序 */
+    /** Dictionary item order */
     val orderNum: Int? = null,
 
-    /** 父id */
+    /** Parent id */
     val parentId: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = true,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

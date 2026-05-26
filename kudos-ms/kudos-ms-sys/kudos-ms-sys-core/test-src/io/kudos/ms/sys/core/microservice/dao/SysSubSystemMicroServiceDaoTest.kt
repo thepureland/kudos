@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 /**
  * junit test for SysSubSystemMicroServiceDao
  *
- * 测试数据来源：`SysSubSystemMicroServiceDaoTest.sql`
+ * Test data source: `SysSubSystemMicroServiceDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor
@@ -42,10 +42,10 @@ class SysSubSystemMicroServiceDaoTest : RdbTestBase() {
 
     @Test
     fun exists() {
-        // 测试存在的关系
+        // Test existing relationship
         assertTrue(sysSubSystemMicroServiceDao.exists("svc-subsys-subsysms-dao-test-1", "svc-ms-subsysms-dao-test-1_1506"))
-        
-        // 测试不存在的关系
+
+        // Test non-existent relationship
         assertFalse(sysSubSystemMicroServiceDao.exists("svc-subsys-subsysms-dao-test-1", "non-existent-ms"))
     }
 }

@@ -5,7 +5,7 @@ import freemarker.template.Template
 import java.io.*
 
 /**
- * freemaker工具类
+ * Freemarker utility.
  *
  * @author K
  * @since 1.0.0
@@ -32,7 +32,7 @@ object FreemarkerKit {
                 Template("templateString...", StringReader(templateString), conf).process(model, writer)
                 writer.toString()
             } catch (_: Exception) {
-                error("解析模板串失败：$templateString")
+                error("Failed to parse template string: $templateString")
             }
         }
 

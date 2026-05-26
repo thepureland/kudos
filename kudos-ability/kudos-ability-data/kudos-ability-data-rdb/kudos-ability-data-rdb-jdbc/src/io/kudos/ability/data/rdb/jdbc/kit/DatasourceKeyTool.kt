@@ -3,13 +3,14 @@ package io.kudos.ability.data.rdb.jdbc.kit
 import io.kudos.ability.data.rdb.jdbc.consts.DatasourceConst
 
 /**
- * 动态数据源 key 的字符串构造 / 解析工具。
+ * String construction / parsing utility for dynamic data-source keys.
  *
- * 约定路由 cache key 的组装格式 `<dsKeyConfig>[::<serverCode>]::<tenantId>::<mode>`，
- * 其中 `serverCode` 仅在原始配置不含分隔符时由 [SERVER_CODE_DEFAULT] 填补。`mode` 是
- * `master` / `readonly` 之一（见 [DatasourceConst]）。
+ * The routing cache key format is `<dsKeyConfig>[::<serverCode>]::<tenantId>::<mode>`,
+ * where `serverCode` is filled with [SERVER_CODE_DEFAULT] only when the original
+ * config does not contain the separator. `mode` is one of `master` / `readonly`
+ * (see [DatasourceConst]).
  *
- * 所有方法纯字符串处理，无副作用、线程安全。
+ * All methods are pure string processing, side-effect free, and thread-safe.
  *
  * @author K
  * @author AI: Codex
@@ -17,16 +18,16 @@ import io.kudos.ability.data.rdb.jdbc.consts.DatasourceConst
  */
 object DatasourceKeyTool {
 
-    /** key 各分量之间的分隔符（双冒号）。选 `::` 避免与典型的数据源 key（含点 / 短横）冲突。 */
+    /** Separator between key components (double colon). Chosen as `::` to avoid clashing with typical data-source keys (which often contain dots/dashes). */
     private const val SEPERATOR = "::"
 
-    /** 默认服务编码，当原始 `dsKeyConfig` 不含分隔符时用它补位。 */
+    /** Default server code, used to fill in when the original `dsKeyConfig` does not contain a separator. */
     const val SERVER_CODE_DEFAULT: String = "default"
 
     /**
-     * 构造路由解析的 cache map key。规则：
-     *  - 原始 `dsKeyConfig` 不含 `::` 分隔符 → `<dsKeyConfig>::default::<tenantId>::<suffix>`
-     *  - 原始 `dsKeyConfig` 已含分隔符 → `<dsKeyConfig>::<tenantId>::<suffix>`（不再补 default）
+     * Builds the cache map key for routing resolution. Rules:
+     *  - Original `dsKeyConfig` does not contain the `::` separator -> `<dsKeyConfig>::default::<tenantId>::<suffix>`
+     *  - Original `dsKeyConfig` already contains the separator -> `<dsKeyConfig>::<tenantId>::<suffix>` (does not fill in default)
      */
     fun convertCacheMapKey(dsKeyConfig: String, tenantId: String?, suffix: String?): String {
         if (!dsKeyConfig.contains(SEPERATOR)) {
@@ -36,10 +37,10 @@ object DatasourceKeyTool {
     }
 
     /**
-     * 从 cache map key 反解出 serverCode（位置 1）。
-     *  - 入参为空 → 返回 `""`
-     *  - 单段（没分隔符）→ 返回 `null`（"没配置，走默认"）
-     *  - 多段 → 返回第 2 段
+     * Parses the serverCode (position 1) out of a cache map key.
+     *  - Blank input -> returns `""`
+     *  - Single segment (no separator) -> returns `null` ("not configured, use default")
+     *  - Multiple segments -> returns the 2nd segment
      */
     fun getServerCode(contextMapKey: String?): String? {
         //contextMapKey = _context::{serverCode}::tenantId::[master|readOnly]
@@ -49,7 +50,7 @@ object DatasourceKeyTool {
         val parts: Array<String?> =
             contextMapKey.split(SEPERATOR.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
         return if (parts.size == 1) {
-            //没配置，获取默认的服务
+            //Not configured; fall back to the default service.
             null
         } else {
             parts[1]
@@ -57,8 +58,9 @@ object DatasourceKeyTool {
     }
 
     /**
-     * 取 cache map key 的最后一段，约定是 mode（master / readonly）后缀。
-     * 入参为空返回 `""`；其它情况返回最后一段字符串。
+     * Returns the last segment of a cache map key, which by convention is the mode
+     * (master / readonly) suffix. Returns `""` when input is blank; otherwise returns
+     * the last segment string.
      */
     fun getSuffix(cacheMapKey: String?): String? {
         if (cacheMapKey.isNullOrBlank()) {
@@ -66,11 +68,11 @@ object DatasourceKeyTool {
         }
         val parts: Array<String?> =
             cacheMapKey.split(SEPERATOR.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        // 取最后一个元素
+        // Return the last element.
         return if (parts.isNotEmpty()) parts[parts.size - 1] else ""
     }
 
-    /** 判断 dsKey 是否为"只读副本"（后缀 [DatasourceConst.MODE_READONLY]）。 */
+    /** Determines whether dsKey is a "read-only replica" (suffix [DatasourceConst.MODE_READONLY]). */
     fun isReadOnly(dsKey: String): Boolean {
         return dsKey.endsWith(DatasourceConst.MODE_READONLY)
     }

@@ -7,40 +7,40 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
 
 
 /**
- * Redis 序列化字典表。配置 `kudos.ability.data.redis.redis-map.<name>.key-serializer` 等
- * 字段时填写本枚举的 [type] 字面值，运行时由 [RedisExtProperties.getSerializerByType]
- * 反射构造对应的 [RedisSerializer]。
+ * Redis serializer dictionary. When configuring fields such as
+ * `kudos.ability.data.redis.redis-map.<name>.key-serializer`, fill in the [type] literal of this enum.
+ * At runtime, [RedisExtProperties.getSerializerByType] reflectively constructs the corresponding [RedisSerializer].
  *
- * 已支持：
- *  - [STRING] —— UTF-8 字符串序列化
- *  - [JDK] —— Java 原生 `Serializable`；二进制紧凑但跨服务版本耦合强
- *  - [FASTJSON] —— Fastjson2 JSON 序列化；可读性高、跨语言友好
+ * Currently supported:
+ *  - [STRING] — UTF-8 string serialization
+ *  - [JDK] — Native Java `Serializable`; compact binary but strongly coupled across service versions
+ *  - [FASTJSON] — Fastjson2 JSON serialization; highly readable and cross-language friendly
  *
- * 新增序列化器需在此处加枚举值 + 给 `getSerializerByType` 加分支。
+ * To add a new serializer, add an enum value here and a branch in `getSerializerByType`.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class RedisSerializerEnum(
-    /** yml 配置中的字面值标识。 */
+    /** Literal identifier used in yml configuration. */
     val type: String,
-    /** 对应的 Spring Data Redis 序列化器类型。 */
+    /** Corresponding Spring Data Redis serializer type. */
     val serializerClazz: Class<out RedisSerializer<*>>
 ) {
 
-    /** UTF-8 字符串序列化器。 */
+    /** UTF-8 string serializer. */
     STRING("string", StringRedisSerializer::class.java),
 
-    /** JDK 序列化器（要求对象实现 `Serializable`）。 */
+    /** JDK serializer (requires the object to implement `Serializable`). */
     JDK("jdk", JdkSerializationRedisSerializer::class.java),
 
-    /** Fastjson2 JSON 序列化器；建议跨服务共享数据时使用。 */
+    /** Fastjson2 JSON serializer; recommended for data shared across services. */
     FASTJSON("fastjson", GenericFastJsonRedisSerializer::class.java);
 
     companion object {
         /**
-         * 按 [type] 字面值查询枚举；未匹配返回 null。
+         * Looks up the enum by the [type] literal; returns null if no match is found.
          */
         fun ofEnum(type: String?): RedisSerializerEnum? = entries.find { it.type == type }
     }

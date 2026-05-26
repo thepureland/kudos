@@ -5,28 +5,29 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 
 /**
- * 默认的批量缓存key生成器
+ * Default batch cache key generator.
  *
  *
- * 适用条件：
+ * Applicable conditions:
  *
- * 1.缓存方法参数，除集合与数组外，其他类型将被toString()
+ * 1. For cache method parameters, all types except collections and arrays will be converted via toString().
  *
- * 2.数组需要用Array<Int>、Array<String>等形式，不要使用IntArray、CharArray等形式
+ * 2. Arrays must be of form Array<Int>, Array<String>, etc. Do not use IntArray, CharArray, etc.
  *
- * 3.不支持无参
+ * 3. No-arg methods are not supported.
  *
  *
- * key的组装规则为：
+ * Key composition rules:
  *
- * 1.由除ignoreParamIndexes指定的参数索引外的所有参数组成
+ * 1. Composed of all parameters except those at indexes specified by ignoreParamIndexes.
  *
- * 2.各部分以半角冒号分隔
+ * 2. Parts are separated by a half-width colon.
  *
- * 3.各部分顺序同参数顺序
+ * 3. Parts follow the parameter order.
  *
- * 4.总的key个数为各参数元素个数的积，如各参数分别为："1", listOf(2,3,4), arrayOf("5","6"),7，那么组装完的key共6个，分别为：
- *   "1:2:5:7", "1:3:6:7", "1:4:5:7", "1:2:6:7", "1:3:5:7", "1:4:6:7"
+ * 4. The total number of keys equals the product of element counts of each parameter. For example, given parameters
+ *    "1", listOf(2,3,4), arrayOf("5","6"), 7, the resulting 6 keys are:
+ *    "1:2:5:7", "1:3:6:7", "1:4:5:7", "1:2:6:7", "1:3:5:7", "1:4:6:7"
  *
  * @author K
  * @since 1.0.0
@@ -53,9 +54,9 @@ class DefaultKeysGenerator : IKeysGenerator {
     }
 
     /**
-     * 校验参数的类型
+     * Validates parameter types.
      *
-     * @param params 方法参数
+     * @param params method parameters
      * @author K
      * @since 1.0.0
      */
@@ -64,16 +65,16 @@ class DefaultKeysGenerator : IKeysGenerator {
             if (it is IntArray || it is CharArray || it is ByteArray || it is ShortArray || it is LongArray ||
                 it is FloatArray || it is DoubleArray || it is BooleanArray
             ) {
-                error("缓存方法参数如果是数组，请使用Array<Any>类型，不支持IntArray、CharArray等类型！")
+                error("If cache method parameters are arrays, please use Array<Any>; primitive arrays such as IntArray, CharArray are not supported!")
             }
         }
     }
 
     /**
-     * 计算key的总个数
+     * Calculates the total number of keys.
      *
-     * @param params 方法参数
-     * @return key的总数
+     * @param params method parameters
+     * @return total number of keys
      * @author K
      * @since 1.0.0
      */
@@ -91,51 +92,51 @@ class DefaultKeysGenerator : IKeysGenerator {
     }
 
     /**
-     * 生成批量缓存的key列表
-     * 
-     * 根据方法参数生成所有可能的缓存key组合，支持集合、数组和普通参数。
-     * 
-     * 工作流程：
-     * 1. 过滤参数：根据ignoreParamIndexes过滤掉需要忽略的参数
-     * 2. 扩展参数：将每个参数扩展为totalCount大小的列表
-     *    - 集合/数组：重复添加元素，直到列表大小为totalCount
-     *    - 普通参数：重复添加相同值，直到列表大小为totalCount
-     * 3. 组合key：遍历每个索引位置，将各参数列表的对应元素组合成一个key
-     * 4. 返回结果：返回所有组合后的key列表
-     * 
-     * 扩展算法：
-     * - 集合/数组：计算需要重复的次数（groupCount = totalCount / 元素个数）
-     *   然后重复添加整个集合/数组，直到列表大小为totalCount
-     * - 普通参数：直接重复添加totalCount次
-     * 
-     * 组合规则：
-     * - 每个key由各参数在相同索引位置的元素组成
-     * - 元素之间使用分隔符（delimiter）连接
-     * - 例如：参数1的第i个元素 + 分隔符 + 参数2的第i个元素 + ...
-     * 
-     * 示例：
-     * - 参数："1", listOf(2,3), arrayOf("a","b")
+     * Generates the list of batch cache keys.
+     *
+     * Produces all possible cache key combinations from method parameters, supporting collections, arrays and plain values.
+     *
+     * Workflow:
+     * 1. Filter parameters: exclude those specified by ignoreParamIndexes.
+     * 2. Expand parameters: expand each parameter into a list of size totalCount.
+     *    - Collection/array: repeatedly append elements until list size reaches totalCount.
+     *    - Plain parameter: repeatedly append the same value until list size reaches totalCount.
+     * 3. Combine keys: for each index, join the corresponding element from each parameter list into a single key.
+     * 4. Return result: return the list of all composed keys.
+     *
+     * Expansion algorithm:
+     * - Collection/array: compute repeat count (groupCount = totalCount / element count),
+     *   then append the whole collection/array repeatedly until size equals totalCount.
+     * - Plain parameter: append totalCount copies directly.
+     *
+     * Composition rules:
+     * - Each key consists of elements from each parameter at the same index position.
+     * - Elements are joined by a delimiter.
+     * - For example: param1[i] + delimiter + param2[i] + ...
+     *
+     * Example:
+     * - Parameters: "1", listOf(2,3), arrayOf("a","b")
      * - totalCount = 1 * 2 * 2 = 4
-     * - 扩展后：
-     *   * 参数1: ["1", "1", "1", "1"]
-     *   * 参数2: [2, 3, 2, 3]（重复2次）
-     *   * 参数3: ["a", "a", "b", "b"]（重复2次）
-     * - 生成的key: ["1:2:a", "1:3:a", "1:2:b", "1:3:b"]
-     * 
-     * 注意事项：
-     * - 参数必须支持toString()方法
-     * - 集合/数组为空时，不会添加任何元素
-     * - 生成的key数量等于totalCount（各参数元素个数的乘积）
-     * - 使用分隔符连接，最后会去除末尾的分隔符
-     * 
-     * @param function 目标方法，用于获取ignoreParamIndexes配置
-     * @param totalCount 要生成的key总数（各参数元素个数的乘积）
-     * @param params 方法参数，可能包含集合、数组或普通值
-     * @return 生成的key列表，数量等于totalCount
+     * - After expansion:
+     *   * Param 1: ["1", "1", "1", "1"]
+     *   * Param 2: [2, 3, 2, 3] (repeated twice)
+     *   * Param 3: ["a", "a", "b", "b"] (repeated twice)
+     * - Generated keys: ["1:2:a", "1:3:a", "1:2:b", "1:3:b"]
+     *
+     * Notes:
+     * - Parameters must support toString().
+     * - Empty collections/arrays contribute no elements.
+     * - The number of generated keys equals totalCount (product of element counts).
+     * - The trailing delimiter is trimmed from each composed key.
+     *
+     * @param function target method, used to read ignoreParamIndexes configuration
+     * @param totalCount total number of keys to generate (product of element counts)
+     * @param params method parameters, may contain collections, arrays or plain values
+     * @return list of generated keys, with size equal to totalCount
      */
     @Suppress("UNCHECKED_CAST")
     private fun generateKeys(function: KFunction<*>?, totalCount: Int, vararg params: Any): List<String> {
-        val keys = mutableListOf<List<Any>>() // List<List<key同一分段的部分>>
+        val keys = mutableListOf<List<Any>>() // List<List<parts at the same key segment>>
         val paramIndexes = getParamIndexes(function, *params)
         params.filterIndexed { index, _ -> index in paramIndexes }.forEach {
             val parts = mutableListOf<Any>()

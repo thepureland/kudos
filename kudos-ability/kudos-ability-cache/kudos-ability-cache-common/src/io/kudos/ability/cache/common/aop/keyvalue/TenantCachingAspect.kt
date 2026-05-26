@@ -17,41 +17,41 @@ import org.springframework.stereotype.Component
 import java.lang.reflect.Method
 
 /**
- * 租户缓存切面
- * 
- * 实现@TenantCaching注解的AOP切面，支持租户隔离的缓存清除。
- * 
- * 核心功能：
- * 1. 方法执行前清除：支持在方法执行前清除缓存（beforeInvocation=true）
- * 2. 方法执行后清除：支持在方法执行后清除缓存（事务提交后）
- * 3. 租户隔离：使用TenantCacheKeyGenerator生成包含租户信息的缓存key
- * 4. 模式清除：支持按模式清除整个租户命名空间的缓存
- * 
- * 工作流程：
- * 1. 拦截标注@TenantCaching的方法
- * 2. 执行前清除：遍历evicts配置，执行beforeInvocation=true的清除操作
- * 3. 执行原方法：调用pjp.proceed()执行原始方法
- * 4. 事务后清除：在事务提交后执行beforeInvocation=false的清除操作
- * 
- * 事务同步：
- * - 使用TransactionTool.doAfterTransactionCommit确保在事务提交后执行
- * - 避免在事务回滚时清除缓存，保证数据一致性
- * - 如果事务提交失败，不会执行清除操作
- * 
- * 清除策略：
- * - allEntries=true：按模式清除整个租户命名空间（可能影响性能）
- * - allEntries=false：清除单个key
- * 
- * 注意事项：
- * - 模式清除可能触发scan操作，性能开销较大
- * - 清除操作在事务提交后执行，确保数据已持久化
- * - 使用租户key生成器确保租户隔离
+ * Tenant cache aspect.
+ *
+ * Implements the AOP aspect for the @TenantCaching annotation, supporting tenant-isolated cache eviction.
+ *
+ * Core features:
+ * 1. Pre-method eviction: supports clearing the cache before the method runs (beforeInvocation=true).
+ * 2. Post-method eviction: supports clearing the cache after the method runs (after the transaction commits).
+ * 3. Tenant isolation: uses TenantCacheKeyGenerator to generate cache keys containing tenant information.
+ * 4. Pattern eviction: supports clearing the entire tenant namespace by pattern.
+ *
+ * Workflow:
+ * 1. Intercepts methods annotated with @TenantCaching.
+ * 2. Pre-eviction: iterates the evicts configuration and performs the beforeInvocation=true eviction operations.
+ * 3. Executes the original method: calls pjp.proceed() to invoke the original method.
+ * 4. Post-transaction eviction: performs beforeInvocation=false eviction operations after the transaction commits.
+ *
+ * Transaction synchronization:
+ * - Uses TransactionTool.doAfterTransactionCommit to ensure execution after the transaction commits.
+ * - Avoids clearing the cache on transaction rollback, preserving data consistency.
+ * - If the transaction commit fails, the eviction operation is not performed.
+ *
+ * Eviction strategies:
+ * - allEntries=true: pattern-clears the entire tenant namespace (may affect performance).
+ * - allEntries=false: clears a single key.
+ *
+ * Notes:
+ * - Pattern eviction may trigger a scan, with a relatively large performance cost.
+ * - Eviction is performed after the transaction commits, ensuring data has been persisted.
+ * - Uses the tenant key generator to ensure tenant isolation.
  */
 @Aspect
 @Lazy(false)
 @Component
-// 写方法上的 evict 切面，在 cache 读注解（@TenantCacheable / @Cacheable 等）之前生效；
-// 优先级介于 DistributedCacheGuard(-999) 与单条 Cacheable(0) 之间。
+// Evict aspect on write methods; takes effect before cache-read annotations (@TenantCacheable / @Cacheable, etc.).
+// Priority sits between DistributedCacheGuard (-999) and single-record Cacheable (0).
 @Order(-100)
 class TenantCachingAspect {
 
@@ -62,9 +62,11 @@ class TenantCachingAspect {
     private val tenantCacheKeyGenerator: TenantCacheKeyGenerator? = null
 
     /**
-     * 事务后清缓存失败时是否向调用方抛错。
-     * - false（默认）：仅 error 日志 + 计数；事务已提交、调用方已返回，硬抛在事务后回调里只是噪音，且无法挽回。
-     * - true：抛出原异常（不包装），便于事务监听器拦截做告警/降级 —— 业务侧需自行接住。
+     * Whether to rethrow to the caller when post-commit cache eviction fails.
+     * - false (default): only logs an error and counts; the transaction has already committed and the caller has already
+     *   returned, so throwing inside the after-commit callback is just noise and cannot be recovered from.
+     * - true: rethrows the original exception (unwrapped) so a transaction listener can intercept it for alerts/fallback
+     *   — the business side must handle it.
      */
     @Value($$"${kudos.ability.cache.evict.throwOnAfterCommitFailure:false}")
     private var throwOnAfterCommitFailure: Boolean = false
@@ -74,24 +76,25 @@ class TenantCachingAspect {
     }
 
     /**
-     * 环绕通知，实现租户缓存清除逻辑
-     * 
-     * 在方法执行前后根据配置清除缓存，支持事务同步。
-     * 
-     * 工作流程：
-     * 1. 获取方法注解：提取@TenantCaching注解配置
-     * 2. 执行前清除：遍历evicts，执行beforeInvocation=true的清除
-     * 3. 执行原方法：调用pjp.proceed()执行业务方法
-     * 4. 注册事务后清除：使用TransactionTool注册事务提交后的清除任务
-     * 5. 返回结果：返回业务方法的执行结果
-     * 
-     * 事务同步：
-     * - 清除操作在事务提交后执行
-     * - 如果事务回滚，不会执行清除操作
-     * - 确保缓存与数据库数据一致
-     * 
-     * @param pjp 切点信息
-     * @return 业务方法的返回值
+     * Around advice that implements the tenant cache eviction logic.
+     *
+     * Clears the cache before and after method execution according to the configuration, with transaction synchronization
+     * support.
+     *
+     * Workflow:
+     * 1. Get the method annotation: extract the @TenantCaching configuration.
+     * 2. Pre-eviction: iterate over evicts and perform beforeInvocation=true evictions.
+     * 3. Execute the original method: call pjp.proceed() to invoke the business method.
+     * 4. Register post-commit eviction: use TransactionTool to register a post-commit eviction task.
+     * 5. Return the result: return the business method's return value.
+     *
+     * Transaction synchronization:
+     * - Eviction is performed after the transaction commits.
+     * - On transaction rollback, eviction is not performed.
+     * - Ensures the cache is consistent with the database.
+     *
+     * @param pjp pointcut information
+     * @return the business method's return value
      */
     @Around("cut()")
     fun around(pjp: ProceedingJoinPoint): Any? {
@@ -100,7 +103,7 @@ class TenantCachingAspect {
         val target = pjp.target
         val args = pjp.args
 
-        // 方法前先 evict
+        // Evict before the method runs.
         for (ev in multicast.evicts) {
             if (ev.beforeInvocation) {
                 doEvict(ev, target, method, args)
@@ -111,11 +114,13 @@ class TenantCachingAspect {
             try {
                 doAfterEvict(pjp, multicast, target, method, args)
             } catch (e: Throwable) {
-                // 这里是事务提交后的回调，业务线程已经返回了 result，向上抛 RuntimeException 调用方根本看不到 →
-                // 缓存清失败被完全吞掉，下游观测不到、脏缓存沉默存在。改成显式 error 日志 + 堆栈，必要时配合配置抛出。
+                // This is an after-commit callback; the business thread has already returned the result. Throwing a
+                // RuntimeException up from here is invisible to the caller -> the cache-eviction failure would be silently
+                // swallowed, leaving stale cache invisible to downstream observers. Replaced with an explicit error log
+                // + stack trace, plus a configurable rethrow.
                 log.error(
                     e,
-                    "事务提交后清缓存失败 — 可能产生脏缓存。class={0} method={1} caches={2}",
+                    "Failed to clear cache after transaction commit - stale cache may result. class={0} method={1} caches={2}",
                     target::class.java.name,
                     method.name,
                     multicast.evicts.flatMap { it.cacheNames.toList() }.joinToString(",")
@@ -127,27 +132,27 @@ class TenantCachingAspect {
     }
 
     companion object {
-        /** 日志器，事务后失败时记 ERROR + 堆栈以便排查脏缓存 */
+        /** Logger; logs ERROR + stack trace on after-commit failures to aid in diagnosing stale cache. */
         private val log = LogFactory.getLog(TenantCachingAspect::class)
     }
 
     /**
-     * 在事务提交后执行清除操作
-     * 
-     * 遍历evicts配置，执行beforeInvocation=false的清除操作。
-     * 
-     * @param pjp 切点信息（未使用）
-     * @param multicast @TenantCaching注解
-     * @param target 目标对象
-     * @param method 目标方法
-     * @param args 方法参数
+     * Performs eviction after the transaction commits.
+     *
+     * Iterates the evicts configuration and performs beforeInvocation=false eviction operations.
+     *
+     * @param pjp pointcut information (unused)
+     * @param multicast the @TenantCaching annotation
+     * @param target target object
+     * @param method target method
+     * @param args method arguments
      */
     @Throws(Throwable::class)
     private fun doAfterEvict(
         pjp: ProceedingJoinPoint?, multicast: TenantCaching,
         target: Any, method: Method, args: Array<Any?>
     ) {
-        // 方法后再 evict
+        // Evict after the method runs.
         for (ev in multicast.evicts) {
             if (!ev.beforeInvocation) {
                 doEvict(ev, target, method, args)
@@ -156,32 +161,32 @@ class TenantCachingAspect {
     }
 
     /**
-     * 执行缓存清除操作
-     * 
-     * 根据配置清除指定缓存的key或整个租户命名空间。
-     * 
-     * 工作流程：
-     * 1. 遍历缓存名称：对每个配置的缓存名称执行清除
-     * 2. 获取缓存实例：从缓存管理器获取缓存实例
-     * 3. 生成缓存key：使用TenantCacheKeyGenerator生成包含租户信息的key
-     * 4. 执行清除：
-     *    - allEntries=true：按模式清除整个租户命名空间
-     *    - allEntries=false：清除单个key
-     * 
-     * 租户隔离：
-     * - key生成器会自动添加租户前缀
-     * - 模式清除只影响当前租户的缓存
-     * - 确保多租户环境下的数据隔离
-     * 
-     * 性能考虑：
-     * - 模式清除可能触发scan操作，性能开销较大
-     * - 建议优先使用单key清除
-     * - 模式清除适用于批量更新场景
-     * 
-     * @param ev 缓存清除配置
-     * @param target 目标对象
-     * @param m 目标方法
-     * @param args 方法参数
+     * Performs the cache eviction operation.
+     *
+     * Clears the specified cache key or the entire tenant namespace according to the configuration.
+     *
+     * Workflow:
+     * 1. Iterate the cache names: perform eviction for each configured cache name.
+     * 2. Get the cache instance: obtain the cache instance from the cache manager.
+     * 3. Generate the cache key: use TenantCacheKeyGenerator to generate a key containing tenant information.
+     * 4. Perform eviction:
+     *    - allEntries=true: pattern-clears the entire tenant namespace.
+     *    - allEntries=false: clears a single key.
+     *
+     * Tenant isolation:
+     * - The key generator automatically adds the tenant prefix.
+     * - Pattern eviction only affects the current tenant's cache.
+     * - Ensures data isolation in a multi-tenant environment.
+     *
+     * Performance considerations:
+     * - Pattern eviction may trigger a scan, with a relatively large performance cost.
+     * - Prefer single-key eviction.
+     * - Pattern eviction is suitable for batch update scenarios.
+     *
+     * @param ev cache eviction configuration
+     * @param target target object
+     * @param m target method
+     * @param args method arguments
      */
     private fun doEvict(
         ev: TenantCacheEvict,
@@ -192,11 +197,11 @@ class TenantCachingAspect {
             if (cache != null) {
                 val key = tenantCacheKeyGenerator!!.generalNormalKey(target, m, ev.suffix, *args)
                 if (ev.allEntries) {
-                    // 全清本租户命名空间（keyGenerator 已拼 prefix）
-                    // 此处如果触发scan可能会有性能问题
+                    // Clear the entire tenant namespace (keyGenerator already added the prefix).
+                    // Triggering a scan here may cause performance issues.
                     cacheManager.evictByPattern(cacheName, key.toString())
                 } else {
-                    // 单条 key 删除
+                    // Delete a single key.
                     cache.evict(key)
                 }
             }

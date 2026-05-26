@@ -17,7 +17,7 @@ kotlin {
 dependencies {
     // Add a dependency on the Kotlin Gradle plugin, so that convention plugins can apply it.
     implementation(libs.kotlinGradlePlugin)
-    // allopen preset, 让约定插件可以 `apply plugin: "org.jetbrains.kotlin.plugin.spring"`
+    // allopen preset, lets convention plugins `apply plugin: "org.jetbrains.kotlin.plugin.spring"`
     implementation(libs.kotlinAllOpenPlugin)
 }
 

@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 角色 内部 RPC 控制器。路径继承自 [IAuthRoleApi] 方法级注解。
+ * Role internal RPC controller. Paths inherited from [IAuthRoleApi] method-level annotations.
  *
  * @author K
  * @since 1.0.0

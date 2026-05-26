@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 用户 API本地实现
+ * Local implementation of the user account API.
  *
  * @author K
  * @author AI: Cursor

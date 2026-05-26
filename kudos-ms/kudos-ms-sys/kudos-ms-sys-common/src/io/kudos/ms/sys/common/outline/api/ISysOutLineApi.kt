@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RequestParam
 
 
 /**
- * 出网白名单 对外API
+ * External API for outbound whitelist.
  *
  * @author K
  * @since 1.0.0
@@ -14,12 +14,12 @@ import org.springframework.web.bind.annotation.RequestParam
 interface ISysOutLineApi {
 
     /**
-     * 返回指定系统下、指定租户的所有启用的出网白名单。
-     * `tenantId == null` 表示平台级规则。
+     * Returns all enabled outbound whitelist entries for the specified system and tenant.
+     * `tenantId == null` indicates platform-level rules.
      *
-     * @param systemCode 系统编码
-     * @param tenantId 租户id；为 `null` 时查询平台级规则
-     * @return 出网白名单列表（仅包含 active=true 的记录）
+     * @param systemCode System code
+     * @param tenantId Tenant id; when `null`, query platform-level rules.
+     * @return List of outbound whitelist entries (only includes records with active=true).
      * @author K
      * @since 1.0.0
      */

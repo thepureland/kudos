@@ -4,7 +4,7 @@ import io.kudos.base.bean.validation.terminal.convert.converter.AbstractConstrai
 import kotlin.reflect.full.memberProperties
 
 /**
- * 默认的约束注解->终端约束转换器
+ * Default converter from constraint annotation to terminal constraint.
  *
  * @author K
  * @since 1.0.0
@@ -16,7 +16,7 @@ open class DefaultConstraintConvertor(annotation: Annotation) : AbstractConstrai
         constraintAnnotation.annotationClass.memberProperties.forEach {
             if (it.name != "groups" && it.name != "payload") {
                 rules[it.name] = requireNotNull(it.call(constraintAnnotation)) {
-                    "约束属性值为空: ${constraintAnnotation.annotationClass}.${it.name}"
+                    "Constraint property value is null: ${constraintAnnotation.annotationClass}.${it.name}"
                 }
             }
         }

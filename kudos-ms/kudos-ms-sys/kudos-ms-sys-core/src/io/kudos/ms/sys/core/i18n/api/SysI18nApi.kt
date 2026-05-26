@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 国际化 API本地实现
+ * Local implementation of the i18n API.
  *
  * @author K
  * @since 1.0.0

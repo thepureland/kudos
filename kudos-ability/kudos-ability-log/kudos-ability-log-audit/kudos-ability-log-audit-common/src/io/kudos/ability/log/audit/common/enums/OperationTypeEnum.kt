@@ -4,10 +4,11 @@ import io.kudos.base.enums.ienums.IDictEnum
 import io.kudos.base.enums.ienums.IDictTypeEnum
 
 /**
- * 审计操作类型枚举。
+ * Audit operation-type enum.
  *
- * **code 必须是纯数字字符串**——[BaseLog.toSysLogVo] 用 `Integer.valueOf(op.code)` 写入
- * `SysAuditLogVo.operateTypeId`，非数字字符串会抛 NumberFormatException。
+ * **`code` must be a pure-numeric string** — [BaseLog.toSysLogVo] uses
+ * `Integer.valueOf(op.code)` when writing `SysAuditLogVo.operateTypeId`;
+ * non-numeric strings will throw NumberFormatException.
  *
  * @author K
  * @author AI: Codex
@@ -19,14 +20,14 @@ enum class OperationTypeEnum(
 ) : IDictEnum {
 
     //Module.LOG op_type
-    //注意:code一定要是数字
-    OTHER("0", "other"),  //其它
-    QUERY("1", "query"),  //查询
-    CREATE("2", "create"),  //添加
-    UPDATE("3", "update"),  //编辑
-    DELETE("4", "delete"),  //删除
-    LOGIN("5", "login"),  //登录
-    LOGOUT("6", "logout"); //登出;
+    //Note: code must be numeric.
+    OTHER("0", "other"),
+    QUERY("1", "query"),
+    CREATE("2", "create"),
+    UPDATE("3", "update"),
+    DELETE("4", "delete"),
+    LOGIN("5", "login"),
+    LOGOUT("6", "logout");
 
     val dictType: IDictTypeEnum
         get() = LogAuditDictTypeEnum.OPERATION_TYPE

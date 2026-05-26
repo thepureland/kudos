@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * kotlin.String扩展函数
+ * kotlin.String extension functions
  *
  * @author K
  * @since 1.0.0
@@ -20,9 +20,9 @@ import kotlin.reflect.KClass
 
 
 /**
- * 将首字母大写
+ * Capitalizes the first character.
  *
- * @return 首字母大写的字符串
+ * @return the string with its first character capitalized
  * @author K
  * @since 1.0.0
  */
@@ -31,50 +31,50 @@ fun CharSequence.capitalizeString(): String =
 
 
 /**
- * 将字符序列转换为指定类型
- * 
- * 支持将字符串转换为常见的基本类型和数值类型。
- * 
- * 支持的类型：
- * - 数值类型：Double、Int、Long、Float、Short、BigDecimal、BigInteger、Byte
- * - 布尔类型：Boolean
- * - 字符类型：Char（取第一个字符）
- * - 字符串类型：String（直接返回）
- * 
- * 转换规则：
- * 1. 数值类型：使用Kotlin标准库的转换方法（toDouble、toInt等）
- * 2. BigDecimal：使用toBigDecimal()方法，支持高精度
- * 3. BigInteger：使用toBigInteger()方法，支持任意长度整数
- * 4. Boolean：使用toBoolean()方法，支持"true"/"false"字符串
- * 5. Char：取字符串的第一个字符
- * 6. String：直接返回原字符串
- * 
- * 类型转换：
- * - 使用Kotlin标准库的转换方法，遵循标准转换规则
- * - 数值类型转换失败会抛出NumberFormatException
- * - Boolean转换遵循Kotlin标准（"true"为true，其他为false）
- * 
- * 异常处理：
- * - 不支持的类型：抛出IllegalArgumentException
- * - 数值转换失败：抛出NumberFormatException（由标准库方法抛出）
- * - 空字符串转Char：抛出NoSuchElementException（由first()抛出）
- * 
- * 使用场景：
- * - Excel导入时的类型转换
- * - 配置文件解析
- * - 动态类型转换
- * 
- * 注意事项：
- * - 只支持基本类型和数值类型，不支持自定义类型
- * - 数值转换遵循Kotlin标准，可能抛出异常
- * - Char类型只取第一个字符，如果字符串为空会抛出异常
- * 
- * @param T 目标类型
- * @param returnType 目标类型的KClass对象
- * @return 转换后的目标类型值
- * @throws IllegalArgumentException 如果目标类型不支持
- * @throws NumberFormatException 如果数值转换失败
- * @throws NoSuchElementException 如果字符串为空且目标类型为Char
+ * Converts a character sequence to the specified type.
+ *
+ * Supports converting strings to common primitive and numeric types.
+ *
+ * Supported types:
+ * - Numeric types: Double, Int, Long, Float, Short, BigDecimal, BigInteger, Byte
+ * - Boolean
+ * - Char (takes the first character)
+ * - String (returned as-is)
+ *
+ * Conversion rules:
+ * 1. Numeric types: use the Kotlin standard library conversion methods (toDouble, toInt, etc.)
+ * 2. BigDecimal: use toBigDecimal() for arbitrary precision.
+ * 3. BigInteger: use toBigInteger() for arbitrary-length integers.
+ * 4. Boolean: use toBoolean(); supports "true"/"false" strings.
+ * 5. Char: takes the first character of the string.
+ * 6. String: returned as-is.
+ *
+ * Type conversion:
+ * - Uses Kotlin standard library conversion methods following standard conversion rules.
+ * - Numeric conversion failure throws NumberFormatException.
+ * - Boolean conversion follows the Kotlin standard ("true" -> true, otherwise false).
+ *
+ * Exception handling:
+ * - Unsupported type: throws IllegalArgumentException.
+ * - Numeric conversion failure: throws NumberFormatException (thrown by stdlib methods).
+ * - Empty string to Char: throws NoSuchElementException (thrown by first()).
+ *
+ * Use cases:
+ * - Type conversion during Excel import.
+ * - Configuration file parsing.
+ * - Dynamic type conversion.
+ *
+ * Notes:
+ * - Only primitive and numeric types are supported; custom types are not.
+ * - Numeric conversion follows the Kotlin standard and may throw exceptions.
+ * - The Char type only takes the first character; an empty string causes an exception.
+ *
+ * @param T target type
+ * @param returnType KClass of the target type
+ * @return the converted value of the target type
+ * @throws IllegalArgumentException if the target type is not supported
+ * @throws NumberFormatException if numeric conversion fails
+ * @throws NoSuchElementException if the string is empty and the target type is Char
  */
 fun <T : Any> CharSequence.toType(returnType: KClass<out T>): T {
     val converted: Any = this.toString().run {
@@ -90,7 +90,7 @@ fun <T : Any> CharSequence.toType(returnType: KClass<out T>): T {
             Byte::class -> toByte()
             Char::class -> toCharArray().first()
             String::class -> this
-            else -> error("不支持的类型【$returnType】!")
+            else -> error("Unsupported type [$returnType]!")
         }
     }
     return returnType.javaObjectType.cast(converted)
@@ -98,96 +98,96 @@ fun <T : Any> CharSequence.toType(returnType: KClass<out T>): T {
 
 
 /**
- * 查找子串并用指定字符串替换（支持多对替换规则）
- * 
- * 根据Map中的键值对，将字符串中所有出现的键替换为对应的值。
- * 
- * 工作流程：
- * 1. 检查Map：如果Map为空，直接返回原字符串
- * 2. 转换为数组：将Map的keys和values转换为数组
- * 3. 调用重载方法：使用数组版本进行实际替换
- * 
- * 替换规则：
- * - 替换所有出现的地方（不是只替换第一个）
- * - 支持同时替换多个不同的子串
- * - 替换顺序按照Map的迭代顺序
- * 
- * 注意事项：
- * - 如果Map为空，直接返回原字符串
- * - 替换是顺序执行的，后面的替换可能影响前面的结果
- * - 键和值都可以为null，但null键不会被替换
- * 
- * @param map 替换规则Map，key为要查找的字符串，value为用来替换的字符串
- * @return 替换后的字符串
+ * Finds substrings and replaces them with the specified strings (supports multiple replacement rules).
+ *
+ * Replaces every occurrence of each key in the map with its corresponding value.
+ *
+ * Workflow:
+ * 1. Check the map: if it is empty, return the original string.
+ * 2. Convert to arrays: convert the map's keys and values to arrays.
+ * 3. Delegate to the overload: invoke the array-based version to perform the actual replacement.
+ *
+ * Replacement rules:
+ * - Replaces all occurrences (not just the first).
+ * - Multiple different substrings can be replaced simultaneously.
+ * - Replacement order follows the map's iteration order.
+ *
+ * Notes:
+ * - If the map is empty, returns the original string.
+ * - Replacements are applied sequentially; later replacements may affect earlier results.
+ * - Keys and values may be null, but null keys are not replaced.
+ *
+ * @param map replacement-rule map; key is the string to look for, value is the replacement
+ * @return the resulting string
  */
 fun CharSequence.replaceEach(map: Map<String?, String?>): String =
     if (map.isEmpty()) toString()
     else replaceEach(map.keys.toTypedArray(), map.values.toTypedArray())
 
 /**
- * 将字符串转换为十六进制表示的值
+ * Converts the string to its hexadecimal representation.
  *
- * @return 转换后的十六进制表示的字符串
+ * @return the converted hex-encoded string
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.toHexStr(): String = String(CryptoKit.encodeHex(this.toString().toByteArray()))
 
 /**
- * 解码十六进制表示的字符串
+ * Decodes a hex-encoded string.
  *
- * @return 解码后的字符串
+ * @return the decoded string
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.decodeHexStr(): String = String(CryptoKit.decodeHex(this.toString().toByteArray()))
 
 /**
- * 对字符串进行MD5加密后，再进行十六进制编码
+ * Applies MD5 hashing to the string, then hex-encodes the result.
  *
- * @param saltStr 盐
- * @return 加密的字符串
+ * @param saltStr salt
+ * @return the encrypted string
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.toMd5HexStr(saltStr: CharSequence): String = DigestKit.getMD5(this.toString(), saltStr.toString())
 
 /**
- * 将字符串按给定的组数均分
- * 
- * 将字符串尽可能均匀地分成指定数量的组，最后一组可能长度不同。
- * 
- * 工作流程：
- * 1. 参数检查：如果groupLen<=0或字符串为空，返回空数组
- * 2. 计算每组长度：使用ceil(总长度/组数)向上取整
- * 3. 分割字符串：
- *    - 遍历每个组索引
- *    - 计算每组的起始和结束索引
- *    - 最后一组包含剩余所有字符
- * 4. 返回结果：将分割后的字符串组成数组返回
- * 
- * 分割算法：
- * - 每组长度 = ceil(总长度 / 组数)
- * - 第i组的起始索引 = i * 每组长度
- * - 第i组的结束索引 = 起始索引 + 每组长度（最后一组为总长度）
- * 
- * 示例：
- * - "123456".divideAverage(3) = ["12", "34", "56"]（每组2个字符）
- * - "1234567".divideAverage(3) = ["123", "456", "7"]（前两组3个字符，最后一组1个字符）
- * - "".divideAverage(3) = []（空字符串）
- * 
- * 边界情况：
- * - groupLen <= 0：返回空数组
- * - 字符串为空：返回空数组
- * - groupLen > 字符串长度：每组1个字符，最后一组可能为空
- * 
- * 注意事项：
- * - 最后一组的长度可能与其他组不同
- * - 使用向上取整确保所有字符都被分配
- * - 如果组数大于字符串长度，会有空组
- * 
- * @param groupLen 要分成的组数
- * @return 分割后的字符串数组，如果参数无效或字符串为空则返回空数组
+ * Splits the string into the given number of groups as evenly as possible.
+ *
+ * Splits the string into the specified number of groups; the last group may have a different length.
+ *
+ * Workflow:
+ * 1. Validate arguments: if groupLen <= 0 or the string is empty, return an empty array.
+ * 2. Compute group length: round up total length divided by group count.
+ * 3. Split the string:
+ *    - iterate over each group index;
+ *    - compute the start and end indices of each group;
+ *    - the last group contains all remaining characters.
+ * 4. Return the result: the split substrings are returned as an array.
+ *
+ * Splitting algorithm:
+ * - Group length = ceil(total length / group count).
+ * - Start index of group i = i * group length.
+ * - End index of group i = start index + group length (last group = total length).
+ *
+ * Examples:
+ * - "123456".divideAverage(3) = ["12", "34", "56"] (2 chars per group)
+ * - "1234567".divideAverage(3) = ["123", "456", "7"] (first two groups have 3 chars, last has 1)
+ * - "".divideAverage(3) = [] (empty string)
+ *
+ * Edge cases:
+ * - groupLen <= 0: returns an empty array.
+ * - empty string: returns an empty array.
+ * - groupLen > string length: each group has 1 char, and the last may be empty.
+ *
+ * Notes:
+ * - The length of the last group may differ from the rest.
+ * - Rounding up ensures all characters are assigned.
+ * - When group count exceeds string length, some groups may be empty.
+ *
+ * @param groupLen number of groups to split into
+ * @return array of split strings, or an empty array if arguments are invalid or the string is empty
  */
 fun CharSequence.divideAverage(groupLen: Int): Array<String?> {
     if (groupLen <= 0 || this.isEmpty()) {
@@ -198,7 +198,7 @@ fun CharSequence.divideAverage(groupLen: Int): Array<String?> {
     val groups = mutableListOf<String>()
     for (i in 0 until groupLen) {
         val beginIndex = i * eachCount
-        val endIndex = if (i == groupLen - 1) { // 最后一组
+        val endIndex = if (i == groupLen - 1) { // last group
             strLen
         } else {
             beginIndex + eachCount
@@ -209,7 +209,7 @@ fun CharSequence.divideAverage(groupLen: Int): Array<String?> {
 }
 
 /**
- * 将“驼峰”式写法的字符串转为用“_”分割的字符串
+ * Converts a "camelCase" string to an "_"-delimited string.
  *
  * <pre>
  * "".humpToUnderscore() = ""
@@ -217,8 +217,8 @@ fun CharSequence.divideAverage(groupLen: Int): Array<String?> {
  * "humpToUnderscore".humpToUnderscore() = "HUMP_TO_UNDERSCORE"
  * </pre>
  *
- * @param upperCase 是否转换为大写，true为大写，false为小写
- * @return “_”分割的字符串
+ * @param upperCase whether to convert to uppercase; true for upper, false for lower
+ * @return the "_"-delimited string
  * @author K
  * @since 1.0.0
  */
@@ -235,7 +235,7 @@ fun CharSequence.humpToUnderscore(upperCase: Boolean = true): String {
 }
 
 /**
- * 将“_”分割的字符串转为“驼峰”式写法的字符串, 如：HUMP_TO_Underscore -> humpToUnderscore
+ * Converts an "_"-delimited string to a "camelCase" string, e.g. HUMP_TO_Underscore -> humpToUnderscore.
  *
  * <pre>
  * "".underscoreToHump() = ""
@@ -243,7 +243,7 @@ fun CharSequence.humpToUnderscore(upperCase: Boolean = true): String {
  * "HUMP_TO_Underscore".underscoreToHump() = "humpToUnderscore"
  * </pre>
  *
- * @return “驼峰”式写法的字符串
+ * @return the "camelCase" string
  * @author K
  * @since 1.0.0
  */
@@ -256,10 +256,10 @@ fun CharSequence.underscoreToHump(): String {
 }
 
 /**
- * 替换模板中的参数(以"${"和"}"括起来)
+ * Replaces parameters in a template (enclosed in "${" and "}").
  *
- * @param paramMap 参数map
- * @return 替换后的字符串
+ * @param paramMap parameter map
+ * @return the resulting string
  * @author K
  * @since 1.0.0
  */
@@ -269,11 +269,11 @@ fun CharSequence.fillTemplateByObjectMap(paramMap: Map<String, Any>): CharSequen
     }
 
 /**
- * 如果缺失指定的后缀，则拼接上
+ * Appends the given suffix if it is missing.
  *
- * @param suffix 后缀
- * @param ignoreCase 忽略大小写，默认不忽略
- * @return 拼接后的字符串
+ * @param suffix suffix
+ * @param ignoreCase ignore case; default false
+ * @return the concatenated string
  * @author K
  * @since 1.0.0
  */
@@ -282,13 +282,13 @@ fun CharSequence.appendIfMissing(suffix: String, ignoreCase: Boolean = false): S
 
 
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-// 封装org.apache.commons.lang3.StringUtils
+// Wrappers around org.apache.commons.lang3.StringUtils
 // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 /**
- * 检查给定是字符串是否包含任何空白字符
+ * Tests whether the given string contains any whitespace characters.
  *
- * @return true：如果字符串非空至少包含1个空白字符, false： 如果不包含
+ * @return true if the string is non-empty and contains at least 1 whitespace character; false otherwise
  * @author K
  * @since 1.0.0
  */
@@ -297,7 +297,7 @@ fun CharSequence.containsWhitespace(): Boolean = StringUtils.containsWhitespace(
 
 //region ContainsAny
 /**
- * 检查是否字符序列包含给定的字符组 searchChars 的任何一个字符
+ * Tests whether this character sequence contains any of the characters in the given group searchChars.
  *
  * <pre>
  * "".containsAny(*)                  = false
@@ -307,15 +307,15 @@ fun CharSequence.containsWhitespace(): Boolean = StringUtils.containsWhitespace(
  * "aba".containsAny(['z'])           = false
  * </pre>
  *
- * @param searchChars 要查找的字符组
- * @return true：任何给定的字符被找到，false：未找到
+ * @param searchChars character group to search for
+ * @return true if any of the given characters is found; false otherwise
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.containsAny(vararg searchChars: Char): Boolean = StringUtils.containsAny(this, *searchChars)
 
 /**
- * 检查是否字符序列包含给定的字符组 searchChars 的任何一个字符
+ * Tests whether this character sequence contains any of the characters in the given group searchChars.
  *
  * <pre>
  * "".containsAny(*)              = false
@@ -325,8 +325,8 @@ fun CharSequence.containsAny(vararg searchChars: Char): Boolean = StringUtils.co
  * "aba".containsAny("z")          = false
  * </pre>
  *
- * @param searchChars 要查找的字符组, 可以为null
- * @return true：任何给定的字符被找到，false：未找到
+ * @param searchChars character group to search for; may be null
+ * @return true if any of the given characters is found; false otherwise
  * @author K
  * @since 1.0.0
  */
@@ -335,7 +335,7 @@ fun CharSequence.containsAny(searchChars: CharSequence?): Boolean = StringUtils.
 
 //region IndexOfAnyBut chars
 /**
- * 在字符序列中查找给定的一组字符 searchChars，返回第一次不出现给定的任何字符的位置
+ * Searches the character sequence for any of the characters in searchChars and returns the index of the first character not in the group.
  *
  * <pre>
  * "".indexOfAnyBut(*)                    = -1
@@ -345,15 +345,15 @@ fun CharSequence.containsAny(searchChars: CharSequence?): Boolean = StringUtils.
  * "aba".indexOfAnyBut(['a', 'b'])        = -1
  * </pre>
  *
- * @param searchChars 要查找的字符组
- * @return 任何第一次不匹配的字符的下标。如果没有找到，将返回-1
+ * @param searchChars character group to search for
+ * @return the index of the first character that does not match; -1 if none is found
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.indexOfAnyBut(vararg searchChars: Char): Int = StringUtils.indexOfAnyBut(this, *searchChars)
 
 /**
- * 在字符序列中查找给定的一组字符 searchChars，返回第一次不出现给定的任何字符的位置
+ * Searches the character sequence for any of the characters in searchChars and returns the index of the first character not in the group.
  *
  * <pre>
  * "".indexOfAnyBut(*)              = -1
@@ -363,8 +363,8 @@ fun CharSequence.indexOfAnyBut(vararg searchChars: Char): Int = StringUtils.inde
  * "aba".indexOfAnyBut("ab")        = -1
  * </pre>
  *
- * @param searchChars 要查找的字符组
- * @return 任何第一次不匹配的字符的下标。如果没有找，将返回-1
+ * @param searchChars character group to search for
+ * @return the index of the first character that does not match; -1 if none is found
  * @author K
  * @since 1.0.0
  */
@@ -373,7 +373,7 @@ fun CharSequence.indexOfAnyBut(searchChars: CharSequence): Int = StringUtils.ind
 
 //region ContainsOnly
 /**
- * 检查字符序列是否只由 valid 中的字符组成
+ * Tests whether the character sequence consists solely of characters in valid.
  *
  * <pre>
  * "".containsOnly(*)         = true
@@ -383,15 +383,15 @@ fun CharSequence.indexOfAnyBut(searchChars: CharSequence): Int = StringUtils.ind
  * "abz".containsOnly('abc')  = false
  * </pre>
  *
- * @param valid 有效的字符组
- * @return true: 如果只由valid中的字符组成或cs为空串， false: 包含其他字符
+ * @param valid the valid character group
+ * @return true if the sequence consists only of characters from valid (or is empty); false otherwise
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.containsOnly(vararg valid: Char): Boolean = StringUtils.containsOnly(this, *valid)
 
 /**
- * 检查字符序列是否只由 validChars 中的字符组成
+ * Tests whether the character sequence consists solely of characters in validChars.
  *
  * <pre>
  * "".containsOnly(*)         = true
@@ -401,8 +401,8 @@ fun CharSequence.containsOnly(vararg valid: Char): Boolean = StringUtils.contain
  * "abz".containsOnly("abc")  = false
  * </pre>
  *
- * @param validChars 有效的字符组
- * @return true: 如果只由validChars中的字符组成或为空串， false: 包含其他字符
+ * @param validChars the valid character group
+ * @return true if the sequence consists only of characters from validChars (or is empty); false otherwise
  * @author K
  * @since 1.0.0
  */
@@ -411,7 +411,7 @@ fun CharSequence.containsOnly(validChars: String?): Boolean = StringUtils.contai
 
 //region ContainsNone
 /**
- * 检查字符序列是否都不由 searchChars 中的字符组成
+ * Tests whether the character sequence contains none of the characters in searchChars.
  *
  * <pre>
  * "".containsNone(*)         = true
@@ -421,15 +421,15 @@ fun CharSequence.containsOnly(validChars: String?): Boolean = StringUtils.contai
  * "abz".containsNone('xyz')  = false
  * </pre>
  *
- * @param searchChars 无效的字符组
- * @return true: 如果都不由searchChars中的字符组成或为空串，false: 包含searchChars中的任何字符
+ * @param searchChars the invalid character group
+ * @return true if no character from searchChars is contained (or the sequence is empty); false if any character is contained
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.containsNone(vararg searchChars: Char): Boolean = StringUtils.containsNone(this, *searchChars)
 
 /**
- * 检查字符序列是否都不由字符串 invalidChars 中的字符组成
+ * Tests whether the character sequence contains none of the characters in the invalidChars string.
  *
  * <pre>
  * "".containsNone(*)         = true
@@ -439,8 +439,8 @@ fun CharSequence.containsNone(vararg searchChars: Char): Boolean = StringUtils.c
  * "abz".containsNone("xyz")  = false
  * </pre>
  *
- * @param invalidChars 无效的字符组
- * @return true: 如果都不由searchChars中的字符组成或为空串, false: 包含searchChars中的任何字符
+ * @param invalidChars the invalid character group
+ * @return true if no character from invalidChars is contained (or the sequence is empty); false if any character is contained
  * @author K
  * @since 1.0.0
  */
@@ -450,7 +450,7 @@ fun CharSequence.containsNone(invalidChars: String): Boolean = StringUtils.conta
 
 //region Left/Right/Mid
 /**
- * 返回字符串最左边的 len 个字符
+ * Returns the leftmost len characters of the string.
  *
  * <pre>
  * *.left(-ve)     = ""
@@ -460,15 +460,15 @@ fun CharSequence.containsNone(invalidChars: String): Boolean = StringUtils.conta
  * "abc".left(4)   = "abc"
  * </pre>
  *
- * @param len 子串的长度
- * @return 最左边的字符串, 为空串或len为负数将返回空串
+ * @param len length of the substring
+ * @return the leftmost substring; returns the empty string if the source is empty or len is negative
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.left(len: Int): String? = StringUtils.leftPad(this.toString(), len)
 
 /**
- * 返回字符串最右边的 len 个字符
+ * Returns the rightmost len characters of the string.
  *
  * <pre>
  * *.right(-ve)     = ""
@@ -478,15 +478,15 @@ fun CharSequence.left(len: Int): String? = StringUtils.leftPad(this.toString(), 
  * "abc".right(4)   = "abc"
  * </pre>
  *
- * @param len 子串的长度
- * @return 最左边的字符串, 为空串或len为负数将返回空串
+ * @param len length of the substring
+ * @return the rightmost substring; returns the empty string if the source is empty or len is negative
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.right(len: Int): String? = StringUtils.right(this.toString(), len)
 
 /**
- * 返回字符串从 pos 位置开始的 len 个字符
+ * Returns len characters of the string starting from position pos.
  *
  * <pre>
  * *.mid(*, -ve)     = ""
@@ -498,9 +498,9 @@ fun CharSequence.right(len: Int): String? = StringUtils.right(this.toString(), l
  * "abc".mid(-2, 2)  = "ab"
  * </pre>
  *
- * @param pos 开始位置, 负数将被当作0
- * @param len 子串的长度
- * @return 从 pos 位置开始的 len 个字符, 为空串或len为负数将返回空串
+ * @param pos starting position; negatives are treated as 0
+ * @param len length of the substring
+ * @return len characters starting at pos; returns the empty string if the source is empty or len is negative
  * @author K
  * @since 1.0.0
  */
@@ -509,7 +509,7 @@ fun CharSequence.mid(pos: Int, len: Int): String? = StringUtils.mid(this.toStrin
 
 //region Substring between
 /**
- * 从字符串中获取嵌在两个相同字符串 tag 中间的子串
+ * Returns the substring nested between two identical tag strings.
  *
  * <pre>
  * "".substringBetween("")             = ""
@@ -518,15 +518,15 @@ fun CharSequence.mid(pos: Int, len: Int): String? = StringUtils.mid(this.toStrin
  * "tagabctag".substringBetween("tag") = "abc"
  * </pre>
  *
- * @param tag 子串前后的字符串
- * @return 子串, 未找到将返回空串，tag为空串将返回空串
+ * @param tag the string surrounding the substring
+ * @return the substring; returns empty string if not found or if tag is empty
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.substringBetween(tag: String): String = StringUtils.substringBetween(this.toString(), tag) ?: ""
 
 /**
- * 从字符串中获取嵌在字符串 open 和 close 中间的子串，返回第一次匹配的结果
+ * Returns the substring nested between the strings open and close; returns the first match.
  *
  * <pre>
  * "wx[b]yz".substringBetween("[", "]") = "b"
@@ -538,9 +538,9 @@ fun CharSequence.substringBetween(tag: String): String = StringUtils.substringBe
  * "yabczyabcz".substringBetween("y", "z")   = "abc"
  * </pre>
  *
- * @param open  子串前的字符串
- * @param close 子串后的字符串
- * @return 子串, 未找到将返回空串，open/close为空串将返回空串
+ * @param open  string before the substring
+ * @param close string after the substring
+ * @return the substring; returns empty string if not found or if open/close is empty
  * @author K
  * @since 1.0.0
  */
@@ -548,16 +548,16 @@ fun CharSequence.substringBetween(open: String, close: CharSequence): String =
     StringUtils.substringBetween(this.toString(), open, close.toString()) ?: ""
 
 /**
- * 从字符串中获取嵌在字符串 open 和 close 中间的子串，返回全部匹配结果
+ * Returns all substrings nested between the strings open and close.
  *
  * <pre>
  * "[a][b][c]".substringsBetween("[", "]") = ["a","b","c"]
  * "".substringsBetween("[", "]")          = []
  * </pre>
  *
- * @param open  标识子串开始的字符串
- * @param close 标识子串结束的字符串
- * @return 子串数组, 未找到返回空数组
+ * @param open  string marking the start of the substring
+ * @param close string marking the end of the substring
+ * @return array of substrings; empty array if none is found
  * @author K
  * @since 1.0.0
  */
@@ -568,7 +568,7 @@ fun CharSequence.substringsBetween(open: String, close: CharSequence): Array<Str
 //region Splitting
 
 /**
- * 根据字符的类型(由`java.lang.Character.getType(char)`返回)分隔字符串。多个连续的相同类型的字符将被当作同一组返回。
+ * Splits the string based on character type (as returned by `java.lang.Character.getType(char)`). Multiple consecutive characters of the same type are returned together as one group.
  *
  * <pre>
  * "".splitByCharacterType()           = []
@@ -581,15 +581,15 @@ fun CharSequence.substringsBetween(open: String, close: CharSequence): Array<Str
  * "ASFRules".splitByCharacterType()   = ["ASFR", "ules"]
  * </pre>
  *
- * @return 子串数组
+ * @return array of substrings
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.splitByCharacterType(): Array<String> = StringUtils.splitByCharacterTypeCamelCase(this.toString())
 
 /**
- * 根据字符的类型(由`java.lang.Character.getType(char)`返回)分隔字符串。
- * 多个连续的相同类型的字符将被当作同一组返回。 以下情况除外： 大写字母紧跟着小写字母(驼峰)，这样，该大写字母将属于小写字母的组
+ * Splits the string based on character type (as returned by `java.lang.Character.getType(char)`).
+ * Multiple consecutive characters of the same type are returned as one group. Exception: when an uppercase letter is immediately followed by a lowercase letter (camel case), the uppercase letter is grouped with the lowercase letters.
  *
  * <pre>
  * "".splitByCharacterTypeCamelCase()           = []
@@ -602,7 +602,7 @@ fun CharSequence.splitByCharacterType(): Array<String> = StringUtils.splitByChar
  * "ASFRules".splitByCharacterTypeCamelCase()   = ["ASF", "Rules"]
  * </pre>
  *
- * @return 子串数组
+ * @return array of substrings
  * @author K
  * @since 1.0.0
  */
@@ -610,7 +610,7 @@ fun CharSequence.splitByCharacterTypeCamelCase(): Array<String>? = StringUtils.s
 //endregion Splitting
 
 /**
- * 删除所有空白字符
+ * Removes all whitespace characters.
  *
  * <pre>
  * "".deleteWhitespace()           = ""
@@ -618,7 +618,7 @@ fun CharSequence.splitByCharacterTypeCamelCase(): Array<String>? = StringUtils.s
  * "   ab  c  ".deleteWhitespace() = "abc"
  * </pre>
  *
- * @return 没有空白字符的字符串
+ * @return the string with no whitespace characters
  * @author K
  * @since 1.0.0
  */
@@ -627,7 +627,7 @@ fun CharSequence.deleteWhitespace(): String = StringUtils.deleteWhitespace(this.
 //region Remove
 
 /**
- * 如果子串在主串的开头部分（大小写不敏感），则删除该子串，否则返回源主串
+ * Removes the substring from the beginning of the main string (case-insensitive); otherwise returns the original string.
  *
  * <pre>
  * "".removeStartIgnoreCase(*)        = ""
@@ -639,8 +639,8 @@ fun CharSequence.deleteWhitespace(): String = StringUtils.deleteWhitespace(this.
  * "abc".removeStartIgnoreCase("")    = "abc"
  * </pre>
  *
- * @param remove 要删除的子串，可以为null，为null或为空串时返回源字符串
- * @return 去掉开头部分的子串后的字符串
+ * @param remove the substring to remove; may be null; returns the source string if null or empty
+ * @return the string after removing the leading substring
  * @author K
  * @since 1.0.0
  */
@@ -648,7 +648,7 @@ fun CharSequence.removePrefixIgnoreCase(remove: CharSequence?): String? =
     Strings.CS.removeStart(this.toString(), remove?.toString() ?: "")
 
 /**
- * 如果子串在主串的末尾（大小写不敏感），则删除该子串，否则返回源主串
+ * Removes the substring from the end of the main string (case-insensitive); otherwise returns the original string.
  *
  * <pre>
  * "".removeEndIgnoreCase(*)        = ""
@@ -661,8 +661,8 @@ fun CharSequence.removePrefixIgnoreCase(remove: CharSequence?): String? =
  * "www.domain.COM".removeEndIgnoreCase(".com") = "www.domain")
  * </pre>
  *
- * @param remove 要删除的子串，可以为null，为null或为空串时返回源字符串
- * @return 去掉末尾的子串后的字符串
+ * @param remove the substring to remove; may be null; returns the source string if null or empty
+ * @return the string after removing the trailing substring
  * @author K
  * @since 1.0.0
  */
@@ -674,7 +674,7 @@ fun CharSequence.removeSuffixIgnoreCase(remove: CharSequence?): String? =
 //region Replacing
 
 /**
- * 查找子串，并用指定字符串替换之, 限定替换次数
+ * Finds substrings and replaces them with the specified string, with a cap on replacement count.
  *
  * <pre>
  * "".replace(*, *, *)           = ""
@@ -690,10 +690,10 @@ fun CharSequence.removeSuffixIgnoreCase(remove: CharSequence?): String? =
  * "abaa".replace("a", "z", -1)  = "zbzz"
  * </pre>
  *
- * @param searchString 要查找的字符串, 为null或空串时返回源字符串
- * @param replacement  用来替换的字符串, 为null时返回源字符串
- * @param max          最大替换次数
- * @return 替换后的字符串
+ * @param searchString string to search for; returns the source string if null or empty
+ * @param replacement  replacement string; returns the source string if null
+ * @param max          maximum number of replacements
+ * @return the resulting string
  * @author K
  * @since 1.0.0
  */
@@ -701,39 +701,39 @@ fun CharSequence.replace(searchString: CharSequence?, replacement: CharSequence?
     Strings.CS.replace(this.toString(), searchString?.toString() ?: "", replacement?.toString() ?: "", max)
 
 /**
- * 查找子串并用指定字符串替换（支持多对替换规则）
- * 
- * 根据两个数组的对应关系，将字符串中所有出现的查找字符串替换为对应的替换字符串。
- * 
- * 工作流程：
- * 1. 参数处理：将CharSequence数组转换为String数组，null值转换为空字符串
- * 2. 调用工具方法：使用Apache Commons Lang的replaceEach方法执行替换
- * 3. 返回结果：返回替换后的字符串
- * 
- * 替换规则：
- * - searchList[i]会被替换为replacementList[i]
- * - 替换所有出现的地方（不是只替换第一个）
- * - 替换顺序按照数组顺序执行
- * 
- * 数组对应关系：
- * - 两个数组的长度必须一致（null或空数组除外）
- * - 如果数组为null，会被视为空数组
- * - 如果数组元素为null，会被转换为空字符串
- * 
- * 边界情况：
- * - 如果两个数组都为null或空，返回原字符串
- * - 如果searchList为空，返回原字符串
- * - 如果replacementList为null，返回原字符串
- * 
- * 注意事项：
- * - 两个数组的长度必须一致，否则抛出IllegalArgumentException
- * - 替换是顺序执行的，后面的替换可能影响前面的结果
- * - 使用Apache Commons Lang的实现，保证替换的正确性
- * 
- * @param searchList 要查找的字符串数组，可以为null
- * @param replacementList 用来替换的字符串数组，与查找数组一一对应，可以为null
- * @return 替换后的字符串
- * @throws IllegalArgumentException 如果两个数组的长度不一致
+ * Finds substrings and replaces them with the specified strings (supports multiple replacement rules).
+ *
+ * Replaces every occurrence of each search string with the corresponding replacement string, based on the correspondence between the two arrays.
+ *
+ * Workflow:
+ * 1. Argument handling: convert the CharSequence arrays to String arrays; null values become empty strings.
+ * 2. Delegate to the utility: invoke Apache Commons Lang's replaceEach to perform the replacement.
+ * 3. Return result: return the resulting string.
+ *
+ * Replacement rules:
+ * - searchList[i] is replaced by replacementList[i].
+ * - Replaces all occurrences (not just the first).
+ * - Replacements are applied in array order.
+ *
+ * Array correspondence:
+ * - Both arrays must have the same length (except for null or empty arrays).
+ * - Null arrays are treated as empty.
+ * - Null array elements are converted to empty strings.
+ *
+ * Edge cases:
+ * - If both arrays are null or empty, returns the original string.
+ * - If searchList is empty, returns the original string.
+ * - If replacementList is null, returns the original string.
+ *
+ * Notes:
+ * - Both arrays must have the same length; otherwise IllegalArgumentException is thrown.
+ * - Replacements are applied sequentially; later replacements may affect earlier results.
+ * - Uses Apache Commons Lang's implementation to ensure correctness.
+ *
+ * @param searchList array of strings to search for; may be null
+ * @param replacementList array of replacement strings, parallel to searchList; may be null
+ * @return the resulting string
+ * @throws IllegalArgumentException if the two arrays have different lengths
  */
 fun CharSequence.replaceEach(
     searchList: Array<out CharSequence?>?,
@@ -746,7 +746,7 @@ fun CharSequence.replaceEach(
 
 
 /**
- * 查找子串，并用指定字符串循环替换之（替换所有出现的地方），支持多对替换规则
+ * Repeatedly finds substrings and replaces every occurrence with the corresponding string, supporting multiple replacement rules.
  *
  * <pre>
  * "".replaceEachRepeatedly(*, *) = ""
@@ -761,11 +761,11 @@ fun CharSequence.replaceEach(
  * "abcde".replaceEachRepeatedly(String[]{"ab", "d"}, String[]{"d", "ab"}) = IllegalStateException
  * </pre>
  *
- * @param searchList      要查找的字符串数组，为null时返回源字符串
- * @param replacementList 用来替换的字符串数组，与查找的数组元素一一对应。为null时返回源字符串
- * @return 替换后的字符串
- * @throws IllegalStateException    死循环时
- * @throws IllegalArgumentException 如果两个数组的长度不一致时(null或空数组是允许的)
+ * @param searchList      array of strings to search for; returns the source string if null
+ * @param replacementList array of replacement strings, parallel to searchList. Returns the source string if null
+ * @return the resulting string
+ * @throws IllegalStateException    if an infinite loop is detected
+ * @throws IllegalArgumentException if the two arrays have different lengths (null or empty arrays are allowed)
  * @author K
  * @since 1.0.0
  */
@@ -781,7 +781,7 @@ fun CharSequence.replaceEachRepeatedly(
 //endregion Replacing
 
 /**
- * 删除字符串末尾的换行符("\n"、"\r"、"\r\n")
+ * Removes line terminators ("\n", "\r", "\r\n") from the end of the string.
  *
  * <pre>
  * "".chomp()            = ""
@@ -796,14 +796,14 @@ fun CharSequence.replaceEachRepeatedly(
  * "\r\n".chomp()        = ""
  * </pre>
  *
- * @return 处理后的字符串
+ * @return the processed string
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.chomp(): String = StringUtils.chomp(this.toString())
 
 /**
- * 删除字符串的最后一个字符(如果该字符串是以"\r\n"结尾，同样也删除这两个字符)
+ * Removes the last character of the string (if the string ends with "\r\n", both characters are removed).
  *
  * <pre>
  * "".chop()            = ""
@@ -818,14 +818,14 @@ fun CharSequence.chomp(): String = StringUtils.chomp(this.toString())
  * "\r\n".chop()        = ""
  * </pre>
  *
- * @return 处理后的字符串
+ * @return the processed string
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.chop(): String = StringUtils.chop(this.toString())
 
 /**
- * 字符串自相连指定次数,两两间用分隔串分隔
+ * Joins a string with itself the specified number of times, separated by the given separator.
  *
  * <pre>
  * "".repeat(null, 0)   = ""
@@ -834,9 +834,9 @@ fun CharSequence.chop(): String = StringUtils.chop(this.toString())
  * "?".repeat(", ", 3)  = "?, ?, ?"
  * </pre>
  *
- * @param separator 分隔串, 为null时当作空串
- * @param repeat    重复的次数，负数当作0
- * @return 自相连后的字符串
+ * @param separator separator string; treated as empty if null
+ * @param repeat    number of repetitions; negatives are treated as 0
+ * @return the concatenated string
  * @author K
  * @since 1.0.0
  */
@@ -846,7 +846,7 @@ fun CharSequence.repeatAndSeparate(separator: CharSequence?, repeat: Int): Strin
 //region Centering
 
 /**
- * 用指定字符左右补全源字符串到指定长度
+ * Pads the source string on the left and right with the specified character to the given length.
  *
  * <pre>
  * "".center(4, ' ')     = "    "
@@ -857,16 +857,16 @@ fun CharSequence.repeatAndSeparate(separator: CharSequence?, repeat: Int): Strin
  * "a".center(4, 'y')    = "yayy"
  * </pre>
  *
- * @param size 要求的长度, 负数当作0，小于源字符串长度将返回源字符串
- * @param padChar 用于补全的字符
- * @return 补全长度后的字符串
+ * @param size required length; negatives are treated as 0; less than the source length returns the source string
+ * @param padChar character used for padding
+ * @return the padded string
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.center(size: Int, padChar: Char): String? = StringUtils.center(this.toString(), size, padChar)
 
 /**
- * 用指定字符串左右补全源字符串到指定长度
+ * Pads the source string on the left and right with the specified string to the given length.
  *
  * <pre>
  * "".center(4, " ")     = "    "
@@ -879,9 +879,9 @@ fun CharSequence.center(size: Int, padChar: Char): String? = StringUtils.center(
  * "abc".center(7, "")   = "  abc  "
  * </pre>
  *
- * @param size   要求的长度, 负数当作0，小于源字符串长度将返回源字符串
- * @param padStr 用于补全的字符串
- * @return 补全长度后的字符串
+ * @param size   required length; negatives are treated as 0; less than the source length returns the source string
+ * @param padStr string used for padding
+ * @return the padded string
  * @author K
  * @since 1.0.0
  */
@@ -893,7 +893,7 @@ fun CharSequence.center(size: Int, padStr: CharSequence?): String? =
 //region Case conversion
 
 /**
- * 将源字符串首字母小写
+ * Lowercases the first character of the source string.
  *
  * <pre>
  * "".uncapitalize()    = ""
@@ -901,21 +901,21 @@ fun CharSequence.center(size: Int, padStr: CharSequence?): String? =
  * "CAT".uncapitalize() = "cAT"
  * </pre>
  *
- * @return 首字母小写的字符串
+ * @return the string with its first character lowercased
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.uncapitalize(): String = StringUtils.uncapitalize(this.toString())
 
 /**
- * 将源字符串中的大写转成小写，小写转成大写
+ * Swaps the case of letters in the source string: uppercase to lowercase and vice versa.
  *
  * <pre>
  * "".swapCase()                   = ""
  * "The dog has a BONE".swapCase() = "tHE DOG HAS A bone"
  * </pre>
  *
- * @return 转换后的字符串
+ * @return the resulting string
  * @author K
  * @since 1.0.0
  */
@@ -924,7 +924,7 @@ fun CharSequence.swapCase(): String = StringUtils.swapCase(this.toString())
 //endregion Case conversion
 
 /**
- * 计算子串在源字符串中出现的次数
+ * Counts the occurrences of a substring in the source string.
  *
  * <pre>
  * "".countMatches(*)         = 0
@@ -935,8 +935,8 @@ fun CharSequence.swapCase(): String = StringUtils.swapCase(this.toString())
  * "abba".countMatches("xxx") = 0
  * </pre>
  *
- * @param sub 子串, 可以为null
- * @return 子串出现的次数
+ * @param sub the substring; may be null
+ * @return the number of occurrences
  * @author K
  * @since 1.0.0
  */
@@ -944,7 +944,7 @@ fun CharSequence.countMatches(sub: CharSequence?): Int = StringUtils.countMatche
 
 //region Character Tests
 /**
- * 测试字符序列是否只包含Unicode字母
+ * Tests whether the character sequence contains only Unicode letters.
  *
  * <pre>
  * "".isAlpha()     = false
@@ -954,14 +954,14 @@ fun CharSequence.countMatches(sub: CharSequence?): Int = StringUtils.countMatche
  * "ab-c".isAlpha() = false
  * </pre>
  *
- * @return true: 只包含Unicode字母
+ * @return true if the sequence contains only Unicode letters
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.isAlpha(): Boolean = StringUtils.isAlpha(this)
 
 /**
- * 测试字符序列是否只包含Unicode字母或空格
+ * Tests whether the character sequence contains only Unicode letters or spaces.
  *
  * <pre>
  * "".isAlphaSpace()     = true
@@ -972,14 +972,14 @@ fun CharSequence.isAlpha(): Boolean = StringUtils.isAlpha(this)
  * "ab-c".isAlphaSpace() = false
  * </pre>
  *
- * @return true: 只包含Unicode字母或空格
+ * @return true if the sequence contains only Unicode letters or spaces
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.isAlphaSpace(): Boolean = StringUtils.isAlphaSpace(this)
 
 /**
- * 测试字符序列是否只包含Unicode字母或数字
+ * Tests whether the character sequence contains only Unicode letters or digits.
  *
  * <pre>
  * "".isAlphanumeric()     = false
@@ -990,14 +990,14 @@ fun CharSequence.isAlphaSpace(): Boolean = StringUtils.isAlphaSpace(this)
  * "ab-c".isAlphanumeric() = false
  * </pre>
  *
- * @return true: 只包含Unicode字母或数字
+ * @return true if the sequence contains only Unicode letters or digits
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.isAlphanumeric(): Boolean = StringUtils.isAlpha(this)
 
 /**
- * 测试字符序列是否只包含Unicode字母、空格或数字
+ * Tests whether the character sequence contains only Unicode letters, spaces, or digits.
  *
  * <pre>
  * "".isAlphanumericSpace()     = true
@@ -1008,14 +1008,14 @@ fun CharSequence.isAlphanumeric(): Boolean = StringUtils.isAlpha(this)
  * "ab-c".isAlphanumericSpace() = false
  * </pre>
  *
- * @return true: 只包含Unicode字母、空格或数字
+ * @return true if the sequence contains only Unicode letters, spaces, or digits
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.isAlphanumericSpace(): Boolean = StringUtils.isAlphanumeric(this)
 
 /**
- * 测试字符序列是否只包含ASCII码的可打印的字符
+ * Tests whether the character sequence contains only printable ASCII characters.
  *
  * <pre>
  * "".isAsciiPrintable()       = true
@@ -1023,21 +1023,21 @@ fun CharSequence.isAlphanumericSpace(): Boolean = StringUtils.isAlphanumeric(thi
  * "Ceki".isAsciiPrintable()   = true
  * "ab2c".isAsciiPrintable()   = true
  * "!ab-c~".isAsciiPrintable() = true
- * "\u0020".isAsciiPrintable() = true
- * "\u0021".isAsciiPrintable() = true
- * "\u007e".isAsciiPrintable() = true
- * "\u007f".isAsciiPrintable() = false
- * "Ceki G\u00fclc\u00fc".isAsciiPrintable() = false
+ * " ".isAsciiPrintable() = true
+ * "!".isAsciiPrintable() = true
+ * "~".isAsciiPrintable() = true
+ * "".isAsciiPrintable() = false
+ * "Ceki Gülcü".isAsciiPrintable() = false
  * </pre>
  *
- * @return true: 每个字符都在32到126的范围内
+ * @return true if every character is in the range 32-126
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.isAsciiPrintable(): Boolean = StringUtils.isAsciiPrintable(this)
 
 /**
- * 测试字符序列是否只包含Unicode数字。 十进制的小数不是Unicode数字。
+ * Tests whether the character sequence contains only Unicode digits. Decimal fractions are not Unicode digits.
  *
  * <pre>
  * "".isNumeric()     = false
@@ -1049,14 +1049,14 @@ fun CharSequence.isAsciiPrintable(): Boolean = StringUtils.isAsciiPrintable(this
  * "12.3".isNumeric() = false
  * </pre>
  *
- * @return true: 只包含Unicode数字
+ * @return true if the sequence contains only Unicode digits
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.isNumeric(): Boolean = StringUtils.isNumeric(this)
 
 /**
- * 测试字符序列是否只包含Unicode数字或空格。 十进制的小数不是Unicode数字。
+ * Tests whether the character sequence contains only Unicode digits or spaces. Decimal fractions are not Unicode digits.
  *
  * <pre>
  * "".isNumericSpace()     = true
@@ -1068,14 +1068,14 @@ fun CharSequence.isNumeric(): Boolean = StringUtils.isNumeric(this)
  * "12.3".isNumericSpace() = false
  * </pre>
  *
- * @return true: 只包含Unicode数字或空格
+ * @return true if the sequence contains only Unicode digits or spaces
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.isNumericSpace(): Boolean = StringUtils.isNumeric(this)
 
 /**
- * 测试字符序列是否只包含空白字符
+ * Tests whether the character sequence contains only whitespace characters.
  *
  * <pre>
  * "".isWhitespace()     = true
@@ -1085,14 +1085,14 @@ fun CharSequence.isNumericSpace(): Boolean = StringUtils.isNumeric(this)
  * "ab-c".isWhitespace() = false
  * </pre>
  *
- * @return true：只包含空白字符
+ * @return true if the sequence contains only whitespace characters
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.isWhitespace(): Boolean = StringUtils.isWhitespace(this)
 
 /**
- * 测试字符序列是否只包含小写字母
+ * Tests whether the character sequence contains only lowercase letters.
  *
  * <pre>
  * "".isAllLowerCase()     = false
@@ -1101,14 +1101,14 @@ fun CharSequence.isWhitespace(): Boolean = StringUtils.isWhitespace(this)
  * "abC".isAllLowerCase() = false
  * </pre>
  *
- * @return true：只包含小写字母
+ * @return true if the sequence contains only lowercase letters
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.isAllLowerCase(): Boolean = StringUtils.isAllLowerCase(this)
 
 /**
- * 测试字符序列是否只包含大写字母
+ * Tests whether the character sequence contains only uppercase letters.
  *
  * <pre>
  * "".isAllUpperCase()     = false
@@ -1117,7 +1117,7 @@ fun CharSequence.isAllLowerCase(): Boolean = StringUtils.isAllLowerCase(this)
  * "aBC".isAllUpperCase() = false
  * </pre>
  *
- * @return true：只包含大写字母
+ * @return true if the sequence contains only uppercase letters
  * @author K
  * @since 1.0.0
  */
@@ -1126,7 +1126,7 @@ fun CharSequence.isAllUpperCase(): Boolean = StringUtils.isAllUpperCase(this)
 //endregion Character Tests
 
 /**
- * 根据分隔符反转字符串，分隔符间的字符串当作一个整体(本身不反转)
+ * Reverses the string by separators; substrings between separators are treated as wholes (not themselves reversed).
  *
  * <pre>
  * "".reverseDelimited(*)        = ""
@@ -1135,8 +1135,8 @@ fun CharSequence.isAllUpperCase(): Boolean = StringUtils.isAllUpperCase(this)
  * "java.lang.String".reverseDelimited(".") = "String.lang.java"
  * </pre>
  *
- * @param separatorChar 分隔符
- * @return 反转后的字符串
+ * @param separatorChar the separator
+ * @return the reversed string
  * @author K
  * @since 1.0.0
  */
@@ -1145,13 +1145,13 @@ fun CharSequence.reverseDelimited(separatorChar: Char): String? =
 
 //region Abbreviating
 /**
- * 省略字符串
- * 规则:
- *  * 如果 `str` 的长度 比 `maxWidth` 还小, return `str`
- *  * 否则省略为： `(substring(str, 0, max-3) + "...")`.
- *  * 如果 `maxWidth` 比 `4` 小, 抛出
- * `IllegalArgumentException` 异常.
- *  * 永远不会返回长度超过 `maxWidth` 的字符串.
+ * Abbreviates a string.
+ * Rules:
+ *  * If the length of `str` is less than `maxWidth`, returns `str`.
+ *  * Otherwise abbreviates as: `(substring(str, 0, max-3) + "...")`.
+ *  * If `maxWidth` is less than `4`, throws
+ * `IllegalArgumentException`.
+ *  * Never returns a string with length greater than `maxWidth`.
  *
  * <pre>
  * "".abbreviate(4)        = ""
@@ -1162,16 +1162,17 @@ fun CharSequence.reverseDelimited(separatorChar: Char): String? =
  * "abcdefg".abbreviate(3) = IllegalArgumentException
  * </pre>
  *
- * @param maxWidth 返回的字符串的最大长度，必须大于等于4
- * @return 省略的字符串
+ * @param maxWidth maximum length of the returned string; must be >= 4
+ * @return the abbreviated string
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.abbreviate(maxWidth: Int): String? = StringUtils.abbreviate(this.toString(), maxWidth)
 
 /**
- * 省略字符串，功能类似`abbreviate(int)`，但可以指定左边界偏移量
- * 左边界偏移量不一定要求最左边的字符出现在结果字符串的最左边， 或紧跟省略号之后，但它一定会出现在结果字符串的某个地方
+ * Abbreviates a string similarly to `abbreviate(int)`, but with a configurable left-edge offset.
+ * The left-edge offset does not necessarily require the leftmost character to appear at the leftmost position of the resulting string,
+ * or right after the ellipsis; it must, however, appear somewhere in the resulting string.
  *
  * <pre>
  * "".abbreviate(0, 4)                  = ""
@@ -1188,10 +1189,10 @@ fun CharSequence.abbreviate(maxWidth: Int): String? = StringUtils.abbreviate(thi
  * "abcdefghij".abbreviate(5, 6)        = IllegalArgumentException
  * </pre>
  *
- * @param offset   源字符串的左边界偏移量
- * @param maxWidth 返回的字符串的最大长度，必须大于等于4
- * @return 省略的字符串
- * @throws IllegalArgumentException 结果长度小于4时
+ * @param offset   left-edge offset of the source string
+ * @param maxWidth maximum length of the returned string; must be >= 4
+ * @return the abbreviated string
+ * @throws IllegalArgumentException if the resulting length is less than 4
  * @author K
  * @since 1.0.0
  */
@@ -1199,13 +1200,13 @@ fun CharSequence.abbreviate(offset: Int, maxWidth: Int): String? =
     StringUtils.abbreviate(this.toString(), offset, maxWidth)
 
 /**
- * 用指定字符串替换源字符串中间的字符，以达到省略源字符串到指定长度的目的
- * 省略只有当以下条件满足时才发生：
- *  源字符串和用来替换的字符串两者都不为null或空串
- *  指定的目标长度小于源字符串的长度
- *  指定的目标长度大于0
- *  被省略的字符串要有足够的长度提供给替换字符串和第一个、最后一个字符
- * 否则，结果将是传入的源字符串
+ * Replaces the middle characters of the source string with the specified string in order to abbreviate the source string to the specified length.
+ * Abbreviation occurs only when all of the following conditions are satisfied:
+ *  Neither the source string nor the replacement string is null or empty.
+ *  The specified target length is less than the source string length.
+ *  The specified target length is greater than 0.
+ *  The abbreviated string has enough length to accommodate the replacement string plus the first and last characters.
+ * Otherwise, the result is the source string unchanged.
  *
  * <pre>
  * "abc".abbreviateMiddle(null, 0)      = "abc"
@@ -1214,9 +1215,9 @@ fun CharSequence.abbreviate(offset: Int, maxWidth: Int): String? =
  * "abcdef".abbreviateMiddle(".", 4)     = "ab.f"
  * </pre>
  *
- * @param middle 用来替换中间字符的字符串, 可以为null，为null表示不替换
- * @param length 返回的字符串的最大长度
- * @return 省略的字符串
+ * @param middle string used to replace the middle characters; may be null, in which case no replacement occurs
+ * @param length maximum length of the returned string
+ * @return the abbreviated string
  * @author K
  * @since 1.0.0
  */
@@ -1227,7 +1228,7 @@ fun CharSequence.abbreviateMiddle(middle: CharSequence?, length: Int): String? =
 
 //region Difference
 /**
- * 比较两字符串，并返回它们不同的部分 (更精确的讲，返回第二个字符串从与第一个不同部分开始的剩下部分)
+ * Compares two strings and returns the part where they differ (more precisely, the remainder of the second string starting from the point where it begins to differ from the first).
  *
  * <pre>
  * "".difference("") = ""
@@ -1239,15 +1240,15 @@ fun CharSequence.abbreviateMiddle(middle: CharSequence?, length: Int): String? =
  * "abcde".difference("xyz") = "xyz"
  * </pre>
  *
- * @param str2 第二个字符串
- * @return 两字符串不同的部分，相同时返回空串
+ * @param str2 the second string
+ * @return the differing part of the two strings; an empty string if they are the same
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.difference(str2: CharSequence): String? = StringUtils.difference(this.toString(), str2.toString())
 
 /**
- * 比较两字符串，并返回它们开始不同时的下标
+ * Compares two strings and returns the index where they begin to differ.
  *
  * <pre>
  * "".indexOfDifference("") = -1
@@ -1259,15 +1260,15 @@ fun CharSequence.difference(str2: CharSequence): String? = StringUtils.differenc
  * "abcde".indexOfDifference("xyz") = 0
  * </pre>
  *
- * @param cs2 第一个字符串, 可以为null
- * @return 开始不同时的下标; 如果两字符串相同返回-1
+ * @param cs2 the first string; may be null
+ * @return the index at which they begin to differ; -1 if the two strings are the same
  * @author K
  * @since 1.0.0
  */
 fun CharSequence.indexOfDifference(cs2: CharSequence): Int = StringUtils.indexOfDifference(this, cs2)
 
 /**
- * 比较数组中的每个字符串，并返回它们开始不同时的下标
+ * Compares each string in the array and returns the index where they begin to differ.
  *
  * <pre>
  * {}.indexOfDifference() = -1
@@ -1288,7 +1289,7 @@ fun CharSequence.indexOfDifference(cs2: CharSequence): Int = StringUtils.indexOf
  * {"i am a machine", "i am a robot"}.indexOfDifference() = 7
  * </pre>
  *
- * @return 开始不同时的下标; 如果字符串都相同返回-1
+ * @return the index at which they begin to differ; -1 if all strings are the same
  * @author K
  * @since 1.0.0
  */
@@ -1296,7 +1297,7 @@ fun Array<out CharSequence?>.indexOfDifference(): Int = StringUtils.indexOfDiffe
 //endregion Difference
 
 /**
- * 比较数组中的每个字符串，并返回它们相同的前缀
+ * Compares each string in the array and returns the common prefix they share.
  *
  * <pre>
  * {}.getCommonPrefix() = ""
@@ -1317,7 +1318,7 @@ fun Array<out CharSequence?>.indexOfDifference(): Int = StringUtils.indexOfDiffe
  * {"i am a machine", "i am a robot"}.getCommonPrefix() = "i am a "
  * </pre>
  *
- * @return 相同的前缀
+ * @return the common prefix
  * @author K
  * @since 1.0.0
  */
@@ -1328,7 +1329,7 @@ fun Array<out CharSequence?>.getCommonPrefix(): String {
 
 ////region Misc
 ///**
-// * 比较两个字符串的“距离”(相似度)， 这个“距离”其实就是从源字符串变换到目标字符串需要进行的删除、插入和替换的次数。
+// * Compares the "distance" (similarity) between two strings. This "distance" is the number of deletions, insertions and substitutions required to transform the source string into the target string.
 // *
 // * <pre>
 // * "".getLevenshteinDistance(,"")               = 0
@@ -1342,17 +1343,17 @@ fun Array<out CharSequence?>.getCommonPrefix(): String {
 // * "hello".getLevenshteinDistance("hallo")    = 1
 // * </pre>
 // *
-// * @param t 第二个字符串
-// * @return 距离
-// * @throws IllegalArgumentException 两参数之一为null时
+// * @param t the second string
+// * @return the distance
+// * @throws IllegalArgumentException if either argument is null
 // * @author K
 // * @since 1.0.0
 // */
 //fun CharSequence.getLevenshteinDistance(t: CharSequence): Int = LevenshteinDistance().apply(this, t)
 //
 ///**
-// * 如果两个字符串的“距离”(相似度)小于等于给定的极限值，就返回该“距离”，否则返回-1。
-// * 这个“距离”其实就是从源字符串变换到目标字符串需要进行的删除、插入和替换的次数。
+// * If the "distance" (similarity) between two strings is less than or equal to the given threshold, returns the distance; otherwise returns -1.
+// * The "distance" is the number of deletions, insertions and substitutions required to transform the source string into the target string.
 // *
 // * <pre>
 // * *.getLevenshteinDistance(*, -1)               = IllegalArgumentException
@@ -1367,10 +1368,10 @@ fun Array<out CharSequence?>.getCommonPrefix(): String {
 // * </pre>
 // *
 // *
-// * @param t         第二个字符串
-// * @param threshold 目标上限值, 不能为负数
-// * @return 距离或-1
-// * @throws IllegalArgumentException 极限值为负数时
+// * @param t         the second string
+// * @param threshold the target upper bound; must not be negative
+// * @return the distance, or -1
+// * @throws IllegalArgumentException if the threshold is negative
 // * @author K
 // * @since 1.0.0
 // */
@@ -1379,7 +1380,7 @@ fun Array<out CharSequence?>.getCommonPrefix(): String {
 ////endregion Misc
 
 /**
- * 检查字符串的前缀是否为给定的任何一个值（大小写不敏感）
+ * Tests whether the string starts with any of the given values (case-insensitive).
  *
  * <pre>
  * "abcxyz".startsWithAny(null)     = false
@@ -1388,8 +1389,8 @@ fun Array<out CharSequence?>.getCommonPrefix(): String {
  * abcxyz".startsWithAny({null, "xyz", "abc"}) = true
  * </pre>
  *
- * @param searchStrings 待匹配的前缀组,
- * @return true: 任何一个为字符串的前缀(大小写不敏感)
+ * @param searchStrings group of prefixes to match
+ * @return true if any of them is a prefix of the string (case-insensitive)
  * @author K
  * @since 1.0.0
  */
@@ -1397,7 +1398,7 @@ fun CharSequence.startsWithAny(vararg searchStrings: CharSequence?): Boolean =
     Strings.CS.startsWithAny(this, *searchStrings)
 
 /**
- * 检查字符串的后缀是否为给定的任何一个值（大小写不敏感）
+ * Tests whether the string ends with any of the given values (case-insensitive).
  *
  * <pre>
  * "abcxyz".endsWithAny(null)     = false
@@ -1406,8 +1407,8 @@ fun CharSequence.startsWithAny(vararg searchStrings: CharSequence?): Boolean =
  * "abcxyz".endsWithAny(String[] {null, "xyz", "abc"}) = true
  * </pre>
  *
- * @param searchStrings 待匹配的前缀组
- * @return 任何一个为字符串的后缀(大小写不敏感)
+ * @param searchStrings group of suffixes to match
+ * @return true if any of them is a suffix of the string (case-insensitive)
  * @author K
  * @since 1.0.0
  */
@@ -1415,9 +1416,9 @@ fun CharSequence.endsWithAny(vararg searchStrings: CharSequence?): Boolean =
     Strings.CS.endsWithAny(this, *searchStrings)
 
 /**
- * 通过去掉前导和尾随空白并使用单个空格替换一系列空白字符，使空白标准化。
+ * Normalizes whitespace by removing leading and trailing whitespace and replacing runs of whitespace characters with a single space.
  *
- * @return 替换后的字符串
+ * @return the resulting string
  * @see .trim
  * @see [
  * http://www.w3.org/TR/xpath/.function-normalize-space](http://www.w3.org/TR/xpath/.function-normalize-space)
@@ -1427,5 +1428,5 @@ fun CharSequence.endsWithAny(vararg searchStrings: CharSequence?): Boolean =
 fun CharSequence.normalizeSpace(): String = StringUtils.normalizeSpace(this.toString())
 
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-// 封装org.apache.commons.lang3.StringUtils
+// Wrappers around org.apache.commons.lang3.StringUtils
 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

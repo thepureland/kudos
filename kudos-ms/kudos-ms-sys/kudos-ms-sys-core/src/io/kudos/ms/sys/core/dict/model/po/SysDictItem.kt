@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 import io.kudos.base.query.sort.Sortable
 
 /**
- * 字典项数据库实体
+ * Dictionary item database entity.
  *
  * @author K
  * @since 1.0.0
@@ -14,21 +14,21 @@ interface SysDictItem : IManagedDbEntity<String, SysDictItem> {
 
     companion object : DbEntityFactory<SysDictItem>()
 
-    /** 字典项代码 */
+    /** Dictionary item code */
     @get:Sortable
     var itemCode: String
 
-    /** 字典项名称 */
+    /** Dictionary item name */
     @get:Sortable
     var itemName: String
 
-    /** 字典id */
+    /** Dictionary id */
     var dictId: String
 
-    /** 字典项排序 */
+    /** Dictionary item order */
     var orderNum: Int?
 
-    /** 父id */
+    /** Parent id */
     var parentId: String?
 
 }

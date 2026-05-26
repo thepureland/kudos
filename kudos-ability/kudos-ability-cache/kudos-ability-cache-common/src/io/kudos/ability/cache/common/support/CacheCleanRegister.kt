@@ -4,14 +4,14 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * 缓存清理监听器注册表（进程级）。
+ * Process-level registry for cache clean listeners.
  *
- * 历史问题：旧实现 [register] 加了 `@Synchronized` 但 [getCleanListener] 没加；
- * 底层是 `mutableMapOf` / `ArrayList`，所以读侧可能拿到正在 grow 的 list 或脏值。
- * 改用 [ConcurrentHashMap] + [CopyOnWriteArrayList]：
- * - 写侧不再需要粗粒度同步；
- * - 读侧返回的快照对结构性修改"看不见"，遍历安全；
- * - 读多写极少（typical：启动期注册一次，后续只读）的场景下，COW 的写代价可以接受。
+ * Historical issue: the old implementation added `@Synchronized` to [register] but not to [getCleanListener];
+ * the underlying structures were `mutableMapOf` / `ArrayList`, so readers could observe a growing list or dirty state.
+ * Switched to [ConcurrentHashMap] + [CopyOnWriteArrayList]:
+ * - writers no longer need coarse-grained synchronization;
+ * - readers receive a snapshot that is unaffected by structural modifications, making iteration safe;
+ * - in read-heavy / write-rare scenarios (typical: registered once at startup, read-only thereafter), the COW write cost is acceptable.
  */
 object CacheCleanRegister {
 

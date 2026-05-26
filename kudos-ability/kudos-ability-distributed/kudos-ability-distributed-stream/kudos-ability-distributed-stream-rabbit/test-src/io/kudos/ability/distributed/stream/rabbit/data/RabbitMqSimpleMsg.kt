@@ -3,7 +3,7 @@ package io.kudos.ability.distributed.stream.rabbit.data
 import java.io.Serializable
 
 /**
- * RabbitMQ测试简单消息封装
+ * RabbitMQ test simple message wrapper.
  *
  * @author shane
  * @author K

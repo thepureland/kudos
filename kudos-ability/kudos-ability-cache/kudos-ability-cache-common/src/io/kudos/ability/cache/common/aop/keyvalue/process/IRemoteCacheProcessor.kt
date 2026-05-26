@@ -1,18 +1,19 @@
 package io.kudos.ability.cache.common.aop.keyvalue.process
 
 /**
- * 远端缓存底层处理器：[TenantAdvancedCacheable] / [TenantAdvancedCacheEvict] 的切面通过本接口
- * 直连远程（典型实现走 Redis），绕过 Spring 本地 CacheManager。
+ * Low-level remote cache processor: the aspects for [TenantAdvancedCacheable] / [TenantAdvancedCacheEvict]
+ * call remote storage directly through this interface (typical implementation goes through Redis), bypassing
+ * Spring's local CacheManager.
  *
- * 三个方法对应 get / put / evict 标准操作；`cacheKey + dataKey` 二级结构支持 Redis hash 形态
- * （cacheKey 作 hash key，dataKey 作 field name）。
+ * The three methods correspond to the standard get / put / evict operations; the `cacheKey + dataKey`
+ * two-level structure supports the Redis hash form (cacheKey as the hash key, dataKey as the field name).
  *
  * @author K
  * @since 1.0.0
  */
 interface IRemoteCacheProcessor {
     /**
-     * 获取缓存数据
+     * Retrieves cached data.
      * @param cacheKey
      * @param dataKey
      * @return
@@ -20,7 +21,7 @@ interface IRemoteCacheProcessor {
     fun getCacheData(cacheKey: String, dataKey: String): Any?
 
     /**
-     * 写入缓存数据
+     * Writes cached data.
      * @param cacheKey
      * @param dataKey
      * @param o
@@ -29,7 +30,7 @@ interface IRemoteCacheProcessor {
     fun writeCacheData(cacheKey: String, dataKey: String, o: Any?, timeOut: Long)
 
     /**
-     * 清理缓存
+     * Clears the cache.
      * @param cacheKey
      * @param s
      * @param b

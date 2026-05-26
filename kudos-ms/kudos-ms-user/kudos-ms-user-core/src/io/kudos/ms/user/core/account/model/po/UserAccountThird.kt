@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
 import java.time.LocalDateTime
 
 /**
- * 用户账号第三方绑定数据库实体
+ * User account third-party binding database entity.
  *
  * @author K
  * @author AI: Codex
@@ -15,61 +15,61 @@ interface UserAccountThird : IDbEntity<String, UserAccountThird> {
 
     companion object : DbEntityFactory<UserAccountThird>()
 
-    /** 关联用户账号ID */
+    /** Associated user account id. */
     var userId: String
 
-    /** 第三方平台字典码 */
+    /** Third-party provider dict code. */
     var accountProviderDictCode: String
 
-    /** 发行方/平台租户 */
+    /** Issuer / provider tenant. */
     var accountProviderIssuer: String?
 
-    /** 第三方用户唯一标识 */
+    /** Third-party unique user identifier. */
     var subject: String
 
-    /** 跨应用统一标识 */
+    /** Cross-application unified identifier. */
     var unionId: String?
 
-    /** 第三方展示名 */
+    /** Third-party display name. */
     var externalDisplayName: String?
 
-    /** 第三方邮箱 */
+    /** Third-party email. */
     var externalEmail: String?
 
-    /** 头像URL */
+    /** Avatar URL. */
     var avatarUrl: String?
 
-    /** 最后登录时间 */
+    /** Last login time. */
     var lastLoginTime: LocalDateTime?
 
-    /** 租户ID */
+    /** Tenant id. */
     var tenantId: String
 
-    /** 备注 */
+    /** Remark. */
     var remark: String?
 
-    /** 是否激活 */
+    /** Active flag. */
     var active: Boolean
 
-    /** 是否内置 */
+    /** Built-in flag. */
     var builtIn: Boolean
 
-    /** 创建用户ID */
+    /** Creator id. */
     var createUserId: String?
 
-    /** 创建用户名称 */
+    /** Creator name. */
     var createUserName: String?
 
-    /** 创建时间 */
+    /** Create time. */
     var createTime: LocalDateTime?
 
-    /** 更新用户ID */
+    /** Updater id. */
     var updateUserId: String?
 
-    /** 更新用户名称 */
+    /** Updater name. */
     var updateUserName: String?
 
-    /** 更新时间 */
+    /** Update time. */
     var updateTime: LocalDateTime?
 
 

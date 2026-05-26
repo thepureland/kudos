@@ -7,29 +7,29 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 
 /**
- * 支持SHA-1/MD5消息摘要的工具类
- * 返回ByteSource，可进一步被编码为Hex, Base64或UrlSafeBase64
+ * Utility class supporting SHA-1 / MD5 message digests.
+ * Returns a ByteSource that may be further encoded as Hex, Base64, or UrlSafeBase64.
  *
  * @author K
  * @since 1.0.0
  */
 object DigestKit {
 
-    /** SHA-1 算法名 */
+    /** SHA-1 algorithm name. */
     const val SHA1 = "SHA-1"
-    /** MD5 算法名 */
+    /** MD5 algorithm name. */
     const val MD5 = "MD5"
 
-    /** 强随机源，用于生成 salt */
+    /** Strong random source used to generate salt. */
     private val random = SecureRandom()
 
     //region MD5
     /**
-     * 对字符串进行MD5加密
+     * MD5-encrypts a string.
      *
-     * @param original 源字符串
-     * @param salt 盐
-     * @return 加密并转成16进制后的字符串
+     * @param original source string
+     * @param salt salt
+     * @return the encrypted string in hex form
      * @author K
      * @since 1.0.0
      */
@@ -40,11 +40,11 @@ object DigestKit {
     }
 
     /**
-     * 对字符串进行MD5加密
+     * MD5-encrypts a string.
      *
-     * @param original 源字符串字节数组
-     * @param salt     盐
-     * @return 加密并转成16进制后的字符串
+     * @param original source string byte array
+     * @param salt     salt
+     * @return the encrypted string in hex form
      * @author K
      * @since 1.0.0
      */
@@ -59,25 +59,25 @@ object DigestKit {
     }
 
     /**
-     * 测试字符串用md5加密后是否和给定的md5串相等
+     * Tests whether the MD5 encryption of a string equals a given MD5 string.
      *
-     * @param str 未加密的串
-     * @param salt 盐
-     * @param md5Str 加密后的串
-     * @return true:源串加密后与给定的md5串相等，反之为false
+     * @param str unencrypted string
+     * @param salt salt
+     * @param md5Str encrypted string
+     * @return true: the encrypted source string equals the given MD5 string; false otherwise
      * @author K
      * @since 1.0.0
      */
     fun isMatchMD5(str: String, salt: String, md5Str: String): Boolean =
         getMD5(str, salt) == md5Str
-            // 处理以前未加盐的历史数据
+            // handle legacy data that was not salted previously
             || (salt.isNotBlank() && getMD5(str, "") == md5Str)
 
     /**
-     * 对文件进行md5散列.
+     * Computes an MD5 hash of a file.
      *
-     * @param input 文件输入流
-     * @return 散列后的文件字节数组
+     * @param input file input stream
+     * @return the hashed file byte array
      * @author K
      * @since 1.0.0
      */
@@ -87,43 +87,43 @@ object DigestKit {
 
     //region SHA1
     /**
-     * 对输入字符串字节数组进行sha1散列.
+     * SHA-1 hashes the input string byte array.
      *
-     * @param input 字符串字节数组
-     * @return 进行sha1散列后的字节数组
+     * @param input string byte array
+     * @return SHA-1 hashed byte array
      * @author K
      * @since 1.0.0
      */
     fun sha1(input: ByteArray): ByteArray = digest(input, SHA1, null, 1)
 
     /**
-     * 对输入字符串字节数组进行sha1散列.
+     * SHA-1 hashes the input string byte array.
      *
-     * @param input 字符串字节数组
-     * @param salt 加盐值字节数组
-     * @return 进行sha1散列后的字节数组
+     * @param input string byte array
+     * @param salt salt byte array
+     * @return SHA-1 hashed byte array
      * @author K
      * @since 1.0.0
      */
     fun sha1(input: ByteArray, salt: ByteArray): ByteArray = digest(input, SHA1, salt, 1)
 
     /**
-     * 对输入字符串字节数组进行sha1散列.
+     * SHA-1 hashes the input string byte array.
      *
-     * @param input 字符串字节数组
-     * @param salt 加盐值字节数组
-     * @param iterations 迭代次数
-     * @return 进行sha1散列后的字节数组
+     * @param input string byte array
+     * @param salt salt byte array
+     * @param iterations iteration count
+     * @return SHA-1 hashed byte array
      * @author K
      * @since 1.0.0
      */
     fun sha1(input: ByteArray, salt: ByteArray, iterations: Int): ByteArray = digest(input, SHA1, salt, iterations)
 
     /**
-     * 对文件进行sha1散列.
+     * Computes a SHA-1 hash of a file.
      *
-     * @param input 文件输入流
-     * @return 散列后的文件字节数组
+     * @param input file input stream
+     * @return the hashed file byte array
      * @author K
      * @since 1.0.0
      */
@@ -132,12 +132,12 @@ object DigestKit {
     //endregion
 
     /**
-     * 对流式输入做摘要，按 8KB 分块读取，避免一次性加载大文件到内存。
-     * 不会关闭传入的流，关闭责任由调用方承担。
+     * Digests a streaming input, reading in 8KB chunks to avoid loading large files entirely into memory.
+     * Does not close the passed stream; the caller is responsible for closing it.
      *
-     * @param input 输入流
-     * @param algorithm 算法名（[SHA1] 或 [MD5]）
-     * @return 摘要字节数组
+     * @param input input stream
+     * @param algorithm algorithm name ([SHA1] or [MD5])
+     * @return digest byte array
      * @author K
      * @since 1.0.0
      */
@@ -154,13 +154,13 @@ object DigestKit {
     }
 
     /**
-     * 对字符串进行散列, 支持md5与sha1算法.
+     * Hashes a string, supporting MD5 and SHA-1 algorithms.
      *
-     * @param input 字符串字节数组
-     * @param algorithm 算法名称，ALGORITHM_SHA1或ALGORITHM_MD5
-     * @param salt 加盐值字节数组
-     * @param iterations 迭代次数
-     * @return 进行散列后的字节数组
+     * @param input string byte array
+     * @param algorithm algorithm name, ALGORITHM_SHA1 or ALGORITHM_MD5
+     * @param salt salt byte array
+     * @param iterations iteration count
+     * @return hashed byte array
      * @author K
      * @since 1.0.0
      */
@@ -176,10 +176,10 @@ object DigestKit {
     }
 
     /**
-     * 生成随机的Byte[]作为salt.
+     * Generates a random Byte[] for use as salt.
      *
-     * @param numBytes byte数组的大小
-     * @return 加盐值字节数组
+     * @param numBytes size of the byte array
+     * @return salt byte array
      * @author K
      * @since 1.0.0
      */

@@ -1,26 +1,26 @@
 package io.kudos.ability.distributed.lock.redisson.init.properties
 
 /**
- * 单机模式配置
+ * Single-server mode configuration.
  */
 class RedissonSingleServerProperties {
     /**
-     * 节点地址
+     * Node address.
      */
     var address: String? = null
 
     /**
-     * 最小空闲连接数
+     * Minimum number of idle connections.
      */
     var connectionMinimumIdleSize: Int = 32
 
     /**
-     * 连接池大小
+     * Connection pool size.
      */
     var connectionPoolSize: Int = 64
 
     /**
-     * 数据库编号
+     * Database index.
      */
     var database: Int = 0
 }

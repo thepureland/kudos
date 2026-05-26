@@ -4,16 +4,16 @@ import org.ktorm.schema.Table
 import org.ktorm.schema.varchar
 
 /**
- * 字符串型主键的dao
+ * DAO for tables with a String primary key.
  *
- * @param E 实体类型
+ * @param E Entity type
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 open class StringIdTable<E : IDbEntity<String, E>>(tableName: String): Table<E>(tableName) {
 
-    /** 主键 */
+    /** Primary key */
     val id = varchar("id").primaryKey().bindTo { it.id }
 
 }

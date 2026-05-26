@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 
 /**
- * 访问规则编辑页回显 DTO（含审计字段）。
+ * Access rule edit-page rendering DTO (with audit fields).
  *
  * @author K
  * @author AI: Cursor
@@ -15,34 +15,34 @@ data class SysAccessRuleEdit (
 
     override val id: String = "",
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 系统编码 */
+    /** System code. */
     val systemCode: String? = null,
 
-    /** 规则类型字典代码 */
+    /** Rule type dictionary code. */
     val accessRuleTypeDictCode: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 创建者id */
+    /** Creator id. */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name. */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time. */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id. */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name. */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time. */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String>

@@ -5,7 +5,7 @@ import io.kudos.base.bean.validation.terminal.convert.ConstraintConvertContext
 import kotlin.reflect.full.declaredMemberProperties
 
 /**
- * 抽象的注解约束->终端约束的转换器
+ * Abstract converter from annotation-based constraints to terminal constraints.
  *
  * @author K
  * @since 1.0.0
@@ -20,51 +20,51 @@ abstract class AbstractConstraintConvertor(protected var annotation: Annotation)
         this.context = context
         val rules = this.handleRules()
         val constraint = requireNotNull(this.constraintAnnotation.annotationClass.simpleName) {
-            "无法解析约束注解名称: ${this.constraintAnnotation.annotationClass}"
+            "Unable to resolve constraint annotation name: ${this.constraintAnnotation.annotationClass}"
         }
         return TerminalConstraint(context.property, constraint, rules)
     }
 
     /**
-     * 返回具体约束注解的规则
+     * Returns the rule for a specific constraint annotation.
      *
-     * @param constraintAnnotation 具体约束注解(不会是其内部注解List)
-     * @return LinkedHashMap<注解属性名 ， 注解属性值>
+     * @param constraintAnnotation the specific constraint annotation (never the inner List annotation)
+     * @return LinkedHashMap<annotationPropertyName, annotationPropertyValue>
      */
     protected abstract fun getRule(constraintAnnotation: Annotation): LinkedHashMap<String, Any>
 
     /**
-     * 处理约束注解（可能是约束注解，也可能是约束的内部注解List）
+     * Handles constraint annotations (which may be the constraint annotation itself or its inner List annotation).
      *
-     * @return Array<Map> < 注解属性名 ， 注解属性值>>
+     * @return Array<Map<annotationPropertyName, annotationPropertyValue>>
      */
     private fun handleRules(): Array<Map<String, Any>> {
         val rules = mutableListOf<Map<String, Any>>()
         val annotationClass = requireNotNull(this.annotation.annotationClass.qualifiedName) {
-            "无法解析注解限定名: ${this.annotation.annotationClass}"
-        } // 可能是约束注解类，也可能是约束的List注解类
+            "Unable to resolve annotation qualified name: ${this.annotation.annotationClass}"
+        } // may be the constraint annotation class or the constraint's List annotation class
         if (annotationClass.endsWith(".List")) {
-            // 为List注解包装具体约束注解的形式，遍历处理每一个具体约束注解
+            // For a List annotation wrapping specific constraint annotations, iterate and process each one
             val annotationsProp = annotation.annotationClass.declaredMemberProperties.first()
             val constraintAnnotations = annotationsProp.call(annotation) as? Array<*>
-                ?: error("List 注解【$annotationClass】的 value 属性不是数组类型")
+                ?: error("The value property of List annotation [$annotationClass] is not an array type")
             constraintAnnotations.forEach {
                 val constraint = it as? Annotation
-                    ?: error("List 注解【$annotationClass】包含非注解元素: $it")
+                    ?: error("List annotation [$annotationClass] contains a non-annotation element: $it")
                 rules.add(handleRule(constraint))
             }
         } else {
-            // 为具体约束注解，没有其List注解包装
+            // A specific constraint annotation without a List annotation wrapper
             rules.add(handleRule(annotation))
         }
         return rules.toTypedArray()
     }
 
     /**
-     * 处理具体约束注解的规则
+     * Handles the rule of a specific constraint annotation.
      *
-     * @param constraintAnnotation 具体约束注解(不会是其内部注解List)
-     * @return Map<注解属性名 ， 注解属性值>
+     * @param constraintAnnotation the specific constraint annotation (never the inner List annotation)
+     * @return Map<annotationPropertyName, annotationPropertyValue>
      */
     private fun handleRule(constraintAnnotation: Annotation): Map<String, Any> {
         this.constraintAnnotation = constraintAnnotation
@@ -74,12 +74,12 @@ abstract class AbstractConstraintConvertor(protected var annotation: Annotation)
     }
 
     /**
-     * 处理错误消息的国际化。
-     * 仅当 message 为 {@code {...}} 且花括号内以 {@code jakarta.validation.constraints} 或
-     * {@code org.hibernate.validator.constraints} 开头时，用 [getCustomDefaultMsgI18nKey] 返回的模板直接替换。
+     * Handles i18n of error messages.
+     * Only when message is {@code {...}} and the content inside the braces starts with {@code jakarta.validation.constraints} or
+     * {@code org.hibernate.validator.constraints}, the template returned by [getCustomDefaultMsgI18nKey] is substituted directly.
      *
-     * @param rule 约束规则（可变），可能被修改 rule["message"]
-     * @param constraintAnnotation 当前约束注解
+     * @param rule the constraint rule (mutable); rule["message"] may be modified
+     * @param constraintAnnotation the current constraint annotation
      */
     protected open fun handleMessageI18n(rule: MutableMap<String, Any>, constraintAnnotation: Annotation) {
         val raw = rule["message"] as? String ?: return
@@ -92,10 +92,10 @@ abstract class AbstractConstraintConvertor(protected var annotation: Annotation)
     }
 
     /**
-     * 获取第三方约束注解的自定义默认国际化key
+     * Returns the custom default i18n key for a third-party constraint annotation.
      *
-     * @param constraintAnnotation 约束注解
-     * @return 默认国际化key字符串
+     * @param constraintAnnotation the constraint annotation
+     * @return the default i18n key string
      */
     protected open fun getCustomDefaultMsgI18nKey(constraintAnnotation: Annotation): String {
         return "sys.valid-msg.default.${constraintAnnotation.annotationClass.simpleName}"

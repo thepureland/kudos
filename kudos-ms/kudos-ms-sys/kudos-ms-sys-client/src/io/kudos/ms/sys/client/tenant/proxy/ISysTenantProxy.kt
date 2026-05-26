@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 租户客户端代理接口
+ * Tenant client proxy interface
  *
  * @author K
  * @since 1.0.0

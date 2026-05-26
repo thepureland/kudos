@@ -9,11 +9,12 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 角色 Feign 容错降级实现。
+ * Feign fallback implementation for the role proxy.
  *
- * **安全相关**：[hasResource] / [hasRole] / [hasRoleByCode] / [isUserHasResource]
- * 在远端不可达时一律返回 `false`（拒绝），属于安全侧默认 —— 宁可错杀也不放过。
- * 若调用方需要在 auth 不可达时放行（如启动期、健康检查跳过），请在自己侧做 fail-open 旁路。
+ * **Security-relevant**: [hasResource] / [hasRole] / [hasRoleByCode] / [isUserHasResource]
+ * always return `false` (deny) when the remote is unreachable. This is the secure default —
+ * fail-closed rather than fail-open. If a caller needs to allow through when auth is down
+ * (e.g. during bootstrap or to skip health checks), it must implement its own fail-open bypass.
  *
  * @author K
  * @author AI: Cursor

@@ -8,7 +8,7 @@ import org.springframework.cache.annotation.Cacheable
 
 
 /**
- * 缓存测试模拟服务
+ * Mock service for cache tests.
  *
  * @author K
  * @author AI: Codex
@@ -22,7 +22,7 @@ open class CacheTestService {
 
     @Cacheable(cacheNames = ["test"], key = "#id")
     open fun getFromDB(id: String): String {
-        LogFactory.getLog(CacheTestService::class).info("模拟去db查询~~~$id")
+        LogFactory.getLog(CacheTestService::class).info("Simulating DB query~~~$id")
         return RandomStringKit.uuidWithoutDelimiter()
     }
 

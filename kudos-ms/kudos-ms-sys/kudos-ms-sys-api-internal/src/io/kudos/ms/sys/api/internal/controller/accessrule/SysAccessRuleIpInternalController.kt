@@ -9,7 +9,7 @@ import java.math.BigDecimal
 
 
 /**
- * ip访问规则 内部 RPC 控制器。路径继承自 [ISysAccessRuleIpApi] 方法级注解。
+ * IP access rule internal RPC controller. Paths are inherited from method-level annotations on [ISysAccessRuleIpApi].
  *
  * @author K
  * @since 1.0.0

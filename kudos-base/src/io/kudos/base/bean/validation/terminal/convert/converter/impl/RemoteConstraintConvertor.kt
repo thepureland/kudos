@@ -1,7 +1,7 @@
 package io.kudos.base.bean.validation.terminal.convert.converter.impl
 
 /**
- * Remote注解约束->终端约束的转换器
+ * Converter from the Remote constraint annotation to a terminal constraint.
  *
  * @author K
  * @since 1.0.0

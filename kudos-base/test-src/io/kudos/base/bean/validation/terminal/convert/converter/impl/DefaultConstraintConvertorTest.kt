@@ -8,7 +8,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * DefaultConstraintConvertor测试用例
+ * Test cases for DefaultConstraintConvertor.
  *
  * @author AI: cursor
  * @author K
@@ -24,7 +24,7 @@ internal class DefaultConstraintConvertorTest {
             val convertor = DefaultConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
             assertNotNull(rule)
-            // NotNull注解应该包含message属性
+            // The NotNull annotation should include the message attribute
             assertTrue(rule.containsKey("message"))
         }
     }
@@ -37,7 +37,7 @@ internal class DefaultConstraintConvertorTest {
             val convertor = DefaultConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
             assertNotNull(rule)
-            // Size注解应该包含min和max属性
+            // The Size annotation should include the min and max attributes
             assertTrue(rule.containsKey("min"))
             assertTrue(rule.containsKey("max"))
             assertEquals(1, rule["min"])
@@ -52,15 +52,15 @@ internal class DefaultConstraintConvertorTest {
         if (annotation != null) {
             val convertor = DefaultConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
-            // groups和payload应该被排除
+            // groups and payload should be excluded
             assertTrue(!rule.containsKey("groups"))
             assertTrue(!rule.containsKey("payload"))
         }
     }
 
     data class TestBean(
-        @get:NotNull(message = "name不能为空")
-        @get:Size(min = 1, max = 100, message = "name长度必须在1到100之间")
+        @get:NotNull(message = "name must not be null")
+        @get:Size(min = 1, max = 100, message = "name length must be between 1 and 100")
         val name: String?
     )
 }

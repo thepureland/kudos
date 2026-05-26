@@ -4,10 +4,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * [UploadContentTypeEnum] 回归测试。
+ * Regression tests for [UploadContentTypeEnum].
  *
- * 历史 bug：`BMP("pdf", "application/x-bmp")` 后缀写错，PDF 被打成 BMP 的 contentType，
- * BMP 文件本身查不到——下面两个断言锁定修复后的行为，防止有人改回去。
+ * Historical bug: `BMP("pdf", "application/x-bmp")` had the wrong suffix, causing PDF
+ * to be tagged with BMP's contentType, while actual BMP files were not found —
+ * the two assertions below lock in the post-fix behavior so the bug cannot be
+ * reintroduced.
  *
  * @author K
  * @author AI: Codex

@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient
 import org.springframework.web.bind.annotation.GetMapping
 
 /**
- * 模拟FeignClient的代理，不用注册中心，直连
+ * Mock FeignClient proxy; bypasses the service registry and connects directly.
  *
  * @author K
  * @since  1.0.0

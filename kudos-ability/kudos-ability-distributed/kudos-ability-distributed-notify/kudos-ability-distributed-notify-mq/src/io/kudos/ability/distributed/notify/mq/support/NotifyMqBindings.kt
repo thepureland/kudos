@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.notify.mq.support
 
 /**
- * notify-mq 默认 binding 名称常量。
+ * Default binding name constants for notify-mq.
  *
  * @author K
  * @author AI: Codex

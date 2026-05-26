@@ -14,10 +14,11 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestBodyAdviceAd
 import java.lang.reflect.Type
 
 /**
- * 拒绝将 [MutableListSearchPayload] 用作外部请求体。
+ * Rejects using [MutableListSearchPayload] as an external request body.
  *
- * 该拦截器在 Spring MVC 完成 JSON -> 对象反序列化后执行，
- * 若请求体对象是 [MutableListSearchPayload]，则抛出参数异常，防止不可信输入直接驱动可变查询载体。
+ * This interceptor runs after Spring MVC completes JSON -> object deserialization;
+ * if the request body object is a [MutableListSearchPayload], it throws a parameter
+ * exception to prevent untrusted input from directly driving a mutable query payload.
  *
  * @author K
  * @author AI: Codex

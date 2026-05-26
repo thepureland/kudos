@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.stream.common.annotations
 
 /**
- * Mq生产者注解
+ * MQ producer annotation.
  *
  * @author paul
  * @author K
@@ -13,24 +13,25 @@ package io.kudos.ability.distributed.stream.common.annotations
 annotation class MqProducer(
 
     /**
-     * 绑定的stream生产者配置名，示例：producer-out-0
+     * Name of the bound stream producer configuration, e.g. producer-out-0.
      */
     val bindingName: String,
 
     /**
-     * 该字段为非必填，仅用于方便查找
+     * Optional; provided only to make lookup easier.
      */
     val topic: String = "",
 
     /**
-     * 作为消息体发送的方法参数下标，默认取第一个参数。
+     * Index of the method parameter to send as the payload; defaults to the first parameter.
      *
-     * 多参数 producer 方法应显式指定，避免业务参数被静默忽略。
+     * Multi-parameter producer methods should set this explicitly to avoid silently ignoring
+     * business arguments.
      */
     val payloadParameterIndex: Int = 0,
 
     /**
-     * 方法返回 Boolean false 时是否取消发送，默认保持历史行为。
+     * Whether to cancel sending when the method returns Boolean false; default preserves historical behavior.
      */
     val cancelOnFalse: Boolean = true
 

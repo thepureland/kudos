@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 域名数据访问对象
+ * Domain data access object
  *
  * @author K
  * @since 1.0.0

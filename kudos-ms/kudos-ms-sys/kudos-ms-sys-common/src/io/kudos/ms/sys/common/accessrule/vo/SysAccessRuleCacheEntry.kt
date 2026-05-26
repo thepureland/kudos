@@ -5,7 +5,7 @@ import java.io.Serializable
 
 
 /**
- * 访问规则在分布式/本地缓存中的值对象（与表 `sys_access_rule` 核心字段对应）。
+ * Value object for access rules in distributed/local cache (mirrors the core fields of table `sys_access_rule`).
  *
  * @author K
  * @author AI: Cursor
@@ -13,18 +13,18 @@ import java.io.Serializable
  */
 data class SysAccessRuleCacheEntry (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String,
 
     /**
-     * 租户 id；**空串**表示平台级（与库表 `tenant_id IS NULL` 对应），与 Hash 副属性索引取值一致。
+     * Tenant id; an **empty string** denotes platform-level (corresponds to `tenant_id IS NULL` in the DB), consistent with the hash secondary index value.
      */
     val tenantId: String,
 
-    /** 系统编码（子系统 / 系统维度 `system_code`） */
+    /** System code (sub-system / system dimension `system_code`). */
     val systemCode: String,
 
-    /** 规则类型字典代码 */
+    /** Rule type dictionary code. */
     val accessRuleTypeDictCode: String,
 
 ) : IIdEntity<String>, Serializable {

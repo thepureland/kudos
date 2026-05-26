@@ -5,43 +5,43 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 
 /**
- * 所有需要关系型数据库环境的测试用例的父类
+ * Base class for all test cases that require a relational database environment.
  *
- * ## 背景与使用场景
- * - 位于测试层，继承自[SqlTestBase]，为需要完整数据库的测试提供容器配置
- * - 由需要关系型数据库的测试类继承使用
- * - 继承[SqlTestBase]的脚本文件配置功能
+ * ## Background and Use Cases
+ * - Located in the test layer, extends [SqlTestBase] to provide container configuration for tests needing a full database
+ * - Used by test classes that require a relational database
+ * - Inherits the script file configuration capability from [SqlTestBase]
  *
- * ## 责任边界
- * - 启动并配置H2TestContainer
- * - 继承[SqlTestBase]的所有功能（测试数据加载、串行执行、事务回滚）
+ * ## Responsibilities
+ * - Starts and configures H2TestContainer
+ * - Inherits all functionality of [SqlTestBase] (test data loading, serial execution, transaction rollback)
  *
- * ## 核心流程
- * 1. 在@DynamicPropertySource中启动H2TestContainer
- * 2. 继承[SqlTestBase]的测试数据加载和事务回滚功能
+ * ## Core Flow
+ * 1. Start H2TestContainer inside @DynamicPropertySource
+ * 2. Inherit test data loading and transaction rollback functionality from [SqlTestBase]
  *
- * ## 依赖与外部交互
- * - 依赖：[SqlTestBase]（提供测试数据加载、事务管理）
- * - 依赖：H2TestContainer
- * - IO：启动Docker容器（如果未运行）
+ * ## Dependencies and External Interactions
+ * - Depends on: [SqlTestBase] (provides test data loading, transaction management)
+ * - Depends on: H2TestContainer
+ * - IO: starts Docker containers (if not running)
  *
- * ## 资料/契约
- * - 输入：无
- * - 输出：配置Spring测试环境属性（H2）
- * - 错误：如果Docker未安装或容器启动失败，会抛出异常
+ * ## Contract
+ * - Input: none
+ * - Output: configures Spring test environment properties (H2)
+ * - Errors: throws exceptions if Docker is not installed or container startup fails
  *
- * ## 交易与一致性
- * - 事务：继承[SqlTestBase]的@Transactional；fixture 数据由 @BeforeTransaction 在事务外提交（见 [SqlTestBase] 说明）
+ * ## Transactions and Consistency
+ * - Transactions: inherits @Transactional from [SqlTestBase]; fixture data is committed outside the transaction by @BeforeTransaction (see [SqlTestBase] docs)
  *
- * ## 并发与线程安全
- * - 容器启动使用同步机制，确保只启动一次
- * - 继承[SqlTestBase]的串行执行保证
+ * ## Concurrency and Thread Safety
+ * - Container startup uses synchronization to ensure each container is started only once
+ * - Inherits serial execution guarantees from [SqlTestBase]
  *
- * ## 性能特性
- * - 容器启动有一定开销，但会复用已运行的容器
+ * ## Performance Characteristics
+ * - Container startup has some overhead but already running containers are reused
  *
- * ## 安全与合规
- * - 仅用于测试环境，不涉及生产数据
+ * ## Security and Compliance
+ * - For test environments only, does not involve production data
  *
  * @author K
  * @author AI: Cursor
@@ -54,7 +54,7 @@ open class RdbTestBase : SqlTestBase() {
         @JvmStatic
         private fun registerProperties(registry: DynamicPropertyRegistry) {
             registry.add("kudos.ability.cache.enabled") { "false" }
-            // 默认 H2；要换 Postgres/MySQL 时业务子类自己写 companion + @DynamicPropertySource 覆盖
+            // Default H2; to switch to Postgres/MySQL, business subclasses should write their own companion + @DynamicPropertySource override
             H2TestContainer.startIfNeeded(registry)
         }
     }

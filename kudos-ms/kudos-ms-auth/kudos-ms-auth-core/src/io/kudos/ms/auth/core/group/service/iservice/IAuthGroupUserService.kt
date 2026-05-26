@@ -5,7 +5,7 @@ import io.kudos.ms.auth.core.group.model.po.AuthGroupUser
 
 
 /**
- * 组-用户关系业务接口
+ * Group-user relation service interface.
  *
  * @author K
  * @author AI: Codex
@@ -15,53 +15,53 @@ interface IAuthGroupUserService : IBaseCrudService<String, AuthGroupUser> {
 
 
     /**
-     * 根据组ID获取用户ID集合
+     * Returns the user IDs bound to the given group.
      *
-     * @param groupId 组ID
-     * @return 用户ID集合
+     * @param groupId group ID
+     * @return set of user IDs
      * @author AI: Codex
      * @since 1.0.0
      */
     fun getUserIdsByGroupId(groupId: String): Set<String>
 
     /**
-     * 根据用户ID获取组ID集合
+     * Returns the group IDs the given user belongs to.
      *
-     * @param userId 用户ID
-     * @return 组ID集合
+     * @param userId user ID
+     * @return set of group IDs
      * @author AI: Codex
      * @since 1.0.0
      */
     fun getGroupIdsByUserId(userId: String): Set<String>
 
     /**
-     * 批量绑定组和用户关系
+     * Batch-binds a group to multiple users.
      *
-     * @param groupId 组ID
-     * @param userIds 用户ID集合
-     * @return 成功绑定的数量
+     * @param groupId group ID
+     * @param userIds user IDs to bind
+     * @return number of bindings created
      * @author AI: Codex
      * @since 1.0.0
      */
     fun batchBind(groupId: String, userIds: Collection<String>): Int
 
     /**
-     * 解绑组和用户关系
+     * Unbinds a group-user relation.
      *
-     * @param groupId 组ID
-     * @param userId 用户ID
-     * @return 是否解绑成功
+     * @param groupId group ID
+     * @param userId user ID
+     * @return true if the relation was removed
      * @author AI: Codex
      * @since 1.0.0
      */
     fun unbind(groupId: String, userId: String): Boolean
 
     /**
-     * 检查关系是否存在
+     * Checks whether a group-user relation exists.
      *
-     * @param groupId 组ID
-     * @param userId 用户ID
-     * @return 是否存在
+     * @param groupId group ID
+     * @param userId user ID
+     * @return true if the relation exists
      * @author AI: Codex
      * @since 1.0.0
      */

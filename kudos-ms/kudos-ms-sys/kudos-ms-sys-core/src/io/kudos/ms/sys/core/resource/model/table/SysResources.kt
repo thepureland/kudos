@@ -7,32 +7,32 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 资源数据库表-实体关联对象
+ * Resource table-to-entity binding.
  *
  * @author K
  * @since 1.0.0
  */
 object SysResources : ManagedTable<SysResource>("sys_resource") {
 
-    /** 名称 */
+    /** Name */
     var name = varchar("name").bindTo { it.name }
 
     /** url */
     var url = varchar("url").bindTo { it.url }
 
-    /** 资源类型字典代码 */
+    /** Resource type dict code */
     var resourceTypeDictCode = varchar("resource_type_dict_code").bindTo { it.resourceTypeDictCode }
 
-    /** 父id */
+    /** Parent id */
     var parentId = varchar("parent_id").bindTo { it.parentId }
 
-    /** 在同父节点下的排序号 */
+    /** Order number among siblings under the same parent */
     var orderNum = int("order_num").bindTo { it.orderNum }
 
-    /** 图标 */
+    /** Icon */
     var icon = varchar("icon").bindTo { it.icon }
 
-    /** 子系统编码 */
+    /** Sub-system code */
     var subSystemCode = varchar("sub_system_code").bindTo { it.subSystemCode }
 
 

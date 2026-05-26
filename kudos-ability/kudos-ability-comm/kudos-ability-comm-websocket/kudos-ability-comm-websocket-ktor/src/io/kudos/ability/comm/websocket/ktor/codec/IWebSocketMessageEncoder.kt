@@ -1,15 +1,17 @@
 package io.kudos.ability.comm.websocket.ktor.codec
 
 /**
- * 业务消息 ↔ WebSocket 文本 frame 的编 / 解码 SPI。
+ * SPI for encoding / decoding business messages to and from WebSocket text frames.
  *
- * 把消息序列化决策从 [io.kudos.ability.comm.websocket.ktor.handler.IKudosWebSocketHandler]
- * 里解耦出来——同一份 handler 实现可以挂不同的协议（JSON / Protobuf JSON-text / MsgPack-base64
- * 等），业务侧只需要换 encoder。
+ * Decouples the message serialization decision from
+ * [io.kudos.ability.comm.websocket.ktor.handler.IKudosWebSocketHandler] — the same handler
+ * implementation can be wired with different protocols (JSON / Protobuf JSON-text /
+ * MsgPack-base64 etc.); the business side only needs to swap the encoder.
  *
- * 命名上对称称为 "encoder"，但同时承担 decode——名字简洁优先于纯描述性。
+ * The name is "encoder" for symmetry, but it also handles decoding — brevity is preferred over
+ * pure descriptiveness.
  *
- * 典型实现（在业务侧，不放本模块）：
+ * Typical implementation (lives on the business side, not in this module):
  *
  * ```kotlin
  * class JacksonWebSocketMessageEncoder(private val mapper: ObjectMapper) : IWebSocketMessageEncoder {
@@ -23,9 +25,9 @@ package io.kudos.ability.comm.websocket.ktor.codec
  */
 interface IWebSocketMessageEncoder {
 
-    /** 把任意业务对象编码为文本 frame 内容。失败应抛异常——调用方决定是否兜底。 */
+    /** Encodes an arbitrary business object as text frame content. Failures should throw an exception — the caller decides on a fallback. */
     fun encode(message: Any): String
 
-    /** 把收到的文本 frame 内容反向解析为指定类型。 */
+    /** Decodes received text frame content into the given type. */
     fun <T : Any> decode(text: String, type: Class<T>): T
 }

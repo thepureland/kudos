@@ -12,7 +12,7 @@ import kotlin.test.*
 /**
  * junit test for AccountThirdByUserIdAndProviderCodeCacheHandler
  *
- * 测试数据来源：`AccountThirdByUserIdAndProviderCodeCacheTest.sql`
+ * Test data source: `AccountThirdByUserIdAndProviderCodeCacheTest.sql`.
  *
  * @author K
  * @author AI: Codex
@@ -38,7 +38,7 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
         val cacheItem = cacheHandler.getAccountThird(userId, providerCode)
         assertNotNull(cacheItem)
 
-        // inactive 不应缓存
+        // inactive should not be cached.
         assertNull(cacheHandler.getAccountThird(userId, "GITHUB"))
 
         val newRecord = insertNewRecordToDb(userId, "ALIPAY", "sub-new", true)
@@ -74,10 +74,10 @@ class AccountThirdByUserIdAndProviderCodeCacheTest : RdbAndRedisCacheTestBase() 
         val cacheItem = cacheHandler.getAccountThird(userId, "WX")
         assertNotNull(cacheItem)
 
-        // inactive 不应缓存
+        // inactive should not be cached.
         assertNull(cacheHandler.getAccountThird(userId, "GITHUB"))
 
-        // 不存在
+        // Does not exist.
         assertNull(cacheHandler.getAccountThird(userId, "NO_PROVIDER"))
     }
 

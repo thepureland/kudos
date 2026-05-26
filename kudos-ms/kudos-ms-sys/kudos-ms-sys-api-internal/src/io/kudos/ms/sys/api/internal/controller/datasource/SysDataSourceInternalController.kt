@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 数据源 内部 RPC 控制器。路径继承自 [ISysDataSourceApi] 方法级注解。
+ * Data source internal RPC controller. Paths are inherited from method-level annotations on [ISysDataSourceApi].
  *
  * @author K
  * @since 1.0.0

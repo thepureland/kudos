@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * 原子服务管理控制器
+ * Atomic service management controller.
  *
  * @author K
  * @since 1.0.0
@@ -26,23 +26,23 @@ class SysMicroServiceAdminController :
     BaseCrudController<String, ISysMicroServiceService, SysMicroServiceQuery, SysMicroServiceRow, SysMicroServiceDetail, SysMicroServiceEdit, SysMicroServiceFormCreate, SysMicroServiceFormUpdate>() {
 
     /**
-     * 返回所有启用的原子服务编码
+     * Return all active atomic service codes.
      *
-     * @return List<原子服务编码>
+     * @return List<atomic service code>
      */
     @GetMapping("/getAllActiveAtomicServiceCodes")
     fun getAllActiveAtomicServiceCodes(): List<String> = service.getActiveAtomicServiceCodes()
 
     /**
-     * 返回所有启用的微服务（不含原子服务）编码
+     * Return all active microservice (excluding atomic services) codes.
      *
-     * @return List<微服务编码>
+     * @return List<microservice code>
      */
     @GetMapping("/getAllActiveMicroServiceCodes")
     fun getAllActiveMicroServiceCodes(): List<String> = service.getActiveMicroServiceCodes()
 
     /**
-     * 返回整棵微服务树
+     * Return the whole microservice tree.
      *
      * @return List<IdAndNameTreeNode>
      */
@@ -52,11 +52,11 @@ class SysMicroServiceAdminController :
     }
 
     /**
-     * 更新active状态
+     * Update the active status.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     @PutMapping("/updateActive")
     fun updateActive(id: String, active: Boolean): Boolean {

@@ -6,7 +6,8 @@ import io.kudos.ability.log.audit.common.support.ILogVo
 
 
 /**
- * 主审计日志载体——一个方法调用可以产生 N 条 [BaseLog]（不同子系统 / 模块的关联记录）。
+ * Top-level audit-log container: a single method call may produce N [BaseLog] entries (related records across
+ * different subsystems / modules).
  *
  * @author K
  * @author AI: Codex
@@ -14,17 +15,17 @@ import io.kudos.ability.log.audit.common.support.ILogVo
  */
 class LogVo : ILogVo {
 
-    /** 当前方法调用累积的审计日志条目。 */
+    /** Audit-log entries accumulated for the current method call. */
     var logs = mutableListOf<BaseLog>()
 
-    /** 追加一条由 [WebAudit] 注解派生的日志条目。 */
+    /** Appends a log entry derived from the [WebAudit] annotation. */
     fun addAuditLog(audit: WebAudit): BaseLog {
         val sysLog = BaseLog(audit)
         this.logs.add(sysLog)
         return sysLog
     }
 
-    /** 追加一条由 [Audit] 注解派生的日志条目。 */
+    /** Appends a log entry derived from the [Audit] annotation. */
     fun addAuditLog(audit: Audit): BaseLog {
         val sysLog = BaseLog(audit)
         this.logs.add(sysLog)

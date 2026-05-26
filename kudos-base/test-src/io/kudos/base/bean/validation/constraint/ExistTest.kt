@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 
 
 /**
- * Exist测试用例
+ * Test cases for Exist.
  *
  * @author K
  * @since 1.0.0
@@ -18,19 +18,19 @@ internal class ExistTest {
 
     @Test
     fun validate() {
-        // 数组类型，某些元素满足规则
+        // Array type with some elements satisfying the rule
         assert(ValidationKit.validateValue(TestExistBean::class, "contactWays", arrayOf("", null, "123")).isEmpty())
 
-        // 数组类型，没有任何一个元素满足规则
+        // Array type with no element satisfying the rule
         for (i in 1..10) {
             val violations = ValidationKit.validateValue(TestExistBean::class, "contactWays", arrayOf("", null))
-            assertEquals("联系方式至少填一种", violations.first().message)
+            assertEquals("at least one contact way must be provided", violations.first().message)
         }
 
-        // 数组类型，返回值为null，直接校验通过
+        // Array type with null value: validation passes directly
         assert(ValidationKit.validateValue(TestExistBean::class, "contactWays", null).isEmpty())
 
-        // 字符串类型，等效于直接用Constraints约束
+        // String type: equivalent to using Constraints directly
         assert(ValidationKit.validateValue(TestExistBean::class, "name", " ").isNotEmpty())
     }
 
@@ -38,14 +38,14 @@ internal class ExistTest {
 
         @get:Exist(
             Constraints(
-                notBlank = NotBlank(message = "联系方式不能为空"),
+                notBlank = NotBlank(message = "contact way must not be blank"),
             ),
-            message = "联系方式至少填一种"
+            message = "at least one contact way must be provided"
         )
         val contactWays: Array<String>?,
 
         @get:Exist(
-            Constraints(notBlank = NotBlank(message = "姓名不能为空"))
+            Constraints(notBlank = NotBlank(message = "name must not be blank"))
         )
         val name: String?
 

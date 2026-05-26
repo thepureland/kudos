@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 机构数据访问对象
+ * Organization data access object.
  *
  * @author K
  * @author AI: Cursor
@@ -21,19 +21,19 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
 
 
     /**
-     * 按租户ID查询，返回缓存用 VO 列表
+     * Queries by tenant ID and returns a list of cache VOs.
      *
-     * @param tenantId 租户ID
+     * @param tenantId tenant ID
      * @return List<UserOrgCacheEntry>
      */
     open fun searchOrgsByTenantIdForCache(tenantId: String): List<UserOrgCacheEntry> =
         searchAs<UserOrgCacheEntry>(Criteria(UserOrg::tenantId eq tenantId))
 
     /**
-     * 查询启用状态下，指定父机构的直接子机构ID列表
+     * Queries the direct child organization ID list of the given parent organization in enabled status.
      *
-     * @param parentId 父机构ID
-     * @return 直接子机构ID列表
+     * @param parentId parent organization ID
+     * @return list of direct child organization IDs
      */
     fun searchActiveChildOrgIds(parentId: String): List<String> {
         val criteria = Criteria(UserOrg::parentId eq parentId)
@@ -42,11 +42,11 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
     }
 
     /**
-     * 查询租户下启用机构；parentId 为 null 时查询全部启用机构
+     * Queries enabled organizations under the tenant; when parentId is null, queries all enabled organizations.
      *
-     * @param tenantId 租户ID
-     * @param parentId 父机构ID，为null时不按父机构过滤
-     * @return 机构列表
+     * @param tenantId tenant ID
+     * @param parentId parent organization ID; when null, do not filter by parent organization
+     * @return organization list
      */
     fun searchActiveOrgsByTenantId(tenantId: String, parentId: String? = null): List<UserOrg> {
         val criteria = Criteria(UserOrg::tenantId eq tenantId).addAnd(UserOrg::active eq true)
@@ -55,15 +55,16 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
     }
 
     /**
-     * 返回 rootOrgId 自身 + 所有递归启用子孙机构 ID。
+     * Returns rootOrgId itself plus all recursively enabled descendant organization IDs.
      *
-     * 用于"父机构看子机构成员"类查询的 IN-list 展开。仅含 `active=true` 的子机构，
-     * 与 [searchActiveChildOrgIds] 的过滤口径一致。
+     * Used for IN-list expansion in "parent organization viewing child organization members" style queries.
+     * Only includes child organizations with `active=true`, consistent with the filter scope of [searchActiveChildOrgIds].
      *
-     * 性能：树深度 N 时为 N 次 SELECT。中型机构树（< 几百节点）够用；超大树可换成
-     * 单次全量 parentId 反向索引（见 [searchAllOrgIdToParentId]）批量计算。
+     * Performance: with tree depth N, performs N SELECTs. Sufficient for medium-sized organization trees
+     * (< a few hundred nodes); for very large trees, switch to a single full-scan parentId reverse index
+     * (see [searchAllOrgIdToParentId]) for batch computation.
      *
-     * @return Set，含 rootOrgId 自身；rootOrgId 本身未必 active，调用方按需过滤。
+     * @return Set, including rootOrgId itself; rootOrgId itself is not necessarily active, callers should filter as needed.
      */
     fun searchOrgAndDescendantIds(rootOrgId: String): Set<String> {
         val result = linkedSetOf(rootOrgId)
@@ -78,10 +79,11 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
     }
 
     /**
-     * 返回 orgId 自身 + 所有祖先机构 ID（沿 parent_id 上溯到 null 或环路）。
+     * Returns orgId itself plus all ancestor organization IDs (walking up parent_id to null or a cycle).
      *
-     * 用于缓存失效：orgId 下的用户关系变化时，所有祖先机构的"含子机构成员"视图都要重算。
-     * 不过滤 active —— 即便祖先被禁用，也可能存在缓存条目要清。
+     * Used for cache invalidation: when user relations under orgId change, the "includes child organization members"
+     * view of all ancestor organizations needs to be recomputed.
+     * Does not filter by active -- even if an ancestor is disabled, cache entries may still need to be cleared.
      */
     fun searchOrgAndAncestorIds(orgId: String): Set<String> {
         val result = linkedSetOf(orgId)
@@ -93,8 +95,8 @@ open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
     }
 
     /**
-     * 全量机构的 orgId → parentId 映射，给缓存批量预热构造父子索引用。
-     * value 为 null 表示根机构。
+     * Full orgId -> parentId mapping for all organizations, used by cache batch warm-up
+     * to build the parent-child index. A value of null indicates a root organization.
      */
     fun searchAllOrgIdToParentId(): Map<String, String?> =
         allSearch().associate { it.id to it.parentId }

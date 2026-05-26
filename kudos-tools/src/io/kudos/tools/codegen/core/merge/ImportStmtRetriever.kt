@@ -1,7 +1,7 @@
 package io.kudos.tools.codegen.core.merge
 
 /**
- * import语句抓取器
+ * Import-statement retriever.
  *
  * @author K
  * @since 1.0.0

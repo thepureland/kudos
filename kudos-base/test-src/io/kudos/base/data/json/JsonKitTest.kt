@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 /**
- * JsonKit测试用例
+ * JsonKit test cases
  *
  * @author K
  * @author AI: ChatGPT
@@ -116,14 +116,14 @@ internal class JsonKitTest {
         assertEquals(expected.length, fact.length)
     }
 
-    // 用于结构对比解析（测试内专用，与你实际 Json 配置无关）
+    // Used for structural comparison parsing (test-only; unrelated to the actual Json configuration)
     private val parseJson = Json {
         encodeDefaults = true
         explicitNulls = true
         ignoreUnknownKeys = true
     }
 
-    // ---------- writeValueAsBytes：reified 版本（preserveNull = true） ----------
+    // ---------- writeValueAsBytes: reified variant (preserveNull = true) ----------
     @Test
     fun writeBytes_reified_preserveNull_true_personList_matchesKnownJson() {
         val expected = """
@@ -132,27 +132,27 @@ internal class JsonKitTest {
               "goods":["sporting","singing","dancing"],
               "contact":{"student":"Tom","teacher":"Lucy"},
               "active":null}]
-        """.trimIndent().replace(Regex("\\s"), "") // 去空白仅用于展示；真正比较用结构
+        """.trimIndent().replace(Regex("\\s"), "") // Stripping whitespace is for display only; actual comparison is structural
 
         val bytes = JsonKit.writeValueAsBytes(listOf(person), preserveNull = true)
         val actualElem = parseJson.parseToJsonElement(bytes.toString(Charsets.UTF_8))
         val expectedElem = parseJson.parseToJsonElement(expected)
 
-        assertEquals(expectedElem, actualElem, "结构应与预期 JSON 一致（包含 null 字段）")
+        assertEquals(expectedElem, actualElem, "Structure should match the expected JSON (including null fields)")
     }
 
-    // ---------- writeValueAsBytes：Any 版本（preserveNull = false） ----------
+    // ---------- writeValueAsBytes: Any variant (preserveNull = false) ----------
     @Test
     fun writeBytes_any_preserveNull_false_person_omitsNulls() {
         val bytes = JsonKit.writeValueAsBytes(person, preserveNull = false)
         val obj = parseJson.parseToJsonElement(bytes.toString(Charsets.UTF_8)).jsonObject
 
-        // 基本字段存在
+        // Basic fields present
         assertEquals("id", obj["id"]?.toString()?.trim('"'))
         assertEquals("Mike", obj["name"]?.toString()?.trim('"'))
 
-        // active=null 在 preserveNull=false 时应被省略
-        assertFalse("active" in obj, "preserveNull=false 时应省略 null 字段")
+        // active=null should be omitted when preserveNull=false
+        assertFalse("active" in obj, "Null fields should be omitted when preserveNull=false")
     }
 
     // ---------- readValue：reified ----------
@@ -160,11 +160,11 @@ internal class JsonKitTest {
     fun readValue_reified_roundtrip_person() {
         val bytes = JsonKit.writeValueAsBytes(person, preserveNull = true)
 
-        // 如果 Person 有 @Serializable，则可直接反序列化；
-        // 若没有，请为 Person 添加 @Serializable（或在你的工程里使用 KType 版本）
+        // If Person has @Serializable it can be deserialized directly;
+        // otherwise, add @Serializable to Person (or use the KType variant in your project)
         val decoded: Person = JsonKit.readValue(bytes)
 
-        assertEquals(person, decoded, "reified 版本应能与原对象等值（data class 建议）")
+        assertEquals(person, decoded, "Reified variant should match the original object (data class recommended)")
     }
 
     // ---------- readValue：KClass ----------
@@ -173,7 +173,7 @@ internal class JsonKitTest {
         val original = person
         val bytes = JsonKit.writeValueAsBytes(original, preserveNull = true)
 
-        // 仅当 Person 本身可拿到直连序列化器（@Serializable 或 sealed 子类）时可用
+        // Only works when Person itself has a direct serializer (@Serializable or sealed subclass)
         val decoded: Person = JsonKit.readValue(bytes, Person::class)
         assertEquals(original, decoded)
     }

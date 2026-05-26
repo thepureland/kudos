@@ -5,7 +5,7 @@ import java.util.Date
 import kotlin.test.*
 
 /**
- * BeanKit测试用例
+ * BeanKit test cases.
  *
  * @author K
  * @since 1.0.0
@@ -38,7 +38,7 @@ internal class BeanKitTest {
     fun shallowClone() {
         val dest = BeanKit.shallowClone(person)
         assertEquals(person, dest)
-        assertSame(person.address, dest.address) // 证明是浅克隆
+        assertSame(person.address, dest.address) // Proves it is a shallow clone
         assertEquals(true, dest.active)
     }
 
@@ -46,7 +46,7 @@ internal class BeanKitTest {
     fun deepClone() {
         val dest: Person = BeanKit.deepClone(person)
         assertEquals(person, dest)
-        assertTrue(person.address !== dest.address) // 证明是深克隆
+        assertTrue(person.address !== dest.address) // Proves it is a deep clone
         assertEquals(true, dest.active)
     }
 
@@ -55,7 +55,7 @@ internal class BeanKitTest {
         val dest = Person()
         BeanKit.copyProperties(person, dest)
         assertEquals(person, dest)
-        assertSame(person.address, dest.address) // 证明是浅克隆
+        assertSame(person.address, dest.address) // Proves it is a shallow clone
         assertEquals(true, dest.active)
     }
 
@@ -90,7 +90,7 @@ internal class BeanKitTest {
     }
 
     /**
-     * 无 setter 的类（如 Kotlin data class 的 val）：setProperty 应通过反射设置 backing field 成功。
+     * Classes without setters (such as Kotlin data class `val` properties): setProperty should set the backing field successfully via reflection.
      */
     @Test
     fun setPropertyOnValOnlyBean() {
@@ -105,7 +105,7 @@ internal class BeanKitTest {
         assertEquals(true, record.active)
     }
 
-    /** 仅 val 属性、无 setter，用于测试 setProperty 的 field 回退逻辑 */
+    /** `val`-only properties without setters, used to test the field fallback logic of setProperty. */
     internal data class ValOnlyRecord(
         val id: String = "",
         val name: String = "",
@@ -130,7 +130,7 @@ internal class BeanKitTest {
     fun copyPropertiesToClassInstance() {
         val dest: Person = BeanKit.copyProperties(Person::class, person)
         assertEquals(person, dest)
-        assertSame(person.address, dest.address) // 证明是浅克隆
+        assertSame(person.address, dest.address) // Proves it is a shallow clone
         assertEquals(true, dest.active)
     }
 
@@ -151,7 +151,7 @@ internal class BeanKitTest {
         assertEquals(person._getId(), dest._getId())
         assertEquals(0, dest.age)
         assertNull(dest.address)
-        assertSame(person.goods, dest.goods) // 浅克隆
+        assertSame(person.goods, dest.goods) // Shallow clone
         assertEquals(true, dest.active)
     }
 

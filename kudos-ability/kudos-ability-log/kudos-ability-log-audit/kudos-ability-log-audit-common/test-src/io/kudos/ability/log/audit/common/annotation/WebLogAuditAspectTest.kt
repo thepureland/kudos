@@ -26,15 +26,16 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * [WebLogAuditAspect] 的 Spring AOP 集成测试。
+ * Spring AOP integration tests for [WebLogAuditAspect].
  *
- * 覆盖：
- *  - 成功路径：`@AfterReturning` submit；description 不带 FAILED 前缀；context clear
- *  - 失败路径：`@AfterThrowing` submit；description 带 `[FAILED:..]` 前缀；原异常透传；context clear
- *  - **Multipart 请求被整体跳过**——不写 `LogAuditContext`、不 submit
+ * Coverage:
+ *  - Success path: `@AfterReturning` submit; description does not start with the FAILED prefix; context cleared.
+ *  - Failure path: `@AfterThrowing` submit; description carries the `[FAILED:..]` prefix; original exception
+ *    propagates; context cleared.
+ *  - **Multipart requests are skipped entirely** — no `LogAuditContext` write, no submit.
  *
- * 用 [MockHttpServletRequest] 通过 [RequestContextHolder] 设到当前线程，让切面以为
- * 处于 Web 请求路径中。
+ * A [MockHttpServletRequest] is bound to the current thread via [RequestContextHolder] so the aspect
+ * believes it is on a web-request path.
  *
  * @author K
  * @author AI: Codex
@@ -65,7 +66,7 @@ class WebLogAuditAspectTest @Autowired constructor(
         controller.list()
         assertEquals(1, recorder.captured.size)
         val description = recorder.captured.single().entities?.firstOrNull()?.description ?: ""
-        assertTrue(!description.startsWith("[FAILED:"), "成功路径 description 不应带 FAILED 前缀: $description")
+        assertTrue(!description.startsWith("[FAILED:"), "Success-path description should not start with the FAILED prefix: $description")
     }
 
     @Test
@@ -87,9 +88,9 @@ class WebLogAuditAspectTest @Autowired constructor(
 
         controller.upload()
 
-        // 切面对 multipart 直接放行：不写 context、不 submit
-        assertEquals(0, recorder.captured.size, "multipart 应当被整体跳过")
-        assertNull(LogAuditContext.getOrNull(), "multipart 路径不应污染上下文")
+        // The aspect bypasses multipart entirely: no context write, no submit
+        assertEquals(0, recorder.captured.size, "multipart should be skipped entirely")
+        assertNull(LogAuditContext.getOrNull(), "multipart path should not pollute the context")
     }
 
     @Test
@@ -120,7 +121,7 @@ class WebLogAuditAspectTest @Autowired constructor(
 }
 
 /**
- * 测试用 Web controller。
+ * Test web controller.
  *
  * @author K
  * @author AI: Codex
@@ -139,7 +140,7 @@ open class WebAuditedController {
 }
 
 /**
- * Web 审计记录器。
+ * Recording web audit service for tests.
  *
  * @author K
  * @author AI: Codex

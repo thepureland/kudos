@@ -135,7 +135,7 @@ class GlobalExceptionHandlerTest {
 
     private class TestRequest {
 
-        @field:NotBlank(message = "名称不能为空")
+        @field:NotBlank(message = "name must not be blank")
         var name: String? = null
 
     }
@@ -178,13 +178,13 @@ class GlobalExceptionHandlerTest {
 
         @GetMapping("/require")
         fun requireCase(): String {
-            require(false) { "name 不能为空" }
+            require(false) { "name must not be blank" }
             return "ok"
         }
 
         @GetMapping("/check")
         fun checkCase(): String {
-            check(false) { "状态不合法" }
+            check(false) { "invalid state" }
             return "ok"
         }
 
@@ -197,7 +197,7 @@ class GlobalExceptionHandlerTest {
 
     private class ConstraintTarget {
 
-        @field:NotNull(message = "数量不能为空")
+        @field:NotNull(message = "count must not be null")
         var count: Int? = null
 
     }

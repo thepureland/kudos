@@ -3,7 +3,7 @@ package io.kudos.base.security
 import kotlin.test.*
 
 /**
- * CryptoKey测试用例
+ * CryptoKey test cases
  *
  * @author AI: cursor
  * @author K
@@ -15,13 +15,13 @@ internal class CryptoKeyTest {
 
     @BeforeTest
     fun setup() {
-        // 保存原始值
+        // Save original value
         originalKey = CryptoKey.KEY_DEFAULT
     }
 
     @AfterTest
     fun teardown() {
-        // 恢复原始值
+        // Restore original value
         CryptoKey.KEY_DEFAULT = originalKey
     }
 

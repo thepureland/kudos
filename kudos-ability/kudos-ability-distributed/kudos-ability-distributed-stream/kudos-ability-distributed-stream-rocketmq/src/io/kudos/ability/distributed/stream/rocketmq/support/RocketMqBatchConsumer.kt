@@ -16,29 +16,30 @@ import java.time.LocalDateTime
 import kotlin.concurrent.thread
 
 /**
- * RocketMQ批量消息消费者
- * 
- * 支持批量拉取和消费RocketMQ消息，提供失败消息持久化和重试机制。
- * 
- * 核心特性：
- * 1. 批量拉取：使用DefaultLitePullConsumer批量拉取消息，提高消费效率
- * 2. 批量处理：支持配置批量处理大小（batchProcessSize），达到阈值或超时后统一处理
- * 3. 定时提交：即使没有拉取到新消息，也会按照pullTime间隔提交一次，确保消息及时处理
- * 4. 异常处理：支持开启异常数据保存功能，将消费失败的消息持久化到数据库，避免MQ堵塞
- * 5. 优雅关闭：注册JVM关闭钩子，确保应用关闭时正确停止消费者
- * 
- * 工作流程：
- * - 启动后创建守护线程持续拉取消息
- * - 当消息数量达到batchProcessSize或距离上次提交超过pullTime时，触发批量处理
- * - 批量处理时反序列化消息体，调用业务处理方法
- * - 处理成功后提交消费位点，失败时根据saveException配置决定是否保存异常数据
- * 
- * 注意事项：
- * - 消费位点提交采用手动提交模式（autoCommit=false），确保消息处理成功后才提交
- * - 如果开启异常保存，即使处理失败也会提交位点，避免重复消费导致堵塞
- * - 消息体使用JDK序列化，需要确保消息体类实现Serializable接口
+ * RocketMQ batch message consumer.
  *
- * @param T 消息体类型
+ * Supports batch pulling and consumption of RocketMQ messages, with failed-message persistence and a retry mechanism.
+ *
+ * Core features:
+ * 1. Batch pulling: uses DefaultLitePullConsumer to pull messages in batches, improving consumption efficiency
+ * 2. Batch processing: supports a configurable batch size (batchProcessSize); processing is triggered when the
+ *    threshold or timeout is reached
+ * 3. Periodic commit: even when no new messages are pulled, commits at the pullTime interval to ensure timely processing
+ * 4. Exception handling: supports persisting failed messages to the database, preventing MQ backlog
+ * 5. Graceful shutdown: registers a JVM shutdown hook to stop the consumer correctly on application exit
+ *
+ * Workflow:
+ * - On startup, creates a daemon thread to continuously pull messages
+ * - Batch processing is triggered when the message count reaches batchProcessSize or pullTime elapses since the last commit
+ * - During batch processing, deserializes the message bodies and invokes the business handler
+ * - On success, commits the consumption offset; on failure, the saveException configuration decides whether to persist exception data
+ *
+ * Notes:
+ * - Offset commit uses manual mode (autoCommit=false) to ensure offsets are committed only after successful processing
+ * - When exception persistence is enabled, the offset is committed even on failure to avoid repeated consumption and backlog
+ * - Message bodies use JDK serialization; the message body class must implement Serializable
+ *
+ * @param T Message body type
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -63,15 +64,16 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     private val topic: String?
 
     /**
-     * @param groupName     分组名
-     * @param topic         主题
-     * @param pullTime      批量拉不到数据，多久提交一次
-     * @param saveException 是否开启异常数据保存，业务严格下请开启它，并提供异常数据修复机制，避免堵塞
+     * @param groupName     Group name
+     * @param topic         Topic
+     * @param pullTime      Commit interval when no batch data is pulled
+     * @param saveException Whether to enable exception-data saving; enable for strict business scenarios and provide a
+     *   recovery mechanism for the saved exception data to avoid backlog
      */
     /**
-     * @param groupName 分组名
-     * @param topic     主题
-     * @param pullTime  批量拉不到数据，多久提交一次
+     * @param groupName Group name
+     * @param topic     Topic
+     * @param pullTime  Commit interval when no batch data is pulled
      */
     init {
         this.pullTime = pullTime
@@ -87,43 +89,43 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
             consumer.subscribe(topic, "*")
             consumer.start()
         } catch (e: MQClientException) {
-            log.error(e, "MQ消费启动异常！topic=$topic")
+            log.error(e, "MQ consumer start failed! topic=$topic")
         }
-        //优雅关机
+        // Graceful shutdown
         Runtime.getRuntime().addShutdownHook(Thread { this.destroy() })
     }
 
     /**
-     * 启动消费，提交业务处理回调
-     * 
-     * 创建守护线程持续拉取和批量处理消息。
-     * 
-     * 批量处理触发条件：
-     * 1. 消息数量达到batchProcessSize（默认1000条）
-     * 2. 距离上次提交超过pullTime（默认5000毫秒）
-     * 
-     * 工作流程：
-     * 1. 保存业务处理方法回调
-     * 2. 设置运行标志为true
-     * 3. 创建守护线程，执行以下循环：
-     *    - 从MQ拉取消息（poll方法，非阻塞）
-     *    - 将拉取到的消息添加到批量数据列表
-     *    - 检查是否达到批量处理条件（数量或时间）
-     *    - 如果达到条件，调用toProcessBizData处理批量数据
-     *    - 重置批量数据列表和上次提交时间
-     * 4. 线程退出时（isRunning=false），处理剩余的批量数据
-     * 
-     * 批量处理策略：
-     * - 达到数量阈值：立即处理，提高吞吐量
-     * - 达到时间阈值：即使数量不足也处理，确保消息及时处理
-     * - 两者任一满足即触发处理，平衡吞吐量和延迟
-     * 
-     * 注意事项：
-     * - 使用守护线程，不会阻止JVM关闭
-     * - 线程退出时会处理剩余的批量数据，避免消息丢失
-     * - 批量处理失败时，根据saveException配置决定是否保存异常数据
-     * 
-     * @param bizBatchProcess 业务处理方法，接收批量消息列表进行处理
+     * Starts consumption with the supplied business-handler callback.
+     *
+     * Creates a daemon thread that continuously pulls and batch-processes messages.
+     *
+     * Batch-processing triggers:
+     * 1. Message count reaches batchProcessSize (default 1000)
+     * 2. Time since the last commit exceeds pullTime (default 5000 ms)
+     *
+     * Workflow:
+     * 1. Save the business-handler callback
+     * 2. Set the running flag to true
+     * 3. Create a daemon thread running the loop:
+     *    - Pull messages from MQ (poll, non-blocking)
+     *    - Append pulled messages to the batch buffer
+     *    - Check whether batch-processing conditions are met (count or time)
+     *    - If met, invoke toProcessBizData to handle the batch
+     *    - Reset the buffer and the last-commit timestamp
+     * 4. When the thread exits (isRunning=false), process any remaining batch data
+     *
+     * Batch strategy:
+     * - Count threshold: process immediately for higher throughput
+     * - Time threshold: process even if the count is small, ensuring timely processing
+     * - Either condition triggers processing, balancing throughput and latency
+     *
+     * Notes:
+     * - Uses a daemon thread so the JVM is not held open
+     * - Remaining batch data is processed on thread exit to avoid message loss
+     * - On batch-processing failure, the saveException setting decides whether to persist exception data
+     *
+     * @param bizBatchProcess Business handler that processes the batch message list
      */
     fun start(bizBatchProcess: (List<BatchConsumerItem<T>>) -> Unit) {
         this.bizBatchProcess = bizBatchProcess
@@ -138,19 +140,19 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
                 val poll = consumer.poll()
                 val polledAny = poll != null && poll.isNotEmpty()
                 if (polledAny) {
-                    log.debug("本次拉到数据：${poll.size}")
+                    log.debug("Pulled this round: ${poll.size}")
                     batchData.addAll(poll)
                 }
                 val nowTime = System.currentTimeMillis()
                 if (batchData.size >= batchProcessSize || nowTime - lastCommitTime > pullTime) {
-                    log.info("本次处理业务数据量：${batchData.size}")
+                    log.info("Business data processed this round: ${batchData.size}")
                     toProcessBizData(batchData)
                     lastCommitTime = System.currentTimeMillis()
                     batchData.clear()
                 } else if (!polledAny) {
-                    // 空轮询 idle backoff——避免 CPU busy-loop。consumer.poll() 内部已有阻塞超时
-                    // (consumerPullTimeoutMillis = 5s)，但低负载场景下 broker 端可能立即返回空集合
-                    // 而非阻塞，此处兜底让线程让出 CPU
+                    // Idle backoff to avoid a CPU busy-loop. consumer.poll() has its own blocking timeout
+                    // (consumerPullTimeoutMillis = 5s), but under low load the broker may return an empty
+                    // collection immediately instead of blocking; this fallback yields the CPU.
                     try {
                         Thread.sleep(IDLE_POLL_SLEEP_MS)
                     } catch (e: InterruptedException) {
@@ -164,47 +166,48 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     }
 
     /**
-     * 处理批量业务数据
-     * 
-     * 将RocketMQ消息反序列化为业务对象，调用业务处理方法，并根据处理结果提交消费位点。
-     * 
-     * 工作流程：
-     * 1. 消息反序列化：
-     *    - 遍历批量消息列表
-     *    - 从消息体中读取字节数组
-     *    - 使用ObjectInputStream反序列化为业务对象
-     *    - 提取消息属性（properties）
-     *    - 封装为BatchConsumerItem对象
-     * 
-     * 2. 业务处理：
-     *    - 调用业务处理方法处理批量数据
-     *    - 如果处理成功，提交消费位点（commit）
-     * 
-     * 3. 异常处理：
-     *    - 如果处理失败且saveException=true：
-     *      * 记录错误日志
-     *      * 保存异常数据到数据库（避免MQ堵塞）
-     *      * 提交消费位点（避免重复消费）
-     *    - 如果处理失败且saveException=false：
-     *      * 记录错误日志
-     *      * 不提交消费位点（下次会重新拉取）
-     * 
-     * 序列化说明：
-     * - 消息体使用JDK序列化（ObjectInputStream）
-     * - 需要确保消息体类实现Serializable接口
-     * - 反序列化失败会抛出RuntimeException，中断处理
-     * 
-     * 消费位点提交：
-     * - 处理成功：立即提交，确认消息已处理
-     * - 处理失败且保存异常：也提交，避免重复消费导致堵塞
-     * - 处理失败且不保存异常：不提交，下次重新拉取重试
-     * 
-     * 注意事项：
-     * - 反序列化失败会直接抛出异常，不会触发异常保存逻辑
-     * - 业务处理异常会根据saveException配置决定是否保存
-     * - 保存异常数据后仍会提交位点，需要提供异常数据修复机制
-     * 
-     * @param batchData 批量消息列表，包含从MQ拉取的消息
+     * Processes a batch of business data.
+     *
+     * Deserializes RocketMQ messages into business objects, invokes the business handler, and commits the
+     * consumption offset based on the processing result.
+     *
+     * Workflow:
+     * 1. Message deserialization:
+     *    - Iterate over the batch message list
+     *    - Read the byte array from the message body
+     *    - Deserialize into a business object via ObjectInputStream
+     *    - Extract the message properties
+     *    - Wrap as a BatchConsumerItem object
+     *
+     * 2. Business processing:
+     *    - Invoke the business handler with the batch
+     *    - On success, commit the consumption offset (commit)
+     *
+     * 3. Exception handling:
+     *    - On failure with saveException=true:
+     *      * Log the error
+     *      * Save exception data to the database (avoid MQ backlog)
+     *      * Commit the offset (avoid repeated consumption)
+     *    - On failure with saveException=false:
+     *      * Log the error
+     *      * Do not commit the offset (will be re-pulled next round)
+     *
+     * Serialization:
+     * - Message bodies use JDK serialization (ObjectInputStream)
+     * - The message body class must implement Serializable
+     * - A deserialization failure throws RuntimeException and aborts processing
+     *
+     * Offset commit:
+     * - Success: commit immediately to acknowledge processing
+     * - Failure with exception persistence: also commit to avoid backlog from repeated consumption
+     * - Failure without exception persistence: do not commit so the next pull retries
+     *
+     * Notes:
+     * - A deserialization failure throws directly and does not trigger the exception-save path
+     * - Business-handler exceptions follow saveException to decide whether to persist
+     * - After persisting exception data the offset is still committed; a recovery mechanism is required for the saved data
+     *
+     * @param batchData The batch message list pulled from MQ
      */
     @Suppress("UNCHECKED_CAST")
     private fun toProcessBizData(batchData: MutableList<MessageExt?>) {
@@ -221,7 +224,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         }
         val processor = bizBatchProcess
         if (processor == null) {
-            log.warn("业务消费处理器为空，跳过本批次消费。topic=$topic")
+            log.warn("Business consumer handler is null; skipping this batch. topic=$topic")
             return
         }
         try {
@@ -229,30 +232,31 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
             consumer.commit()
         } catch (e: Exception) {
             if (!saveException) {
-                log.error(e, "业务消费失败，重新拉数据...")
+                log.error(e, "Business consumption failed; will re-pull data...")
                 return
             }
-            log.error(e, "业务数据消费失败！${e.message}")
+            log.error(e, "Business data consumption failed! ${e.message}")
             saveErrorData(batchData)
-            //出现异常，但是保存了日志，所以确认消费
+            // An exception occurred, but the log was saved, so acknowledge the consumption.
             consumer.commit()
         }
     }
 
     /**
-     * 把消费失败的批次落库到 `sys_mq_fail_msg`，避免 MQ 堆积。
-     * 仅当 RocketMQ 配置 `saveException = true` 时才真正落库；否则只 WARN 提醒未开启该能力。
+     * Persists a failed batch to `sys_mq_fail_msg` to prevent MQ backlog.
+     * Only actually persists when the RocketMQ configuration has `saveException = true`; otherwise just emits a
+     * WARN noting that the feature is disabled.
      *
-     * @param data 失败批次（一般是 [MessageExt] 列表）
+     * @param data Failed batch (typically a [MessageExt] list)
      * @author K
      * @since 1.0.0
      */
     private fun saveErrorData(data: Any) {
         if (!rocketMqProperties.saveException) {
-            log.warn("未开启异常消费记录功能...")
+            log.warn("Exception-consumption logging is not enabled...")
             return
         }
-        log.warn("保存异常消费日志，避免mq堵塞")
+        log.warn("Saving exception-consumption log to avoid MQ backlog")
         val exceptionMsg = SysMqFailMsg().apply {
             topic = requireNotNull(this@RocketMqBatchConsumer.topic) { "topic is null" }
             msgBodyJson = JSONObject.toJSONString(data)
@@ -267,14 +271,14 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     }
 
     /**
-     * 优雅停止消费者：
-     * 1. 设 `isRunning = false` 让 daemon 线程主循环退出；
-     * 2. join daemon 线程；
-     * 3. 调 `consumer.shutdown()` 释放 RocketMQ 客户端的 netty 连接和消费位点资源。
+     * Gracefully stops the consumer:
+     * 1. Sets `isRunning = false` so the daemon thread's main loop exits;
+     * 2. joins the daemon thread;
+     * 3. calls `consumer.shutdown()` to release the RocketMQ client's netty connections and offset resources.
      *
-     * 第 3 步是相对于"旧实现只置位然后等 JVM 退出"的关键修复——否则 consumer 内部
-     * 线程池 / netty selector 会持续占用资源直到进程终止。被注册到 [Runtime.addShutdownHook]
-     * 由 JVM 主动调用。
+     * Step 3 is the key fix versus the prior implementation, which only flipped the flag and waited for JVM exit
+     * — otherwise the consumer's internal thread pool / netty selector keeps holding resources until the process
+     * terminates. Registered with [Runtime.addShutdownHook] and invoked by the JVM.
      *
      * @author K
      * @since 1.0.0
@@ -284,26 +288,27 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         try {
             daemonThread?.join()
         } catch (e: InterruptedException) {
-            log.error(e, "停止 mq 消费失败")
+            log.error(e, "Failed to stop MQ consumption")
             Thread.currentThread().interrupt()
         }
-        // 关 RocketMQ 客户端释放 netty / 消费位点资源。旧实现只置 isRunning=false 让循环退出，
-        // consumer 本身的连接 / 线程池会一直挂到 JVM 退出。
+        // Shut down the RocketMQ client to release netty / offset resources. The prior implementation only set
+        // isRunning=false to exit the loop, leaving the consumer's connections and thread pool hanging until JVM exit.
         try {
             consumer.shutdown()
         } catch (e: Exception) {
-            log.warn("RocketMQ consumer shutdown 异常: {0}", e.message)
+            log.warn("RocketMQ consumer shutdown exception: {0}", e.message)
         }
     }
 
 
     /**
-     * 批量消费项：业务消息体 + 原 [MessageExt] 的属性（attribute headers）。
-     * 把这两者一起带给业务回调，避免业务侧再去回查原 MessageExt。
+     * A batch consumption item: business message body + the attributes (attribute headers) of the original
+     * [MessageExt]. Passing both to the business callback removes the need for the business side to look up the
+     * original MessageExt.
      *
-     * @param T 消息体类型
-     * @property data 反序列化后的消息体
-     * @property properties 原 MessageExt 上的属性 map
+     * @param T Message body type
+     * @property data Deserialized message body
+     * @property properties Property map from the original MessageExt
      * @author K
  * @author AI: Codex
      * @since 1.0.0
@@ -311,10 +316,10 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     class BatchConsumerItem<T>(var data: T, var properties: MutableMap<String?, String?>?)
 
     companion object {
-        /** 日志器 */
+        /** Logger */
         private val log = LogFactory.getLog(this::class)
 
-        /** 空轮询时 daemon 线程的休眠时长（ms），避免 CPU 100% 空转。 */
+        /** Daemon-thread sleep duration (ms) on idle polls to avoid 100% CPU spinning. */
         private const val IDLE_POLL_SLEEP_MS = 100L
 
         internal fun decodeJdkBody(body: ByteArray, deserializationFilter: String): Any? =

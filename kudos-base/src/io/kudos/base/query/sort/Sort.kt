@@ -4,41 +4,41 @@ import io.kudos.base.lang.string.humpToUnderscore
 import java.io.Serializable
 
 /**
- * 排序规则封装类
- * 
- * 用于封装多个排序规则，支持多属性排序和排序方向的组合。
- * 
- * 核心功能：
- * 1. 多属性排序：支持按多个属性进行排序
- * 2. 排序方向：每个属性可以指定独立的排序方向（ASC/DESC）
- * 3. 排序合并：支持通过and方法合并多个Sort对象
- * 4. SQL生成：支持将排序规则转换为SQL的ORDER BY子句
- * 
- * 数据结构：
- * - orders：排序规则列表，按添加顺序执行排序
- * - 每个Order包含属性名和排序方向
- * 
- * 排序执行顺序：
- * - 按照orders列表的顺序依次执行排序
- * - 前面的排序优先级高于后面的排序
- * - 如果前面的排序结果相同，则使用后面的排序规则
- * 
- * SQL转换：
- * - 支持将排序规则转换为SQL的ORDER BY子句
- * - 支持属性名到列名的映射（columnMap）
- * - 属性名会自动转换为下划线命名（驼峰转下划线）
- * 
- * 使用场景：
- * - 数据库查询的排序
- * - 列表数据的排序
- * - 多条件排序需求
- * 
- * 注意事项：
- * - 必须至少提供一个排序规则
- * - 排序规则按添加顺序执行
- * - 支持链式调用添加排序规则
- * - 实现Iterable接口，可以遍历所有Order
- * 
+ * Sort rule wrapper class.
+ *
+ * Encapsulates multiple sort rules, supporting multi-property sorting and combinations of sort directions.
+ *
+ * Core features:
+ * 1. Multi-property sorting: supports sorting by multiple properties
+ * 2. Sort direction: each property can specify an independent sort direction (ASC/DESC)
+ * 3. Sort merging: supports merging multiple Sort objects via the `and` method
+ * 4. SQL generation: supports converting sort rules into a SQL ORDER BY clause
+ *
+ * Data structure:
+ * - orders: list of sort rules, executed in insertion order
+ * - Each Order contains a property name and a sort direction
+ *
+ * Sort execution order:
+ * - Sorts are applied in the order they appear in the orders list
+ * - Earlier sorts have higher priority than later ones
+ * - If earlier sort comparisons are equal, later sort rules are used as tiebreakers
+ *
+ * SQL conversion:
+ * - Supports converting sort rules into a SQL ORDER BY clause
+ * - Supports mapping from property names to column names (columnMap)
+ * - Property names are automatically converted from camelCase to snake_case
+ *
+ * Use cases:
+ * - Sorting in database queries
+ * - Sorting of list data
+ * - Multi-criteria sort requirements
+ *
+ * Notes:
+ * - At least one sort rule must be provided
+ * - Sort rules are executed in insertion order
+ * - Supports chained calls to add sort rules
+ * - Implements Iterable, so all Orders can be iterated
+ *
  * @since 1.0.0
  */
 class Sort : Iterable<Order>, Serializable {
@@ -49,20 +49,20 @@ class Sort : Iterable<Order>, Serializable {
 
     constructor(orders: MutableList<Order>) {
         if (orders.isEmpty()) {
-            error("必须至少提供一个排序规则！")
+            error("At least one sort rule must be provided!")
         }
         this.orders = orders
     }
 
     /**
-     * 默认升序的构造器
+     * Constructor that defaults to ascending order.
      */
     constructor(vararg properties: String) : this(DirectionEnum.ASC, properties.toList())
 
     constructor(direction: DirectionEnum, vararg properties: String) : this(direction, properties.toList())
 
     constructor(direction: DirectionEnum, properties: List<String>) {
-        require(properties.isNotEmpty()) { "至少提供一个排序属性！" }
+        require(properties.isNotEmpty()) { "At least one sort property must be provided!" }
         orders = properties.mapTo(ArrayList(properties.size)) { Order(it, direction) }
     }
 

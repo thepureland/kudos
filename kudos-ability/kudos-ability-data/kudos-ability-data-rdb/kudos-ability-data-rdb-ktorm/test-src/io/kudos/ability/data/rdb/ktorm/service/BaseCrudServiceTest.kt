@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 import kotlin.test.*
 
 /**
- * [BaseCrudService] 测试（含 IHasBuiltIn 删除约束）
+ * Tests for [BaseCrudService] (including the IHasBuiltIn delete constraint).
  */
 @EnableKudosTest
 internal open class BaseCrudServiceTest {
@@ -29,7 +29,7 @@ internal open class BaseCrudServiceTest {
     @Resource
     private lateinit var testTableCrudService: TestTableCrudService
 
-    /** 与 data.sql 中 test_built_in_ktorm 初始数据一致 */
+    /** Matches the initial data for test_built_in_ktorm in data.sql */
     private val idCustomA = 901
     private val idBuiltIn = 902
     private val idCustomB = 903

@@ -20,7 +20,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
 
 /**
- * [DistributedLockAspect] 切面加锁、解锁和异常传播行为单测。
+ * Unit tests for [DistributedLockAspect] covering lock/unlock and exception propagation.
  *
  * @author K
  * @author AI: Codex
@@ -96,7 +96,7 @@ internal class DistributedLockAspectTest {
     }
 
     /**
-     * 承载 [DistributedLock] 注解方法的测试目标类。
+     * Test target class hosting methods annotated with [DistributedLock].
      *
      * @author K
      * @author AI: Codex
@@ -114,7 +114,7 @@ internal class DistributedLockAspectTest {
     }
 
     /**
-     * 用于验证业务异常类型不被切面包装的测试异常。
+     * Test exception used to verify the aspect does not wrap typed business exceptions.
      *
      * @author K
      * @author AI: Codex
@@ -123,7 +123,7 @@ internal class DistributedLockAspectTest {
     private class TypedBusinessException : RuntimeException("typed")
 
     /**
-     * 记录 Redisson 锁调用次数的测试代理。
+     * Test proxy that records Redisson lock call counts.
      *
      * @author K
      * @author AI: Codex

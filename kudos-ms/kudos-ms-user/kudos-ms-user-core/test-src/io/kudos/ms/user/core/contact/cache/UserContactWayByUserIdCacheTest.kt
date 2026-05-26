@@ -12,7 +12,7 @@ import kotlin.test.*
 /**
  * junit test for UserContactWayByUserIdCacheHandler
  *
- * 测试数据来源：`UserContactWayByUserIdCacheTest.sql`
+ * Test data source: `UserContactWayByUserIdCacheTest.sql`.
  *
  * @author K
  * @author AI: Codex

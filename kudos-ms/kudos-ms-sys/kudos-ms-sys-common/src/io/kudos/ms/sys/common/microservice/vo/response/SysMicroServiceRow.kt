@@ -1,38 +1,38 @@
 package io.kudos.ms.sys.common.microservice.vo.response
 
 /**
- * 微服务列表查询结果响应VO
+ * Response VO for microservice list query result.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysMicroServiceRow (
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 编码 */
+    /** Code */
     val code: String = "",
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
-    /** 上下文 */
+    /** Context */
     val context: String = "",
 
-    /** 是否为原子服务 */
+    /** Whether atomic service */
     val atomicService: Boolean = true,
 
-    /** 父服务编码 */
+    /** Parent service code */
     val parentCode: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = true,
 
 )

@@ -5,56 +5,56 @@ import java.time.LocalDateTime
 
 
 /**
- * 租户编辑响应VO
+ * Tenant edit response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysTenantEdit (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
-    /** 时区 */
+    /** Timezone */
     val timezone: String? = null,
 
-    /** 默认语言编码 */
+    /** Default language code */
     val defaultLanguageCode: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether active */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = false,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String> {
 
 
-    /** 以逗号分隔的子系统编码 */
+    /** Comma-separated subsystem codes */
     var subSystemCodes: String = ""
 }

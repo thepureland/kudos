@@ -6,14 +6,14 @@ import jakarta.validation.constraints.NotBlank
 
 
 /**
- * 域名表单更新请求VO
+ * Domain update form request VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysDomainFormUpdate (
 
-    /** 主键 */
+    /** Primary key */
     @get:NotBlank
     @get:FixedLength(36)
     override val id: String,

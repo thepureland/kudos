@@ -3,27 +3,27 @@ package io.kudos.ms.sys.common.domain.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 域名错误码
+ * Domain module error codes.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class SysDomainErrorCodeEnum(
-    /** 错误码 */
+    /** Error code */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Unspecified error */
+    UNSPECIFIED("UNSPECIFIED", "Unspecified error"),
 
-    /** 按主键或域名查找失败 */
-    DOMAIN_NOT_FOUND("DOMAIN_NOT_FOUND", "域名不存在"),
+    /** Domain not found by primary key or domain */
+    DOMAIN_NOT_FOUND("DOMAIN_NOT_FOUND", "Domain not found"),
 
-    /** 域名已被占用 */
-    DOMAIN_ALREADY_EXISTS("DOMAIN_ALREADY_EXISTS", "该域名已存在");
+    /** Domain already taken */
+    DOMAIN_ALREADY_EXISTS("DOMAIN_ALREADY_EXISTS", "Domain already exists");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.domain"

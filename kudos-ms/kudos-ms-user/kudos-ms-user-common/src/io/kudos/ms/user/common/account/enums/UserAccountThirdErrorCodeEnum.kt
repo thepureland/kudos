@@ -3,27 +3,27 @@ package io.kudos.ms.user.common.account.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 第三方账户错误码
+ * Third-party account error codes
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 enum class UserAccountThirdErrorCodeEnum(
-    /** 错误码 */
+    /** Error code */
     override val code: String,
-    /** 默认展示文本 */
+    /** Default display text */
     override val defaultDisplayText: String,
 ) : IErrorCodeEnum {
 
-    /** 未定义错误 */
-    UNSPECIFIED("UNSPECIFIED", "未定义错误"),
+    /** Unspecified error */
+    UNSPECIFIED("UNSPECIFIED", "Unspecified error"),
 
-    /** 按主键或 (provider, openid) 维度查找第三方绑定失败 */
-    THIRD_ACCOUNT_NOT_FOUND("THIRD_ACCOUNT_NOT_FOUND", "第三方账号绑定不存在"),
+    /** Failed to find third-party binding by primary key or (provider, openid) */
+    THIRD_ACCOUNT_NOT_FOUND("THIRD_ACCOUNT_NOT_FOUND", "Third-party account binding not found"),
 
-    /** (provider, openid) 已存在绑定 */
-    THIRD_ACCOUNT_ALREADY_BOUND("THIRD_ACCOUNT_ALREADY_BOUND", "该第三方账号已被绑定");
+    /** (provider, openid) already has a binding */
+    THIRD_ACCOUNT_ALREADY_BOUND("THIRD_ACCOUNT_ALREADY_BOUND", "This third-party account is already bound");
 
     override val i18nKeyPrefix: String
         get() = "user.error-msg.user-third"

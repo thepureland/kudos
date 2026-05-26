@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 组-用户关系业务
+ * Group-user relation service.
  *
  * @author K
  * @author AI: Codex
@@ -43,11 +43,11 @@ open class AuthGroupUserService(
     @Transactional
     override fun batchBind(groupId: String, userIds: Collection<String>): Int {
         if (userIds.isEmpty()) return 0
-        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        // One SELECT for existing relations, then a single batchInsert for the delta — collapses the original N+1 into 2 SQL calls.
         val existing = dao.searchUserIdsByGroupId(groupId)
         val boundUserIds = userIds.toSet() - existing
         if (boundUserIds.isEmpty()) {
-            log.debug("批量绑定组${groupId}与${userIds.size}个用户的关系，全部已存在，无新增。")
+            log.debug("Batch-binding group ${groupId} to ${userIds.size} users: all already exist, nothing inserted.")
             return 0
         }
         val relations = boundUserIds.map { userId ->
@@ -57,7 +57,7 @@ open class AuthGroupUserService(
             }
         }
         dao.batchInsert(relations)
-        log.debug("批量绑定组${groupId}与${userIds.size}个用户的关系，成功绑定${boundUserIds.size}条。")
+        log.debug("Batch-bound group ${groupId} to ${userIds.size} users, ${boundUserIds.size} new bindings inserted.")
         eventPublisher.publishEvent(AuthGroupUserRelationsChanged(groupId, boundUserIds.toList()))
         return boundUserIds.size
     }
@@ -67,10 +67,10 @@ open class AuthGroupUserService(
         val count = dao.deleteByGroupIdAndUserId(groupId, userId)
         val success = count > 0
         if (success) {
-            log.debug("解绑组${groupId}与用户${userId}的关系。")
+            log.debug("Unbound group ${groupId} from user ${userId}.")
             eventPublisher.publishEvent(AuthGroupUserRelationsChanged(groupId, listOf(userId)))
         } else {
-            log.warn("解绑组${groupId}与用户${userId}的关系失败，关系不存在。")
+            log.warn("Failed to unbind group ${groupId} from user ${userId}: relation does not exist.")
         }
         return success
     }

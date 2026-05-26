@@ -11,7 +11,7 @@ import kotlin.test.assertNull
 
 
 /**
- * Plain JVM unit test — no Docker, no Spring. CurrentUserKit 只读 ThreadLocal，单测够用。
+ * Plain JVM unit test — no Docker, no Spring. CurrentUserKit only reads from ThreadLocal, unit tests are sufficient.
  *
  * @author K
  * @since 1.0.0
@@ -33,7 +33,7 @@ class CurrentUserKitTest {
 
     @Test
     fun returnsNull_whenContextSetButUserMissing() {
-        // 走过 WebContextInitFilter 但没登录：context 存在、user 字段是 null
+        // Passed through WebContextInitFilter but not logged in: context exists, user field is null.
         KudosContextHolder.set(KudosContext())
         assertNull(CurrentUserKit.currentUserIdOrNull())
         assertNull(CurrentUserKit.currentPrincipalOrNull())
@@ -57,7 +57,7 @@ class CurrentUserKitTest {
 
     @Test
     fun returnsNull_whenUserIsNotSessionPrincipalType() {
-        // user 字段类型 IIdEntity<String>?，理论上可以塞别的子类；本工具用 `as?` 强转，非 SessionUserPrincipal 应该 → null
+        // The user field type is IIdEntity<String>?, theoretically other subclasses can be set; this utility uses `as?` cast, non-SessionUserPrincipal should -> null.
         KudosContextHolder.get().user = object : io.kudos.base.model.contract.entity.IIdEntity<String> {
             override val id: String = "x"
         }

@@ -15,7 +15,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * jetty引擎ktor测试
+ * Ktor test for the Jetty engine.
  *
  * @author K
  * @author AI: Codex
@@ -24,7 +24,7 @@ import kotlin.test.assertEquals
 @EnableKudosTest(
     properties = ["kudos.ability.web.ktor.engine.name=jetty"]
 )
-@Disabled("jetty依赖有版本冲突")
+@Disabled("Jetty dependency has version conflicts")
 class JettyEngineTest {
 
     @BeforeTest
@@ -42,7 +42,7 @@ class JettyEngineTest {
     }
 
     @Test
-    @Disabled  //TODO 版本冲突
+    @Disabled  //TODO version conflict
     fun testRoot() = runBlocking {
         val client = HttpClient()
         val response = client.get("http://localhost:${KtorContext.properties.engine.port}/")

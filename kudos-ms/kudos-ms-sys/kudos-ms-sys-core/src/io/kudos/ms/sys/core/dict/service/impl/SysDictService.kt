@@ -28,7 +28,7 @@ import kotlin.reflect.KClass
 
 
 /**
- * 字典业务
+ * Dictionary business.
  *
  * @author K
  * @author AI: Cursor
@@ -93,8 +93,8 @@ open class SysDictService(
         return completeCrudUpdate(
             success = dao.update(dict),
             log = log,
-            successMessage = "更新id为${id}的字典的启用状态为${active}。",
-            failureMessage = "更新id为${id}的字典的启用状态为${active}失败！",
+            successMessage = "Updated active status of dictionary with id ${id} to ${active}.",
+            failureMessage = "Failed to update active status of dictionary with id ${id} to ${active}!",
         ) {
             eventPublisher.publishEvent(SysDictUpdated(id = id))
         }
@@ -103,7 +103,7 @@ open class SysDictService(
     @Transactional
     override fun insert(any: Any): String {
         val id = super.insert(any)
-        completeCrudInsert(log, "新增id为${id}的字典。") {
+        completeCrudInsert(log, "Inserted dictionary with id ${id}.") {
             eventPublisher.publishEvent(SysDictInserted(id = id))
         }
         return id
@@ -111,12 +111,12 @@ open class SysDictService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "字典")
+        val id = requireStringId(any, "dictionary")
         return completeCrudUpdate(
             success = super.update(any),
             log = log,
-            successMessage = "更新id为${id}的字典。",
-            failureMessage = "更新id为${id}的字典失败！",
+            successMessage = "Updated dictionary with id ${id}.",
+            failureMessage = "Failed to update dictionary with id ${id}!",
         ) {
             eventPublisher.publishEvent(SysDictUpdated(id = id))
         }
@@ -125,14 +125,14 @@ open class SysDictService(
     @Transactional
     override fun deleteById(id: String): Boolean {
         if (dao.get(id) == null) {
-            log.warn("删除id为${id}的字典时，发现其已不存在！")
+            log.warn("When deleting dictionary with id ${id}, found that it no longer exists!")
             return false
         }
         return completeCrudUpdate(
             success = super.deleteById(id),
             log = log,
-            successMessage = "删除id为${id}的字典。",
-            failureMessage = "删除id为${id}的字典失败！",
+            successMessage = "Deleted dictionary with id ${id}.",
+            failureMessage = "Failed to delete dictionary with id ${id}!",
         ) {
             eventPublisher.publishEvent(SysDictDeleted(id = id))
         }
@@ -141,7 +141,7 @@ open class SysDictService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         val count = super.batchDelete(ids)
-        log.debug("批量删除字典，期望删除${ids.size}条，实际删除${count}条。")
+        log.debug("Batch-deleted dictionaries: expected to delete ${ids.size}, actually deleted ${count}.")
         if (count > 0) {
             eventPublisher.publishEvent(SysDictBatchDeleted(ids = ids))
         }
@@ -177,11 +177,13 @@ open class SysDictService(
         }
 
     /**
-     * 级联删除：先清字典项再删字典本身。
-     * 顺序不可换——先删字典会触发外键约束错误（字典项 FK 引用字典 id）。
+     * Cascade delete: clear dictionary items first, then delete the dictionary itself.
+     * Order cannot be swapped—deleting the dictionary first would trigger a foreign key constraint error
+     * (dictionary item FK references dictionary id).
      *
-     * @param id 字典 id
-     * @return 字典本身删除是否成功（字典项删除不计入返回值，但失败会因为约束反向阻断）
+     * @param id dictionary id
+     * @return whether deletion of the dictionary itself succeeded (deletion of dictionary items is not included in the
+     *         return value, but a failure would reverse-block via the constraint)
      * @author K
      * @since 1.0.0
      */
@@ -191,10 +193,11 @@ open class SysDictService(
     }
 
     /**
-     * 单字典删除：DAO 删行 → 成功则发 [SysDictDeleted] 事件供下游清缓存；失败仅 ERROR 日志。
+     * Single dictionary deletion: DAO removes the row -> on success, publishes [SysDictDeleted] for downstream cache
+     * cleanup; on failure, logs at ERROR only.
      *
-     * @param id 字典 id
-     * @return 是否真的删到行
+     * @param id dictionary id
+     * @return whether a row was actually deleted
      * @author K
      * @since 1.0.0
      */
@@ -203,17 +206,17 @@ open class SysDictService(
         if (success) {
             eventPublisher.publishEvent(SysDictDeleted(id = id))
         } else {
-            log.error("删除id为${id}的字典失败！")
+            log.error("Failed to delete dictionary with id ${id}!")
         }
         return success
     }
 
     /**
-     * 取生效字典项缓存（active=true 已由 `SysDictItemService` 缓存侧筛过）。
+     * Get the active dictionary items cache (active=true is already filtered by `SysDictItemService` on the cache side).
      *
-     * @param dictType 字典类型
-     * @param atomicServiceCode 原子服务编码（多租户/多服务隔离 key）
-     * @return 字典项缓存条目列表
+     * @param dictType dictionary type
+     * @param atomicServiceCode atomic service code (multi-tenant / multi-service isolation key)
+     * @return list of dictionary item cache entries
      * @author K
      * @since 1.0.0
      */
@@ -221,11 +224,12 @@ open class SysDictService(
         sysDictItemService.getDictItemsFromCache(dictType, atomicServiceCode)
 
     /**
-     * 生效字典项的 itemCode → itemName 映射；用 [LinkedHashMap] 保留插入顺序以维持业务排序。
+     * itemCode -> itemName mapping for active dictionary items; uses [LinkedHashMap] to preserve insertion order so
+     * the business sort is maintained.
      *
-     * @param dictType 字典类型
-     * @param atomicServiceCode 原子服务编码
-     * @return itemCode → itemName 的有序映射
+     * @param dictType dictionary type
+     * @param atomicServiceCode atomic service code
+     * @return ordered itemCode -> itemName mapping
      * @author K
      * @since 1.0.0
      */
@@ -233,13 +237,14 @@ open class SysDictService(
         getActiveDictItems(dictType, atomicServiceCode).associateTo(LinkedHashMap()) { it.itemCode to it.itemName }
 
     /**
-     * 构造字典批量缓存命中的 key 对：`(atomicServiceCode, dictType)`。
-     * **注意顺序**——批量入参是 `(dictType, atomicServiceCode)`，这里特意翻转，
-     * 与下游 `batchGetActiveDictItemMapFromCache` 返回值的 key 顺序保持一致，避免调用方对错位置。
+     * Build the key pair for batch dictionary cache hits: `(atomicServiceCode, dictType)`.
+     * **Note the order**—batch inputs are `(dictType, atomicServiceCode)`; this intentionally flips them to stay
+     * consistent with the key order of `batchGetActiveDictItemMapFromCache`'s return value, preventing callers from
+     * swapping positions.
      *
-     * @param dictType 字典类型
-     * @param atomicServiceCode 原子服务编码
-     * @return `(atomicServiceCode, dictType)` 顺序的 Pair
+     * @param dictType dictionary type
+     * @param atomicServiceCode atomic service code
+     * @return Pair in `(atomicServiceCode, dictType)` order
      * @author K
      * @since 1.0.0
      */
@@ -247,10 +252,10 @@ open class SysDictService(
         Pair(atomicServiceCode, dictType)
 
     /**
-     * 把 PO [SysDict] 拷成扁平的 VO [SysDictRow]，用于 list 接口（避免暴露 ORM Entity 字段）。
+     * Copies the PO [SysDict] into the flat VO [SysDictRow] for the list endpoint (avoids exposing ORM Entity fields).
      *
-     * @param dict 字典 PO
-     * @return 字典 VO
+     * @param dict dictionary PO
+     * @return dictionary VO
      * @author K
      * @since 1.0.0
      */

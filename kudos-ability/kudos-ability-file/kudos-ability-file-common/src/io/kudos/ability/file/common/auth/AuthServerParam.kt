@@ -1,14 +1,15 @@
 package io.kudos.ability.file.common.auth
 
 /**
- * 文件存储后端认证参数的标记接口。
+ * Marker interface for authentication parameters of file storage backends.
  *
- * 当前实现：
- *  - [AccessKeyServerParam]：AK / SK 双串（MinIO / S3 / 阿里云 OSS 等）
- *  - [AccessTokenServerParam]：单 token / Bearer header
+ * Current implementations:
+ *  - [AccessKeyServerParam]: AK / SK pair (MinIO / S3 / Aliyun OSS, etc.)
+ *  - [AccessTokenServerParam]: single token / Bearer header
  *
- * 设计成空接口而非 sealed class，是为了让下游 storage 子模块可以自定义新认证形式
- * （如带 region 的 STS token、Azure SAS URL 等）。
+ * Designed as an empty interface rather than a sealed class so that downstream
+ * storage submodules can define new authentication forms (e.g. STS token with
+ * region, Azure SAS URL, etc.).
  *
  * @author K
  * @author AI: Codex

@@ -5,7 +5,7 @@ import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 import io.kudos.base.query.sort.Sortable
 
 /**
- * 资源数据库实体
+ * Resource database entity
  *
  * @author K
  * @since 1.0.0
@@ -14,26 +14,26 @@ interface SysResource : IManagedDbEntity<String, SysResource> {
 
     companion object : DbEntityFactory<SysResource>()
 
-    /** 名称 */
+    /** Name */
     @get:Sortable
     var name: String
 
-    /** url */
+    /** URL */
     var url: String?
 
-    /** 资源类型字典代码 */
+    /** Resource type dictionary code */
     var resourceTypeDictCode: String
 
-    /** 父id */
+    /** Parent id */
     var parentId: String?
 
-    /** 在同父节点下的排序号 */
+    /** Order number among siblings under the same parent */
     var orderNum: Int?
 
-    /** 图标 */
+    /** Icon */
     var icon: String?
 
-    /** 子系统编码 */
+    /** Subsystem code */
     var subSystemCode: String
 
 }

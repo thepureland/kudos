@@ -7,23 +7,23 @@ import kotlin.reflect.KProperty0
 
 
 /**
- * 微服务列表查询条件请求VO
+ * Request VO for querying the microservice list.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysMicroServiceQuery (
 
-    /** 编码 */
+    /** Code */
     val code: String? = null,
 
-    /** 名称 */
+    /** Name */
     val name: String? = null,
 
-    /** 是否为原子服务 */
+    /** Whether atomic service */
     val atomicService: Boolean? = null,
 
-    /** 仅启用 */
+    /** Only enabled */
     val active: Boolean? = true,
 
 ) : ListSearchPayload() {

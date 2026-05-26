@@ -14,12 +14,12 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 用户联系方式缓存处理器
+ * User contact way cache handler.
  *
- * 1.数据来源表：user_contact_way
- * 2.仅缓存active=true的联系方式
- * 3.缓存的key为：user_id
- * 4.缓存的value为：UserContactWayCacheEntry对象列表
+ * 1. Source table: user_contact_way
+ * 2. Caches only contact ways with active=true
+ * 3. Cache key: user_id
+ * 4. Cache value: list of UserContactWayCacheEntry
  *
  * @author K
  * @author AI: Codex
@@ -44,35 +44,35 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有启用状态的联系方式！")
+            log.info("Cache disabled; not loading or caching active contact ways!")
             return
         }
 
-        // 加载所有可用的联系方式
+        // Load all active contact ways.
         val searchPayload = UserContactWayQuery(active = true)
         @Suppress("UNCHECKED_CAST")
         val results = userContactWayDao.search(searchPayload, UserContactWayCacheEntry::class)
-        log.debug("从数据库加载了${results.size}条联系方式。")
+        log.debug("Loaded ${results.size} contact way records from the database.")
 
-        // 清除缓存
+        // Clear the cache.
         if (clear) {
             clear()
         }
 
-        // 缓存联系方式
+        // Cache the contact ways.
         val grouped = results.groupBy { it.userId }
         grouped.forEach { (userId, items) ->
             if (userId.isNullOrBlank()) return@forEach
             KeyValueCacheKit.put(CACHE_NAME, getKey(userId), items)
         }
-        log.debug("缓存了${results.size}条联系方式。")
+        log.debug("Cached ${results.size} contact way records.")
     }
 
     /**
-     * 根据用户ID从缓存获取联系方式，如果缓存中不存在，则从数据库加载并写入缓存
+     * Get contact ways from the cache by user id; on miss, load from DB and write back.
      *
-     * @param userId 用户ID
-     * @return List<UserContactWayCacheEntry>，找不到返回空列表
+     * @param userId user id
+     * @return List<UserContactWayCacheEntry>; an empty list when none are found
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -81,7 +81,7 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
     )
     open fun getContactWays(userId: String): List<UserContactWayCacheEntry> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在用户${userId}的联系方式，从数据库中加载...")
+            log.debug("Contact ways for user ${userId} not in cache; loading from DB...")
         }
         val searchPayload = UserContactWayQuery(
             userId = userId,
@@ -90,61 +90,61 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
         @Suppress("UNCHECKED_CAST")
         val results = userContactWayDao.search(searchPayload, UserContactWayCacheEntry::class)
         if (results.isEmpty()) {
-            log.warn("数据库中不存在用户${userId}的active=true的联系方式！")
+            log.warn("No active=true contact ways found in DB for user ${userId}!")
         } else {
-            log.debug("数据库中加载到用户${userId}的联系方式共${results.size}条。")
+            log.debug("Loaded ${results.size} contact way records from DB for user ${userId}.")
         }
         return results
     }
 
     /**
-     * 数据库插入记录后同步缓存
+     * Sync the cache after a DB insert.
      *
-     * @param any 包含必要属性的对象
-     * @param id 联系方式id
+     * @param any object containing the required properties
+     * @param id contact way id
      */
     open fun syncOnInsert(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("新增id为${id}的联系方式后，同步${CACHE_NAME}缓存...")
+            log.debug("After inserting contact way id=${id}, syncing ${CACHE_NAME} cache...")
             val userId = BeanKit.getProperty(any, UserContactWay::userId.name) as String
             KeyValueCacheKit.evict(CACHE_NAME, getKey(userId))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<UserContactWayByUserIdCache>().getContactWays(userId)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 更新数据库记录后同步缓存
+     * Sync the cache after a DB update.
      *
-     * @param any 包含必要属性的对象
-     * @param id 联系方式id
+     * @param any object containing the required properties
+     * @param id contact way id
      */
     open fun syncOnUpdate(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${id}的联系方式后，同步${CACHE_NAME}缓存...")
+            log.debug("After updating contact way id=${id}, syncing ${CACHE_NAME} cache...")
             val userId = BeanKit.getProperty(any, UserContactWay::userId.name) as String
             KeyValueCacheKit.evict(CACHE_NAME, getKey(userId))
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<UserContactWayByUserIdCache>().getContactWays(userId)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 更新启用状态后同步缓存
+     * Sync the cache after the active flag is updated.
      *
-     * @param id 联系方式id
-     * @param active 是否启用
+     * @param id contact way id
+     * @param active whether the contact way is active
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("更新id为${id}的联系方式的启用状态后，同步缓存...")
+            log.debug("After updating active flag of contact way id=${id}, syncing cache...")
             val contactWay = userContactWayDao.get(id)
             if (contactWay == null) {
-                log.warn("同步联系方式缓存时未找到id为${id}的记录。")
+                log.warn("No contact way found with id=${id} while syncing cache.")
                 return
             }
             val userId = contactWay.userId
@@ -153,46 +153,46 @@ open class UserContactWayByUserIdCache : AbstractKeyValueCacheHandler<List<UserC
             if (active && KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<UserContactWayByUserIdCache>().getContactWays(userId)
             }
-            log.debug("缓存同步完成。")
+            log.debug("Cache sync complete.")
         }
     }
 
     /**
-     * 删除数据库记录后同步缓存
+     * Sync the cache after a DB delete.
      *
-     * @param any 包含必要属性的对象
-     * @param id 联系方式id
+     * @param any object containing the required properties
+     * @param id contact way id
      */
     open fun syncOnDelete(any: Any, id: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             val userId = BeanKit.getProperty(any, UserContactWay::userId.name) as String
-            log.debug("删除id为${id}的联系方式后，同步从${CACHE_NAME}缓存中踢除...")
+            log.debug("After deleting contact way id=${id}, evicting from ${CACHE_NAME} cache...")
             KeyValueCacheKit.evict(CACHE_NAME, getKey(userId))
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 批量删除数据库记录后同步缓存
+     * Sync the cache after a batch DB delete.
      *
-     * @param ids 联系方式id集合
-     * @param userIds 用户id集合
+     * @param ids contact way id collection
+     * @param userIds user id collection
      */
     open fun syncOnBatchDelete(ids: Collection<String>, userIds: Collection<String>) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("批量删除id为${ids}的联系方式后，同步从${CACHE_NAME}缓存中踢除...")
+            log.debug("After batch deleting contact ways ids=${ids}, evicting from ${CACHE_NAME} cache...")
             userIds.distinct().forEach {
                 KeyValueCacheKit.evict(CACHE_NAME, getKey(it))
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 返回参数拼接后的key
+     * Build the cache key by joining the given parameters.
      *
-     * @param userId 用户ID
-     * @return 缓存key
+     * @param userId user id
+     * @return cache key
      */
     fun getKey(userId: String): String {
         return userId

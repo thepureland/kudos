@@ -27,69 +27,70 @@ import java.util.ResourceBundle
 import javax.sql.DataSource
 
 /**
- * 配置信息界面JavaFx控制器
+ * JavaFX controller for the configuration screen.
  *
  * @author K
  * @since 1.0.0
  */
 class ConfigController : Initializable {
 
-    /** 数据库 JDBC URL 输入框，与 [Config.dbUrl] 双向绑定 */
+    /** Database JDBC URL text field, bidirectionally bound to [Config.dbUrl] */
     @FXML
     lateinit var urlTextField: TextField
 
-    /** 数据库用户名输入框 */
+    /** Database username text field */
     @FXML
     lateinit var userTextField: TextField
 
-    /** 数据库密码输入框（掩码显示） */
+    /** Database password text field (masked) */
     @FXML
     lateinit var passwordField: PasswordField
 
-    /** 模板下拉框，展示 templates/ 下的所有模板目录 */
+    /** Template dropdown that lists all template directories under templates/ */
     @FXML
     lateinit var templateChoiceBox: ComboBox<Config.TemplateNameAndRootDir>
 
-    /** 生成代码的包前缀输入框 */
+    /** Package prefix text field for generated code */
     @FXML
     lateinit var packagePrefixTextField: TextField
 
-    /** 模块名输入框 */
+    /** Module name text field */
     @FXML
     lateinit var moduleTextField: TextField
 
-    /** 代码输出目录显示框（由目录选择器写入） */
+    /** Code output directory text field (written by the directory chooser) */
     @FXML
     lateinit var locationTextField: TextField
 
-    /** "选择目录"按钮，触发 [openFileChooser] */
+    /** "Choose directory" button; triggers [openFileChooser] */
     @FXML
     lateinit var openButton: Button
 
-    /** 作者输入框，对应模板内 `@author` 占位符 */
+    /** Author text field, corresponding to the `@author` placeholder in templates */
     @FXML
     lateinit var authorTextField: TextField
 
-    /** 版本输入框，对应模板内 `@since` 占位符 */
+    /** Version text field, corresponding to the `@since` placeholder in templates */
     @FXML
     lateinit var versionTextField: TextField
 
-    /** 与 UI 双向绑定的配置 VO */
+    /** Configuration VO bidirectionally bound to the UI */
     val config = Config()
-    /** 当前用户的 home 目录，用于定位 properties 文件 */
+    /** Current user's home directory, used to locate the properties file */
     private val userHome = System.getProperty("user.home")
-    /** 持久化配置文件路径：`~/.kudos/CodeGenerator.properties` */
+    /** Persisted config file path: `~/.kudos/CodeGenerator.properties` */
     private val propertiesFile = File("$userHome/.kudos/CodeGenerator.properties")
-    /** 读写 [propertiesFile] 的封装器 */
+    /** Wrapper for reading/writing [propertiesFile] */
     private lateinit var propertiesLoader: PropertiesLoader
-    /** 模块名候选建议集合，用于将来做自动补全 */
+    /** Module name suggestion set, for future autocompletion */
     private var moduleSuggestions: Set<String?>? = null
 
     /**
-     * JavaFX 在加载 FXML 后回调；按"读配置 → 双向绑定 → 初始化下拉框 → 初始化补全"顺序完成界面准备。
+     * Callback invoked by JavaFX after the FXML is loaded; prepares the UI in the order:
+     * "load config -> bind properties -> init dropdown -> init autocompletion".
      *
-     * @param location FXML 文件位置（未使用）
-     * @param resources i18n 资源（未使用）
+     * @param location FXML file location (unused)
+     * @param resources i18n resources (unused)
      * @author K
      * @since 1.0.0
      */
@@ -101,7 +102,7 @@ class ConfigController : Initializable {
     }
 
     /**
-     * 读取 properties 中的"模块名候选建议"列表，按逗号切分供后续自动补全使用。
+     * Reads the "module-name suggestions" list from the properties, splitting on comma for later autocompletion.
      *
      * @author K
      * @since 1.0.0
@@ -112,9 +113,9 @@ class ConfigController : Initializable {
     }
 
     /**
-     * 从 [propertiesFile] 加载所有配置项填入 [config]。
-     * 模板信息独立处理：[Config.TemplateNameAndRootDir] 的 name/rootDir 在这里都取自 ROOT_DIR 字段，
-     * 因为旧版配置文件没有单独存模板名。
+     * Loads every configuration entry from [propertiesFile] into [config].
+     * Template info is handled separately: both name and rootDir of [Config.TemplateNameAndRootDir] are taken from
+     * the ROOT_DIR field, because older config files did not store the template name independently.
      *
      * @author K
      * @since 1.0.0
@@ -140,8 +141,8 @@ class ConfigController : Initializable {
     }
 
     /**
-     * 把每个 FXML 输入控件的 `textProperty` 与 [config] 的对应 JavaFX 属性做双向绑定。
-     * 这样 UI 修改即时反映到 [config]，反之亦然，省去手动同步代码。
+     * Bidirectionally binds each FXML input control's `textProperty` to the corresponding JavaFX property on [config].
+     * UI edits are immediately reflected in [config] and vice versa, eliminating manual synchronization code.
      *
      * @author K
      * @since 1.0.0
@@ -163,8 +164,9 @@ class ConfigController : Initializable {
     }
 
     /**
-     * 扫描 `resources/main/templates/` 下的所有子目录作为模板候选填入下拉框。
-     * 默认选中第一项，避免下拉框初始为空导致用户卡在"未选模板"的校验上。
+     * Scans subdirectories under `resources/main/templates/` and fills them into the dropdown as template candidates.
+     * The first entry is selected by default so the dropdown is never initially empty, which would otherwise trip the
+     * "no template selected" validation.
      *
      * @author K
      * @since 1.0.0
@@ -183,13 +185,13 @@ class ConfigController : Initializable {
     }
 
     /**
-     * "下一步"按钮前置校验：连接数据库、跑 Flyway、检查所有必填字段。
-     * 任一项失败都抛 [Exception]，由上层 UI 捕获后用 Alert 提示用户。
+     * Pre-check for the "Next" button: connect to the database, run Flyway, and verify all required fields.
+     * Any failure throws [Exception], which the upper-level UI catches and shows via an Alert.
      *
-     * 副作用：成功调用一次会真实建库 / 跑 migration，并把 DataSource 写入 [KudosContextHolder]，
-     * 让后续步骤可以直接读元数据。
+     * Side effects: a successful call actually creates the database / runs migrations and writes the DataSource into
+     * [KudosContextHolder], so subsequent steps can read metadata directly.
      *
-     * @throws Exception 任一校验项失败时
+     * @throws Exception When any validation step fails
      * @author K
      * @since 1.0.0
      */
@@ -210,43 +212,43 @@ class ConfigController : Initializable {
 
         // test template
         if (templateChoiceBox.selectionModel.isEmpty) {
-            throw Exception("请选择模板方案！")
+            throw Exception("Please select a template scheme!")
         }
 
         // package prefix
         if (packagePrefixTextField.text.isNullOrBlank()) {
-            throw Exception("请填写包名前缀！")
+            throw Exception("Please fill in the package prefix!")
         }
 
         // test module
         if (moduleTextField.text.isNullOrBlank()) {
-            throw Exception("请填写模块名！")
+            throw Exception("Please fill in the module name!")
         }
 
         // test location
         if (locationTextField.text.isNullOrBlank()) {
-            throw Exception("代码生成目录不存在！")
+            throw Exception("The code generation directory does not exist!")
         }
 
         // author location
         if (authorTextField.text.isNullOrBlank()) {
-            throw Exception("请填写作者！")
+            throw Exception("Please fill in the author!")
         }
 
         // version location
         if (versionTextField.text.isNullOrBlank()) {
-            throw Exception("请填写版本号！")
+            throw Exception("Please fill in the version!")
         }
     }
 
     /**
-     * 执行 Flyway 脚本升级（codegen 自己的元数据表）。
+     * Runs Flyway migrations (for codegen's own metadata tables).
      *
-     * - `isBaselineOnMigrate = true`：新库自动 baseline，避免空库报错
-     * - `isValidateOnMigrate = false`：校验阶段宽容，允许历史脚本在本地被改动
-     * - `isPlaceholderReplacement = false`：本工具的脚本不含占位符，关闭以避免 `${}` 误解析
+     * - `isBaselineOnMigrate = true`: new databases are baselined automatically to avoid empty-DB errors
+     * - `isValidateOnMigrate = false`: validation is permissive so historical scripts can be tweaked locally
+     * - `isPlaceholderReplacement = false`: this tool's scripts contain no placeholders, so disable to avoid `${}` misinterpretation
      *
-     * @param dataSource 上一步建立好的数据源
+     * @param dataSource Data source established by the previous step
      * @author K
      * @since 1.0.0
      */
@@ -263,10 +265,11 @@ class ConfigController : Initializable {
     }
 
     /**
-     * 内部数据库连接测试：成功立即关闭连接；失败弹一次 Alert 并抛 [Exception]。
-     * 私有版本不弹"连接成功"，避免在 [canGoOn] 流程里多余的弹窗。
+     * Internal DB connection test: closes the connection immediately on success; pops an Alert and throws
+     * [Exception] on failure. The private version does not show a "connection succeeded" alert, avoiding a
+     * redundant popup in the [canGoOn] flow.
      *
-     * @throws Exception 当 JDBC 连接抛错时
+     * @throws Exception When JDBC connection throws
      * @author K
      * @since 1.0.0
      */
@@ -276,13 +279,13 @@ class ConfigController : Initializable {
                 RdbKit.testConnection(it)
             }
         } catch (_: Exception) {
-            Alert(Alert.AlertType.ERROR, "连接失败！").show()
-            throw Exception("数据库连接不上！")
+            Alert(Alert.AlertType.ERROR, "Connection failed!").show()
+            throw Exception("Cannot connect to the database!")
         }
     }
 
     /**
-     * "测试连接"按钮回调；与 [_testDbConnection] 的区别是连接成功也弹 Alert 反馈用户。
+     * "Test connection" button callback; unlike [_testDbConnection], a success alert is also shown to the user.
      *
      * @author K
      * @since 1.0.0
@@ -290,12 +293,12 @@ class ConfigController : Initializable {
     @FXML
     private fun testDbConnection() {
         _testDbConnection()
-        Alert(Alert.AlertType.INFORMATION, "连接成功！").show()
+        Alert(Alert.AlertType.INFORMATION, "Connection succeeded!").show()
     }
 
     /**
-     * "选择目录"按钮回调：用 [DirectoryChooser] 选一个目录，写回 [locationTextField]。
-     * 若上次保存的目录仍存在，作为对话框的默认起点。
+     * "Choose directory" button callback: uses [DirectoryChooser] to pick a directory and writes it back to
+     * [locationTextField]. If the previously saved directory still exists, it is used as the dialog's starting point.
      *
      * @author K
      * @since 1.0.0
@@ -303,7 +306,7 @@ class ConfigController : Initializable {
     @FXML
     private fun openFileChooser() {
         val directoryChooser = DirectoryChooser().apply {
-            title = "选择生成目录"
+            title = "Select the generation directory"
             config.getCodeLoaction().takeIf { it.isNotBlank() }
                 ?.let(::File)
                 ?.takeIf { it.exists() && it.isDirectory }
@@ -315,8 +318,9 @@ class ConfigController : Initializable {
     }
 
     /**
-     * 把当前 [config] 的内容回写到 [propertiesFile]，供下次启动时恢复。
-     * 写文件失败仅打印堆栈，不抛异常——配置写不进去不应阻塞代码生成流程。
+     * Writes the current [config] back to [propertiesFile] so it can be restored on the next launch.
+     * Write failures only print the stack trace, never throw — failing to persist the config should not block
+     * the code generation flow.
      *
      * @author K
      * @since 1.0.0
@@ -344,18 +348,18 @@ class ConfigController : Initializable {
     }
 
     /**
-     * 读取或初始化 [propertiesFile]。
-     * 文件不存在时创建父目录并塞入一组合理默认值（默认指向本地 H2、当前用户、版本 1.0.0），
-     * 让"首次使用"无需先编辑配置文件就能跑通主流程。
+     * Loads or initializes [propertiesFile].
+     * When the file does not exist, creates the parent directory and seeds reasonable defaults (a local H2,
+     * the current user and version 1.0.0) so the main flow works out of the box without editing the config first.
      */
     private val properties: Properties
         get() {
             val properties = Properties()
-            if (!propertiesFile.exists()) { // 第一次使用，预设组件默认值
+            if (!propertiesFile.exists()) { // First use: preset component defaults
                 val parentFile = propertiesFile.parentFile
                 if (!parentFile.exists()) {
                     if (!parentFile.mkdir()) {
-                        throw Exception(parentFile.toString() + "目录创建失败！")
+                        throw Exception(parentFile.toString() + " directory creation failed!")
                     }
                 }
                 with(properties) {

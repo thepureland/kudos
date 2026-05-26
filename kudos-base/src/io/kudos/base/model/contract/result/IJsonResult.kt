@@ -3,7 +3,7 @@ package io.kudos.base.model.contract.result
 import java.io.Serializable
 
 /**
- * 要以json返回的结果对象接口，会自动去除值为null的属性
+ * Result-object interface to be returned as JSON; properties with null values are automatically stripped.
  *
  * @author K
  * @since 1.0.0

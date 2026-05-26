@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 
 /**
- * RabbitMq测试生產者微服务应用
+ * RabbitMQ test producer microservice application.
  *
  * @author shane
  * @author K

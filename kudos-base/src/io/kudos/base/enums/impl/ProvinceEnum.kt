@@ -4,7 +4,7 @@ import io.kudos.base.enums.ienums.IDictEnum
 import io.kudos.base.lang.EnumKit
 
 /**
- * 中国省份枚举
+ * Enumeration of provinces of China.
  *
  *
  * @author K
@@ -58,7 +58,7 @@ enum class ProvinceEnum(
     companion object {
         fun enumOf(code: String): ProvinceEnum {
             return requireNotNull(EnumKit.enumOf(ProvinceEnum::class, code)) {
-                "无效省份编码: $code"
+                "Invalid province code: $code"
             }
         }
     }

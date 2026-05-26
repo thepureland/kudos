@@ -18,14 +18,14 @@ import org.springframework.data.redis.connection.lettuce.LettucePoolingClientCon
 import java.time.Duration
 
 /**
- * Redis 连接工厂。负责构造 Spring Data Redis 的 [LettuceConnectionFactory]，
- * 内部根据 [RedisExtProperties.cluster] 是否配置自动决定走集群 vs 单机模式。
+ * Redis connection factory. Responsible for constructing the Spring Data Redis [LettuceConnectionFactory],
+ * automatically choosing between cluster and standalone mode based on whether [RedisExtProperties.cluster] is configured.
  *
- * 区别于 Spring Boot 默认 `RedisAutoConfiguration`：
- *  - 直接读取 kudos 自定义的 [RedisExtProperties]，支持每个 redis 实例独立的连接池参数
- *  - 默认开启 keepAlive、autoReconnect，集群模式下额外开启周期性 topology 刷新
- *  - 默认 [ReadFrom.REPLICA_PREFERRED]，读请求优先打从节点
- *  - 当 `ssl.enabled=true` 或配置了 `ssl.bundle` 时启用 Lettuce SSL 连接
+ * Differences from Spring Boot's default `RedisAutoConfiguration`:
+ *  - Directly reads the kudos custom [RedisExtProperties], supporting independent connection pool parameters per Redis instance.
+ *  - Enables keepAlive and autoReconnect by default, with additional periodic topology refresh in cluster mode.
+ *  - Defaults to [ReadFrom.REPLICA_PREFERRED] so read requests prefer replica nodes.
+ *  - Enables Lettuce SSL connections when `ssl.enabled=true` or `ssl.bundle` is configured.
  *
  * @author K
  * @author AI: Codex
@@ -33,10 +33,10 @@ import java.time.Duration
  */
 object RedisConnectFactory {
     /**
-     * 根据配置创建 [LettuceConnectionFactory]；集群 vs 单机由 `cluster.nodes` 是否非空决定。
+     * Creates a [LettuceConnectionFactory] based on configuration; cluster vs standalone is determined by whether `cluster.nodes` is non-empty.
      *
-     * @param redisProperties Redis 扩展配置
-     * @return 已经 `afterPropertiesSet()` 过、可直接交给 RedisTemplate 的连接工厂
+     * @param redisProperties Redis extension configuration
+     * @return A connection factory that has already had `afterPropertiesSet()` invoked and can be handed directly to a RedisTemplate.
      */
     fun newLettuceConnectionFactory(redisProperties: RedisExtProperties): LettuceConnectionFactory {
         val isCluster = !redisProperties.cluster?.nodes.isNullOrEmpty()
@@ -81,7 +81,7 @@ object RedisConnectFactory {
     }
 
     /**
-     * 创建 Lettuce 客户端配置；拆出该方法便于覆盖 SSL / pool 等不需要真实 Redis 的配置分支。
+     * Creates the Lettuce client configuration; extracted into a separate method to make it easy to cover SSL / pool branches that do not require a real Redis.
      */
     internal fun newLettuceClientConfiguration(
         redisProperties: RedisExtProperties,
@@ -99,7 +99,7 @@ object RedisConnectFactory {
     }
 
     /**
-     * 单机模式下的redis连接配置
+     * Redis connection configuration for standalone mode.
      *
      * @param redisProperties redisProperties
      * @return redisConfiguration
@@ -119,7 +119,7 @@ object RedisConnectFactory {
     }
 
     /**
-     * 集群模式下的redis连接配置
+     * Redis connection configuration for cluster mode.
      *
      * @param redisProperties redisProperties
      * @return redisClusterConfiguration

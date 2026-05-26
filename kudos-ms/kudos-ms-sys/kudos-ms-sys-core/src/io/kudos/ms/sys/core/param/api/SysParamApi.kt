@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 参数 API本地实现
+ * Local implementation of the parameter API.
  *
  * @author K
  * @since 1.0.0

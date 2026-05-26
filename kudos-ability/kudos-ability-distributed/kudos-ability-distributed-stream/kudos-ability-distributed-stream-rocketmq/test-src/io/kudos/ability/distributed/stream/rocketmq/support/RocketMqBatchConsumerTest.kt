@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * [RocketMqBatchConsumer] JDK 反序列化过滤策略测试。
+ * [RocketMqBatchConsumer] JDK deserialization filter strategy tests.
  *
  * @author K
  * @author AI: Codex
@@ -45,7 +45,7 @@ internal class RocketMqBatchConsumerTest {
     }
 
     /**
-     * RocketMQ 批量消费反序列化测试 DTO。
+     * Test DTO for RocketMQ batch consumer deserialization.
      *
      * @author K
      * @author AI: Codex

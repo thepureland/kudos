@@ -13,55 +13,55 @@ import java.util.PropertyResourceBundle
 import java.util.ResourceBundle
 
 /**
- * 国际化工具类
- * 
- * 提供多语言国际化支持，支持按类型、模块和语言代码组织国际化资源。
- * 
- * 文件路径规范：
- * - 基础路径：i18n/
- * - 完整路径：i18n/类型/模块名_两位小写语言代码_两位大写国家代码.properties
- * - 示例：i18n/common/user_zh_CN.properties
- * 
- * 数据结构：
- * - 四层嵌套Map结构：locale -> type -> module -> key -> value
- * - 支持多个国际化类型（如common、dicts等）
- * - 支持多个模块（如user、order等）
- * - 支持多个语言（如zh_CN、en_US等）
- * 
- * 核心功能：
- * 1. 初始化：支持指定支持的语言列表、类型列表和默认语言
- * 2. 资源加载：自动扫描类路径下的国际化资源文件
- * 3. 缺失补全：其他语言缺失的key会自动使用默认语言的值
- * 4. 字典支持：支持字典类型的国际化（DICT_I18N_KEY）
- * 
- * 初始化流程：
- * 1. 扫描资源文件：根据类型和前缀扫描properties文件
- * 2. 按语言分组：将资源文件按语言代码分组
- * 3. 先加载默认语言：确保默认语言完整
- * 4. 再加载其他语言：其他语言缺失的key使用默认语言的值
- * 
- * 使用场景：
- * - Web应用的国际化显示
- * - 错误消息的国际化
- * - 字典数据的国际化
- * - 多语言系统支持
- * 
- * 注意事项：
- * - 国际化文件编码必须为UTF-8
- * - 必须调用initI18n初始化后才能使用
- * - 不支持的locale会自动回退到默认locale
- * - 文件命名必须符合规范，否则无法正确解析
- * 
+ * i18n utility.
+ *
+ * Provides multilingual i18n support, organizing i18n resources by type, module, and language code.
+ *
+ * File path convention:
+ * - Base path: i18n/
+ * - Full path: i18n/<type>/<moduleName>_<two-letter lowercase language>_<two-letter uppercase country>.properties
+ * - Example: i18n/common/user_zh_CN.properties
+ *
+ * Data structure:
+ * - Four-level nested Map: locale -> type -> module -> key -> value
+ * - Supports multiple i18n types (e.g. common, dicts)
+ * - Supports multiple modules (e.g. user, order)
+ * - Supports multiple languages (e.g. zh_CN, en_US)
+ *
+ * Core features:
+ * 1. Initialization: supports specifying the supported languages list, type list, and default language
+ * 2. Resource loading: automatically scans i18n resource files from the classpath
+ * 3. Missing fallback: keys missing in other languages automatically fall back to the default language value
+ * 4. Dict support: supports i18n for the dict type (DICT_I18N_KEY)
+ *
+ * Initialization flow:
+ * 1. Scan resource files: scan properties files by type and prefix
+ * 2. Group by language: group resource files by language code
+ * 3. Load default language first: ensure the default language is complete
+ * 4. Then load other languages: keys missing in other languages use the default language value
+ *
+ * Use cases:
+ * - i18n display in web applications
+ * - i18n of error messages
+ * - i18n of dict data
+ * - Multilingual system support
+ *
+ * Notes:
+ * - i18n files must be encoded in UTF-8
+ * - initI18n must be called before use
+ * - Unsupported locales automatically fall back to the default locale
+ * - File names must follow the convention, otherwise they cannot be parsed correctly
+ *
  * @since 1.0.0
  */
 object I18nKit {
 
     /**
-     * 初始化，如果不初始化，只支持zh_CN
+     * Initialize. If not initialized, only zh_CN is supported.
      *
-     * @param supportLocales 支持的Locale
-     * @param types 国际化信息类型，自定义，为i18n目录的子目录
-     * @param defaultLocale 默认Locale
+     * @param supportLocales supported Locales
+     * @param types i18n information types — user-defined, corresponding to subdirectories of the i18n directory
+     * @param defaultLocale default Locale
      * @author K
      * @since 1.0.0
      */
@@ -69,7 +69,7 @@ object I18nKit {
         this.supportLocales = supportLocales
         this.types = types
         if (defaultLocale !in supportLocales) {
-            error("默认Locale【$defaultLocale】不在支持的列表【${supportLocales}】中！")
+            error("Default Locale [$defaultLocale] is not in the supported list [${supportLocales}]!")
         }
         if (defaultLocale.isNotBlank()) {
             this.defaultLocale = defaultLocale
@@ -78,26 +78,28 @@ object I18nKit {
     }
 
     /**
-     * 按单一类型增量加载国际化资源。
-     * 调用前必须先调用 [initI18n] 完成基础初始化（语言列表、类型列表、默认语言）。
+     * Incrementally load i18n resources for a single type.
+     * Before calling, [initI18n] must have been called to complete the base initialization
+     * (language list, type list, default language).
      *
-     * 加载策略：先加载默认语言，再加载其它语言，最后用默认语言补齐缺失键。
+     * Loading strategy: load the default language first, then load other languages, finally fill in
+     * missing keys with the default language.
      *
-     * @param args 可变参数：第 1 个为 type（i18n 子目录名），第 2 个可选为文件名前缀
-     * @return 调用成功固定返回 true，主要表达“已执行”而非校验结果
-     * @throws IllegalStateException 当未先调用 [initI18n] 时
+     * @param args varargs: the 1st is the type (i18n subdirectory name); the 2nd (optional) is the file name prefix
+     * @return always returns true on successful call; expresses "executed" rather than a validation result
+     * @throws IllegalStateException when [initI18n] has not been called first
      * @author K
      * @since 1.0.0
      */
     fun initI18nByType(vararg args: String): Boolean {
         if (!::supportLocales.isInitialized || !::types.isInitialized) {
-            error("请先调用 initI18n 初始化 I18nKit")
+            error("Please call initI18n to initialize I18nKit first")
         }
         val type = if (args.isNotEmpty()) args[0] else ""
         val prefix = if (args.size > 1) args[1] else ""
         if (type.isNotBlank()) {
             val otherLocales = ArrayList(supportLocales)
-            //去除默认语言
+            // remove the default language
             otherLocales.remove(defaultLocale)
             //initI18nByType(type,DEFAULT_LOCALE,Arrays.asList(DEFAULT_LOCALE),prefix);
             initI18nByType(type, defaultLocale, otherLocales, prefix)
@@ -106,16 +108,16 @@ object I18nKit {
     }
 
     /**
-     * 根据Locale, 获取其所有类别的国际化Map
+     * Returns the i18n Map of all types for the given Locale.
      *
-     * @param locale 两位小写语言代码_两位大写国家代码
+     * @param locale two-letter lowercase language code _ two-letter uppercase country code
      * @return MutableMap(type, MutableMap(module, MutableMap(i18n-key, i18n-value)))
      * @author K
      * @since 1.0.0
      */
     fun getI18nMap(locale: String = defaultLocale): Map<String, MutableMap<String, MutableMap<String, String>>> {
         val resolvedLocale = if (!isSupport(locale)) {
-            log.warn("不支持的Locale【${locale}】，按默认Locale【${defaultLocale}】处理！")
+            log.warn("Unsupported Locale [${locale}], falling back to default Locale [${defaultLocale}]!")
             defaultLocale
         } else {
             locale
@@ -124,19 +126,19 @@ object I18nKit {
     }
 
     /**
-     * 获取国际化后的字符串
+     * Returns the localized string.
      *
-     * @param locale  两位小写语言代码_两位大写国家代码
-     * @param type    国际化信息类型
-     * @param module  模块名
-     * @param i18nKey 国际化key
-     * @return 国际化后的字符串，如果找不到会直接返回i18nKey的值
+     * @param locale  two-letter lowercase language code _ two-letter uppercase country code
+     * @param type    i18n information type
+     * @param module  module name
+     * @param i18nKey i18n key
+     * @return the localized string; if not found, returns the value of i18nKey itself
      * @author K
      * @since 1.0.0
      */
     fun getLocalStr(i18nKey: String, module: String, type: String, locale: String = defaultLocale): String {
         val localeStr = if (!isSupport(locale)) {
-            log.warn("不支持的Locale【${locale}】，按默认Locale【${defaultLocale}】处理！")
+            log.warn("Unsupported Locale [${locale}], falling back to default Locale [${defaultLocale}]!")
             defaultLocale
         } else locale
         return i18nMap[localeStr]
@@ -147,46 +149,46 @@ object I18nKit {
     }
 
     /**
-     * 是否支持指定的Locale
+     * Whether the given Locale is supported.
      *
      * @param locale Locale
-     * @return true: 支持，false: 不支持
+     * @return true: supported, false: unsupported
      * @author K
      * @since 1.0.0
      */
     fun isSupport(locale: String): Boolean = supportLocales.contains(locale)
 
 
-    /** 日志器 */
+    /** Logger. */
     private val log = LogFactory.getLog(I18nKit::class)
-    /** 国际化资源根目录（classpath 下） */
+    /** Root directory of i18n resources (under classpath). */
     private const val DEFAULT_BASE_PATH = "i18n/"
-    /** 字典国际化的固定类型 key（对应 i18n/dicts/ 子目录） */
+    /** Fixed type key for dict i18n (corresponds to the i18n/dicts/ subdirectory). */
     const val DICT_I18N_KEY = "dicts"
 
-    /** 主国际化容器：locale -> type -> module -> i18nKey -> i18nValue */
+    /** Main i18n container: locale -> type -> module -> i18nKey -> i18nValue. */
     private val i18nMap = mutableMapOf<String, MutableMap<String, MutableMap<String, MutableMap<String, String>>>>()
 
-    /** 字典专用容器：locale -> module -> dictType -> dictKey -> dictValue */
+    /** Dict-specific container: locale -> module -> dictType -> dictKey -> dictValue. */
     private val i18nMapDict =
         mutableMapOf<String, MutableMap<String, MutableMap<String, MutableMap<String, String?>>>>()
 
     /**
-     * 初始化的默认语言
+     * Default language used for initialization.
      */
     private var defaultLocale: String = "zh_CN"
 
-    /** 支持的 locale 集合，由 [initI18n] 注入 */
+    /** Set of supported locales, injected by [initI18n]. */
     private lateinit var supportLocales: Set<String>
 
-    /** 支持的国际化类型集合（i18n 下的子目录名），由 [initI18n] 注入 */
+    /** Set of supported i18n types (subdirectory names under i18n), injected by [initI18n]. */
     private lateinit var types: Set<String>
 
     /**
-     * 入口式初始化：当前仅触发 [initI18n] 完成普通国际化加载。
-     * 字典初始化（[initDictByLocale]）保留为可选扩展点，默认未启用。
+     * Entry-style initialization: currently only triggers [initI18n] to perform regular i18n loading.
+     * Dict initialization ([initDictByLocale]) is retained as an optional extension point and is not enabled by default.
      *
-     * @param defaultLocale 默认语言
+     * @param defaultLocale default language
      * @author K
      * @since 1.0.0
      */
@@ -196,15 +198,15 @@ object I18nKit {
     }
 
     /**
-     * 遍历所有 [types]，按类型分别加载资源；types 为空时只做一次无类型加载。
+     * Iterates over all [types] and loads resources per type; when types is empty, performs a single type-less load.
      *
-     * @param defaultLocale 默认语言；其余语言会用它补齐缺失键
+     * @param defaultLocale default language; other languages use it to fill in missing keys
      * @author K
      * @since 1.0.0
      */
     private fun initI18n(defaultLocale: String) {
         val otherLocales = ArrayList(supportLocales)
-        //去除默认语言
+        // remove the default language
         otherLocales.remove(defaultLocale)
         if (types.isEmpty()) {
             initI18nByType("", defaultLocale, otherLocales, "")
@@ -218,9 +220,9 @@ object I18nKit {
     }
 
     /**
-     * 绑定本地运行环境和资源文件
+     * Binds the local runtime environment to a resource file.
      *
-     * @param file 资源文件
+     * @param file resource file
      * @author K
      * @since 1.0.0
      */
@@ -237,32 +239,33 @@ object I18nKit {
     }
 
     /**
-     * 加载单一类型下所有语言资源的核心实现。
-     * 先按默认语言完整建立基线，再对其他语言加载并以默认语言补齐缺失键。
+     * Core implementation for loading all language resources under a single type.
+     * First fully establishes a baseline using the default language, then loads other languages and fills in
+     * missing keys from the default language.
      *
-     * @param type 国际化类型（i18n 子目录名）
-     * @param defaultLocale 默认语言
-     * @param otherLocales 除默认语言之外需要加载的语言列表
-     * @param prefix 资源文件名前缀过滤
+     * @param type i18n type (i18n subdirectory name)
+     * @param defaultLocale default language
+     * @param otherLocales list of languages to load other than the default language
+     * @param prefix resource file name prefix filter
      * @author K
      * @since 1.0.0
      */
     private fun initI18nByType(type: String, defaultLocale: String, otherLocales: List<String>, prefix: String) {
         val resources = ClassPathScanner.scanForResources(DEFAULT_BASE_PATH + type, prefix, ".properties")
         val resourceGroup = resourceGroup(resources)
-        //先初始化:默认语言
+        // initialize the default language first
         initOneLocale(defaultLocale, type, resourceGroup[defaultLocale].orEmpty())
 
-        //后初始化:其它语言
+        // then initialize the other languages
         for (locale in otherLocales) {
             initOneLocale(locale, type, resourceGroup[locale].orEmpty())
-            //补足缺失的国际化
+            // fill in missing i18n entries
             compareToSetDefaultLocale(defaultLocale, type, locale)
         }
     }
 
     /**
-     * 按语言,类型,进行初始化
+     * Initializes by language and type.
      * @param locale
      * @param type
      * @param resourceGroup
@@ -278,7 +281,7 @@ object I18nKit {
     }
 
     /**
-     * 对比默认语言,不存在,或者值为空,即使用默认语言
+     * Compares against the default language; if a key is missing or its value is blank, falls back to the default language.
      *
      * @param defaultLocale
      * @param type
@@ -303,7 +306,7 @@ object I18nKit {
     }
 
     /**
-     * 资源文件按语言分组
+     * Groups resource files by language.
      * @param resources
      * @return
      */
@@ -312,7 +315,7 @@ object I18nKit {
     }
 
     /**
-     * 按类型
+     * Processes by type.
      * @param moduleMap
      * @param resource
      * @param type
@@ -328,28 +331,28 @@ object I18nKit {
     }
 
     /**
-     * 从资源文件名中解析出模块名与 locale。
-     * 文件名约定：`模块名_两位小写语言代码_两位大写国家代码.properties`。
+     * Parses the module name and locale from a resource file name.
+     * File name convention: `<moduleName>_<two-letter lowercase language>_<two-letter uppercase country>.properties`.
      *
-     * @param resource 类路径下的资源
-     * @return Pair(模块名, locale 字符串)
-     * @throws IllegalArgumentException 当文件名不符合命名约定时
+     * @param resource resource on the classpath
+     * @return Pair(moduleName, locale string)
+     * @throws IllegalArgumentException when the file name does not follow the naming convention
      * @author K
      * @since 1.0.0
      */
     private fun getModuleAndLocale(resource: Resource): Pair<String, String> {
         val baseName = resource.filename.substringBefore(".")
         val moduleName = baseName.substring(0, baseName.length - 6)
-        val locale = requireNotNull(baseName.right(5)) { "无法从资源名解析locale: ${resource.filename}" }
+        val locale = requireNotNull(baseName.right(5)) { "Cannot parse locale from resource name: ${resource.filename}" }
         return Pair(moduleName, locale)
     }
 
     /**
-     * 获取或惰性创建指定模块的键值映射。
+     * Gets or lazily creates the key-value map for the specified module.
      *
-     * @param moduleMap 类型层映射
-     * @param module 模块名
-     * @return 该模块对应的 key->value 映射
+     * @param moduleMap type-level map
+     * @param module module name
+     * @return the key->value map corresponding to the module
      * @author K
      * @since 1.0.0
      */
@@ -358,7 +361,7 @@ object I18nKit {
     ): MutableMap<String, String> = moduleMap.getOrPut(module) { mutableMapOf() }
 
     /**
-     * 将i18nMap里的字典,组织成字典专用的i18nMapDict
+     * Organizes the dicts inside i18nMap into the dict-specific i18nMapDict.
      * @param locale locale string
      */
     private fun initDictByLocale(locale: String) {
@@ -377,12 +380,12 @@ object I18nKit {
                             dictTypeMap[realKey] = realValue
                         } else {
                             dictTypeMap[dictType] = "${module}_$oneType"
-                            log.error("i18n:字典国际化模块:{0},类型:{1},缺少Code！", module, oneType)
+                            log.error("i18n: dict i18n module:{0}, type:{1}, missing Code!", module, oneType)
                         }
                     } catch (_: IndexOutOfBoundsException) {
-                        log.error("i18n:字典国际化模块:{0},类型:{1},缺少Code！", module, oneType)
+                        log.error("i18n: dict i18n module:{0}, type:{1}, missing Code!", module, oneType)
                     } catch (_: IllegalArgumentException) {
-                        log.error("i18n:字典国际化模块:{0},类型:{1},缺少Code！", module, oneType)
+                        log.error("i18n: dict i18n module:{0}, type:{1}, missing Code!", module, oneType)
                     }
                 }
             }

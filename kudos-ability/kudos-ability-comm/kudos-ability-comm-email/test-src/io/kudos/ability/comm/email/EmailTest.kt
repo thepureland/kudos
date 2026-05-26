@@ -17,7 +17,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * 测试发送邮件
+ * Tests for sending emails.
  *
  * @author paul
  * @author K

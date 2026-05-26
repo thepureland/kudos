@@ -10,7 +10,7 @@ import kotlin.test.assertNull
 
 
 /**
- * IpKit测试用例
+ * Test cases for IpKit.
  *
  * @author K
  * @since 1.0.0

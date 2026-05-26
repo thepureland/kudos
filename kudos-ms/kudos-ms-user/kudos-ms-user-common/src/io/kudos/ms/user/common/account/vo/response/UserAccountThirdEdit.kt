@@ -5,47 +5,47 @@ import java.time.LocalDateTime
 
 
 /**
- * 用户第三方账号编辑响应VO
+ * User third-party account edit response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class UserAccountThirdEdit (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 关联用户账号ID */
+    /** Linked user account ID */
     val userId: String? = null,
 
-    /** 第三方平台字典码 */
+    /** Third-party platform dict code */
     val accountProviderDictCode: String? = null,
 
-    /** 发行方/平台租户 */
+    /** Issuer / platform tenant */
     val accountProviderIssuer: String? = null,
 
-    /** 第三方用户唯一标识 */
+    /** Third-party user unique identifier */
     val subject: String? = null,
 
-    /** 跨应用统一标识 */
+    /** Cross-application unified identifier */
     val unionId: String? = null,
 
-    /** 第三方展示名 */
+    /** Third-party display name */
     val externalDisplayName: String? = null,
 
-    /** 第三方邮箱 */
+    /** Third-party email */
     val externalEmail: String? = null,
 
-    /** 头像URL */
+    /** Avatar URL */
     val avatarUrl: String? = null,
 
-    /** 最后登录时间 */
+    /** Last login time */
     val lastLoginTime: LocalDateTime? = null,
 
-    /** 租户ID */
+    /** Tenant ID */
     val tenantId: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
 ) : IIdEntity<String>

@@ -10,14 +10,16 @@ import io.kudos.context.kit.SpringKit
 import kotlin.reflect.KClass
 
 /**
- * 按策略封装本地/远程 Hash 缓存的统一视图，实现 [IHashCache]。
- * 读按策略委托 local/remote；写时 REMOTE 只写远程，LOCAL_REMOTE 先写远程、再同步写本地（保证本节点下次读命中最新）、最后发通知让其他节点失效本地。
+ * A unified view that wraps the local/remote hash caches by strategy and implements [IHashCache].
+ * Reads delegate to local/remote per strategy; on writes, REMOTE writes only the remote layer, while
+ * LOCAL_REMOTE writes remote first, then synchronously writes local (so the next read on this node
+ * hits the latest value), and finally publishes a notification so other nodes invalidate their local copies.
  *
- * @param cacheName 逻辑缓存名（未加版本前缀）
- * @param strategy 策略
- * @param local 本地实现，可为 null
- * @param remote 远程实现，可为 null
- * @param nodeId 当前节点 ID（发通知用，与 RedisCacheMessageHandler 一致）
+ * @param cacheName logical cache name (without version prefix)
+ * @param strategy strategy
+ * @param local local implementation, may be null
+ * @param remote remote implementation, may be null
+ * @param nodeId current node id (used when sending notifications, consistent with RedisCacheMessageHandler)
  *
  * @author K
  * @author AI: Cursor
@@ -37,14 +39,17 @@ internal class MixHashCache(
     private val name: String = cacheName
 
     /**
-     * 记录最近一次写操作传入的 filterable/sortable 副属性集合，供读路径从远端回填本地时重建二级索引。
-     * 如果不记录这些信息，远端回填本地永远只写主数据、副属性索引为空，后续按副属性的查询永远 miss 本地。
+     * Records the filterable/sortable secondary-property sets passed into the most recent write,
+     * so that the read path can rebuild secondary indexes when backfilling local from remote.
+     * Without this, backfilling local from remote would only write the primary data with empty
+     * secondary-property indexes, and subsequent secondary-property queries would always miss locally.
      */
     @Volatile private var indexedFilterable: Set<String> = emptySet()
     @Volatile private var indexedSortable: Set<String> = emptySet()
 
     private fun captureIndexProps(filterable: Set<String>, sortable: Set<String>) {
-        // 非空才更新（"replace if non-empty"）：避免某次写操作误传空集合时把记录抹掉。
+        // Update only if non-empty ("replace if non-empty"): avoids wiping the record when a write
+        // operation accidentally passes an empty set.
         if (filterable.isNotEmpty()) indexedFilterable = filterable
         if (sortable.isNotEmpty()) indexedSortable = sortable
     }
@@ -74,7 +79,7 @@ internal class MixHashCache(
         return remoteOrLocal().getById(name, id, entityClass)
     }
 
-    /** 回填一条到本地，使用已记录的副属性集合重建索引（保持与远端一致）。 */
+    /** Backfills one entry into local, rebuilding indexes from the recorded secondary-property sets (keeping parity with remote). */
     @Suppress("UNCHECKED_CAST")
     private fun saveOneLocal(entity: IIdEntity<*>) {
         local?.save(
@@ -85,7 +90,7 @@ internal class MixHashCache(
         )
     }
 
-    /** 回填多条到本地。优先用 saveBatch 减少 N 次单条调用的开销。 */
+    /** Backfills multiple entries into local. Prefers saveBatch to avoid the overhead of N single-entry calls. */
     @Suppress("UNCHECKED_CAST")
     private fun saveManyLocal(entities: List<IIdEntity<*>>) {
         if (local == null || entities.isEmpty()) return
@@ -136,8 +141,9 @@ internal class MixHashCache(
             CacheStrategy.LOCAL_REMOTE -> {
                 requireNotNull(remote) { "remote hash cache is null" }.saveBatch(name, entities, filterableProperties, sortableProperties)
                 local?.saveBatch(name, entities, filterableProperties, sortableProperties)
-                // 旧实现 entities.forEach { pushHashNotify(it.id) }：N 条 publish 风暴。
-                // 改为一条消息携带 id 列表，接收方在 RedisCacheMessageHandler 里按 Collection 展开 evictLocal。
+                // The old implementation did entities.forEach { pushHashNotify(it.id) }: a storm of N publishes.
+                // Switched to a single message carrying the id list; the receiver in RedisCacheMessageHandler
+                // expands the Collection and calls evictLocal for each id.
                 val ids = entities.mapNotNull { it.id as Any? }
                 if (ids.isNotEmpty()) pushHashNotify(ids)
             }
@@ -178,7 +184,7 @@ internal class MixHashCache(
             CacheStrategy.LOCAL_REMOTE -> {
                 requireNotNull(remote) { "remote hash cache is null" }.deleteByIds(name, ids, entityClass, filterableProperties, sortableProperties)
                 local?.deleteByIds(name, ids, entityClass, filterableProperties, sortableProperties)
-                // 与 saveBatch 一致：单条通知带 id 列表，避免 N 条 Pub/Sub 风暴。
+                // Same as saveBatch: a single notification carrying the id list, avoiding an N-message Pub/Sub storm.
                 pushHashNotify(ids.mapNotNull { it as Any? })
             }
         }
@@ -216,7 +222,7 @@ internal class MixHashCache(
             val fromLocal = readFromLocalFirst { it.listBySetIndex(name, entityClass, property, value) }
             if (!fromLocal.isNullOrEmpty()) return fromLocal
             val fromRemote = remote?.listBySetIndex(name, entityClass, property, value) ?: return emptyList()
-            // 确保被查询的 property 一定在 filterable 索引集合中，否则本地永远无法按此属性命中。
+            // Ensure the queried property is in the filterable index set; otherwise the local layer can never hit on this property.
             if (property !in indexedFilterable) {
                 indexedFilterable = indexedFilterable + property
             }

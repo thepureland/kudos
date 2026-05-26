@@ -6,23 +6,26 @@ import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
 
 /**
- * Spring 事务相关工具。
- * 把"事务提交后才执行某段副作用（发 MQ、清缓存、调外部接口）"这种常见模式封装成一行调用，
- * 在没有真实事务时退化为立即执行，避免业务代码到处写 [TransactionSynchronizationManager] 样板。
+ * Spring transaction utilities.
+ * Wraps the common "run a side effect only after the transaction commits (publish MQ, evict cache,
+ * call an external API)" pattern into a one-liner. Falls back to immediate execution when no real
+ * transaction is present, so business code does not need to scatter [TransactionSynchronizationManager]
+ * boilerplate everywhere.
  *
  * @author K
  * @since 1.0.0
  */
 object TransactionTool {
-    /** 日志器，仅用于回调执行失败时记录异常 */
+    /** Logger, used only to record exceptions when a callback fails. */
     private val log: Log = LogFactory.getLog(TransactionTool::class.java)
 
     /**
-     * 注册一段"事务提交成功后才执行"的回调。
-     * 当前线程不在事务里时立即执行；否则注册到 [TransactionSynchronizationManager]，
-     * 由 Spring 在 afterCommit 阶段调用。回调内异常仅记日志，不传播。
+     * Register a callback that runs only after the transaction commits successfully.
+     * If the current thread is not in a transaction, runs immediately; otherwise registers it with
+     * [TransactionSynchronizationManager] so Spring invokes it during afterCommit. Exceptions inside
+     * the callback are only logged, not propagated.
      *
-     * @param r 待延后执行的逻辑
+     * @param r the logic to defer
      * @author K
      * @since 1.0.0
      */
@@ -34,7 +37,7 @@ object TransactionTool {
                         try {
                             r.run()
                         } catch (e: Exception) {
-                            log.error("afterCommit 执行失败", e)
+                            log.error("afterCommit execution failed", e)
                         }
                     }
                 }
@@ -45,11 +48,12 @@ object TransactionTool {
     }
 
     /**
-     * 当前线程是否处于真实事务中。
-     * 与 [TransactionSynchronizationManager.isSynchronizationActive] 的区别在于：
-     * 后者在仅注册了 synchronization 但没真开事务时也会返回 true；本方法只有真正在事务里才返回 true。
+     * Whether the current thread is in a real transaction.
+     * The difference from [TransactionSynchronizationManager.isSynchronizationActive] is that the
+     * latter also returns true when only synchronization is registered but no actual transaction has
+     * been opened; this method only returns true when a real transaction is active.
      *
-     * @return true 表示存在真实活跃事务
+     * @return true if a real active transaction exists
      * @author K
      * @since 1.0.0
      */

@@ -6,20 +6,20 @@ import io.kudos.base.bean.validation.support.RegExpEnum
 import jakarta.validation.constraints.NotBlank
 
 /**
- * 缓存表单新建请求VO
+ * Cache form create request VO
  *
  * @author K
  * @since 1.0.0
  */
 data class SysCacheFormCreate (
 
-    /** 名称 */
+    /** Name */
     @get:NotBlank
     @get:Matches(RegExpEnum.VAR_NAME)
     @get:MaxLength(64)
     val name: String ,
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     @get:NotBlank
     @get:MaxLength(32)
     val atomicServiceCode: String ,
@@ -34,7 +34,7 @@ data class SysCacheFormCreate (
 
     override val remark: String? ,
 
-    /** 是否为 Hash 缓存 */
+    /** Whether it is a Hash cache */
     val hash: Boolean ,
 
 ) : ISysCacheFormBase

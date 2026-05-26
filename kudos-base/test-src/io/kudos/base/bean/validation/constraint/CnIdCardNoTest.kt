@@ -5,7 +5,7 @@ import io.kudos.base.bean.validation.kit.ValidationKit
 import kotlin.test.Test
 
 /**
- * CnIdCardNo测试用例
+ * CnIdCardNo test cases
  *
  * @author K
  * @since 1.0.0

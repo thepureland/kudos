@@ -1,47 +1,47 @@
 package io.kudos.ms.sys.common.resource.vo.response
 
 /**
- * 资源树列表查询结果响应VO
+ * Resource tree list query result response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class SysResourceTreeRow (
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 名称 */
+    /** Name */
     val name: String? = null,
 
-    /** url */
+    /** URL */
     val url: String? = null,
 
-    /** 资源类型字典代码 */
+    /** Resource type dictionary code */
     val resourceTypeDictCode: String? = null,
 
-    /** 父id */
+    /** Parent id */
     val parentId: String? = null,
 
-    /** 在同父节点下的排序号 */
+    /** Order number among siblings under the same parent */
     val orderNum: Int? = null,
 
-    /** 图标 */
+    /** Icon */
     val icon: String? = null,
 
-    /** 子系统编码 */
+    /** Subsystem code */
     val subSystemCode: String? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean? = null,
 
-    /** 子资源列表 */
+    /** Child resource list */
     val children: MutableList<SysResourceTreeRow>? = null,
 
 )

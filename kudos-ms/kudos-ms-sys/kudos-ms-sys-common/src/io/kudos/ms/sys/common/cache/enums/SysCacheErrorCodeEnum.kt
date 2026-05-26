@@ -3,7 +3,7 @@ package io.kudos.ms.sys.common.cache.enums
 import io.kudos.base.enums.ienums.IErrorCodeEnum
 
 /**
- * 缓存模块错误码
+ * Cache module error codes.
  *
  * @author K
  * @author AI: Codex
@@ -14,11 +14,11 @@ enum class SysCacheErrorCodeEnum(
     override val defaultDisplayText: String
 ) : IErrorCodeEnum {
 
-    /** 缓存键不存在 */
-    CACHE_KEY_NOT_FOUND("SC00000001", "缓存键不存在"),
+    /** Cache key not found */
+    CACHE_KEY_NOT_FOUND("SC00000001", "Cache key not found"),
 
-    /** 缓存配置不存在 */
-    CACHE_CONFIG_NOT_FOUND("SC00000002", "缓存配置不存在");
+    /** Cache configuration not found */
+    CACHE_CONFIG_NOT_FOUND("SC00000002", "Cache configuration not found");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.cache"

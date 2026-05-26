@@ -7,7 +7,7 @@ import java.text.ParseException
 import java.text.SimpleDateFormat
 
 /**
- * DateTime约束验证器
+ * Validator for the DateTime constraint.
  *
  * @author K
  * @since 1.0.0

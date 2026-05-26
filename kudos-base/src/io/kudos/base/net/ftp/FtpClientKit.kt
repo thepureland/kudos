@@ -10,7 +10,7 @@ import java.io.OutputStream
 
 
 /**
- * FTP客户端工具类
+ * FTP client utility class.
  *
  * @author K
  * @since 1.0.0
@@ -20,16 +20,16 @@ class FtpClientKit {
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * 下载文件
+     * Download a file.
      *
-     * @param hostname  FTP服务器地址
-     * @param port      FTP服务器端口号
-     * @param username  FTP登录帐号
-     * @param password  FTP登录密码
-     * @param pathname  FTP服务器文件目录
-     * @param filename  文件名称
-     * @param localPath 下载后的文件路径
-     * @return 是否下载成功
+     * @param hostname  FTP server address
+     * @param port      FTP server port
+     * @param username  FTP login user
+     * @param password  FTP login password
+     * @param pathname  directory on the FTP server
+     * @param filename  file name
+     * @param localPath path of the downloaded file on the local machine
+     * @return whether the download succeeded
      * @author K
      * @since 1.0.0
      */
@@ -45,16 +45,16 @@ class FtpClientKit {
         var flag = false
         val ftpClient = FTPClient()
         try {
-            //连接FTP服务器
+            // Connect to the FTP server
             ftpClient.connect(hostname, port)
-            //登录FTP服务器
+            // Log in to the FTP server
             ftpClient.login(username, password)
-            //验证FTP服务器是否登录成功
+            // Verify whether the FTP login succeeded
             val replyCode: Int = ftpClient.replyCode
             if (!FTPReply.isPositiveCompletion(replyCode)) {
                 return false
             }
-            //切换FTP目录
+            // Switch the working directory on the FTP server
             ftpClient.changeWorkingDirectory(pathname)
             val ftpFiles = ftpClient.listFiles()
             for (file in ftpFiles) {

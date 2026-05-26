@@ -5,32 +5,32 @@ import io.kudos.ms.auth.common.role.vo.response.AuthRoleRow
 
 
 /**
- * 角色列表查询条件请求VO
+ * Request VO for the role list query criteria.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthRoleQuery (
 
-    /** 角色编码 */
+    /** Role code. */
     val code: String? = null,
 
-    /** 角色名称 */
+    /** Role name. */
     val name: String? = null,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 子系统编码 */
+    /** Subsystem code. */
     val subsysCode: String? = null,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String? = null,
 
-    /** 是否激活 */
+    /** Whether the role is active. */
     val active: Boolean? = null,
 
-    /** 是否内置 */
+    /** Whether the role is built-in. */
     val builtIn: Boolean? = null,
 
 ) : ListSearchPayload() {

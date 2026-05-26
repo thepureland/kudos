@@ -1,7 +1,7 @@
 package io.kudos.ability.data.rdb.jdbc.metadata
 
 /**
- * 关系型数据库表类型枚举
+ * Enumeration of relational database table types.
  *
  * @author K
  * @author AI: Codex
@@ -10,37 +10,37 @@ package io.kudos.ability.data.rdb.jdbc.metadata
 enum class TableTypeEnum {
 
     /**
-     * 普通表
+     * Regular table.
      */
     TABLE,
 
     /**
-     * 视图
+     * View.
      */
     VIEW,
 
     /**
-     * 系统表
+     * System table.
      */
     SYSTEM_TABLE,
 
     /**
-     * 全局临时表
+     * Global temporary table.
      */
     GLOBAL_TEMPORARY,
 
     /**
-     * 局部临时表
+     * Local temporary table.
      */
     LOCAL_TEMPORARY,
 
     /**
-     * 别名
+     * Alias.
      */
     ALIAS,
 
     /**
-     * 同义词
+     * Synonym.
      */
     SYNONYM
 }

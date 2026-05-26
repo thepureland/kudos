@@ -5,12 +5,13 @@ import kotlin.annotation.AnnotationTarget.CLASS
 import kotlin.annotation.AnnotationTarget.FUNCTION
 
 /**
- * 如果本机安装了 Docker，则启用测试用例
- * 
- * 与 `@EnabledIfDockerAvailable` 不同，此注解只检查 Docker 是否安装（通过 `docker --version` 命令），
- * 而不检查 Docker 是否正在运行。如果 Docker 已安装但未启动，测试仍会运行（DockerKit 会自动启动 Docker）。
- * 
- * 如果没有安装 Docker，测试用例会被跳过。
+ * Enables a test case if Docker is installed on the local machine.
+ *
+ * Unlike `@EnabledIfDockerAvailable`, this annotation only checks whether Docker is installed
+ * (via the `docker --version` command), not whether Docker is running. If Docker is installed
+ * but not started, the test still runs (DockerKit will start Docker automatically).
+ *
+ * If Docker is not installed, the test case is skipped.
  * 
  * @author K
  * @author AI:Cursor

@@ -3,20 +3,20 @@ package io.kudos.base.data.xls
 import java.io.File
 
 /**
- * excel数据导入器接口
+ * Excel data importer interface.
  *
- * @param T 行对象类型
+ * @param T row-object type
  * @author
  * @since 1.0.0
  */
 interface IExcelImporter<T> {
 
     /**
-     * 执行导入
+     * Performs the import.
      *
-     * @param xlsFile excel文件
-     * @return 导入的行对象列表
-     * @throws IllegalStateException 导入过程有错误发生时
+     * @param xlsFile the Excel file
+     * @return list of imported row objects
+     * @throws IllegalStateException when an error occurs during import
      * @author
      * @since 1.0.0
      */

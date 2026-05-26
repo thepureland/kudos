@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 用户数据访问对象
+ * User account DAO.
  *
  * @author K
  * @author AI: Cursor
@@ -21,11 +21,11 @@ open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
 
 
     /**
-     * 按租户、用户名查询，返回缓存用 VO 列表
+     * Query by tenant id + username, returning the cache VO.
      *
-     * @param tenantId 租户id
-     * @param username 用户名
-     * @return UserAccountCacheEntry，不存在返回null
+     * @param tenantId tenant id
+     * @param username username
+     * @return UserAccountCacheEntry, or null if not found
      */
     open fun getUsersByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? {
         val criteria = Criteria.and(
@@ -36,7 +36,7 @@ open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
     }
 
     /**
-     * 查询所有 active=true 的用户
+     * Query all users with active=true.
      *
      * @return List<UserAccountCacheEntry>
      */
@@ -46,10 +46,10 @@ open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
     }
 
     /**
-     * 查询租户下所有启用用户ID
+     * Query all active user ids under the given tenant.
      *
-     * @param tenantId 租户ID
-     * @return 用户ID列表
+     * @param tenantId tenant id
+     * @return list of user ids
      */
     fun searchActiveUserIdsByTenantId(tenantId: String): List<String> {
         val criteria = Criteria(UserAccount::tenantId eq tenantId)

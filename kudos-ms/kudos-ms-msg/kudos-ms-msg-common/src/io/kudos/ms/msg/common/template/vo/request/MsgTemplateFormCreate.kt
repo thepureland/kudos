@@ -1,7 +1,7 @@
 package io.kudos.ms.msg.common.template.vo.request
 
 /**
- * 消息模板表单新建请求VO
+ * Message template create form request VO.
  *
  * @author K
  * @since 1.0.0

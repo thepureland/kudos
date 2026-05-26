@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 用户账号保护数据访问对象
+ * User account protection DAO.
  *
  * @author K
  * @author AI: Codex

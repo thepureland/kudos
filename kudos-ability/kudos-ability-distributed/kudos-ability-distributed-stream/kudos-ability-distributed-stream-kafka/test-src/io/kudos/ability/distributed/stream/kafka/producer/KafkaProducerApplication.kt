@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 
 /**
- * kafka测试生產者微服务应用
+ * Kafka test producer microservice application.
  *
  * @author shane
  * @author K

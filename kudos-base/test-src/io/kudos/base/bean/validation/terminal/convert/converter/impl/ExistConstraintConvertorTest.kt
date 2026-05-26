@@ -9,7 +9,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * ExistConstraintConvertor测试用例
+ * Test cases for ExistConstraintConvertor.
  *
  * @author AI: cursor
  * @author K
@@ -25,7 +25,7 @@ internal class ExistConstraintConvertorTest {
             val convertor = ExistConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
             assertNotNull(rule)
-            // 应该包含子约束的规则
+            // Should contain the rules for the sub-constraints
             assertTrue(rule.isNotEmpty())
         }
     }
@@ -37,11 +37,11 @@ internal class ExistConstraintConvertorTest {
         if (annotation != null) {
             val convertor = ExistConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
-            // 子约束的message应该被移除
-            // 检查子约束规则中是否没有message
+            // Sub-constraint messages should be removed
+            // Check that sub-constraint rules have no message field
             rule.forEach { (_, value) ->
                 if (value is Map<*, *>) {
-                    // 子约束的message应该被移除
+                    // Sub-constraint message should be removed
                 }
             }
         }
@@ -54,7 +54,7 @@ internal class ExistConstraintConvertorTest {
         if (annotation != null) {
             val convertor = ExistConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
-            // 应该包含Exist约束的message
+            // Should contain the message from the Exist constraint
             assertTrue(rule.containsKey("message"))
         }
     }
@@ -62,8 +62,8 @@ internal class ExistConstraintConvertorTest {
     data class TestBean(
         @get:Exist(
             value = Constraints(
-                notNull = NotNull("不能為null"),
-                pattern = Pattern(regexp = "[a-zA-Z]+", message = "只能包含字母")
+                notNull = NotNull("must not be null"),
+                pattern = Pattern(regexp = "[a-zA-Z]+", message = "must contain letters only")
             )
         )
         val value: String?

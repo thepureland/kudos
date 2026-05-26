@@ -9,16 +9,19 @@ import java.util.UUID
 import kotlin.reflect.KClass
 
 /**
- * JDBC 类型 → Kotlin 类型 的映射表（按数据库分支细化）。
+ * Mapping table from JDBC types to Kotlin types (refined per database branch).
  *
- * 设计思路：单一的 JDBC Types.* 数字到 KClass 的映射不够 —— 不同数据库对同一 JDBC type code
- * 习惯返回的 typeName 各异（"INT2" / "SMALLINT" / "TINYINT"），且不同数据库的 numeric 精度
- * 范围语义不同（Oracle NUMBER(n) 必须按 n 进一步切分），因此分两层：
- *  1. [defaultMapping]：纯 JDBC Types.* 数字到 KClass 的默认映射，作为 fallback
- *  2. [getKotlinType]：按 [RdbTypeEnum] 分支，用 typeName 字符串匹配做更精细的判断；分支里没有
- *     列出来的 jdbcType 一律落到 `Any::class`（"我不知道，让上层自己处理")
+ * Design rationale: a single mapping from JDBC Types.* numbers to KClass is insufficient —
+ * different databases conventionally return different typeNames for the same JDBC type code
+ * ("INT2" / "SMALLINT" / "TINYINT"), and the precision/range semantics of numeric vary across
+ * databases (Oracle NUMBER(n) must be further split by n). So we have two layers:
+ *  1. [defaultMapping]: pure JDBC Types.* number to KClass mapping, used as fallback
+ *  2. [getKotlinType]: branches by [RdbTypeEnum] and uses typeName string matching for finer
+ *     judgement; any jdbcType not listed in a branch falls back to `Any::class` ("I don't know,
+ *     let the upper layer handle it").
  *
- * 主要用于代码生成器（POJO 字段类型推断）和 ORM 映射（Ktorm column 适配）。
+ * Primarily used for code generators (POJO field type inference) and ORM mapping (Ktorm column
+ * adaptation).
  *
  * @author K
  * @author AI: Codex
@@ -71,11 +74,11 @@ object JdbcTypeToKotlinType {
     )
 
     /**
-     * 返回列的指定关系型数据库对应的Kotlin类型
+     * Returns the Kotlin type corresponding to the column for the given relational database.
      *
-     * @param rdbType 关系型数据库枚举
-     * @param column 列
-     * @return Kotlin类型
+     * @param rdbType the relational database enum
+     * @param column the column
+     * @return the Kotlin type
      * @author K
      * @since 1.0.0
      */
@@ -194,7 +197,7 @@ object JdbcTypeToKotlinType {
                 }
             }
             else -> {
-                defaultMapping[column.jdbcType] ?: error("未支持JdbcType: ${column.jdbcType}")
+                defaultMapping[column.jdbcType] ?: error("Unsupported JdbcType: ${column.jdbcType}")
             }
         }
     }

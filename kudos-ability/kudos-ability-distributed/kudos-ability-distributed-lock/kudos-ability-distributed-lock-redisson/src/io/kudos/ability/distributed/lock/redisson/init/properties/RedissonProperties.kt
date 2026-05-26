@@ -1,8 +1,8 @@
 package io.kudos.ability.distributed.lock.redisson.init.properties
 
 /**
- * Redisson配置属性类
- * 封装Redisson的完整配置信息，包括启用开关、运行模式、服务器配置等
+ * Redisson config properties.
+ * Holds the full Redisson configuration: enable flag, run mode and server settings.
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -13,7 +13,7 @@ class RedissonProperties {
     var mode: String = "single"
 
     /**
-     * RedissonLockKit 生成 Redis lock key 时追加的统一前缀。可设为空字符串禁用前缀。
+     * Uniform prefix appended by RedissonLockKit when building Redis lock keys. Set to empty string to disable.
      */
     var lockKeyPrefix: String = "REDISSON::"
 

@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
 /**
- * [SeataFeignXidProcessor] Feign XID 请求头透传测试。
+ * Tests that [SeataFeignXidProcessor] propagates the Feign XID request header.
  *
  * @author K
  * @author AI: Codex

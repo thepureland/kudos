@@ -9,7 +9,7 @@ import org.ktorm.schema.varchar
 
 
 /**
- * 用户联系方式数据库表-实体关联对象
+ * User contact way table-to-entity mapping.
  *
  * @author K
  * @author AI: Codex
@@ -17,46 +17,46 @@ import org.ktorm.schema.varchar
  */
 object UserContactWays : StringIdTable<UserContactWay>("user_contact_way") {
 
-    /** 用户ID */
+    /** User id. */
     var userId = varchar("user_id").bindTo { it.userId }
 
-    /** 联系方式字典码 */
+    /** Contact way dict code. */
     var contactWayDictCode = varchar("contact_way_dict_code").bindTo { it.contactWayDictCode }
 
-    /** 联系方式值 */
+    /** Contact way value. */
     var contactWayValue = varchar("contact_way_value").bindTo { it.contactWayValue }
 
-    /** 联系方式状态字典码 */
+    /** Contact way status dict code. */
     var contactWayStatusDictCode = varchar("contact_way_status_dict_code").bindTo { it.contactWayStatusDictCode }
 
-    /** 优先级 */
+    /** Priority. */
     var priority = int("priority").bindTo { it.priority }
 
-    /** 备注 */
+    /** Remark. */
     var remark = varchar("remark").bindTo { it.remark }
 
-    /** 是否启用 */
+    /** Active flag. */
     var active = boolean("active").bindTo { it.active }
 
-    /** 是否内置 */
+    /** Built-in flag. */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
 
-    /** 创建者ID */
+    /** Creator id. */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
-    /** 创建者名称 */
+    /** Creator name. */
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }
 
-    /** 创建时间 */
+    /** Create time. */
     var createTime = datetime("create_time").bindTo { it.createTime }
 
-    /** 更新者ID */
+    /** Updater id. */
     var updateUserId = varchar("update_user_id").bindTo { it.updateUserId }
 
-    /** 更新者名称 */
+    /** Updater name. */
     var updateUserName = varchar("update_user_name").bindTo { it.updateUserName }
 
-    /** 更新时间 */
+    /** Update time. */
     var updateTime = datetime("update_time").bindTo { it.updateTime }
 
 

@@ -6,10 +6,10 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
 
 /**
- * 默认的 Hash 批量缓存 key 生成器：从方法参数中按 [HashBatchCacheableByPrimary.ignoreParamIndexes] 排除后，
- * 用与 [io.kudos.ability.cache.common.batch.keyvalue.DefaultKeysGenerator] 相同的规则生成 id 列表（即 key 列表）。
+ * Default Hash batch cache key generator: after excluding parameters per [HashBatchCacheableByPrimary.ignoreParamIndexes],
+ * generates the id list (i.e. key list) using the same rules as [io.kudos.ability.cache.common.batch.keyvalue.DefaultKeysGenerator].
  *
- * 典型用法：方法形如 `getByIds(ids: List<String>): Map<String, E?>`，则 keys = ids。
+ * Typical usage: for a method like `getByIds(ids: List<String>): Map<String, E?>`, keys = ids.
  *
  * @author K
  * @author AI: Cursor
@@ -20,7 +20,7 @@ class DefaultHashBatchKeysGenerator : IKeysGenerator {
     override fun generate(target: Any?, function: KFunction<*>?, vararg params: Any): List<String> {
         validParamType(*params)
         val paramIndexes = getParamIndexes(function, *params)
-        // 典型用法：仅一个参数且为 id 集合，直接展开为 key 列表，避免笛卡尔积且避免 JVM 下非 Collection 类型问题
+        // Typical usage: exactly one parameter that is an id collection; expand directly to the key list to avoid a Cartesian product and JVM non-Collection type issues
         if (paramIndexes.size == 1) {
             return when (val single = params[paramIndexes[0]]) {
                 is Collection<*> -> single.map { it.toString() }
@@ -46,7 +46,7 @@ class DefaultHashBatchKeysGenerator : IKeysGenerator {
             if (it is IntArray || it is CharArray || it is ByteArray || it is ShortArray || it is LongArray ||
                 it is FloatArray || it is DoubleArray || it is BooleanArray
             ) {
-                error("Hash 批量缓存方法参数如是数组，请使用 Array<Any>，不支持 IntArray、CharArray 等类型！")
+                error("If Hash batch cache method parameters are arrays, please use Array<Any>; IntArray, CharArray, etc. are not supported!")
             }
         }
     }
@@ -84,8 +84,8 @@ class DefaultHashBatchKeysGenerator : IKeysGenerator {
                     repeat(groupCount) { parts.addAll(listOf(it)) }
                 }
 
-                is Collection<*> -> { /* parts 保持空 */ }
-                is Array<*> -> { /* parts 保持空 */ }
+                is Collection<*> -> { /* parts stays empty */ }
+                is Array<*> -> { /* parts stays empty */ }
                 else -> repeat(totalCount) { parts.add(it) }
             }
             keys.add(parts)

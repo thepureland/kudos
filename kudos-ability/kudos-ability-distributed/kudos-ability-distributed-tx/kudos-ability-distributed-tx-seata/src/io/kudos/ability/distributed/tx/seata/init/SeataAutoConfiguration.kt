@@ -13,7 +13,7 @@ import org.springframework.context.annotation.PropertySource
 
 
 /**
- * Seata自动配置类
+ * Seata auto-configuration class.
  *
  * @author K
  * @since 1.0.0
@@ -27,15 +27,17 @@ import org.springframework.context.annotation.PropertySource
 open class SeataAutoConfiguration : IComponentInitializer {
 
     /**
-     * Seata 数据源代理实现——覆盖 jdbc 模块默认的 `IDataSourceProxy` bean。
-     * `@Primary` 让多 bean 同时存在时本实现胜出，把 DataSource 包成 `DataSourceProxy`(AT)
-     * 或 `DataSourceProxyXA`(XA)，让 ConnectionProxy 能在每条 SQL commit 时写 undo log /
-     * 注册 BranchRegister。
+     * Seata DataSource proxy implementation — overrides the default `IDataSourceProxy` bean from
+     * the jdbc module. `@Primary` ensures this implementation wins when multiple beans coexist,
+     * wrapping the DataSource as `DataSourceProxy` (AT) or `DataSourceProxyXA` (XA) so that the
+     * ConnectionProxy can write undo logs / register a BranchRegister on every SQL commit.
      *
-     * 注：旧实现还有一段构造 Ktorm `Database` 的注释代码，是双重代理的反面教材（让 Spring TX
-     * 用的 DataSource 与 Ktorm 用的不是同一实例 → 分支注册失败）。已删除；正确的接线是让
-     * `KudosContextHolder.currentDatabase()` 直接用 `Database.connectWithSpringSupport(dataSource)`，
-     * 见 `kudos-ability-data-rdb-ktorm` README 的 "Database 与 DataSource 同实例约定"。
+     * Note: the previous implementation contained commented-out code constructing a Ktorm
+     * `Database`, a textbook example of double proxying (the DataSource used by Spring TX would
+     * not match the one used by Ktorm -> branch registration fails). It has been removed; the
+     * correct wiring is to let `KudosContextHolder.currentDatabase()` use
+     * `Database.connectWithSpringSupport(dataSource)` directly, see the
+     * "Database and DataSource share the same instance" convention in the `kudos-ability-data-rdb-ktorm` README.
      */
     @Primary
     @Bean("dataSourceProxy")

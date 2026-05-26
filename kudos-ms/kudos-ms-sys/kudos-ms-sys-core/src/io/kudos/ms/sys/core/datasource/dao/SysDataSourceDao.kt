@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 数据源数据访问对象
+ * Data source DAO.
  *
  * @author K
  * @since 1.0.0
@@ -19,7 +19,7 @@ import org.springframework.stereotype.Repository
 @Repository
 open class SysDataSourceDao : BaseCrudDao<String, SysDataSource, SysDataSources>() {
 
-    /** 按 id 集合批量查询，返回缓存用 VO 列表 */
+    /** Batch query by id collection, returning cache VO list. */
     open fun fetchDataSourcesByIdsForCache(ids: Collection<String>): List<SysDataSourceCacheEntry> {
         if (ids.isEmpty()) return emptyList()
         val criteria = Criteria(SysDataSource::id inList ids)
@@ -27,11 +27,11 @@ open class SysDataSourceDao : BaseCrudDao<String, SysDataSource, SysDataSources>
     }
 
     /**
-     * 按租户id+子系统编码+微服务编码查询单条（tenantId 非空）。
+     * Query records by tenant id + sub-system code + micro-service code (tenantId is required).
      *
-     * @param tenantId 租户ID
-     * @param subSystemCode 子系统编号，为空将不作为查询条件
-     * @param microServiceCode 微服务编号，为空将不作为查询条件
+     * @param tenantId tenant id
+     * @param subSystemCode sub-system code; blank value is ignored as a condition
+     * @param microServiceCode micro-service code; blank value is ignored as a condition
      * @return List<SysDataSourceCacheEntry>
      */
     open fun fetchDataSourcesForCache(

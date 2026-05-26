@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 租户-语言关系 Feign 容错降级实现。
+ * Tenant-locale relationship Feign fallback implementation.
  *
  * @author K
  * @since 1.0.0

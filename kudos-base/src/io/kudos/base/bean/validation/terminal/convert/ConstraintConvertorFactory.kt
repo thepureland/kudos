@@ -6,7 +6,7 @@ import io.kudos.base.bean.validation.terminal.convert.converter.impl.*
 
 
 /**
- * 约束注解->终端约束转换器工厂
+ * Factory of constraint-annotation to terminal-constraint converters.
  *
  * @author K
  * @since 1.0.0
@@ -14,16 +14,16 @@ import io.kudos.base.bean.validation.terminal.convert.converter.impl.*
 object ConstraintConvertorFactory {
 
     /**
-     * 返回约束注解的终端约束转换器
+     * Returns the terminal-constraint converter for the given constraint annotation.
      *
-     * @param annotation 约束注解
-     * @return 终端约束转换器
+     * @param annotation the constraint annotation
+     * @return the terminal-constraint converter
      * @author K
      * @since 1.0.0
      */
     fun getInstance(annotation: Annotation): IConstraintConvertor? =
         when (annotation.annotationClass) {
-            DictItemCode::class -> null // 为null不需要返回给终端
+            DictItemCode::class -> null // null entries don't need to be returned to the terminal
             DictEnumItemCode::class -> DictEnumCodeConstraintConvertor(annotation)
             Compare::class, Compare.List::class -> CompareConstraintConvertor(annotation)
             NotNullOn::class -> NotNullOnConstraintConvertor(annotation)

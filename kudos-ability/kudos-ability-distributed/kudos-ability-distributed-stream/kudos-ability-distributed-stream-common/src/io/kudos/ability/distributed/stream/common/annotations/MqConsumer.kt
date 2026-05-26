@@ -4,9 +4,9 @@ import org.springframework.context.annotation.Bean
 import org.springframework.core.annotation.AliasFor
 
 /**
- * Mq消费者注解
+ * MQ consumer annotation.
  *
- * 注意：该注解修饰的方法返回值，一定得是java.util.function.Consumer类型
+ * Note: methods annotated with this must return java.util.function.Consumer.
  *
  * @author paul
  * @author K
@@ -18,14 +18,14 @@ import org.springframework.core.annotation.AliasFor
 annotation class MqConsumer(
 
     /**
-     * 绑定的stream消费者配置名，示例：consumer-in-0
-     * 注：该字段为非必填，仅用于方便查找
+     * Name of the bound stream consumer configuration, e.g. consumer-in-0.
+     * Optional; provided only to make lookup easier.
      */
     @get:AliasFor(annotation = Bean::class, attribute = "name") val beanName: Array<String> = [],
     val bindingName: String = "",
 
     /**
-     * 该字段为非必填，仅用于方便查找
+     * Optional; provided only to make lookup easier.
      */
     val topic: String = ""
 

@@ -6,14 +6,14 @@ import jakarta.validation.constraints.NotBlank
 
 
 /**
- * 语言字典表单更新请求VO
+ * Request VO for updating a language dictionary form.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysLocaleFormUpdate(
 
-    /** 主键 */
+    /** Primary key */
     @get:NotBlank
     @get:FixedLength(36)
     override val id: String,

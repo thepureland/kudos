@@ -4,14 +4,14 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 角色表单更新请求VO
+ * Request VO for role form update.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthRoleFormUpdate (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String,
 
     override val code: String?,

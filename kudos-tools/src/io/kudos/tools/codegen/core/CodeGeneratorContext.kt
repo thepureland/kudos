@@ -5,7 +5,7 @@ import io.kudos.tools.codegen.model.vo.Config
 
 
 /**
- * 代码生成器上下文
+ * Code generator context.
  *
  * @author K
  * @since 1.0.0

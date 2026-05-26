@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * [MqProducerAspect] payload 参数选择测试。
+ * Tests for [MqProducerAspect] payload parameter selection.
  *
  * @author K
  * @author AI: Codex
@@ -28,7 +28,7 @@ internal class MqProducerAspectTest {
     }
 
     /**
-     * producer payload 选择测试 DTO。
+     * Test DTO for producer payload selection.
      *
      * @author K
      * @author AI: Codex

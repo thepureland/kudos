@@ -21,7 +21,8 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.jvm.kotlinFunction
 
 /**
- * [HashCacheableByPrimary] 切面：先按主属性（id）查 Hash 缓存，未命中则执行方法并回写；回写时可带副属性以建 Set/ZSet 索引。
+ * [HashCacheableByPrimary] aspect: first queries the Hash cache by the primary property (id); on a miss, executes the
+ * method and writes the result back, optionally with secondary properties to build Set/ZSet indexes.
  *
  * @author K
  * @author AI: Cursor
@@ -31,25 +32,27 @@ import kotlin.reflect.jvm.kotlinFunction
 @Component
 @Lazy(false)
 @ConditionalOnBean(MixHashCacheManager::class)
-@Order(0) // 与其他单条 Cacheable 切面同序；这些注解互斥，相对顺序不影响行为，标注主要是避免默认 LOWEST_PRECEDENCE 带来的不确定。
+@Order(0) // Same order as other single-record Cacheable aspects; these annotations are mutually exclusive, so the relative
+          // order does not affect behavior. The annotation mainly avoids the nondeterminism of the default LOWEST_PRECEDENCE.
 class HashCacheableByPrimaryAspect {
 
-    /** SpEL 表达式求值用的参数名发现器，从 [SpelExpressionCache] 拿单例 */
+    /** Parameter name discoverer used for SpEL expression evaluation; obtained as a singleton from [SpelExpressionCache]. */
     private val nameDiscoverer = SpelExpressionCache.parameterNameDiscoverer
 
-    /** 切点：匹配标注 [HashCacheableByPrimary] 的方法 */
+    /** Pointcut: matches methods annotated with [HashCacheableByPrimary]. */
     @Pointcut("@annotation(io.kudos.ability.cache.common.aop.hash.HashCacheableByPrimary)")
     fun cut() {}
 
     /**
-     * 主键 hash 缓存切面：
-     * 1. 解析注解 cacheName / condition / key（走 SpEL）；
-     * 2. 命中条件 + cache 激活时，先查 [HashCacheKit] hash 缓存；命中直接返回；
-     * 3. miss 时调用原方法；
-     * 4. 通过 unless 条件后，把返回的 [IIdEntity] 写回 hash 缓存（连同 filterable/sortable 属性）。
+     * Primary-key hash cache aspect:
+     * 1. Resolve the annotation's cacheName / condition / key (via SpEL).
+     * 2. When the condition passes and the cache is active, first query the [HashCacheKit] hash cache; on hit return directly.
+     * 3. On miss, invoke the original method.
+     * 4. After the unless condition passes, write the returned [IIdEntity] back to the hash cache (together with the
+     *    filterable/sortable properties).
      *
-     * @param joinPoint AOP 切入点
-     * @return 缓存命中或方法执行结果
+     * @param joinPoint AOP join point
+     * @return cache hit value or the method execution result
      * @author K
      * @since 1.0.0
      */
@@ -97,12 +100,13 @@ class HashCacheableByPrimaryAspect {
     }
 
     /**
-     * 解析 cache 名：优先取 [HashCacheableByPrimary.cacheNames] 第一个；
-     * 注解未设时回落到目标类上的 `@CacheConfig.cacheNames` 第一个；都没有返回 null（切面静默 proceed）。
+     * Resolve the cache name: prefer the first of [HashCacheableByPrimary.cacheNames]; when not set on the annotation,
+     * fall back to the first of `@CacheConfig.cacheNames` on the target class; returns null if neither is configured
+     * (the aspect silently proceeds).
      *
-     * @param joinPoint AOP 切入点
-     * @param ann 注解实例
-     * @return cache 名，未配置返回 null
+     * @param joinPoint AOP join point
+     * @param ann annotation instance
+     * @return cache name, or null if not configured
      * @author K
      * @since 1.0.0
      */
@@ -114,11 +118,11 @@ class HashCacheableByPrimaryAspect {
     }
 
     /**
-     * 把通配的 `KClass<out IIdEntity<*>>` 强转为 `KClass<out IIdEntity<Any?>>`。
-     * 单独抽出来集中 `@Suppress("UNCHECKED_CAST")` 警告，主流程更整洁。
+     * Cast the wildcard `KClass<out IIdEntity<*>>` to `KClass<out IIdEntity<Any?>>`.
+     * Extracted separately to localize the `@Suppress("UNCHECKED_CAST")` warning and keep the main flow tidy.
      *
-     * @param entityClass 通配实体类型
-     * @return 已收窄的实体类型
+     * @param entityClass wildcard entity type
+     * @return narrowed entity type
      * @author K
      * @since 1.0.0
      */

@@ -5,14 +5,14 @@ import io.kudos.context.kit.SpringKit
 import io.kudos.ms.sys.core.dict.cache.SysDictItemHashCache
 
 /**
- * 字典项编码查找器
+ * Dictionary item code finder.
  *
  * @author K
  * @since 1.0.0
  */
 class DictItemCodeFinder : IDictItemCodeFinder {
 
-    // 该类通过java ServiceLoader 加载，所以不能用bean注入
+    // This class is loaded via Java ServiceLoader, so it cannot use bean injection.
     private var sysDictItemHashCache: SysDictItemHashCache? = null
 
     override fun getDictItemCodes(
@@ -22,7 +22,7 @@ class DictItemCodeFinder : IDictItemCodeFinder {
         if (sysDictItemHashCache == null) {
             sysDictItemHashCache = SpringKit.getBean<SysDictItemHashCache>()
         }
-        val cache = requireNotNull(sysDictItemHashCache) { "SysDictItemHashCache 未初始化" }
+        val cache = requireNotNull(sysDictItemHashCache) { "SysDictItemHashCache is not initialized" }
         val items = cache.getDictItems(atomicServiceCode, dictType)
         return items.map { it.itemCode }.toSet()
     }

@@ -3,40 +3,44 @@ package io.kudos.ability.comm.websocket.ktor.session
 import io.ktor.websocket.CloseReason
 
 /**
- * 注册中心 / 广播器使用的会话**抽象**。
+ * Session **abstraction** used by the registry / broadcaster.
  *
- * 抽出来的目的：让 [KudosWebSocketRegistry] /
- * [io.kudos.ability.comm.websocket.ktor.broadcast.WebSocketBroadcaster] 等业务层组件不直接
- * 依赖 Ktor 的 `DefaultWebSocketServerSession`——
+ * The purpose of extracting this interface is to keep business-layer components such as
+ * [KudosWebSocketRegistry] and
+ * [io.kudos.ability.comm.websocket.ktor.broadcast.WebSocketBroadcaster] from directly
+ * depending on Ktor's `DefaultWebSocketServerSession`:
  *
- *  - **测试性**：单测里可以用纯数据对象实现本接口，无需启动 Ktor / 模拟 WebSocket 上下文
- *  - **多引擎兼容**：未来若新增 netty 直连等"非 Ktor"实现，复用同一套注册 / 广播抽象只需要
- *    新的 [KudosWebSocketSessionRef] 实现
+ *  - **Testability**: unit tests can implement this interface with a plain data object
+ *    without starting Ktor or mocking a WebSocket context.
+ *  - **Multi-engine compatibility**: if a future non-Ktor implementation (e.g. raw netty) is
+ *    added, the same registry / broadcast abstractions can be reused — only a new
+ *    [KudosWebSocketSessionRef] implementation is needed.
  *
- * 真正运行时还是用 [KudosWebSocketSession]——它同时实现本接口且持有 `raw` Ktor 会话。
+ * At runtime, [KudosWebSocketSession] is the real implementation — it implements this
+ * interface and also holds the `raw` Ktor session.
  *
  * @author K
  * @since 1.0.0
  */
 interface KudosWebSocketSessionRef {
-    /** 进程内唯一标识。 */
+    /** Unique identifier within the process. */
     val sessionId: String
 
-    /** 业务侧建立连接时填入；为 null 表示匿名会话。 */
+    /** Populated by the business side when the connection is established; null means an anonymous session. */
     val userId: String?
 
-    /** 业务侧建立连接时填入；多租户场景的隔离键。 */
+    /** Populated by the business side when the connection is established; isolation key for multi-tenant scenarios. */
     val tenantId: String?
 
-    /** 自由扩展点（客户端版本、设备 ID、Locale 等）。 */
+    /** Open extension point (client version, device ID, Locale, etc.). */
     val attributes: MutableMap<String, Any?>
 
-    /** 发送一段文本 frame。 */
+    /** Sends a text frame. */
     suspend fun sendText(text: String)
 
-    /** 发送一段二进制 frame。 */
+    /** Sends a binary frame. */
     suspend fun sendBinary(bytes: ByteArray)
 
-    /** 正常关闭连接。 */
+    /** Closes the connection normally. */
     suspend fun close(reason: CloseReason = CloseReason(CloseReason.Codes.NORMAL, ""))
 }

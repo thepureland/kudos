@@ -4,68 +4,68 @@ import io.kudos.base.bean.validation.constraint.annotations.MaxLength
 import java.time.LocalDateTime
 
 /**
- * 用户表单基础字段（新建 / 更新共用）
+ * User form base fields (shared between create and update)
  *
  * @author K
  * @since 1.0.0
  */
 interface IUserAccountFormBase {
 
-    /** 用户名 */
+    /** Username */
     val username: String?
 
-    /** 租户ID */
+    /** Tenant ID */
     val tenantId: String?
 
-    /** 登录密码 */
+    /** Login password */
     val loginPassword: String?
 
-    /** 安全密码 */
+    /** Security password */
     val securityPassword: String?
 
-    /** 用户类型字典码 */
+    /** Account type dict code */
     val accountTypeDictCode: String?
 
-    /** 用户状态字典码 */
+    /** Account status dict code */
     val accountStatusDictCode: String?
 
-    /** 默认语言环境 */
+    /** Default locale */
     val defaultLocale: String?
 
-    /** 默认时区 */
+    /** Default timezone */
     val defaultTimezone: String?
 
-    /** 默认货币 */
+    /** Default currency */
     val defaultCurrency: String?
 
-    /** 最后登录时间 */
+    /** Last login time */
     val lastLoginTime: LocalDateTime?
 
-    /** 最后登录IP */
+    /** Last login IP */
     val lastLoginIp: Long?
 
-    /** 最后登出时间 */
+    /** Last logout time */
     val lastLogoutTime: LocalDateTime?
 
-    /** 登录错误次数 */
+    /** Login error count */
     val loginErrorTimes: Int?
 
-    /** 安全密码错误次数 */
+    /** Security password error count */
     val securityPasswordErrorTimes: Int?
 
-    /** 会话密钥 */
+    /** Session key */
     val sessionKey: String?
 
-    /** 认证密钥 */
+    /** Authentication key */
     val authenticationKey: String?
 
-    /** 所属机构ID */
+    /** Owning organization ID */
     val orgId: String?
 
-    /** 直属上级ID */
+    /** Direct supervisor ID */
     val supervisorId: String?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 }

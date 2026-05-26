@@ -3,7 +3,7 @@ package io.kudos.base.enums.impl
 import io.kudos.base.enums.ienums.IDictEnum
 
 /**
- * 逻辑真假的枚举
+ * Logical true/false enum.
  *
  * @author K
  * @since 1.0.0
@@ -14,8 +14,8 @@ enum class YesNotEnum(
     override var displayText: String
 ) : IDictEnum {
 
-    YES(true, "1", "是"),
-    NOT(false, "0", "否");
+    YES(true, "1", "Yes"),
+    NOT(false, "0", "No");
 
     companion object Companion {
 

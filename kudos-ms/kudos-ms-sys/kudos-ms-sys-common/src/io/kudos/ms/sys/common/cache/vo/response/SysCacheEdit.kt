@@ -4,38 +4,38 @@ import io.kudos.base.model.contract.entity.IIdEntity
 
 
 /**
- * 缓存编辑响应VO
+ * Cache configuration edit response VO.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysCacheEdit (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
-    /** 原子服务编码 */
+    /** Atomic service code */
     val atomicServiceCode: String = "",
 
-    /** 缓存策略代码 */
+    /** Cache strategy code */
     val strategyDictCode: String = "",
 
-    /** 是否启动时写缓存 */
+    /** Write to cache on boot */
     val writeOnBoot: Boolean = true,
 
-    /** 是否及时回写缓存 */
+    /** Write back to cache in real time */
     val writeInTime: Boolean = true,
 
-    /** 缓存生存时间(秒) */
+    /** Cache TTL (seconds) */
     val ttl: Int? = null,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否为 Hash 缓存 */
+    /** Whether it is a Hash cache */
     val hash: Boolean = false,
 
 ) : IIdEntity<String>

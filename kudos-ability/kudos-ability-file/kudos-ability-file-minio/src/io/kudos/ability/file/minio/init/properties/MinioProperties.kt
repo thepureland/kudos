@@ -1,15 +1,18 @@
 package io.kudos.ability.file.minio.init.properties
 
 /**
- * MinIO 客户端配置，对应 `kudos.ability.file.minio.*`。
+ * MinIO client configuration, corresponding to `kudos.ability.file.minio.*`.
  *
- * @property endpoint 内部访问的 MinIO 地址（如 K8s 集群内 service DNS 或 IP）
- * @property accessKey AK——静态客户端用
- * @property secretKey SK——静态客户端用
- * @property publicEndpoint 外网访问的 MinIO 地址，作为 [io.kudos.ability.file.common.entity.UploadFileResult.pathPrefix]
- *   返回给业务，让前端直接拼接 `pathPrefix + filePath` 形成可访问 URL。
- *   通常和 [endpoint] 不同——内部走 service DNS、外部走 ingress 域名 / CDN。
- * @property partSize 未知大小流上传时传给 MinIO SDK 的 multipart 分片大小，默认 10MiB。
+ * @property endpoint internal MinIO address (e.g. service DNS or IP inside a K8s cluster)
+ * @property accessKey AK — used by the static client
+ * @property secretKey SK — used by the static client
+ * @property publicEndpoint externally accessible MinIO address, returned to business
+ *   code as [io.kudos.ability.file.common.entity.UploadFileResult.pathPrefix] so
+ *   the frontend can directly concatenate `pathPrefix + filePath` into an accessible URL.
+ *   Usually differs from [endpoint] — internal traffic goes through service DNS,
+ *   external traffic via ingress domain / CDN.
+ * @property partSize multipart part size passed to the MinIO SDK when uploading
+ *   streams of unknown size; defaults to 10 MiB.
  *
  * @author K
  * @author AI: Codex

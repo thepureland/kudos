@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank
 
 
 /**
- * 系统表单更新请求VO
+ * System update form request VO.
  *
  * @author K
  * @since 1.0.0

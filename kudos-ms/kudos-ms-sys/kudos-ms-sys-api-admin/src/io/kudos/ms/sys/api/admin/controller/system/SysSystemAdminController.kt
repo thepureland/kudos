@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 /**
- * 系统管理控制器
+ * System management controller.
  *
  * @author K
  * @since 1.0.0
@@ -35,25 +35,25 @@ class SysSystemAdminController:
             >() {
 
     /**
-     * 返回所有启用的子系统编码
+     * Return all active sub-system codes.
      *
-     * @return List<子系统编码>
+     * @return List<sub-system code>
      */
     @GetMapping("/getAllActiveSubSystemCodes")
     fun getAllActiveSubSystemCodes(): List<String> = service.getActiveSubSystemCodes()
 
     /**
-     * 返回所有启用的系统（不含子系统）编码
+     * Return all active system (excluding sub-systems) codes.
      *
-     * @return List<系统编码>
+     * @return List<system code>
      */
     @GetMapping("/getAllActiveSystemCodes")
     fun getAllActiveSystemCodes(): List<String> = service.getActiveSystemCodes()
 
     /**
-     * 返回整棵系统树
+     * Return the whole system tree.
      *
-     * @return 系统树节点列表（根节点及其 children）
+     * @return system tree node list (root nodes and their children)
      */
     @GetMapping("/getFullSystemTree")
     fun getFullSystemTree(): List<IdAndNameTreeNode<String>> {
@@ -61,11 +61,11 @@ class SysSystemAdminController:
     }
 
     /**
-     * 更新active状态
+     * Update the active status.
      *
-     * @param id 主键
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id primary key
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     @PutMapping("/updateActive")
     fun updateActive(id: String, active: Boolean): Boolean {

@@ -7,7 +7,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Criterion DSL测试用例
+ * Criterion DSL test cases
  *
  * @author AI: cursor
  * @author K

@@ -9,14 +9,14 @@ import kotlin.reflect.full.memberProperties
 
 
 /**
- * 缓存配置默认提供者：从 `kudos.cache.items` 字符串列表配置（item 形如 `name=xxx&strategy=REMOTE&...`）
- * 和 `cache-item-configs` 结构化配置解析为 [CacheConfig]。
+ * Default cache configuration provider: parses [CacheConfig] from the `kudos.cache.items` string-list configuration
+ * (items shaped like `name=xxx&strategy=REMOTE&...`) and the `cache-item-configs` structured configuration.
  *
- * 关键点：
- * - 配置在 init 阶段一次性解析，运行期不变 → 所有查询都基于初始化后构建的扁平 map，O(1) 命中。
- * - 旧实现把 cacheConfigs 放在 companion object 里（多实例会共享状态，跨测试上下文会"配置累积"），现在改成实例字段。
- * - 旧实现的 [getCacheConfig] 和 [getAllCacheConfigs] 每次都重建扁平 map（O(策略数 × 缓存项数)），
- *   而 Kit 在热路径上反复调它们；现在改成构建一次后只读，避免重复聚合开销。
+ * Key points:
+ * - Configuration is parsed once during init and is immutable at runtime -> all lookups go against the flat map built after init, with O(1) hits.
+ * - The legacy implementation kept cacheConfigs in a companion object (multiple instances would share state and tests would accumulate config across contexts); we now use instance fields.
+ * - The legacy [getCacheConfig] and [getAllCacheConfigs] rebuilt the flat map on every call (O(strategies x cache items)),
+ *   while Kit calls them repeatedly on hot paths. We now build once and read-only afterward to avoid repeated aggregation cost.
  *
  * @author K
  * @author AI: Codex
@@ -24,13 +24,13 @@ import kotlin.reflect.full.memberProperties
  */
 class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICacheConfigProvider {
 
-    /** 按策略分组的配置（结构与旧实现一致，仅作为构造期数据组织）。 */
+    /** Configurations grouped by strategy (same structure as the legacy implementation, used only as construction-time data organization). */
     private val cacheConfigsByStrategy: MutableMap<String, MutableMap<String, CacheConfig>> = mutableMapOf()
 
-    /** 扁平化的全量配置 cacheName -> config，初始化后冻结。 */
+    /** Flat full configuration map cacheName -> config, frozen after initialization. */
     private val flatConfigs: Map<String, CacheConfig>
 
-    /** 按策略预切的不可变视图，避免每次查询再过滤。 */
+    /** Pre-sliced immutable views per strategy, avoiding re-filtering on each lookup. */
     private val localConfigs: Map<String, CacheConfig>
     private val remoteConfigs: Map<String, CacheConfig>
     private val localRemoteConfigs: Map<String, CacheConfig>
@@ -39,7 +39,7 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
     init {
         val cacheItems = itemsProperties.cacheItems
         val cacheItemConfigs = itemsProperties.cacheItemConfigs
-        log.info("加载到cache-items配置：size=${cacheItems.size}, cache-item-configs配置：size=${cacheItemConfigs.size}")
+        log.info("Loaded cache-items config: size=${cacheItems.size}, cache-item-configs config: size=${cacheItemConfigs.size}")
         if (cacheItems.isNotEmpty()) {
             initCacheConfig(cacheItems)
         }
@@ -56,7 +56,7 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
     }
 
     /**
-     * 从配置解析，初始化缓存
+     * Parses the configuration and initializes caches.
      *
      * @param cacheItems
      */
@@ -81,7 +81,7 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
         cacheItem.split("&").forEach { param ->
             val (key, value) = parseParam(param, cacheItem)
             require(key in writableConfigProperties) {
-                "cache item 包含未知字段 '$key': $cacheItem，可用字段：${writableConfigProperties.joinToString()}"
+                "cache item contains unknown field '$key': $cacheItem; available fields: ${writableConfigProperties.joinToString()}"
             }
             BeanKit.setProperty<CacheConfig?>(config, key, value)
         }
@@ -91,7 +91,7 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
     private fun parseParam(param: String, cacheItem: String): Pair<String, String> {
         val pair = param.split("=", limit = 2)
         require(pair.size == 2 && pair[0].isNotBlank()) {
-            "cache item 参数格式错误，应为 key=value: '$param' in '$cacheItem'"
+            "cache item parameter format is invalid; expected key=value: '$param' in '$cacheItem'"
         }
         return pair[0] to pair[1]
     }
@@ -106,15 +106,16 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
     }
 
     private fun addCacheConfig(cacheConfig: CacheConfig, source: String) {
-        // 用派生属性 resolvedStrategyCode 而非裸 `.strategy`——README "新代码必须用派生属性"
-        // 契约的最后一处遗留 reader 收口。yml 解析路径只会设 `.strategy`，DB 字典码路径
-        // 只会设 `.strategyDictCode`；resolvedStrategyCode 把两条来源兜底集中到一处。
+        // Use the derived property `resolvedStrategyCode` instead of the raw `.strategy` — this is the final
+        // remaining legacy reader to satisfy the README "new code must use the derived property" contract.
+        // The yml parsing path only sets `.strategy`; the DB dictionary-code path only sets `.strategyDictCode`;
+        // `resolvedStrategyCode` consolidates both sources in one place.
         val strategy = cacheConfig.resolvedStrategyCode
-            ?: error("cache item 缺少 strategy: $source")
+            ?: error("cache item is missing strategy: $source")
         require(cacheConfig.resolvedStrategy != null) {
-            "cache item strategy 非法 '$strategy': $source，可用值：${CacheStrategy.values().joinToString { it.name }}"
+            "cache item strategy is invalid '$strategy': $source; allowed values: ${CacheStrategy.values().joinToString { it.name }}"
         }
-        val name = cacheConfig.name?.takeIf { it.isNotBlank() } ?: error("cache item 缺少 name: $source")
+        val name = cacheConfig.name?.takeIf { it.isNotBlank() } ?: error("cache item is missing name: $source")
         cacheConfigsByStrategy.getOrPut(strategy) { mutableMapOf() }[name] = cacheConfig
     }
 

@@ -6,16 +6,16 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 
 /**
- * [ClientCacheItem.genUid] 指纹稳定性 + 边界场景单测。
+ * Unit tests for [ClientCacheItem.genUid] fingerprint stability and edge cases.
  *
- * 契约（README）：
- *  - 同一类、同一字段值 → 同一 UID
- *  - 不同字段值 → 不同 UID
- *  - FQN 与 JSON 间用 `#` 分隔，杜绝"类名 + JSON 拼接同字符串"碰撞
- *  - 与"加密"无关——MD5 仅作内容指纹
+ * Contract (README):
+ *  - Same class, same field values → same UID
+ *  - Different field values → different UID
+ *  - FQN and JSON are separated by `#`, preventing "class name + JSON concatenated to the same string" collisions
+ *  - Not for encryption — MD5 is used only as a content fingerprint
  *
- * 已知风险（README 也说过）：DTO 含 `Map<*, *>` 且非 LinkedHashMap 时迭代顺序不稳——
- * 在本测试中刻意用 [LinkedHashMap] / data class 保证可重复。
+ * Known risk (also documented in the README): when a DTO contains a `Map<*, *>` that is not a LinkedHashMap,
+ * iteration order is unstable — these tests deliberately use [LinkedHashMap] / data class for repeatability.
  *
  * @author K
  * @author AI: Codex
@@ -24,7 +24,7 @@ import kotlin.test.assertNotNull
 internal class ClientCacheItemTest {
 
     /**
-     * UID 测试用用户 DTO。
+     * User DTO used for UID tests.
      *
      * @author K
      * @author AI: Codex
@@ -33,7 +33,7 @@ internal class ClientCacheItemTest {
     private data class UserDto(val id: Int, val name: String)
 
     /**
-     * UID 类型隔离测试用订单 DTO。
+     * Order DTO used to test UID type isolation.
      *
      * @author K
      * @author AI: Codex
@@ -57,8 +57,8 @@ internal class ClientCacheItemTest {
 
     @Test
     fun genUid_differentClassesSameFieldShape_differentUid() {
-        // UserDto(1, "Alice") 与 OrderDto(1, "Alice") JSON 内容完全一致，仅 FQN 不同。
-        // 没有 # 分隔时类名 + JSON 拼接会撞——本测试守住 FQN 隔离。
+        // UserDto(1, "Alice") and OrderDto(1, "Alice") produce identical JSON; only the FQN differs.
+        // Without the `#` separator, class name + JSON concatenation would collide — this test guards FQN isolation.
         val u = UserDto(1, "Alice")
         val o = OrderDto(1, "Alice")
         assertNotEquals(ClientCacheItem.genUid(u), ClientCacheItem.genUid(o))

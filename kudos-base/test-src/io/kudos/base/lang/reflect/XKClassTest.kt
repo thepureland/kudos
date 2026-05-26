@@ -12,7 +12,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 
 /**
- * XKClass测试用例
+ * XKClass test cases.
  *
  * @author K
  * @since 1.0.0
@@ -83,7 +83,7 @@ class XKClassTest {
         assert(Bird::class.isAnnotationPresent(TestAnno::class))
         assertFalse(Flyable::class.isAnnotationPresent(TestAnno::class))
         assertFalse(Organism::class.isAnnotationPresent(AtLeast::class))
-        assertFalse(Organism::class.isAnnotationPresent(SinceKotlin::class)) // 对于像SinceKotlin的注解无效
+        assertFalse(Organism::class.isAnnotationPresent(SinceKotlin::class)) // ineffective for annotations such as SinceKotlin
     }
 
     @Test
@@ -93,7 +93,7 @@ class XKClassTest {
         Parrot::class.getMemberProperty("name")
         assertFailsWith<NoSuchElementException> { Parrot::class.getMemberProperty("weight") } // private
         assertFailsWith<NoSuchElementException> { Parrot::class.getMemberProperty("xxxxx") }
-        assertFailsWith<NoSuchElementException> { Parrot::class.getMemberProperty("ageValue") } // 只是参数，未定义为属性
+        assertFailsWith<NoSuchElementException> { Parrot::class.getMemberProperty("ageValue") } // only a parameter, not defined as a property
     }
 
     @Test
@@ -156,7 +156,7 @@ class XKClassTest {
             Parrot::class.getClassUpThatPresentAnnotation(TestAnno::class)
         )
 
-        // 对于像SinceKotlin的注解无效
+        // ineffective for annotations such as SinceKotlin
         assert(Parrot::class.getClassUpThatPresentAnnotation(SinceKotlin::class).isEmpty())
     }
 
@@ -211,12 +211,12 @@ class XKClassTest {
 
     internal annotation class TestAnno
 
-    private open class Person { // 没有空构造器，也没有主构造器
+    private open class Person { // no no-arg constructor and no primary constructor
         @Suppress("UNUSED_PARAMETER")
         constructor(name:String, age: Int)
     }
 
-    private class Student: Person { // 没有空构造器，也没有主构造器
+    private class Student: Person { // no no-arg constructor and no primary constructor
         constructor(name:String, age: Int): super(name, age)
     }
 

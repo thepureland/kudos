@@ -7,7 +7,7 @@ import jakarta.annotation.Resource
 /**
  * junit test for UserOrgDao
  *
- * 测试数据来源：`UserOrgDaoTest.sql`
+ * Test data source: `UserOrgDaoTest.sql`
  *
  * @author K
  * @author AI: Cursor

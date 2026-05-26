@@ -13,7 +13,7 @@ import io.kudos.ability.data.rdb.ktorm.support.LongIdTable
 </#if>
 
 
-<@generateClassComment table.comment+"数据库表-实体关联对象"/>
+<@generateClassComment table.comment+" database table-entity mapping object"/>
 //region your codes 1
 object ${entityName}s : ${daoSuperClass}<${entityName}>("${table.name}") {
 //endregion your codes 1

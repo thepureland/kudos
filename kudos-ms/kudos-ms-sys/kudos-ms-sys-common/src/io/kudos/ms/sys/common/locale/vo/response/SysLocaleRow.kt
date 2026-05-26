@@ -4,37 +4,37 @@ import java.time.LocalDateTime
 
 
 /**
- * 语言字典列表查询结果响应VO
+ * Response VO for language dictionary list query result.
  *
  * @author K
  * @since 1.0.0
  */
 data class SysLocaleRow(
 
-    /** 主键 */
+    /** Primary key */
     val id: String = "",
 
-    /** 语言代码 */
+    /** Language code */
     val code: String = "",
 
-    /** 显示名称 */
+    /** Display name */
     val displayName: String = "",
 
-    /** 英文名称 */
+    /** English name */
     val englishName: String = "",
 
-    /** 排序号 */
+    /** Sort number */
     val sortNo: Int = 0,
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = false,
 
-    /** 创建时间 */
+    /** Creation time */
     val createTime: LocalDateTime? = null,
 )

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.accessrule.vo.response
 
 /**
- * 访问规则列表行 DTO。
+ * Access rule list row DTO.
  *
  * @author K
  * @author AI: Cursor
@@ -9,16 +9,16 @@ package io.kudos.ms.sys.common.accessrule.vo.response
  */
 data class SysAccessRuleRow (
 
-    /** 主键 */
+    /** Primary key. */
     val id: String = "",
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String? = null,
 
-    /** 系统编码 */
+    /** System code. */
     val systemCode: String? = null,
 
-    /** 规则类型字典代码 */
+    /** Rule type dictionary code. */
     val accessRuleTypeDictCode: String? = null,
 
 )

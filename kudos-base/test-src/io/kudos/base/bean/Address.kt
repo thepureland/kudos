@@ -3,7 +3,7 @@ package io.kudos.base.bean
 import java.io.Serializable
 
 /**
- * 地址信息(for test)
+ * Address information (for test).
  *
  * @author K
  * @since 1.0.0

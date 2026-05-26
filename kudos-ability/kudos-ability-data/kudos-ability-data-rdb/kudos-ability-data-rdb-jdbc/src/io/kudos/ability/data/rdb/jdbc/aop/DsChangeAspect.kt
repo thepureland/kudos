@@ -14,13 +14,14 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 处理 [DsChange] 注解的切面：方法执行前把注解参数写入 [DbContext] 的 `DbParam`，
- * 执行后整体清空 `DbParam`。
+ * Aspect that handles the [DsChange] annotation: before method execution it writes the annotation
+ * parameters into [DbContext]'s `DbParam`, and after execution it clears `DbParam` entirely.
  *
- * 切面 `@Order(-100)` 比 [DynamicDataSourceAspect]（-99）更外层 —— 必须先把
- * forcedDs 写入 ThreadLocal，路由切面才看得到。
+ * The aspect `@Order(-100)` is outer than [DynamicDataSourceAspect] (-99) — `forcedDs` must be
+ * written into the ThreadLocal first so the routing aspect can see it.
  *
- * `@Lazy` 让 bean 延迟到首次需要时才初始化，避免和早期 bean 形成循环依赖。
+ * `@Lazy` defers bean initialization until first needed to avoid circular dependencies with
+ * early-loaded beans.
  *
  * @author K
  * @author AI: Codex
@@ -35,15 +36,16 @@ class DsChangeAspect {
     private val log = LogFactory.getLog(this::class)
 
     /**
-     * pointcut 定义：所有带 [DsChange] 注解的方法。
+     * Pointcut definition: all methods annotated with [DsChange].
      */
     @Pointcut("@annotation(io.kudos.ability.data.rdb.jdbc.aop.DsChange)")
     private fun cut() {
     }
 
     /**
-     * 环绕通知。写入 forcedDs / readonly，proceed 业务方法，finally 恢复进入切面前的
-     * [DbParam] 快照；进入时无线程上下文则彻底 [DbContext.clear]。
+     * Around advice. Writes `forcedDs` / `readonly`, proceeds with the business method, and in
+     * `finally` restores the [DbParam] snapshot captured before entering the aspect; if there was
+     * no thread context on entry, performs a full [DbContext.clear].
      */
     @Around("cut()")
     fun around(joinPoint: ProceedingJoinPoint): Any? {
@@ -56,7 +58,7 @@ class DsChangeAspect {
         }
         current.readonly = dsChange.readonly
         DbContext.set(current)
-        log.debug("强制指定数据源:ds=${current.forcedDs},readonly=${dsChange.readonly}")
+        log.debug("Forcibly specifying data source: ds=${current.forcedDs}, readonly=${dsChange.readonly}")
         return try {
             joinPoint.proceed()
         } finally {

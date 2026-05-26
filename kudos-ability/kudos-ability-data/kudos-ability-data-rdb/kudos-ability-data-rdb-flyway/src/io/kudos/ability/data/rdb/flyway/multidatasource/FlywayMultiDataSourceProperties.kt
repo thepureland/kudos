@@ -1,13 +1,15 @@
 package io.kudos.ability.data.rdb.flyway.multidatasource
 
 /**
- * 多数据源 Flyway 配置属性，对应 yml 里 `kudos.ability.flyway.*`。
+ * Multi-data-source Flyway configuration properties, mapped to `kudos.ability.flyway.*` in yml.
  *
- * 主要承载"模块名 → 数据源 key"的映射 [datasourceConfig]，启动时
- * [FlywayMultiDataSourceMigrator] 据此决定哪些模块需要迁移、用哪个数据源。
+ * Primarily carries the "module name → data source key" mapping [datasourceConfig]; at startup
+ * [FlywayMultiDataSourceMigrator] uses it to decide which modules need migration and which data
+ * source to use.
  *
- * 用 [LinkedHashMap] 保留声明顺序 —— 同一启动周期内模块迁移按 yml 声明顺序进行，
- * 便于处理"模块 A 的 schema 必须先于模块 B 落地"这类显式依赖。
+ * Uses [LinkedHashMap] to preserve declaration order — within a single startup cycle modules are
+ * migrated in the order declared in yml, which makes it easy to express explicit dependencies like
+ * "module A's schema must land before module B's".
  *
  * @author K
  * @author AI: Codex
@@ -15,9 +17,9 @@ package io.kudos.ability.data.rdb.flyway.multidatasource
  */
 open class FlywayMultiDataSourceProperties {
 
-    /** 数据源配置信息：key = 模块名（对应 `sql/<moduleName>/` 目录），value = 动态数据源 key。 */
+    /** Data source configuration: key = module name (matches the `sql/<moduleName>/` directory), value = dynamic data source key. */
     var datasourceConfig: LinkedHashMap<String, String> = linkedMapOf()
 
-    /** 取某模块对应的数据源 key；模块未配置时返回 `null`。 */
+    /** Returns the data source key for the given module; returns `null` if the module is not configured. */
     fun getDataSourceKey(moduleName: String): String? = datasourceConfig[moduleName]
 }

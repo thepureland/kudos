@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 字典项 API本地实现
+ * Local implementation of the dictionary item API.
  *
  * @author K
  * @since 1.0.0

@@ -3,13 +3,14 @@ package io.kudos.ability.log.audit.common.support
 import io.kudos.ability.log.audit.common.entity.LogVo
 
 /**
- * 审计日志上下文。
+ * Audit log context.
  *
- * 使用 [InheritableThreadLocal] 存储；但 `childValue` 返回 null —— 子线程**不**继承父线程的
- * 审计上下文，避免线程池里的子任务串台到上一个请求的审计记录。
+ * Stored in an [InheritableThreadLocal]; however, `childValue` returns null —
+ * child threads **do not** inherit the parent thread's audit context, preventing
+ * tasks in a thread pool from leaking the previous request's audit record.
  *
- * **线程池场景必须在请求/任务结束的 finally 里调 [clear]**，否则下次复用线程时
- * 会读到陈旧的 LogVo。
+ * **In thread-pool scenarios, [clear] must be called in a finally block at the
+ * end of the request/task**, otherwise the reused thread will read a stale LogVo.
  *
  * @author K
  * @author AI: Codex
@@ -19,7 +20,7 @@ class LogAuditContext {
 
     private val contextParam: ThreadLocal<LogVo> = object : InheritableThreadLocal<LogVo>() {
         override fun childValue(logVo: LogVo?): LogVo? {
-            // 返回 null 表示子线程不继承父线程的值
+            // Returning null means the child thread does not inherit the parent's value.
             return null
         }
     }
@@ -28,9 +29,9 @@ class LogAuditContext {
         private val self = LogAuditContext()
 
         /**
-         * 设置当前线程的审计日志上下文。
+         * Sets the audit log context for the current thread.
          *
-         * @param logVo 日志值对象
+         * @param logVo log value object
          * @author K
          * @since 1.0.0
          */
@@ -39,17 +40,23 @@ class LogAuditContext {
         }
 
         /**
-         * 获取当前线程的审计日志上下文，**没有时自动创建并塞回 ThreadLocal**。
+         * Returns the audit log context for the current thread; **if none exists,
+         * automatically creates one and stores it back into the ThreadLocal**.
          *
-         * 历史 API 语义：[io.kudos.ability.log.audit.common.annotation.LogAuditAspect.after]
-         * 假设 `set` 之后 `get` 一定非空；但某些路径只走 `after` 而没走 `before`，所以这里
-         * 兜底创建。副作用：
-         *  - **只读侦测**（"当前线程有 LogVo 吗？"）会污染 ThreadLocal，留下空 [LogVo] 实例。
-         *  - 线程池复用线程时这个空 LogVo 不会被自动清，下一个任务读出来误以为已有审计上下文。
+         * Historical API semantics:
+         * [io.kudos.ability.log.audit.common.annotation.LogAuditAspect.after]
+         * assumes that after `set`, `get` is always non-null; but some paths only
+         * go through `after` without `before`, so this falls back to creating one.
+         * Side effects:
+         *  - **Read-only probes** ("does the current thread have a LogVo?") will
+         *    pollute the ThreadLocal with an empty [LogVo] instance.
+         *  - When a thread pool reuses the thread, the empty LogVo is not auto-cleared,
+         *    so the next task reads it and mistakenly believes the audit context exists.
          *
-         * 纯只读检查请改用 [getOrNull]；调用方仍需在请求 / 任务结束的 finally 里调 [clear]。
+         * Use [getOrNull] for pure read-only checks; callers must still call [clear]
+         * in a finally block at the end of the request / task.
          *
-         * @return 当前线程的 LogVo（可能是刚创建的空实例）
+         * @return the current thread's LogVo (possibly a freshly created empty instance)
          * @author K
          * @since 1.0.0
          */
@@ -61,15 +68,17 @@ class LogAuditContext {
         }
 
         /**
-         * 只读侦测：返回当前线程的 LogVo，**没有时返回 null 而不创建**。
-         * 用于"看看有没有"而不是"我要用"的场景，避免污染 ThreadLocal。
+         * Read-only probe: returns the current thread's LogVo; **returns null
+         * without creating one when absent**. For "check if present" rather than
+         * "I want to use it" scenarios, to avoid polluting the ThreadLocal.
          */
         fun getOrNull(): LogVo? = self.contextParam.get()
 
         /**
-         * 清除当前线程的审计日志上下文。
+         * Clears the current thread's audit log context.
          *
-         * 建议在请求 / 任务结束时调用此方法，避免线程池复用线程时造成上下文污染和内存泄漏。
+         * Recommended to call this at the end of the request / task to avoid
+         * context pollution and memory leaks when a thread pool reuses threads.
          *
          * @author K
          * @since 1.0.0

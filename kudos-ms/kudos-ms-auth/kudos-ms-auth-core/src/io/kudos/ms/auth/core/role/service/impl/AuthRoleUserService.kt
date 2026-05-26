@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 角色-用户关系业务
+ * Role-User relation business
  *
  * @author K
  * @author AI: Cursor
@@ -55,11 +55,11 @@ open class AuthRoleUserService(
     @Transactional
     override fun batchBind(roleId: String, userIds: Collection<String>): Int {
         if (userIds.isEmpty()) return 0
-        // 一次 SELECT 已存在的关系，差集对新增 ID 一次 batchInsert，把原 N+1 折叠到 2 次 SQL。
+        // SELECT existing relations once, then batchInsert the delta of new IDs once, folding the original N+1 into 2 SQL calls.
         val existing = dao.searchUserIdsByRoleId(roleId).toSet()
         val boundUserIds = userIds.toSet() - existing
         if (boundUserIds.isEmpty()) {
-            log.debug("批量绑定角色${roleId}与${userIds.size}个用户的关系，全部已存在，无新增。")
+            log.debug("Batch binding relations between role ${roleId} and ${userIds.size} users; all already exist, nothing added.")
             return 0
         }
         val relations = boundUserIds.map { userId ->
@@ -69,7 +69,7 @@ open class AuthRoleUserService(
             }
         }
         dao.batchInsert(relations)
-        log.debug("批量绑定角色${roleId}与${userIds.size}个用户的关系，成功绑定${boundUserIds.size}条。")
+        log.debug("Batch binding relations between role ${roleId} and ${userIds.size} users; successfully bound ${boundUserIds.size} entries.")
         eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, boundUserIds.toList()))
         return boundUserIds.size
     }
@@ -79,10 +79,10 @@ open class AuthRoleUserService(
         val count = dao.deleteByRoleIdAndUserId(roleId, userId)
         val success = count > 0
         if (success) {
-            log.debug("解绑角色${roleId}与用户${userId}的关系。")
+            log.debug("Unbinding relation between role ${roleId} and user ${userId}.")
             eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, listOf(userId)))
         } else {
-            log.warn("解绑角色${roleId}与用户${userId}的关系失败，关系不存在。")
+            log.warn("Failed to unbind relation between role ${roleId} and user ${userId}; relation does not exist.")
         }
         return success
     }

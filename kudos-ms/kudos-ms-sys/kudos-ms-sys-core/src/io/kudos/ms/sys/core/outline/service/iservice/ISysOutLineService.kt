@@ -6,7 +6,7 @@ import io.kudos.ms.sys.core.outline.model.po.SysOutLine
 
 
 /**
- * 出网白名单业务接口
+ * Outbound allowlist service interface.
  *
  * @author K
  * @since 1.0.0
@@ -14,20 +14,20 @@ import io.kudos.ms.sys.core.outline.model.po.SysOutLine
 interface ISysOutLineService : IBaseCrudService<String, SysOutLine> {
 
     /**
-     * 列出指定系统/租户下启用的所有出网白名单。`tenantId == null` 表示平台级规则。
+     * List all enabled outbound allowlist entries under the given system/tenant. `tenantId == null` means platform-level rules.
      *
-     * @param systemCode 系统编码，非空
-     * @param tenantId 租户id；为 `null` 时查询平台级规则
-     * @return 已启用的出网白名单缓存项
+     * @param systemCode system code, non-blank
+     * @param tenantId tenant id; when `null`, queries platform-level rules
+     * @return list of active outbound allowlist cache entries
      */
     fun listActiveOutLines(systemCode: String, tenantId: String? = null): List<SysOutLineCacheEntry>
 
     /**
-     * 更新启用状态
+     * Update the enabled state.
      *
-     * @param id 出网白名单 id
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id outbound allowlist id
+     * @param active whether enabled
+     * @return whether the update succeeded
      */
     fun updateActive(id: String, active: Boolean): Boolean
 

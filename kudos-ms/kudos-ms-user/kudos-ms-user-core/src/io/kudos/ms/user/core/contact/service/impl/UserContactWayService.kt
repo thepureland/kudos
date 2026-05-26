@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 
 
 /**
- * 用户联系方式业务
+ * User contact way service
  *
  * @author K
  * @author AI: Codex
@@ -34,7 +34,7 @@ open class UserContactWayService(
             .addAnd(UserContactWay::contactWayDictCode eq contactWayDictCode)
             .addAnd(UserContactWay::active eq true)
         val rows = dao.search(criteria)
-        // 同一 userId 多条时按 priority ASC 取第一；priority 为 null 的视作最低优先级
+        // For multiple rows with the same userId, pick the first by priority ASC; null priority is treated as lowest priority
         return rows
             .groupBy { it.userId }
             .mapValues { (_, list) ->

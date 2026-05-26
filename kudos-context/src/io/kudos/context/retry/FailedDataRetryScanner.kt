@@ -15,11 +15,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 /**
- * 失败数据重试扫描器。
+ * Failed-data retry scanner.
  *
- * 在应用启动后为每个 [IFailedDataHandler] 创建一条独立的 CRON 定时任务。
- * 任务触发时先抢分布式锁（多实例部署只让一个节点执行），
- * 再扫描该 handler 对应目录下的失败数据文件，依次交还 handler 重试，成功则删除文件。
+ * After application startup, creates a dedicated CRON scheduled task for each [IFailedDataHandler].
+ * When the task fires, it first acquires a distributed lock (so only one node runs in multi-instance deployments),
+ * then scans the handler's corresponding directory for failed-data files and hands each one back to the handler for retry; on success the file is deleted.
  *
  * @author K
  * @author AI: Codex
@@ -28,41 +28,41 @@ import java.nio.file.Paths
 @Component
 class FailedDataRetryScanner {
 
-    /** 失败数据重试专用的 [TaskScheduler]；由配置类提供独立线程池，避免占用业务调度池 */
+    /** [TaskScheduler] dedicated to failed-data retry; the config class provides a separate thread pool to avoid consuming the business scheduler pool. */
     @Autowired
     @Qualifier("failDataTaskScheduler")
     private lateinit var taskScheduler: TaskScheduler
 
     /**
-     * 锁提供者解析回调。默认走 [LockTool.lockProvider]（要求 Spring 上下文已就绪）。
+     * Lock provider resolution callback. Defaults to [LockTool.lockProvider] (requires the Spring context to be ready).
      *
-     * Visible-for-testing：单元测试时把它设为 `{ NormalLockService() }` 之类的本地实例，
-     * 即可在不启动 Spring 容器的前提下测 [retry] / [lockRetry]。
+     * Visible-for-testing: in unit tests, set this to e.g. `{ NormalLockService() }` (a local instance),
+     * so [retry] / [lockRetry] can be tested without starting the Spring container.
      */
     internal var lockProviderSupplier: () -> ILeaseLockProvider = { LockTool.lockProvider }
 
 
     /**
-     * 调度所有失败数据重试任务
+     * Schedules all failed-data retry tasks.
      *
-     * 在应用启动后，为所有IFailedDataHandler实现类创建定时重试任务。
+     * After application startup, creates a scheduled retry task for every IFailedDataHandler implementation.
      *
-     * 工作流程：
-     * 1. 获取所有IFailedDataHandler实现类的Bean
-     * 2. 为每个处理器创建定时任务：
-     *    - 使用处理器配置的cronExpression作为执行频率
-     *    - 任务执行时调用lockRetry方法（带分布式锁保护）
-     * 3. 记录调度信息日志
+     * Flow:
+     * 1. Obtain beans for all IFailedDataHandler implementations
+     * 2. For each handler, create a scheduled task:
+     *    - Use the handler's configured cronExpression as the firing schedule
+     *    - When the task fires, call lockRetry (protected by a distributed lock)
+     * 3. Log the scheduling information
      *
-     * 定时任务：
-     * - 每个处理器都有独立的定时任务
-     * - 使用CronTrigger支持灵活的调度配置
-     * - 任务执行时会获取分布式锁，确保多实例环境下只有一个实例执行
+     * Scheduled tasks:
+     * - Each handler has its own dedicated scheduled task
+     * - Uses CronTrigger for flexible schedule configuration
+     * - Acquires a distributed lock at task execution time so only one instance runs in multi-instance environments
      *
-     * 注意事项：
-     * - 在@PostConstruct阶段执行，确保所有Bean都已初始化
-     * - 每个处理器的重试频率可以独立配置
-     * - 使用分布式锁避免多实例重复执行
+     * Notes:
+     * - Runs in the @PostConstruct phase to ensure all beans are initialized
+     * - Each handler's retry frequency can be configured independently
+     * - Uses a distributed lock to avoid duplicate execution across instances
      */
     @jakarta.annotation.PostConstruct
     fun scheduleAll() {
@@ -77,32 +77,32 @@ class FailedDataRetryScanner {
     }
 
     /**
-     * 返回当前线程已绑定上下文中的原子服务编码。
+     * Returns the atomic service code from the context bound to the current thread.
      *
-     * 启动期调度线程通常没有请求上下文，这里必须用 [KudosContextHolder.getOrNull]，
-     * 避免为了生成锁 key 而隐式创建一个空的 ThreadLocal 上下文。
+     * Scheduler threads during startup usually have no request context, so [KudosContextHolder.getOrNull] must be used here
+     * to avoid implicitly creating an empty ThreadLocal context just to generate a lock key.
      */
     internal fun currentAtomicServiceCode(): String? =
         KudosContextHolder.getOrNull()?.atomicServiceCode
 
     /**
-     * 加锁重试：使用分布式锁保护重试操作
+     * Locked retry: protects the retry operation with a distributed lock.
      *
-     * 在分布式环境下，确保只有一个实例执行重试操作，避免重复处理。
+     * In a distributed environment, ensures only one instance executes the retry to avoid duplicate processing.
      *
-     * 锁键格式：
+     * Lock key format:
      * - `"$FAILED_DATA_RETRY_LOCK_PREFIX{businessType}_{appName}"`
-     * - 历史版本曾误写为 `faile-data-retry-`，已统一为 `failed-data-retry-`；多实例部署须同版本前缀以免无法互斥。
+     * - A historical version had a typo `faile-data-retry-`, now standardized to `failed-data-retry-`; multi-instance deployments must use the same prefix to remain mutually exclusive.
      *
-     * @param handler 失败数据处理器
-     * @param appName 应用名称，用于生成锁键
+     * @param handler the failed-data handler
+     * @param appName the application name, used to build the lock key
      */
     internal fun lockRetry(handler: IFailedDataHandler<*>, appName: String?) {
         val lockProvider = lockProviderSupplier()
         val key = "$FAILED_DATA_RETRY_LOCK_PREFIX${handler.businessType}_$appName"
         val lock = lockProvider.tryLock(key, 600)
         if (!lock) {
-            logger.warn("还有其他任务在处理中，未正确释放锁")
+            logger.warn("another task is still in progress; the lock has not been released")
             return
         }
         try {
@@ -113,9 +113,9 @@ class FailedDataRetryScanner {
     }
 
     /**
-     * 执行重试：扫描失败数据文件并处理
+     * Executes the retry: scans for failed-data files and processes them.
      *
-     * @param handler 失败数据处理器，负责处理具体的失败数据
+     * @param handler the failed-data handler responsible for processing the specific failed data
      */
     internal fun retry(handler: IFailedDataHandler<*>) {
         val dir = Paths.get(handler.filePath(), handler.businessType)
@@ -154,16 +154,16 @@ class FailedDataRetryScanner {
         }
     }
 
-    /** 日志器 */
+    /** Logger */
     private val logger = LogFactory.getLog(this::class)
 
     companion object {
-        /** 失败数据重试锁键前缀（已修正历史拼写 faile-data-retry） */
+        /** Failed-data retry lock key prefix (historical typo `faile-data-retry` has been corrected). */
         private const val FAILED_DATA_RETRY_LOCK_PREFIX = "failed-data-retry-"
 
         /**
-         * 合法失败数据文件名的正则：`{时间戳}-{UUID}.json`。
-         * 用于过滤目录内的非数据文件（如 IDE 的 `.DS_Store`、临时 swap 文件）。
+         * Regex for valid failed-data file names: `{timestamp}-{UUID}.json`.
+         * Used to filter out non-data files inside the directory (such as IDE `.DS_Store` files or temporary swap files).
          */
         private val FAILED_DATA_FILE_PATTERN = Regex("""\d+-[0-9a-fA-F\-]+\.json""")
     }

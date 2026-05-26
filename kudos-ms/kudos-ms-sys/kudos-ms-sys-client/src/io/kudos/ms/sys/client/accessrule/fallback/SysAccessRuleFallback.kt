@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * 访问规则 Feign 容错降级实现。
+ * Access rule Feign fallback implementation.
  *
  * @author K
  * @since 1.0.0

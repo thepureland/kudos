@@ -10,7 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * [SeataXidServletFilter] 入站 XID 绑定与清理测试。
+ * Tests for [SeataXidServletFilter] inbound XID binding and cleanup.
  *
  * @author K
  * @author AI: Codex

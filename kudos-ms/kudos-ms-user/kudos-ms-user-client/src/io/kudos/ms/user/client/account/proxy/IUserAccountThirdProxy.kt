@@ -6,7 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
- * 用户第三方账号客户端代理接口
+ * Third-party user account client proxy interface.
  *
  * @author K
  * @author AI: Codex

@@ -6,44 +6,44 @@ import java.time.LocalDateTime
 
 
 /**
- * 消息实例缓存项
+ * Message instance cache entry.
  *
  * @author K
  * @since 1.0.0
  */
 data class MsgInstanceCacheEntry (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String,
 
-    /** 国家-语言字典码 */
+    /** Country-language dictionary code */
     val localeDictCode: String?,
 
-    /** 标题 */
+    /** Title */
     val title: String?,
 
-    /** 通知内容 */
+    /** Notification content */
     val content: String?,
 
-    /** 消息模板id */
+    /** Message template id */
     val templateId: String?,
 
-    /** 发送类型字典码 */
+    /** Send type dictionary code */
     val sendTypeDictCode: String?,
 
-    /** 事件类型字典码 */
+    /** Event type dictionary code */
     val eventTypeDictCode: String?,
 
-    /** 消息类型字典码 */
+    /** Message type dictionary code */
     val msgTypeDictCode: String?,
 
-    /** 有效期起 */
+    /** Validity start time */
     val validTimeStart: LocalDateTime?,
 
-    /** 有效期止 */
+    /** Validity end time */
     val validTimeEnd: LocalDateTime?,
 
-    /** 租户ID */
+    /** Tenant ID */
     val tenantId: String?,
 
 ) : IIdEntity<String>, Serializable {

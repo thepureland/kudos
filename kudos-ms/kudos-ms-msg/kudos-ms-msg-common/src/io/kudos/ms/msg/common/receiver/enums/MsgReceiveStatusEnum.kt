@@ -2,30 +2,31 @@ package io.kudos.ms.msg.common.receiver.enums
 
 
 /**
- * `msg_receive.receive_status_dict_code` 取值。
+ * Values of `msg_receive.receive_status_dict_code`.
  *
- * 字典码与 `V1.0.0.2__insert_sys_dict_item.sql` 中的 receive_status 字典项一一对应，
- * 改这里的同时务必保证 SQL 端的 item_code 不变。
+ * The dict codes correspond one-to-one with the receive_status dict items defined in
+ * `V1.0.0.2__insert_sys_dict_item.sql`; when changing these, make sure the SQL-side
+ * item_code values stay the same.
  *
  * @author K
  * @since 1.0.0
  */
 enum class MsgReceiveStatusEnum(val dictCode: String) {
 
-    /** 已接收（发送端写入接收记录的初始状态） */
+    /** Received (the initial status written by the sender into the receive record) */
     RECEIVED("11"),
 
-    /** 未读（接收方拉取过、但尚未点开） */
+    /** Unread (the recipient has fetched but not yet opened it) */
     UNREAD("01"),
 
-    /** 已读（接收方点开过） */
+    /** Read (the recipient has opened it) */
     READ("12"),
 
-    /** 已删除（接收方在收件箱里删除，但保留行做审计） */
+    /** Deleted (removed by the recipient from the inbox, but the row is kept for audit) */
     DELETED("21");
 
     companion object {
-        /** "未读" 类接收记录的判定集合：RECEIVED 也算未读，因为接收方还没打开过。 */
+        /** Set used to detect "unread" receive records: RECEIVED also counts as unread since the recipient has not opened it yet. */
         val UNREAD_CODES: Set<String> = setOf(RECEIVED.dictCode, UNREAD.dictCode)
     }
 }

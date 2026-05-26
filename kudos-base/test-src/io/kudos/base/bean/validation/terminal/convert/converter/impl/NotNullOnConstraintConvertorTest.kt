@@ -7,7 +7,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * NotNullOnConstraintConvertor测试用例
+ * Test cases for NotNullOnConstraintConvertor.
  *
  * @author AI: cursor
  * @author K
@@ -23,7 +23,7 @@ internal class NotNullOnConstraintConvertorTest {
             val convertor = NotNullOnConstraintConvertor(annotation)
             val rule = convertor.getRule(annotation)
             assertNotNull(rule)
-            // 应该包含depends属性
+            // Should contain the `depends` attribute
             assertTrue(rule.containsKey("depends"))
         }
     }
@@ -37,7 +37,7 @@ internal class NotNullOnConstraintConvertorTest {
             val rule = convertor.getRule(annotation)
             val depends = rule["depends"]
             assertNotNull(depends)
-            // depends应该是Depends注解的规则映射
+            // `depends` should be the rule map of the Depends annotation
             assertTrue(depends is Map<*, *>)
         }
     }
@@ -48,7 +48,7 @@ internal class NotNullOnConstraintConvertorTest {
                 properties = ["other"],
                 values = ["test"]
             ),
-            message = "当other为test时，value不能为空"
+            message = "value must not be null when `other` is `test`"
         )
         val value: String?,
         val other: String?

@@ -11,7 +11,7 @@ import org.testcontainers.utility.DockerImageName
 
 
 /**
- * WireMock测试容器
+ * WireMock test container.
  *
  * @author K
  * @since 1.0.0
@@ -28,16 +28,16 @@ object WireMockTestContainer {
 
 
     /**
-     * 启动容器(若需要)
+     * Starts the container (if needed).
      *
-     * 保证批量测试时共享一个容器，避免多次开/停容器，浪费大量时间。
-     * 另外，亦可手动运行该clazz类的main方法来启动容器，跑测试用例时共享它。
-     * 并注册 JVM 关闭钩子，当批量测试结束时自动停止容器，
-     * 而不是每个测试用例结束时就关闭，前提条件是不要加@Testcontainers注解。
-     * 当docker没安装时想忽略测试用例，可以用@EnabledIfDockerInstalled
+     * Ensures a single container is shared across a batch of tests, avoiding the time wasted starting/stopping containers repeatedly.
+     * Alternatively, you can run this class's main method manually to start the container and share it while running tests.
+     * Registers a JVM shutdown hook to automatically stop the container when the batch finishes,
+     * rather than stopping after each test — provided the @Testcontainers annotation is not used.
+     * To skip tests when Docker is not installed, use @EnabledIfDockerInstalled.
      *
-     * @param registry spring的动态属性注册器，可用来注册或覆盖已注册的属性
-     * @return 运行中的容器对象
+     * @param registry Spring's dynamic property registry, used to register or override already-registered properties
+     * @return the running container instance
      */
     fun startIfNeeded(registry: DynamicPropertyRegistry?): Container {
         return TestContainerCrossProcessLock.run(WireMockTestContainer::class.java, "wiremock") {
@@ -50,12 +50,12 @@ object WireMockTestContainer {
     }
 
     /**
-     * WireMock 容器目前不注册任何 Spring 属性——测试代码会直接拿
-     * [getRunningContainer] 拼出 baseUrl 自用，不需要透传到 Bean 配置层。
-     * 保留方法是为了和其他 TestContainer 形态对齐 [startIfNeeded] 调用模板。
+     * The WireMock container currently registers no Spring properties — test code uses
+     * [getRunningContainer] directly to build its baseUrl, with no need to pass values into bean configuration.
+     * The method is kept to keep the [startIfNeeded] call template aligned with other TestContainer types.
      *
-     * @param registry Spring 动态属性注册表（允许 null）
-     * @param runningContainer 运行中的容器
+     * @param registry the Spring dynamic property registry (null allowed)
+     * @param runningContainer the running container
      * @author K
      * @since 1.0.0
      */
@@ -63,9 +63,9 @@ object WireMockTestContainer {
     }
 
     /**
-     * 返回运行中的容器对象
+     * Returns the running container instance.
      *
-     * @return 容器对象，如果没有返回null
+     * @return the container instance, or null if none is running
      */
     fun getRunningContainer(): Container? = TestContainerKit.getRunningContainer(LABEL)
 

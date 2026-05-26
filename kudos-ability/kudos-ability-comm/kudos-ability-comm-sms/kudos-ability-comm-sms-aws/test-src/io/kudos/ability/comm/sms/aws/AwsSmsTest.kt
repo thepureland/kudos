@@ -18,7 +18,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * aws短信发送测试用例，用WireMock模拟aws短信服务
+ * AWS SMS send test case; uses WireMock to mock the AWS SMS service.
  *
  * @author AI: ChatGPT
  * @author K
@@ -37,7 +37,7 @@ class AwsSmsTest {
 
         val req = AwsSmsRequest().apply {
             region = "us-east-1"
-            accessKeyId = "fake-ak"       // WireMock 不校验签名
+            accessKeyId = "fake-ak"       // WireMock does not verify the signature
             accessKeySecret = "fake-sk"
             phoneNumber = "+15550100"
             message = "hello wiremock"
@@ -67,7 +67,7 @@ class AwsSmsTest {
             region = "us-east-1"
             accessKeyId = "fake-ak"
             accessKeySecret = "fake-sk"
-            phoneNumber = "+19990000"     // 命中限流桩
+            phoneNumber = "+19990000"     // hit the rate-limit stub
             message = "trigger 429"
         }
 
@@ -82,16 +82,16 @@ class AwsSmsTest {
         }
 
         latch.await(10, TimeUnit.SECONDS)
-        // 这里我们用 429 模拟业务限流
+        // Here we use 429 to simulate business rate limiting.
         assertEquals(429, statusCode)
         assertEquals("Too Many Requests", statusText)
     }
 
-    // ---------------- WireMock 注册桩 ----------------
+    // ---------------- WireMock register stubs ----------------
 
-    /** 成功桩：匹配 Action=Publish，返回 200 + OK */
+    /** Success stub: match Action=Publish and return 200 + OK. */
     private fun stubPublishOK() {
-        // 匹配 QueryString
+        // Match QueryString
         postJson("$baseUrl/__admin/mappings", """
             {
               "request": {
@@ -109,7 +109,7 @@ class AwsSmsTest {
             }
         """.trimIndent())
 
-        // 匹配 x-www-form-urlencoded（SDK 常用）：body 包含 Action=Publish
+        // Match x-www-form-urlencoded (common in SDKs): body contains Action=Publish
         postJson("$baseUrl/__admin/mappings", """
             {
               "request": {
@@ -127,11 +127,11 @@ class AwsSmsTest {
         """.trimIndent())
     }
 
-    /** 限流桩：指定手机号触发 429 */
+    /** Rate-limit stub: trigger 429 for the specified phone number. */
     private fun stubPublishRateLimitedFor(phone: String) {
         val encodedPhone = URLEncoder.encode(phone, StandardCharsets.UTF_8)
 
-        // 429 + AWS Query 错误 XML
+        // 429 + AWS Query error XML
         val errorXml = """
       <?xml version="1.0"?>
       <ErrorResponse xmlns="http://sns.amazonaws.com/doc/2010-03-31/">
@@ -144,7 +144,7 @@ class AwsSmsTest {
       </ErrorResponse>
     """.trimIndent()
 
-        // 优先级设低数字（高优先）
+        // Set priority to a low number (higher priority)
         postJson("$baseUrl/__admin/mappings", """
       {
         "request": {
@@ -183,7 +183,7 @@ class AwsSmsTest {
     companion object {
         private lateinit var baseUrl: String
 
-        /** 在 Spring 上下文启动前，注入 Handler 的 endpoint → WireMock */
+        /** Before the Spring context starts, inject the handler's endpoint -> WireMock. */
         @JvmStatic
         @DynamicPropertySource
         fun props(registry: DynamicPropertyRegistry) {

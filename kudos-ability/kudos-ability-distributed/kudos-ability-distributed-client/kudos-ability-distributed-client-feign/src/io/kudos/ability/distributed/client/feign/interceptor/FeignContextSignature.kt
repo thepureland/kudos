@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.client.feign.interceptor
 
 /**
- * Feign 上下文透传签名头。
+ * Signature headers used by Feign context propagation.
  *
  * @author K
  * @author AI: Codex

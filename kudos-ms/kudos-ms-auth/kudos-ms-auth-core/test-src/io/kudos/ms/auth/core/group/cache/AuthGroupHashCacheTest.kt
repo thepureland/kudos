@@ -9,13 +9,13 @@ import jakarta.annotation.Resource
 import kotlin.test.*
 
 /**
- * [AuthGroupHashCache] 单元测试（Hash 缓存，按 id 存取、按 tenantId+code 查询，不区分 active）。
+ * [AuthGroupHashCache] unit tests (Hash cache, access by id, query by tenantId+code, not distinguishing active).
  *
- * 覆盖：按 id 单条/批量获取、按租户+用户组编码获取用户组、全量刷新、新增/更新/删除/批量删除后同步；
- * 本地缓存开启时二次取为同一对象引用。
+ * Coverage: single/batch get by id, get group by tenant+group code, full reload, sync after insert/update/delete/batch-delete;
+ * with local cache enabled, a second fetch returns the same object reference.
  *
- * 测试数据：`AuthGroupHashCacheTest.sql`。
- * 需 Docker 运行 Redis，且 sys_cache 中已配置 AUTH_GROUP__HASH（hash=true）。
+ * Test data: `AuthGroupHashCacheTest.sql`.
+ * Requires Docker to run Redis, and AUTH_GROUP__HASH (hash=true) must be configured in sys_cache.
  *
  * @author K
  * @since 1.0.0
@@ -31,7 +31,7 @@ class AuthGroupHashCacheTest : RdbAndRedisCacheTestBase() {
 
     private fun isLocalCacheEnabled(): Boolean = HashCacheKit.isLocalCacheEnabled(AuthGroupHashCache.CACHE_NAME)
 
-    private val newGroupName = "新用户组名称_${System.currentTimeMillis()}"
+    private val newGroupName = "New group name_${System.currentTimeMillis()}"
 
     private val tenant001 = "tenant-001-hashAuth"
     private val tenant002 = "tenant-002-hashAuth"
@@ -45,7 +45,7 @@ class AuthGroupHashCacheTest : RdbAndRedisCacheTestBase() {
         assertNotNull(item)
         assertEquals(groupId1, item.id)
         assertEquals("GROUP_ADMIN", item.code)
-        assertEquals("管理员组", item.name)
+        assertEquals("Administrator group", item.name)
         assertEquals(tenant001, item.tenantId)
         val itemAgain = cacheHandler.getGroupById(groupId1)
         if (isLocalCacheEnabled()) assertSame(item, itemAgain)
@@ -94,7 +94,7 @@ class AuthGroupHashCacheTest : RdbAndRedisCacheTestBase() {
     fun getGroupByTenantIdAndGroupCodeInactiveAlsoReturned() {
         cacheHandler.reloadAll(true)
         val inactive = cacheHandler.getGroupByTenantIdAndGroupCode(tenant001, "GROUP_TEST")
-        assertNotNull(inactive, "不区分 active 时，inactive 用户组也应能按 tenantId+code 查到")
+        assertNotNull(inactive, "When not distinguishing active, inactive groups should also be queryable by tenantId+code")
         assertEquals("ag-hash-4444-4444-4444-4444444444444", inactive.id)
         assertEquals(false, inactive.active)
     }
@@ -147,7 +147,7 @@ class AuthGroupHashCacheTest : RdbAndRedisCacheTestBase() {
         val timestamp = System.currentTimeMillis()
         val authGroup = AuthGroup.Companion().apply {
             code = "TEST_GROUP_${timestamp}"
-            name = "测试用户组_${timestamp}"
+            name = "Test group_${timestamp}"
             tenantId = tenant001
             subsysCode = "ams"
             active = true

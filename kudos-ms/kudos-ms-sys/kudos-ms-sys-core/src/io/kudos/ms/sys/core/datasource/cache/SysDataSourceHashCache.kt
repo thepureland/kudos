@@ -19,14 +19,14 @@ import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
 /**
- * 数据源统一 Hash 缓存处理器，整合按 id 与按「租户id+子系统编码+微服务编码」两类查询。
+ * Unified Hash cache handler for data sources, supporting lookup by id and by tenant id + sub-system code + micro-service code.
  *
- * 1. 数据来源表：sys_data_source
- * 2. 按主键 id 存取：缓存所有数据源（含 active=false）
- * 3. 按租户id+子系统编码+微服务编码： tenantId 非空的记录
- * 4. 使用 Hash 结构，主键为 id；副属性索引：tenantId、subSystemCode、microServiceCode
+ * 1. Source table: sys_data_source
+ * 2. Lookup by primary id: caches all data sources (including active=false)
+ * 3. Lookup by tenant id + sub-system code + micro-service code: only records with non-null tenantId
+ * 4. Hash structure keyed by id; secondary indexes on tenantId, subSystemCode, microServiceCode
  *
- * 使用前需在缓存配置表 sys_cache 中增加名为 [CACHE_NAME] 的配置项且 hash=true。
+ * Before use, add an entry named [CACHE_NAME] with hash=true in the cache config table sys_cache.
  *
  * @author K
  * @author AI: Cursor
@@ -43,7 +43,7 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
     companion object {
         const val CACHE_NAME = "SYS_DATA_SOURCE__HASH"
 
-        /** 可筛选副属性，用于按 tenantId/subSystemCode/microServiceCode 建二级索引 */
+        /** Filterable secondary properties used to build indexes by tenantId/subSystemCode/microServiceCode */
         val FILTERABLE_PROPERTIES = setOf(
             SysDataSourceCacheEntry::tenantId.name,
             SysDataSourceCacheEntry::subSystemCode.name,
@@ -60,13 +60,13 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
     override fun doReload(id: Any): SysDataSourceCacheEntry? =
         sysDataSourceDao.get(id.toString(), SysDataSourceCacheEntry::class)
 
-    // ---------- 按主键 id（与 DataSourceByIdCache 等价） ----------
+    // ---------- Lookup by primary id (equivalent to DataSourceByIdCache) ----------
 
     /**
-     * 根据 id 从缓存获取数据源，未命中则查库并回写。
+     * Gets a data source by id from cache; on miss, queries the database and writes back.
      *
-     * @param id 数据源主键，非空
-     * @return 数据源缓存项，不存在时 null
+     * @param id data source primary key, non-blank
+     * @return cached data source entry, or null if not found
      */
     @HashCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -76,15 +76,15 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
         filterableProperties = ["tenantId", "subSystemCode", "microServiceCode"]
     )
     open fun getDataSourceById(id: String): SysDataSourceCacheEntry? {
-        require(id.isNotBlank()) { "获取数据源时 id 不能为空" }
+        require(id.isNotBlank()) { "id must not be blank when fetching a data source" }
         return sysDataSourceDao.get(id, SysDataSourceCacheEntry::class)
     }
 
     /**
-     * 根据多个 id 批量从缓存获取数据源，未命中的从库加载并回写。
+     * Batch gets data sources by ids from cache; misses are loaded from the database and written back.
      *
-     * @param ids 数据源 id 集合，可为空
-     * @return id -> 缓存对象 映射，仅包含能查到的 id
+     * @param ids data source id collection, may be empty
+     * @return id -> cached entry map; only contains ids that were found
      */
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
@@ -97,16 +97,16 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
         return list.filter { it.id.isNotBlank() && it.id in ids }.associateBy { it.id }
     }
 
-    // ---------- 按租户id+子系统编码+微服务编码（与 DataSourceByTenantIdAnd3CodesCache 等价） ----------
+    // ---------- Lookup by tenant id + sub-system code + micro-service code (equivalent to DataSourceByTenantIdAnd3CodesCache) ----------
 
     /**
-     * 按租户id、子系统编码、微服务编码多条件等值查询，返回匹配的数据源列表
-     * 先按副属性索引查缓存，未命中则查库并回写。
+     * Equality query by tenant id, sub-system code and micro-service code, returning the matching data sources.
+     * Checks the secondary index in cache first; on miss, queries the database and writes back.
      *
-     * @param tenantId 租户 id，非空
-     * @param subSystemCode 子系统编码, 可为null
-     * @param microServiceCode 微服务编码，可为 null
-     * @return 匹配的缓存列表
+     * @param tenantId tenant id, non-blank
+     * @param subSystemCode sub-system code, may be null
+     * @param microServiceCode micro-service code, may be null
+     * @return matching cache entries
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
@@ -119,35 +119,35 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
         subSystemCode: String?,
         microServiceCode: String?
     ): List<SysDataSourceCacheEntry> {
-        require(tenantId.isNotBlank()) { "获取数据源时租户ID必须指定" }
+        require(tenantId.isNotBlank()) { "tenant id must be provided when fetching data sources" }
         return sysDataSourceDao.fetchDataSourcesForCache(tenantId, subSystemCode, microServiceCode)
     }
 
 
-    // ---------- 全量刷新与同步 ----------
+    // ---------- Full refresh and synchronization ----------
 
     /**
-     * 从库全量加载数据源并刷新 Hash 缓存（含所有记录，与按 id 缓存一致）。
+     * Loads all data sources from the database and refreshes the Hash cache (contains all records, same as the by-id cache).
      *
-     * @param clear 为 true 时先清空再写入；为 false 时覆盖写入
+     * @param clear when true, clears before writing; when false, overwrites in place
      */
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载数据源 Hash 缓存")
+            log.info("Cache is not enabled; skip loading data source Hash cache.")
             return
         }
         val cache = hashCache()
         if (clear) cache.clear(CACHE_NAME)
         val list = sysDataSourceDao.searchAs<SysDataSourceCacheEntry>()
-        log.debug("从数据库加载 ${list.size} 条数据源，刷新 Hash 缓存")
+        log.debug("Loaded ${list.size} data sources from database; refreshing Hash cache.")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
     }
 
     /**
-     * 新增数据源后同步：将指定 id 的实体从库加载并写入缓存。
+     * Syncs after data source insert: loads the entity by id from the database and writes it to the cache.
      *
-     * @param any 包含必要属性的对象（用于判断是否需写 3-codes 索引）
-     * @param id 数据源 id
+     * @param any object carrying needed attributes (used to decide whether to write the 3-codes index)
+     * @param id data source id
      */
     open fun syncOnInsert(any: Any, id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME) || !KeyValueCacheKit.isWriteInTime(CACHE_NAME)) return
@@ -156,10 +156,10 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
     }
 
     /**
-     * 更新数据源后同步：先按旧 key 从索引移除，再按新数据写回。
+     * Syncs after data source update: removes the old index entries, then writes back with the new data.
      *
-     * @param any 包含必要属性的对象
-     * @param id 数据源 id
+     * @param any object carrying needed attributes
+     * @param id data source id
      */
     open fun syncOnUpdate(any: Any, id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -170,10 +170,10 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
     }
 
     /**
-     * 更新启用状态后同步：从库重新加载该 id 并写回缓存（索引会随之更新）。
+     * Syncs after updating active status: reloads the entity by id and writes it back (the index will be updated accordingly).
      *
-     * @param id 数据源 id
-     * @param active 是否启用
+     * @param id data source id
+     * @param active enabled flag
      */
     open fun syncOnUpdateActive(id: String, active: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -184,9 +184,9 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
     }
 
     /**
-     * 删除数据源后同步：从缓存中移除该 id 及其副属性索引。
+     * Syncs after data source delete: removes the id and its secondary index entries from the cache.
      *
-     * @param id 数据源 id
+     * @param id data source id
      */
     open fun syncOnDelete(id: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
@@ -194,18 +194,18 @@ open class SysDataSourceHashCache : AbstractHashCacheHandler<SysDataSourceCacheE
     }
 
     /**
-     * 批量删除数据库对象后，同步缓存
+     * Syncs cache after batch database delete.
      *
-     * @param ids 主键集合
+     * @param ids primary key collection
      */
     open fun syncOnBatchDelete(ids: Collection<String>) {
         if (!KeyValueCacheKit.isCacheActive(cacheName())) return
-        log.debug("批量删除id为${ids}的sys_data_source后，同步从${cacheName()}缓存中踢除...")
+        log.debug("After batch deleting sys_data_source with ids $ids, evicting from ${cacheName()} cache...")
         val cache = hashCache()
         ids.forEach {
             cache.deleteById(cacheName(), it, SysDataSourceCacheEntry::class, FILTERABLE_PROPERTIES, emptySet())
         }
-        log.debug("${cacheName()}缓存同步完成。")
+        log.debug("${cacheName()} cache sync completed.")
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)

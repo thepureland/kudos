@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 import kotlin.reflect.KClass
 
 /**
- * IP访问规则表单基础字段（新建 / 更新共用）
+ * IP access rule form base fields (shared by create / update).
  *
  * @author K
  * @since 1.0.0
@@ -25,34 +25,34 @@ import kotlin.reflect.KClass
 @GroupSequenceProvider(ISysAccessRuleIpFormBase.GroupSequenceProvider::class)
 interface ISysAccessRuleIpFormBase {
 
-    /** ipv4起(字符串表达) */
+    /** IPv4 start (string form) */
     @get:Matches(RegExpEnum.IPV4_FULL, groups = [Group.First::class])
     val ipv4StartStr: String?
 
-    /** ipv4止(字符串表达) */
+    /** IPv4 end (string form) */
     @get:Matches(RegExpEnum.IPV4_FULL, groups = [Group.First::class])
     @get:Compare(anotherProperty = "ipv4StartStr", logic = LogicOperatorEnum.GE, groups = [Group.First::class], message = "sys.valid-msg.accessrule.ge-ip-start")
     val ipv4EndStr: String?
 
-    /** ipv6起(字符串表达) */
+    /** IPv6 start (string form) */
     @get:Matches(RegExpEnum.IPV6_FULL, groups = [Group.Second::class])
     val ipv6StartStr: String?
 
-    /** ipv6止(字符串表达) */
+    /** IPv6 end (string form) */
     @get:Matches(RegExpEnum.IPV6_FULL, groups = [Group.Second::class])
     @get:Compare(anotherProperty = "ipv6StartStr", logic = LogicOperatorEnum.GE, groups = [Group.Second::class], message = "sys.valid-msg.accessrule.ge-ip-start")
     val ipv6EndStr: String?
 
-    /** ip 类型字典代码 */
+    /** IP type dict code */
     @get:NotBlank
     @get:MaxLength(4)
     @get:DictItemCode(dictType = SysDictTypes.IP_TYPE, atomicServiceCode = SysConsts.ATOMIC_SERVICE_NAME)
     val ipTypeDictCode: String
 
-    /** 过期时间 */
+    /** Expiration time */
     val expirationDate: LocalDateTime?
 
-    /** 备注 */
+    /** Remark */
     @get:MaxLength(128)
     val remark: String?
 

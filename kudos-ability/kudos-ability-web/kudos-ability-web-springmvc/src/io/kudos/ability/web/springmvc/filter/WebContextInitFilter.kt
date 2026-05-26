@@ -15,16 +15,17 @@ import java.util.UUID
 
 
 /**
- * Web 上下文初始化过滤器默认实现。
+ * Default implementation of the web context initialization filter.
  *
- * 在每个请求进入业务逻辑前：
- *  1. 把 session / cookie / header 全量塞进 [KudosContext]，便于业务侧通过 [KudosContextHolder] 读
- *  2. 解析 `traceKey` 请求头（缺失则生成新 UUID）
- *  3. 解析客户端 IP / 浏览器 / OS / Referer / Locale，组装 [ClientInfo]
- *  4. 请求结束的 finally 里 `KudosContextHolder.clear()`，避免线程池里的线程被复用时串台
+ * Before each request enters business logic:
+ *  1. Copy session / cookie / header entries into [KudosContext] so business code can read them via [KudosContextHolder].
+ *  2. Resolve the `traceKey` request header (generate a new UUID when missing).
+ *  3. Resolve client IP / browser / OS / Referer / Locale and assemble a [ClientInfo].
+ *  4. Call `KudosContextHolder.clear()` in finally after the request completes, to avoid context leakage when threads are reused by a thread pool.
  *
- * 实现侧重业务可读性而非性能：会把整个 session 拷一份到 context，session 大时不友好；
- * 业务方有需要可继承本类覆盖 [doFilter] 或自实现 [IWebContextInitFilter] 取代。
+ * The implementation favours business readability over performance: it copies the entire session into the context,
+ * which is unfriendly for large sessions. Business code may subclass and override [doFilter] or provide a custom
+ * [IWebContextInitFilter] implementation to replace it.
  *
  * @author K
  * @author AI: Codex
@@ -67,13 +68,13 @@ open class WebContextInitFilter : IWebContextInitFilter {
         context.clientInfo = ClientInfo(clientInfoBuilder)
 
 
-        // 初始化上下文
+        // initialize context
         KudosContextHolder.set(context)
 
         try {
             chain.doFilter(request, response)
         } finally {
-            // 请求结束后清理所有上下文，避免线程池复用线程时造成上下文污染和内存泄漏
+            // Clean up all context after the request completes to avoid context pollution and memory leaks when threads are reused by a thread pool.
             KudosContextHolder.clear()
         }
     }

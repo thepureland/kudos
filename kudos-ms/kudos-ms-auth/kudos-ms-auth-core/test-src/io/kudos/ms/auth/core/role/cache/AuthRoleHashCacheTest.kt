@@ -9,13 +9,13 @@ import jakarta.annotation.Resource
 import kotlin.test.*
 
 /**
- * [AuthRoleHashCache] 单元测试（Hash 缓存，按 id 存取、按 tenantId+code 查询，不区分 active）。
+ * Unit tests for [AuthRoleHashCache] (hash cache; get by id and query by tenantId+code, ignoring active state).
  *
- * 覆盖：按 id 单条/批量获取、按租户+角色编码获取角色、全量刷新、新增/更新/删除/批量删除后同步；
- * 本地缓存开启时二次取为同一对象引用。
+ * Coverage: single/batch get by id, get by tenant+role code, full refresh, sync after insert/update/delete/batch-delete;
+ * when the local cache is enabled, a repeated fetch returns the same object reference.
  *
- * 测试数据：`AuthRoleHashCacheTest.sql`。
- * 需 Docker 运行 Redis，且 sys_cache 中已配置 AUTH_ROLE__HASH（hash=true）。
+ * Test data: `AuthRoleHashCacheTest.sql`.
+ * Requires Docker for Redis, and AUTH_ROLE__HASH (hash=true) configured in sys_cache.
  *
  * @author K
  * @since 1.0.0
@@ -31,7 +31,7 @@ class AuthRoleHashCacheTest : RdbAndRedisCacheTestBase() {
 
     private fun isLocalCacheEnabled(): Boolean = HashCacheKit.isLocalCacheEnabled(AuthRoleHashCache.CACHE_NAME)
 
-    private val newRoleName = "新角色名称_${System.currentTimeMillis()}"
+    private val newRoleName = "NewRoleName_${System.currentTimeMillis()}"
 
     private val tenant001 = "tenant-001-hashRole"
     private val tenant002 = "tenant-002-hashRole"
@@ -45,7 +45,7 @@ class AuthRoleHashCacheTest : RdbAndRedisCacheTestBase() {
         assertNotNull(item)
         assertEquals(roleId1, item.id)
         assertEquals("ROLE_ADMIN", item.code)
-        assertEquals("系统管理员", item.name)
+        assertEquals("System Administrator", item.name)
         assertEquals(tenant001, item.tenantId)
         val itemAgain = cacheHandler.getRoleById(roleId1)
         if (isLocalCacheEnabled()) assertSame(item, itemAgain)
@@ -94,7 +94,7 @@ class AuthRoleHashCacheTest : RdbAndRedisCacheTestBase() {
     fun getRoleByTenantIdAndRoleCodeInactiveAlsoReturned() {
         cacheHandler.reloadAll(true)
         val inactive = cacheHandler.getRoleByTenantIdAndRoleCode(tenant001, "ROLE_TEST")
-        assertNotNull(inactive, "不区分 active 时，inactive 角色也应能按 tenantId+code 查到")
+        assertNotNull(inactive, "When active state is ignored, inactive roles should still be found by tenantId+code")
         assertEquals("ar-hash-4444-4444-4444-4444444444444", inactive.id)
         assertEquals(false, inactive.active)
     }
@@ -147,7 +147,7 @@ class AuthRoleHashCacheTest : RdbAndRedisCacheTestBase() {
         val timestamp = System.currentTimeMillis()
         val authRole = AuthRole.Companion().apply {
             code = "TEST_ROLE_${timestamp}"
-            name = "测试角色_${timestamp}"
+            name = "TestRole_${timestamp}"
             tenantId = tenant001
             subsysCode = "default"
             active = true

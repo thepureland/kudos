@@ -7,7 +7,7 @@ import org.springframework.stereotype.Repository
 
 
 /**
- * 租户数据访问对象
+ * Tenant data access object.
  *
  * @author K
  * @since 1.0.0

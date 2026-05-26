@@ -8,7 +8,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.assertFalse
 
 /**
- * FtpClientKit测试用例
+ * Test cases for FtpClientKit.
  *
  * @author AI: cursor
  * @author K
@@ -34,7 +34,7 @@ internal class FtpClientKitTest {
 
     @Test
     fun testDownloadWithInvalidConnection() {
-        // 测试连接失败的情况
+        // Test the connection-failure scenario
         val result = ftpClientKit.download(
             hostname = "invalid.host",
             port = 21,
@@ -49,9 +49,9 @@ internal class FtpClientKitTest {
 
     @Test
     fun testDownloadWithInvalidCredentials() {
-        // 测试登录失败的情况
-        // 注意：这个测试需要实际的FTP服务器或Mock
-        // 由于FtpClientKit使用真实的FTP连接，这里只测试基本功能
+        // Test the login-failure scenario.
+        // Note: this test requires a real FTP server or a mock.
+        // Since FtpClientKit uses a real FTP connection, this only exercises basic behavior.
         val result = ftpClientKit.download(
             hostname = "localhost",
             port = 21,
@@ -61,14 +61,14 @@ internal class FtpClientKitTest {
             filename = "test.txt",
             localPath = tempDir.absolutePath
         )
-        // 由于没有真实的FTP服务器，登录失败应该返回false
-        // 在实际环境中，应该使用Mock FTP服务器
-        assertFalse(result, "使用无效凭据应该返回false")
+        // With no real FTP server available, the login failure should yield false.
+        // In a real environment a mock FTP server should be used.
+        assertFalse(result, "Invalid credentials should return false")
     }
 
     @Test
     fun testDownloadWithNonExistentFile() {
-        // 测试文件不存在的情况
+        // Test the missing-file scenario
         val result = ftpClientKit.download(
             hostname = "localhost",
             port = 21,
@@ -78,9 +78,9 @@ internal class FtpClientKitTest {
             filename = "non-existent-file.txt",
             localPath = tempDir.absolutePath
         )
-        // 文件不存在时应该返回false
-        // 实际行为取决于FTP服务器的响应
-        assertFalse(result, "文件不存在时应该返回false")
+        // When the file does not exist the call should return false.
+        // Actual behavior depends on the FTP server's response.
+        assertFalse(result, "Missing file should return false")
     }
 
     @Test
@@ -94,11 +94,11 @@ internal class FtpClientKitTest {
             filename = "test.txt",
             localPath = tempDir.absolutePath
         )
-        // 空路径可能导致连接失败或返回false
-        // 根据实际FTP服务器行为，这里只验证方法能正常执行
-        // 如果连接失败，result应该为false
-        // 由于没有真实的FTP服务器，这里只验证方法不会抛出异常
-        // 实际结果取决于FTP服务器配置
+        // An empty path may cause the connection to fail or return false.
+        // Depending on the actual FTP server, this only verifies the method runs.
+        // If the connection fails, result should be false.
+        // Without a real FTP server, we only verify no exception is thrown here.
+        // Actual outcome depends on FTP server configuration.
     }
 
     @Test
@@ -112,14 +112,14 @@ internal class FtpClientKitTest {
             filename = "",
             localPath = tempDir.absolutePath
         )
-        // 空文件名时，不会匹配任何文件，应该返回false
-        assertFalse(result, "空文件名时应该返回false")
+        // With an empty filename no file matches, so the call should return false.
+        assertFalse(result, "Empty filename should return false")
     }
 
     @Test
     fun testDownloadWithInvalidLocalPath() {
-        // 测试本地路径无效的情况
-        // 注意：在Windows上路径格式不同，这里使用一个明显不存在的路径
+        // Test the invalid-local-path scenario.
+        // Note: path format differs on Windows; use a clearly nonexistent path.
         val invalidPath = if (System.getProperty("os.name").contains("Windows")) {
             "Z:\\invalid\\path\\that\\does\\not\\exist"
         } else {
@@ -134,26 +134,26 @@ internal class FtpClientKitTest {
             filename = "test.txt",
             localPath = invalidPath
         )
-        // 路径不存在时，创建文件会失败，应该返回false或抛出异常
-        // 由于方法内部捕获了异常，应该返回false
-        assertFalse(result, "无效的本地路径应该返回false")
+        // When the path does not exist, file creation fails, so the method should
+        // return false or throw. Since the method catches exceptions internally, it should return false.
+        assertFalse(result, "Invalid local path should return false")
     }
 
     @Test
     fun testDownloadCaseInsensitiveFilename() {
-        // 测试文件名大小写不敏感
+        // Test that filename comparison is case-insensitive.
 //        val result = ftpClientKit.download(
 //            hostname = "localhost",
 //            port = 21,
 //            username = "test",
 //            password = "test",
 //            pathname = "/",
-//            filename = "TEST.TXT", // 大写
+//            filename = "TEST.TXT", // uppercase
 //            localPath = tempDir.absolutePath
 //        )
-        // 由于没有真实的FTP服务器，这里只验证方法能正常执行
-        // 在实际环境中，应该能够匹配小写的test.txt（如果服务器上存在）
-        // 代码中使用 ignoreCase = true 进行比较，所以大小写不敏感
-        // 由于没有真实服务器，这里只验证方法不会抛出异常
+        // Without a real FTP server, this only verifies the method runs.
+        // In a real environment it should match a lowercase test.txt on the server (if present).
+        // The code uses ignoreCase = true for the comparison, so it is case-insensitive.
+        // Without a real server, we only verify no exception is thrown.
     }
 }

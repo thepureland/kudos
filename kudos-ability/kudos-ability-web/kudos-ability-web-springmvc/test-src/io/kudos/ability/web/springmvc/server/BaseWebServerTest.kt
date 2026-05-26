@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 
 
 /**
- * web server测试用例基类
+ * Base class for web server test cases.
  *
  * @author K
  * @author AI: Codex

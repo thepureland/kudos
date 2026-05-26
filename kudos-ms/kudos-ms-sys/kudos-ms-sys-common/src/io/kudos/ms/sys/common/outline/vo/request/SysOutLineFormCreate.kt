@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.outline.vo.request
 
 /**
- * 出网白名单表单新建请求VO
+ * Request VO for creating an outbound whitelist form.
  *
  * @author K
  * @since 1.0.0

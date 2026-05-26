@@ -5,7 +5,7 @@ import java.io.Serializable
 
 
 /**
- * 微服务缓存项
+ * Cache entry for microservices.
  *
  * @author K
  * @since 1.0.0
@@ -14,28 +14,28 @@ data class SysMicroServiceCacheEntry (
 
     override val id: String,
 
-    /** 编码 */
+    /** Code */
     val code: String,
 
-    /** 名称 */
+    /** Name */
     val name: String,
 
-    /** 上下文 */
+    /** Context */
     val context: String,
 
-    /** 是否为原子服务 */
+    /** Whether atomic service */
     val atomicService: Boolean,
 
-    /** 父服务编码 */
+    /** Parent service code */
     val parentCode: String?,
 
-    /** 备注 */
+    /** Remark */
     val remark: String?,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean,
 
 ) : IIdEntity<String>, Serializable {

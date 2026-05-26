@@ -8,7 +8,7 @@ import org.ktorm.schema.decimal
 import org.ktorm.schema.varchar
 
 /**
- * 视图 `v_sys_access_rule_with_ip` 的 [org.ktorm.schema.Table] 定义，与 [VSysAccessRuleWithIp] 绑定。
+ * [org.ktorm.schema.Table] definition for the view `v_sys_access_rule_with_ip`, bound to [VSysAccessRuleWithIp].
  *
  * @author K
  * @author AI: Cursor

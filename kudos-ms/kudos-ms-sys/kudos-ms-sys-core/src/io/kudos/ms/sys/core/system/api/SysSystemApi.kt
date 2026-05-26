@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 系统 API本地实现
+ * Local implementation of the system API.
  *
  * @author K
  * @author AI: Cursor

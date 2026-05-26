@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController
 
 
 /**
- * 机构 内部 RPC 控制器。路径继承自 [IUserOrgApi] 方法级注解。
+ * Organization internal RPC controller. Paths are inherited from method-level annotations on [IUserOrgApi].
  *
  * @author K
  * @since 1.0.0

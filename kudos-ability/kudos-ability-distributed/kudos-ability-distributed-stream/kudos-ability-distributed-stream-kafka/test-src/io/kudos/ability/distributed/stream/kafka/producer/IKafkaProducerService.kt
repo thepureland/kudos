@@ -3,7 +3,7 @@ package io.kudos.ability.distributed.stream.kafka.producer
 import io.kudos.ability.distributed.stream.kafka.data.KafkaSimpleMsg
 
 /**
- * kafka测试生產者服务接口
+ * Producer service interface for Kafka tests.
  *
  * @author shane
  * @author K

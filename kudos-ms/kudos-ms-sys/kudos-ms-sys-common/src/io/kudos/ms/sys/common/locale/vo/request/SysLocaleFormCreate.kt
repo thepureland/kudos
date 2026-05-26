@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.locale.vo.request
 
 /**
- * 语言字典表单新建请求VO
+ * Request VO for creating a language dictionary form.
  *
  * @author K
  * @since 1.0.0

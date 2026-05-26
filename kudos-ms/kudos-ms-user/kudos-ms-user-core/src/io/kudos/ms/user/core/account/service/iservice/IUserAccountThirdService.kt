@@ -5,7 +5,7 @@ import io.kudos.ms.user.core.account.model.po.UserAccountThird
 
 
 /**
- * 用户账号第三方绑定业务接口
+ * User account third-party binding service interface.
  *
  * @author K
  * @author AI: Codex
@@ -15,21 +15,21 @@ interface IUserAccountThirdService : IBaseCrudService<String, UserAccountThird> 
 
 
     /**
-     * 根据用户账号ID查询绑定列表
+     * Query the binding list for a user account.
      *
-     * @param userId 用户账号ID
-     * @return 绑定列表
+     * @param userId user account id
+     * @return binding list
      */
     fun getByUserAccountId(userId: String): List<UserAccountThird>
 
     /**
-     * 按第三方身份信息查询绑定记录
+     * Look up a binding record by third-party identity.
      *
-     * @param tenantId 租户ID
-     * @param accountProviderDictCode 第三方平台代码
-     * @param accountProviderIssuer 发行方/平台租户
-     * @param subject 第三方用户唯一标识
-     * @return 绑定记录，找不到返回null
+     * @param tenantId tenant id
+     * @param accountProviderDictCode third-party provider code
+     * @param accountProviderIssuer issuer / provider tenant
+     * @param subject third-party unique user identifier
+     * @return binding record, or null if not found
      */
     fun getByProviderSubject(
         tenantId: String,

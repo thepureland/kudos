@@ -7,13 +7,15 @@ import org.springframework.web.filter.OncePerRequestFilter
 import org.springframework.web.util.ContentCachingRequestWrapper
 
 /**
- * Web 审计请求体缓存过滤器。
+ * Web audit request-body caching filter.
  *
- * 用 [ContentCachingRequestWrapper] 包裹原始请求，让下游切面（[io.kudos.ability.log.audit.common.annotation.WebLogAuditAspect]）
- * 在请求体已被业务读完后仍能反复读取——HttpServletRequest 的 InputStream 默认只能读一次。
+ * Wraps the original request with [ContentCachingRequestWrapper] so downstream aspects
+ * ([io.kudos.ability.log.audit.common.annotation.WebLogAuditAspect]) can read the request body repeatedly even after
+ * the business code has consumed it — `HttpServletRequest`'s InputStream can only be read once by default.
  *
- * 注：使用 Spring Security 的项目要把本 filter 注册进 security 过滤器链，否则 request 会被 security 重写，
- * 本 filter 包裹的对象会被丢弃，请求体缓存能力失效。
+ * Note: projects using Spring Security must register this filter into the security filter chain, otherwise the
+ * request gets rewritten by security, the object wrapped by this filter is discarded, and the body-caching capability
+ * is lost.
  *
  * @author K
  * @author AI: Codex
@@ -22,12 +24,12 @@ import org.springframework.web.util.ContentCachingRequestWrapper
 class WebLogAuditFilter : OncePerRequestFilter() {
 
     /**
-     * 将原始 request 包成 [ContentCachingRequestWrapper] 后委托给下一个 filter。
-     * cache size 传 0 表示按需扩容，避免初始化时分配大缓冲区。
+     * Wraps the original request as a [ContentCachingRequestWrapper] then delegates to the next filter.
+     * A cache size of 0 means grow on demand, avoiding allocating a large buffer at init time.
      *
-     * @param request 原始请求
-     * @param response 响应
-     * @param filterChain 过滤器链
+     * @param request the original request
+     * @param response the response
+     * @param filterChain the filter chain
      * @author K
      * @since 1.0.0
      */
@@ -36,13 +38,13 @@ class WebLogAuditFilter : OncePerRequestFilter() {
         response: HttpServletResponse,
         filterChain: FilterChain
     ) {
-        //使用spring-security时，request会被重写
+        // When using spring-security, the request gets rewritten
         val wrapper = ContentCachingRequestWrapper(request, 0)
         filterChain.doFilter(wrapper, response)
     }
 
     companion object {
-        /** Spring bean 名，方便在 SecurityFilterChain 中按名引用 */
+        /** Spring bean name, for referencing by name in a SecurityFilterChain */
         const val BEAN_NAME: String = "webLogAuditFilter"
     }
 

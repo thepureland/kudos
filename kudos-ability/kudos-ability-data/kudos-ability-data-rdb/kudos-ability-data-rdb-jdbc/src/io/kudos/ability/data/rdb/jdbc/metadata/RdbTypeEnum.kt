@@ -1,13 +1,13 @@
 package io.kudos.ability.data.rdb.jdbc.metadata
 
 /**
- * 支持的关系型数据库类型枚举。
+ * Enumeration of supported relational database types.
  *
- * 每个枚举值绑定两个事实信息：
- * - [productName]：JDBC `DatabaseMetaData.getDatabaseProductName()` 返回的字符串，用于"从已有连接反查类型"
- * - [jdbcDriverName]：标准驱动类的全限定名，用于"从 url 推断类型后手动 Class.forName 加载驱动"
+ * Each enum value binds two pieces of factual information:
+ * - [productName]: the string returned by JDBC `DatabaseMetaData.getDatabaseProductName()`, used to "look up the type from an existing connection"
+ * - [jdbcDriverName]: the fully qualified standard driver class name, used to "manually Class.forName-load the driver after inferring the type from the URL"
  *
- * 通过 [ofProductName] / [ofJdbcDriverName] 双向查找；任何未在此声明的数据库类型都不被本框架支持。
+ * Use [ofProductName] / [ofJdbcDriverName] for bidirectional lookup; any database type not declared here is not supported by this framework.
  *
  * @author K
  * @author AI: Codex
@@ -26,10 +26,10 @@ enum class RdbTypeEnum(val productName: String, val jdbcDriverName: String) {
 
     companion object {
         /**
-         * 返回产品名称对应的关系型数据库类型枚举
+         * Returns the relational database type enum corresponding to the given product name.
          *
-         * @param productName 产品名称
-         * @return 关系型数据库类型枚举
+         * @param productName the product name
+         * @return the relational database type enum
          * @author K
          * @since 1.0.0
          */
@@ -37,10 +37,10 @@ enum class RdbTypeEnum(val productName: String, val jdbcDriverName: String) {
             entries.first { it.productName == productName }
 
         /**
-         * 返回JDBC驱动名称对应的关系型数据库类型枚举
+         * Returns the relational database type enum corresponding to the given JDBC driver name.
          *
-         * @param jdbcDriverName JDBC驱动名称
-         * @return 关系型数据库类型枚举
+         * @param jdbcDriverName the JDBC driver name
+         * @return the relational database type enum
          * @author K
          * @since 1.0.0
          */

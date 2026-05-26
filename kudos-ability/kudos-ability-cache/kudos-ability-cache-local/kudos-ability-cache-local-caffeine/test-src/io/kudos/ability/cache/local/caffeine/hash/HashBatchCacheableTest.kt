@@ -14,7 +14,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * [io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary] 注解测试用例（本地 Caffeine）。
+ * Tests for the [io.kudos.ability.cache.common.batch.hash.HashBatchCacheableByPrimary] annotation (local Caffeine).
  *
  * @author K
  * @author AI: Codex
@@ -62,9 +62,9 @@ internal class HashBatchCacheableTest {
         assertEquals("Bob", fromCache["b"]?.name)
         assertEquals("Carol", fromCache["c"]?.name)
         val fromCacheAgain = hashCacheableTestService.getTestRowsByIds(listOf("a", "b", "c"))
-        assertSame(fromCache["a"], fromCacheAgain["a"], "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
-        assertSame(fromCache["b"], fromCacheAgain["b"], "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
-        assertSame(fromCache["c"], fromCacheAgain["c"], "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(fromCache["a"], fromCacheAgain["a"], "Under SINGLE_LOCAL, fetching the same id again from cache should return the same object reference")
+        assertSame(fromCache["b"], fromCacheAgain["b"], "Under SINGLE_LOCAL, fetching the same id again from cache should return the same object reference")
+        assertSame(fromCache["c"], fromCacheAgain["c"], "Under SINGLE_LOCAL, fetching the same id again from cache should return the same object reference")
     }
 
     @Test
@@ -82,8 +82,8 @@ internal class HashBatchCacheableTest {
         assertEquals("P1", fromCache["p1"]?.name)
         assertEquals("P2", fromCache["p2"]?.name)
         val fromCacheAgain = hashCacheableTestService.getTestRowsByIds(listOf("p1", "p2", "p3"))
-        assertSame(fromCache["p1"], fromCacheAgain["p1"], "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
-        assertSame(fromCache["p2"], fromCacheAgain["p2"], "SINGLE_LOCAL 下同一 id 再次从缓存获取应返回同一对象引用")
+        assertSame(fromCache["p1"], fromCacheAgain["p1"], "Under SINGLE_LOCAL, fetching the same id again from cache should return the same object reference")
+        assertSame(fromCache["p2"], fromCacheAgain["p2"], "Under SINGLE_LOCAL, fetching the same id again from cache should return the same object reference")
     }
 
     @Test
@@ -104,11 +104,11 @@ internal class HashBatchCacheableTest {
         assertTrue(byType1.any { it.id == "s1" && it.name == "S1" })
         assertTrue(byType1.any { it.id == "s2" && it.name == "S2" })
         val byType1Again = cache.listBySetIndex(cacheName, TestRow::class, "type", 1)
-        assertSame(byType1.first(), byType1Again.first(), "SINGLE_LOCAL 下同一维度再次从缓存获取应返回同一对象引用")
+        assertSame(byType1.first(), byType1Again.first(), "Under SINGLE_LOCAL, fetching the same dimension again from cache should return the same object reference")
         val byType2 = cache.listBySetIndex(cacheName, TestRow::class, "type", 2)
         assertEquals(1, byType2.size)
         assertEquals("s3", byType2.first().id)
         val byType2Again = cache.listBySetIndex(cacheName, TestRow::class, "type", 2)
-        assertSame(byType2.first(), byType2Again.first(), "SINGLE_LOCAL 下同一维度再次从缓存获取应返回同一对象引用")
+        assertSame(byType2.first(), byType2Again.first(), "Under SINGLE_LOCAL, fetching the same dimension again from cache should return the same object reference")
     }
 }

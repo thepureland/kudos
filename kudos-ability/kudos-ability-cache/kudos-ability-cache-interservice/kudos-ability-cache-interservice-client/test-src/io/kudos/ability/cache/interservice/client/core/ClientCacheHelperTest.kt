@@ -13,7 +13,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 /**
- * [ClientCacheHelper] 配置化 TTL 与本地缓存读取容错测试。
+ * Tests configurable TTL and lenient local-cache reads in [ClientCacheHelper].
  *
  * @author K
  * @author AI: Codex
@@ -74,7 +74,8 @@ internal class ClientCacheHelperTest {
     }
 
     /**
-     * 记录初始化配置的内存 cache manager，用于隔离真实 Caffeine/Spring 容器。
+     * In-memory cache manager that records initialization configs, used to isolate the test from
+     * the real Caffeine / Spring container.
      *
      * @author K
      * @author AI: Codex

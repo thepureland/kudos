@@ -3,36 +3,39 @@ package io.kudos.base.model.payload
 import io.kudos.base.query.sort.Order
 
 /**
- * 列表查询条件项载体
+ * Payload for list-query condition items.
  *
  * @author K
  * @since 1.0.0
  */
 open class ListSearchPayload : ISearchPayload {
 
-    /** 当前页码(为null不分页) */
+    /** Current page number (null means no pagination). */
     open var pageNo: Int? = null
 
-    /** 页面大小(仅当pageNo不为null时才应用) */
+    /** Page size (only applied when pageNo is non-null). */
     open var pageSize: Int? = null
 
     /**
-     * 单页最大条数上限，用于防止 pageSize 被恶意放大。
-     * 实际分页时取 min(pageSize, getMaxPageSize())。
-     * 子类可重写以调整上限。
+     * Upper bound on the per-page row count; used to prevent pageSize from being maliciously inflated.
+     * The effective page size is min(pageSize, getMaxPageSize()).
+     * Subclasses may override to adjust the limit.
      */
     open fun getMaxPageSize(): Int = 100
 
     /**
-     * 是否允许在 [pageNo] 为 null 时查询全部数据（不分页）。
-     * 为 true 时，pageNo 为 null 则不施加 limit；为 false 时，pageNo 为 null 将按第 1 页分页，避免全表扫描。
-     * 默认为 false。仅在有意的受信任场景（如导出、后台任务）或小数据量的表下子类重写为 true。
+     * Whether unpaged queries (all rows) are allowed when [pageNo] is null.
+     * When true, a null pageNo applies no limit; when false, a null pageNo falls back to page 1 to avoid
+     * full-table scans. Defaults to false. Subclasses should override to true only in deliberate trusted
+     * scenarios (e.g. exports, background jobs) or for small tables.
      */
     open fun isUnpagedSearchAllowed(): Boolean = false
 
     /**
-     * 排序请求（属性名与方向）。
-     * 每个参与排序的属性均须在 DAO 对应表实体（PO）上标注 [io.kudos.base.query.sort.Sortable]；未标注的项会被忽略并记 WARN，与 [getReturnEntityClass] 是否为 VO 无关。
+     * Sort request (property name and direction).
+     * Every property participating in sorting must be annotated with [io.kudos.base.query.sort.Sortable] on the
+     * DAO's corresponding table entity (PO); unannotated entries are ignored with a WARN log, regardless of
+     * whether [getReturnEntityClass] is a VO.
      */
     open var orders: List<Order>? = null
 

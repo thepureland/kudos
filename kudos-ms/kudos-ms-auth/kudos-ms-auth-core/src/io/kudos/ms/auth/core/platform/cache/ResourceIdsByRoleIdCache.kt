@@ -16,12 +16,12 @@ import org.springframework.transaction.event.TransactionalEventListener
 
 
 /**
- * 资源ID列表（by role id）缓存处理器
+ * Cache handler for the list of resource IDs keyed by role id.
  *
- * 1.数据来源表：auth_role_resource
- * 2.缓存各角色拥有的所有资源ID集合
- * 3.缓存的key为：roleId
- * 4.缓存的value为：资源ID集合（List<String>）
+ * 1. Source table: auth_role_resource.
+ * 2. Caches the full set of resource IDs owned by each role.
+ * 3. Cache key: roleId.
+ * 4. Cache value: collection of resource IDs (List<String>).
  *
  * @author K
  * @author AI: Cursor
@@ -46,37 +46,38 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>
 
     override fun reloadAll(clear: Boolean) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.info("缓存未开启，不加载和缓存所有角色的资源ID！")
+            log.info("Cache is disabled; skipping load and cache of resource IDs for all roles.")
             return
         }
 
         val roles = authRoleDao.searchActiveRolesForCache()
         val roleIdToResourceIdsMap = authRoleResourceDao.searchAllRoleIdToResourceIdsForCache()
 
-        log.debug("从数据库加载了${roles.size}条角色、角色-资源关系分组${roleIdToResourceIdsMap.size}。")
+        log.debug("Loaded ${roles.size} roles and ${roleIdToResourceIdsMap.size} role-resource relation groups from the database.")
 
-        // 清除缓存
+        // Clear the cache.
         if (clear) {
             clear()
         }
 
-        // 缓存角色资源ID列表
+        // Cache the resource ID list for each role.
         roles.forEach { role ->
             val roleId = role.id
             if (roleId.isBlank()) return@forEach
             val resourceIds = roleIdToResourceIdsMap[roleId] ?: emptyList()
             if (resourceIds.isNotEmpty()) {
                 KeyValueCacheKit.put(CACHE_NAME, roleId, resourceIds)
-                log.debug("缓存了角色${roleId}的${resourceIds.size}条资源ID。")
+                log.debug("Cached ${resourceIds.size} resource IDs for role ${roleId}.")
             }
         }
     }
 
     /**
-     * 根据角色ID从缓存中获取该角色拥有的所有资源ID，如果缓存中不存在，则从数据库中加载，并回写缓存
+     * Get all resource IDs owned by the given role from the cache. If absent, load from the
+     * database and write back to the cache.
      *
-     * @param roleId 角色ID
-     * @return Set<资源ID>
+     * @param roleId role id
+     * @return list of resource IDs
      */
     @Cacheable(
         cacheNames = [CACHE_NAME],
@@ -85,49 +86,49 @@ open class ResourceIdsByRoleIdCache : AbstractKeyValueCacheHandler<List<String>>
     )
     open fun getResourceIds(roleId: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("缓存中不存在角色${roleId}的资源ID，从数据库中加载...")
+            log.debug("Cache miss for resource IDs of role ${roleId}; loading from the database...")
         }
 
         val resourceIds = authRoleResourceDao.searchResourceIdsByRoleIds(setOf(roleId)).toList()
-        log.debug("从数据库加载了角色${roleId}的${resourceIds.size}条资源ID。")
+        log.debug("Loaded ${resourceIds.size} resource IDs for role ${roleId} from the database.")
         return resourceIds
     }
 
     /**
-     * 角色-资源关系变更后同步缓存
+     * Sync the cache after the role-resource relations of the given role change.
      *
-     * @param roleId 角色ID
+     * @param roleId role id
      */
     open fun syncOnRoleResourceChange(roleId: String) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("角色${roleId}的资源关系变更后，同步${CACHE_NAME}缓存...")
+            log.debug("Role ${roleId} resource relations changed; syncing the ${CACHE_NAME} cache...")
             evict(roleId)
             if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                 getSelf<ResourceIdsByRoleIdCache>().getResourceIds(roleId)
             }
-            log.debug("${CACHE_NAME}缓存同步完成。")
+            log.debug("${CACHE_NAME} cache sync complete.")
         }
     }
 
     /**
-     * 批量角色-资源关系变更后同步缓存
+     * Sync the cache after a batch of role-resource relation changes.
      *
-     * @param roleIds 角色ID集合
+     * @param roleIds collection of role IDs
      */
     open fun syncOnBatchRoleResourceChange(roleIds: Collection<String>) {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
-            log.debug("批量角色资源关系变更后，同步${CACHE_NAME}缓存...")
+            log.debug("Batch role-resource relations changed; syncing the ${CACHE_NAME} cache...")
             roleIds.forEach { roleId ->
                 KeyValueCacheKit.evict(CACHE_NAME, roleId)
                 if (KeyValueCacheKit.isWriteInTime(CACHE_NAME)) {
                     getSelf<ResourceIdsByRoleIdCache>().getResourceIds(roleId)
                 }
             }
-            log.debug("${CACHE_NAME}缓存同步完成，共影响${roleIds.size}个角色。")
+            log.debug("${CACHE_NAME} cache sync complete; ${roleIds.size} roles affected.")
         }
     }
 
-    /** 角色删除后清掉该 roleId 下的 resourceId 列表。 */
+    /** Evict the resourceId list for the given roleId after the role is deleted. */
     private fun evictByRoleId(roleId: String) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
         KeyValueCacheKit.evict(CACHE_NAME, roleId)

@@ -10,13 +10,13 @@ import java.util.UUID
 import kotlin.test.*
 
 /**
- * [SysMicroServiceHashCache] 单元测试（Hash 缓存，按 code 存取）。
+ * Unit tests for [SysMicroServiceHashCache] (Hash cache, keyed by code).
  *
- * 覆盖：按 code 单条/批量获取、按 atomicService 查询、全量刷新、新增/更新/删除/批量删除后同步；
- * 本地缓存开启时二次取为同一对象引用。
+ * Covers: single/batch fetch by code, query by atomicService, full reload, sync after insert/update/delete/batch-delete;
+ * when local cache is enabled, the second fetch returns the same object reference.
  *
- * 测试数据：`SysMicroServiceHashCacheTest.sql`。
- * 需 Docker 运行 Redis，且 sys_cache 中已配置 SYS_MICRO_SERVICE__HASH（hash=true）。
+ * Test data: `SysMicroServiceHashCacheTest.sql`.
+ * Requires Docker-hosted Redis and a SYS_MICRO_SERVICE__HASH (hash=true) row configured in sys_cache.
  *
  * @author K
  * @author AI: Cursor
@@ -33,7 +33,7 @@ class SysMicroServiceHashCacheTest : RdbAndRedisCacheTestBase() {
 
     private fun isLocalCacheEnabled(): Boolean = HashCacheKit.isLocalCacheEnabled(SysMicroServiceHashCache.CACHE_NAME)
 
-    private val newMicroServiceName = "新微服务名称"
+    private val newMicroServiceName = "New micro-service name"
 
     @Test
     fun getMicroServiceByCode() {
@@ -141,7 +141,7 @@ class SysMicroServiceHashCacheTest : RdbAndRedisCacheTestBase() {
         val unique = UUID.randomUUID().toString().replace("-", "").take(12)
         val sysMicroService = SysMicroService().apply {
             code = "tc_${unique}"
-            name = "测试微服务_${unique}"
+            name = "Test micro-service_${unique}"
             context = "/test"
             active = true
         }

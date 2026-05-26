@@ -6,7 +6,7 @@ import io.kudos.ms.sys.core.accessrule.model.po.SysAccessRule
 
 
 /**
- * 访问规则业务接口
+ * Access rule service interface.
  *
  * @author K
  * @since 1.0.0
@@ -15,11 +15,11 @@ interface ISysAccessRuleService : IBaseCrudService<String, SysAccessRule> {
 
 
     /**
-     * 获取访问规则
+     * Get an access rule.
      *
-     * @param systemCode 系统编码，缺省为"default"
-     * @param tenantId 租户id，缺省为"default"
-     * @return 访问规则记录，找不到返回null
+     * @param systemCode system code, defaults to "default"
+     * @param tenantId tenant id, defaults to "default"
+     * @return access rule record, or null if not found
      * @author K
      * @since 1.0.0
      */
@@ -29,31 +29,31 @@ interface ISysAccessRuleService : IBaseCrudService<String, SysAccessRule> {
     ): SysAccessRuleRow?
 
     /**
-     * 获取租户的访问规则列表
+     * Get the access rule list for a tenant.
      *
-     * @param tenantId 租户id
-     * @return 访问规则记录列表
+     * @param tenantId tenant id
+     * @return list of access rule records
      * @author K
      * @since 1.0.0
      */
     fun getAccessRulesByTenantId(tenantId: String): List<SysAccessRuleRow>
 
     /**
-     * 获取系统的访问规则列表
+     * Get the access rule list for a system.
      *
-     * @param systemCode 系统编码
-     * @return 访问规则记录列表
+     * @param systemCode system code
+     * @return list of access rule records
      * @author K
      * @since 1.0.0
      */
     fun getAccessRulesBySystemCode(systemCode: String): List<SysAccessRuleRow>
 
     /**
-     * 更新启用状态
+     * Update the enabled state.
      *
-     * @param id 访问规则id
-     * @param active 是否启用
-     * @return 是否更新成功
+     * @param id access rule id
+     * @param active whether enabled
+     * @return whether the update succeeded
      * @author K
      * @since 1.0.0
      */

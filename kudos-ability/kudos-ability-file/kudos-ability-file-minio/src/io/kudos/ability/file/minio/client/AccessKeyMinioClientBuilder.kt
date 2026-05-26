@@ -6,10 +6,11 @@ import io.minio.MinioClient
 import java.net.URI
 
 /**
- * 用 AK/SK 静态凭证构建 [MinioClient]。
+ * Builds [MinioClient] using static AK/SK credentials.
  *
- * 适用场景：服务自身持有的固定 access key + secret key（例如配置文件、KMS 取出的长期凭证）。
- * 与 [AccessTokenMinioClientBuilder] 的区别是后者用 OAuth2 token 走 STS 临时凭证，租期更短。
+ * Applicable scenarios: fixed access key + secret key held by the service itself (e.g., long-term credentials
+ * from configuration files or KMS). The difference from [AccessTokenMinioClientBuilder] is that the latter
+ * uses an OAuth2 token via STS temporary credentials with a shorter lease.
  *
  * @author Roger
  * @author K
@@ -18,17 +19,17 @@ import java.net.URI
  */
 class AccessKeyMinioClientBuilder : MinioClientBuilder<AccessKeyServerParam> {
 
-    /** MinIO 全局配置（提供 endpoint） */
+    /** Global MinIO configuration (provides endpoint). */
     private var minioProperties: MinioProperties? = null
 
-    /** 当前次请求所用的 AK/SK */
+    /** AK/SK used for the current request. */
     private var authServerParam: AccessKeyServerParam? = null
 
     /**
-     * 用 endpoint + AK/SK 组装 [MinioClient] 并返回。
+     * Assembles a [MinioClient] using endpoint + AK/SK and returns it.
      *
-     * @return 全新的 MinIO 客户端实例
-     * @throws IllegalArgumentException 配置缺失时
+     * @return a brand-new MinIO client instance
+     * @throws IllegalArgumentException when configuration is missing
      * @author K
      * @since 1.0.0
      */
@@ -42,9 +43,9 @@ class AccessKeyMinioClientBuilder : MinioClientBuilder<AccessKeyServerParam> {
     }
 
     /**
-     * 注入 MinIO 全局配置。
+     * Injects the global MinIO configuration.
      *
-     * @param minioProperties 配置对象
+     * @param minioProperties configuration object
      * @author K
      * @since 1.0.0
      */
@@ -53,9 +54,9 @@ class AccessKeyMinioClientBuilder : MinioClientBuilder<AccessKeyServerParam> {
     }
 
     /**
-     * 注入本次请求所用的 AK/SK 凭证。
+     * Injects the AK/SK credentials used for the current request.
      *
-     * @param authServerParam 鉴权参数
+     * @param authServerParam authentication parameters
      * @author K
      * @since 1.0.0
      */

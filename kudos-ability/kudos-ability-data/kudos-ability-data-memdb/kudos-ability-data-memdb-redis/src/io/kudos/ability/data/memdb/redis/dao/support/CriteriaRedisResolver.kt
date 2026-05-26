@@ -7,13 +7,13 @@ import io.kudos.base.query.enums.OperatorEnum
 import org.springframework.data.redis.core.RedisTemplate
 
 /**
- * 将 Criteria 转为 Redis Set/ZSet 查询，得到满足条件的 id 集合。
- * - 属性值为数值型（Number）或范围类操作符：用 ZSet 索引（zset:property）
- * - 其他：用 Set 索引（set:property:value）
- * 逻辑关系：组间 AND，组内数组为 OR。
+ * Translates a Criteria into Redis Set/ZSet queries to obtain the set of ids satisfying the criteria.
+ * - Numeric (Number) property values or range-type operators: use the ZSet index (zset:property).
+ * - Others: use the Set index (set:property:value).
+ * Logical relations: AND between groups; OR within a group's array.
  *
- * @param indexKeyPrefix 二级索引 key 前缀
- * @param redisTemplate Redis 操作模板
+ * @param indexKeyPrefix Secondary index key prefix.
+ * @param redisTemplate Redis operation template.
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -25,19 +25,19 @@ internal class CriteriaRedisResolver(
 
     private companion object {
         /**
-         * ZSet 分数下界。**不要写 [Double.MIN_VALUE]**——Java/Kotlin 里它是最小**正**double，
-         * 用作下界会让所有负 score 的成员被排除。`-Double.MAX_VALUE` 才是负方向最远。
+         * ZSet score lower bound. **Do not use [Double.MIN_VALUE]** — in Java/Kotlin it is the smallest **positive** double,
+         * and using it as the lower bound would exclude all members with negative scores. `-Double.MAX_VALUE` is the most negative value.
          */
         private const val SCORE_MIN: Double = -Double.MAX_VALUE
         private const val SCORE_MAX: Double = Double.MAX_VALUE
 
-        /** ZSet score 的等值匹配偏移，规避浮点近似导致的等值匹配漏命中。 */
+        /** Epsilon for equality matching of ZSet scores, to avoid missed equality matches caused by floating-point approximation. */
         private const val SCORE_EPSILON: Double = 1e-10
     }
 
     /**
-     * 解析 Criteria，返回满足条件的 id 集合。
-     * @return 满足条件的 id 集合；若 criteria 为空则返回 null（表示“全部”，由调用方用 HKEYS 等处理）
+     * Parses the Criteria and returns the set of matching ids.
+     * @return Set of ids satisfying the conditions; returns null if the criteria is empty (meaning "all", to be handled by the caller via HKEYS, etc.).
      */
     fun resolveToIds(criteria: Criteria?): Set<String>? {
         if (criteria == null || criteria.isEmpty()) return null
@@ -59,10 +59,10 @@ internal class CriteriaRedisResolver(
     }
 
     /**
-     * 处理"组内 OR"语义：数组中每个元素的 id 集合做并集。
+     * Handles "OR within a group" semantics: takes the union of the id sets of each element in the array.
      *
-     * @param array 同组的 [Criterion] 或嵌套 [Criteria] 数组
-     * @return 并集；空并集返回 null（让上层视作"无约束"）
+     * @param array Array of [Criterion]s or nested [Criteria]s in the same group.
+     * @return The union; an empty union returns null (so the upper layer treats it as "no constraint").
      * @author K
      * @since 1.0.0
      */
@@ -80,12 +80,12 @@ internal class CriteriaRedisResolver(
     }
 
     /**
-     * 把单个 [Criterion] 解析为 id 集合。
-     * value 为 null 时按 operator 是否接受 null 决定结果（不接受 → 空集；接受 → null 表示"无约束"）。
-     * 是否走 ZSet 索引：数值型 value 或范围类操作符。
+     * Parses a single [Criterion] into a set of ids.
+     * When value is null, the result depends on whether the operator accepts null (does not accept → empty set; accepts → null means "no constraint").
+     * Whether to use the ZSet index: numeric value or range-type operator.
      *
-     * @param c 单条条件
-     * @return 该条件命中的 id 集合
+     * @param c Single condition.
+     * @return The set of ids matching this condition.
      * @author K
      * @since 1.0.0
      */
@@ -99,10 +99,10 @@ internal class CriteriaRedisResolver(
     }
 
     /**
-     * 判定 value 是否能作为 ZSet score（数值或可解析为数值的字符串）。
+     * Determines whether value can be used as a ZSet score (a number or a string parseable as a number).
      *
-     * @param value 待判定值
-     * @return true 表示可走 ZSet 索引
+     * @param value Value to test.
+     * @return true if the ZSet index can be used.
      * @author K
      * @since 1.0.0
      */
@@ -113,10 +113,10 @@ internal class CriteriaRedisResolver(
     }
 
     /**
-     * 是否为范围类操作符（必须走 ZSet 才能 range 查询）。
+     * Whether the operator is a range-type operator (must use ZSet to do range queries).
      *
-     * @param op 操作符
-     * @return true 表示属于 GT/GE/LT/LE/BETWEEN/NOT_BETWEEN
+     * @param op Operator.
+     * @return true if it belongs to GT/GE/LT/LE/BETWEEN/NOT_BETWEEN.
      * @author K
      * @since 1.0.0
      */
@@ -124,10 +124,10 @@ internal class CriteriaRedisResolver(
         op in setOf(OperatorEnum.GT, OperatorEnum.GE, OperatorEnum.LT, OperatorEnum.LE, OperatorEnum.BETWEEN, OperatorEnum.NOT_BETWEEN)
 
     /**
-     * 把值转为 Double 作为 ZSet score；非数值字符串和其它类型回落到 [SCORE_MIN]（负方向最远）。
+     * Converts the value to a Double for use as a ZSet score; non-numeric strings and other types fall back to [SCORE_MIN] (the most negative value).
      *
-     * @param value 任意值
-     * @return Double score
+     * @param value Any value.
+     * @return Double score.
      * @author K
      * @since 1.0.0
      */
@@ -138,13 +138,13 @@ internal class CriteriaRedisResolver(
     }
 
     /**
-     * 通过 Set 索引按等值/IN 操作符查询 id。
-     * EQ/IEQ：直接读 set 成员；IN：把 value 拆分后多 set 做 union。
+     * Queries ids via the Set index for equality / IN operators.
+     * EQ/IEQ: directly read set members; IN: split value and union multiple sets.
      *
-     * @param property 属性名
-     * @param operator 操作符（仅支持 EQ/IEQ/IN）
-     * @param value 查询值
-     * @return id 集合；不支持的操作符返回 null
+     * @param property Property name.
+     * @param operator Operator (only EQ/IEQ/IN are supported).
+     * @param value Query value.
+     * @return Set of ids; returns null for unsupported operators.
      * @author K
      * @since 1.0.0
      */
@@ -168,15 +168,15 @@ internal class CriteriaRedisResolver(
     }
 
     /**
-     * 通过 ZSet 索引按数值或范围操作符查询 id。
+     * Queries ids via the ZSet index for numeric or range operators.
      *
-     * 范围端点用 [SCORE_EPSILON] 处理"严格大于/小于"——浮点等值匹配不可靠，
-     * 用一个极小偏移把开区间转闭区间，再让 `rangeByScore` 处理。
+     * Range endpoints use [SCORE_EPSILON] to handle "strict greater-than / less-than" — floating-point equality matching is unreliable,
+     * so we use a tiny offset to turn an open interval into a closed one, then let `rangeByScore` handle it.
      *
-     * @param property 属性名
-     * @param operator 操作符
-     * @param value 查询值（数值或范围）
-     * @return id 集合；不支持的操作符返回 null
+     * @param property Property name.
+     * @param operator Operator.
+     * @param value Query value (numeric or range).
+     * @return Set of ids; returns null for unsupported operators.
      * @author K
      * @since 1.0.0
      */
@@ -204,30 +204,30 @@ internal class CriteriaRedisResolver(
         }
     }
 
-    /** 取 Set 成员的小辅助：转换为 String 集合，空时返回空集 */
+    /** Small helper to fetch Set members: converts to a String set; returns empty set if empty. */
     private fun setMembers(key: String): Set<String> =
         redisTemplate.opsForSet().members(key)?.mapNotNullTo(mutableSetOf()) { it.toString() } ?: emptySet()
 
-    /** 取 ZSet score 范围内成员的小辅助：转换为 String 集合，空时返回空集 */
+    /** Small helper to fetch ZSet members within a score range: converts to a String set; returns empty set if empty. */
     private fun zsetRange(key: String, min: Double, max: Double): Set<String> =
         redisTemplate.opsForZSet().rangeByScore(key, min, max)
             ?.mapNotNullTo(mutableSetOf()) { it?.toString() } ?: emptySet()
 
-    /** 构造 Set 索引的完整 Redis key */
+    /** Builds the full Redis key for the Set index. */
     private fun setKey(property: String, value: String): String =
         CacheKey.getCacheKey(indexKeyPrefix, "set", property, value)
 
-    /** 构造 ZSet 索引的完整 Redis key */
+    /** Builds the full Redis key for the ZSet index. */
     private fun zsetKey(property: String): String =
         CacheKey.getCacheKey(indexKeyPrefix, "zset", property)
 
     /**
-     * 从 BETWEEN/NOT_BETWEEN 的 value 中解析 (min, max)。
-     * 支持 [ClosedFloatingPointRange] / [Array] 双元素 / [List] 双元素三种形态；
-     * 长度不足或含 null 返回 null（调用方按"空结果"处理）。
+     * Parses (min, max) from the value of BETWEEN / NOT_BETWEEN.
+     * Supports three shapes: [ClosedFloatingPointRange], two-element [Array], and two-element [List];
+     * returns null if the length is insufficient or contains null (the caller treats this as an "empty result").
      *
-     * @param value 范围值
-     * @return (min, max)，无法解析时 null
+     * @param value Range value.
+     * @return (min, max), or null if it cannot be parsed.
      * @author K
      * @since 1.0.0
      */

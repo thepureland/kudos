@@ -20,15 +20,16 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
- * [MixCache] 各 [CacheStrategy] 下 get / put / evict / putIfAbsent / clear 的写入顺序与广播单测。
+ * Unit tests covering [MixCache] write ordering and broadcasting for get / put / evict / putIfAbsent / clear
+ * under each [CacheStrategy].
  *
- * 关键检查点：
- *  - `LOCAL_REMOTE` 的写入顺序是**先远端后本地**——失败语义在 README 已说明
- *  - `LOCAL_REMOTE` 写完后异步广播失效消息给所有 `ICacheMessageHandler` 实现
- *  - `putIfAbsent` 已存在时不广播、但回填本地（读语义而非写语义）
- *  - `SINGLE_LOCAL` / `REMOTE` 走对应的单端，不广播
+ * Key checks:
+ *  - `LOCAL_REMOTE` write order is **remote first, then local** — failure semantics documented in the README.
+ *  - After a `LOCAL_REMOTE` write, an invalidation message is asynchronously broadcast to all `ICacheMessageHandler` implementations.
+ *  - `putIfAbsent` does not broadcast when the value already exists, but does backfill local (read semantics, not write).
+ *  - `SINGLE_LOCAL` / `REMOTE` write only to their respective layer, with no broadcast.
  *
- * 广播是 fire-and-forget（共享 daemon executor），断言时用 [CountDownLatch] 等单条消息抵达。
+ * Broadcasting is fire-and-forget (shared daemon executor); assertions use [CountDownLatch] to wait for a single message to arrive.
  */
 internal class MixCacheTest {
 
@@ -46,7 +47,7 @@ internal class MixCacheTest {
     @AfterTest
     fun teardown() {
         ctx.close()
-        // 不清 SpringKit.applicationContext 字段——getter 不允许写 null，且后续 test 会重新覆盖
+        // Do not clear the SpringKit.applicationContext field — the setter does not allow null, and later tests will overwrite it.
     }
 
     // region SINGLE_LOCAL
@@ -59,7 +60,7 @@ internal class MixCacheTest {
         cache.put("k", "v")
 
         assertEquals("v", local.get("k")?.get())
-        assertEquals(0, handler.size(), "SINGLE_LOCAL 不应广播")
+        assertEquals(0, handler.size(), "SINGLE_LOCAL must not broadcast")
     }
 
     @Test
@@ -92,7 +93,7 @@ internal class MixCacheTest {
         cache.put("k", "v")
 
         assertEquals("v", remote.get("k")?.get())
-        assertEquals(0, handler.size(), "REMOTE 不应广播")
+        assertEquals(0, handler.size(), "REMOTE must not broadcast")
     }
 
     @Test
@@ -103,7 +104,7 @@ internal class MixCacheTest {
 
     // endregion
 
-    // region LOCAL_REMOTE — 核心
+    // region LOCAL_REMOTE — core
 
     @Test
     fun localRemote_put_writesRemoteThenLocal_andBroadcasts() {
@@ -118,8 +119,8 @@ internal class MixCacheTest {
 
         cache.put("k", "v")
 
-        assertTrue(handler.await(2, TimeUnit.SECONDS), "广播应在 2s 内异步抵达")
-        assertEquals(listOf("remote:put:k", "local:put:k"), ops, "写入顺序应当先远端后本地")
+        assertTrue(handler.await(2, TimeUnit.SECONDS), "Broadcast should arrive asynchronously within 2s")
+        assertEquals(listOf("remote:put:k", "local:put:k"), ops, "Write order should be remote first, then local")
         val msg = handler.messages().single()
         assertEquals("user", msg.cacheName)
         assertEquals("k", msg.key)
@@ -141,7 +142,7 @@ internal class MixCacheTest {
         val cache = MixCache(CacheStrategy.LOCAL_REMOTE, local, remote)
 
         assertEquals("v", cache.get("k")?.get())
-        // 远端命中后回填本地
+        // After a remote hit, backfill local.
         assertEquals("v", local.get("k")?.get())
     }
 
@@ -170,7 +171,7 @@ internal class MixCacheTest {
         cache.clear()
 
         assertTrue(handler.await(2, TimeUnit.SECONDS))
-        assertNull(handler.messages().single().key, "clear 的广播 key 应为 null")
+        assertNull(handler.messages().single().key, "Broadcast key for clear should be null")
     }
 
     @Test
@@ -182,10 +183,10 @@ internal class MixCacheTest {
 
         val previous = cache.putIfAbsent("k", "v")
 
-        assertNull(previous, "首次 putIfAbsent 应返回 null")
+        assertNull(previous, "First putIfAbsent should return null")
         assertEquals("v", local.get("k")?.get())
         assertEquals("v", remote.get("k")?.get())
-        assertTrue(handler.await(2, TimeUnit.SECONDS), "新插入应广播")
+        assertTrue(handler.await(2, TimeUnit.SECONDS), "A new insert should broadcast")
     }
 
     @Test
@@ -196,48 +197,48 @@ internal class MixCacheTest {
 
         val previous = cache.putIfAbsent("k", "new-v")
 
-        assertEquals("remote-v", previous?.get(), "返回的应是远端原值")
-        // 远端值回填到本地，避免本节点后续再查
+        assertEquals("remote-v", previous?.get(), "Should return the original remote value")
+        // Backfill local with the remote value to avoid re-querying from this node later.
         assertEquals("remote-v", local.get("k")?.get())
-        // 等一会确认没有广播被异步触发
+        // Wait a moment to confirm no broadcast was triggered asynchronously.
         Thread.sleep(200)
-        assertEquals(0, handler.size(), "远端已存在不应广播失效")
+        assertEquals(0, handler.size(), "Should not broadcast invalidation when the remote value already exists")
     }
 
     @Test
     fun localRemote_remoteWriteFails_propagatesException_noBroadcast_noLocalWrite() {
-        // 远端写抛异常 → 整体回滚：异常上抛、本地保持原值、不广播
+        // Remote write throws → full rollback: exception propagates, local keeps original value, no broadcast.
         val local = newCache("user").apply { put("k", "old-local") }
         val remote = WriteFailingCache(newCache("user"), failOn = setOf("put"))
         remote.delegate.put("k", "old-remote")
         val cache = MixCache(CacheStrategy.LOCAL_REMOTE, local, remote)
-        handler.expect(1) // 期望 0；用 latch 等不到来证明无广播
+        handler.expect(1) // Expect 0; failure to satisfy the latch proves no broadcast occurred.
 
         assertFails { cache.put("k", "new-v") }
 
-        assertEquals("old-local", local.get("k")?.get(), "远端失败时本地应保持原值")
-        assertEquals("old-remote", remote.delegate.get("k")?.get(), "远端失败时远端应保持原值")
-        // 等一段让 fire-and-forget 有机会执行——确实没广播
-        assertTrue(!handler.await(300, TimeUnit.MILLISECONDS), "远端失败不应触发广播")
+        assertEquals("old-local", local.get("k")?.get(), "Local should keep its original value when remote fails")
+        assertEquals("old-remote", remote.delegate.get("k")?.get(), "Remote should keep its original value when remote fails")
+        // Wait a bit so the fire-and-forget executor has a chance to run — confirms there was no broadcast.
+        assertTrue(!handler.await(300, TimeUnit.MILLISECONDS), "A remote failure must not trigger a broadcast")
     }
 
     @Test
     fun localRemote_localWriteFails_swallowed_broadcastStillFires() {
-        // 远端写成功，本地写失败 —— 异常被吞 + warn 日志 + 广播仍发出
+        // Remote write succeeds, local write fails — exception is swallowed, a warn log is emitted, and the broadcast still fires.
         val local = WriteFailingCache(newCache("user"), failOn = setOf("put"))
         local.delegate.put("k", "old-local")
         val remote = newCache("user").apply { put("k", "old-remote") }
         val cache = MixCache(CacheStrategy.LOCAL_REMOTE, local, remote)
         handler.expect(1)
 
-        // 调用不应抛
+        // The call should not throw.
         cache.put("k", "new-v")
 
-        assertEquals("new-v", remote.get("k")?.get(), "远端应当被成功更新")
+        assertEquals("new-v", remote.get("k")?.get(), "Remote should be updated successfully")
         assertEquals("old-local", local.delegate.get("k")?.get(),
-            "本地写失败后保持原值（不抛、不破坏其他状态）")
+            "Local keeps its original value after a write failure (no throw, no collateral state damage)")
         assertTrue(handler.await(2, TimeUnit.SECONDS),
-            "本地失败但远端成功 → 仍广播让其他节点剔除其本地副本")
+            "Local failure but remote success → still broadcast so other nodes evict their local copies")
     }
 
     @Test
@@ -261,7 +262,7 @@ internal class MixCacheTest {
 
     private fun newCache(name: String): Cache = ConcurrentMapCache(name, /* allowNullValues = */ true)
 
-    /** 把入站消息记录下来 + 计数 latch，便于断言 async 广播抵达。 */
+    /** Records inbound messages plus a counting latch so assertions can confirm async broadcasts arrived. */
     private class RecordingHandler : ICacheMessageHandler {
         private val received = Collections.synchronizedList(mutableListOf<CacheMessage>())
         @Volatile private var latch: CountDownLatch = CountDownLatch(0)
@@ -279,7 +280,7 @@ internal class MixCacheTest {
         override fun receiveMessage(message: CacheMessage) {}
     }
 
-    /** 包一层 [Cache] 把 put/evict/clear 的发生顺序追加到外部列表，用于断言"先远端后本地"。 */
+    /** Wraps a [Cache] and appends the order of put/evict/clear to an external list so tests can assert "remote first, then local". */
     private class OrderRecordingCache(private val delegate: Cache, private val tag: String) : Cache by delegate {
         @Volatile private var sink: MutableList<String>? = null
         fun recordTo(target: MutableList<String>) { sink = target }
@@ -297,7 +298,7 @@ internal class MixCacheTest {
         }
     }
 
-    /** 指定写操作抛异常，其余 delegate。测 LOCAL_REMOTE 失败语义用。 */
+    /** Throws on the specified write operations and delegates the rest. Used for LOCAL_REMOTE failure semantics tests. */
     private class WriteFailingCache(val delegate: Cache, private val failOn: Set<String>) : Cache by delegate {
         override fun put(key: Any, value: Any?) {
             if ("put" in failOn) error("forced put failure on ${delegate.name}")
@@ -317,7 +318,7 @@ internal class MixCacheTest {
         }
     }
 
-    /** 任何读 / 写都抛——用于断言"本地命中不应触发远端访问"。 */
+    /** Throws on any read/write — used to assert that "a local hit should not trigger remote access". */
     private class ThrowOnAnyCache(private val tag: String, private val cacheName: String) : Cache {
         override fun getName(): String = cacheName
         override fun getNativeCache(): Any = this

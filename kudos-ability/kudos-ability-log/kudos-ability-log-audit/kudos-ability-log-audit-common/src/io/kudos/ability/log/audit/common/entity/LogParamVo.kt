@@ -5,26 +5,26 @@ import java.io.Serializable
 import java.util.Locale
 
 /**
- * 描述参数 POJO，对应日志模板里的 `${name}` 占位符。
+ * Description-parameter POJO matching the `${name}` placeholders in log templates.
  *
- * 同一参数可携带 [type]（字符串 / 货币 / 日期）和 [locale]（用于货币 / 日期格式化）。
- * 业务侧通过 `BaseLog.addParam(LogParamVo(...))` 或 `addParam(name, value)` 添加。
+ * A single parameter may carry [type] (string / currency / date) and [locale] (for currency / date formatting).
+ * The business side adds them via `BaseLog.addParam(LogParamVo(...))` or `addParam(name, value)`.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 class LogParamVo : Serializable {
-    //参数名
+    // Parameter name
     var name: String? = null
 
-    //参数值
+    // Parameter value
     var value: Any? = null
 
-    //参数类型
+    // Parameter type
     var type: String? = LogParamTypeEnum.STRING.code
 
-    //参数所属地区(用于货币、日期)
+    // Locale of the parameter (used for currency / date)
     private var locale: Locale? = null
 
     constructor()

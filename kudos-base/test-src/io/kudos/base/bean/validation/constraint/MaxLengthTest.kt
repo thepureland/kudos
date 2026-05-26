@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * MaxLength测试用例
+ * Test cases for MaxLength.
  *
  * @author AI: Codex
  * @since 1.0.0
@@ -26,11 +26,11 @@ internal class MaxLengthTest {
         val bean = TestBean("abcd")
         val violations = ValidationKit.validateBean(bean, failFast = false)
         assertEquals(1, violations.size)
-        assertEquals("name长度不能超过3", violations.first().message)
+        assertEquals("name length must not exceed 3", violations.first().message)
     }
 
     internal data class TestBean(
-        @get:MaxLength(max = 3, message = "name长度不能超过3")
+        @get:MaxLength(max = 3, message = "name length must not exceed 3")
         val name: String?
     )
 }

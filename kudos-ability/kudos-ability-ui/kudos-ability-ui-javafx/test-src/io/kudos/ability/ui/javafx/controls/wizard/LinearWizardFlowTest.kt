@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertFalse
 
 /**
- * [LinearWizardFlow] 的 headless 单元测试。
+ * Headless unit tests for [LinearWizardFlow].
  *
  * @author K
  * @author AI: Codex

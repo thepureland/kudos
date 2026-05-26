@@ -1,10 +1,10 @@
 package io.kudos.ms.sys.core.resource.event
 
 /**
- * 资源（`sys_resource`）领域事件。由 `@TransactionalEventListener(AFTER_COMMIT)` 派发。
+ * Domain events for resources (`sys_resource`). Dispatched by `@TransactionalEventListener(AFTER_COMMIT)`.
  *
- * Hash 缓存的副属性索引由框架自动维护（按 FILTERABLE_PROPERTIES 在保存 / 删除时同步索引），
- * 所以事件无需携带 dim 信息——仅 id 即可。
+ * Secondary indexes of the Hash cache are maintained automatically by the framework (kept in sync on save / delete
+ * by FILTERABLE_PROPERTIES), so events do not need to carry dimension info — only the id is required.
  *
  * @author K
  * @author AI: Cursor

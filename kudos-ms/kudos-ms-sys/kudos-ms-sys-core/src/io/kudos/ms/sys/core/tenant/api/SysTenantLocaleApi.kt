@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service
 
 
 /**
- * 租户-语言关系 API本地实现
+ * Local implementation of the tenant-locale relation API
  *
  * @author K
  * @since 1.0.0

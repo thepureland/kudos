@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
 import kotlin.reflect.full.memberProperties
 
 /**
- * Bean操作工具类
+ * Bean operation utility class.
  *
  * @author K
  * @since 1.0.0
@@ -23,13 +23,13 @@ import kotlin.reflect.full.memberProperties
 object BeanKit {
 
     /**
-     * 深度克隆指定的bean
-     * 该方法比直接在对象图中的所有对象重写克隆方法慢很多倍. 但是, 对于复杂的对象图, 或那些不支持深度克隆的对象, 这提供了另一种实现. 当然, 所有对象都必须实现 `Serializable`接口.
+     * Deeply clone the specified bean.
+     * This method is many times slower than overriding the clone method on every object in the object graph directly. However, for complex object graphs, or for objects that do not support deep cloning, this provides an alternative implementation. Of course, all objects must implement the `Serializable` interface.
      *
-     * @param T bean类型
-     * @param bean 被克隆的bean
-     * @return 克隆后的bean
-     * @throws org.apache.commons.lang3.SerializationException (运行时) 如果序列化失败
+     * @param T bean type
+     * @param bean the bean to be cloned
+     * @return the cloned bean
+     * @throws org.apache.commons.lang3.SerializationException (runtime) if serialization fails
      * @see SerializationKit.clone
      * @author K
      * @since 1.0.0
@@ -37,19 +37,19 @@ object BeanKit {
     fun <T : Serializable> deepClone(bean: T): T = SerializationKit.clone(bean)
 
     /**
-     * 根据字段映射，拷贝源对象的属性，到指定目标类对象的对应属性
+     * Copy the properties of the source object to the corresponding properties of the specified target class object, according to the field mapping.
      *
-     * @param T 目标类型
-     * @param destClass 目标类
-     * @param srcObj 源对象
-     * @param propertyMap 字段映射 Map(源对象属性名，目标对象属性名)，为null或空将尝试拷贝所有源对象的属性到目标对象的对应属性(如果存在的话)
-     * @return 目标类的对象
+     * @param T target type
+     * @param destClass target class
+     * @param srcObj source object
+     * @param propertyMap field mapping Map(source object property name, target object property name); if null or empty, will try to copy all source object properties to the corresponding properties of the target object (if they exist)
+     * @return the target class object
      * @author K
      * @since 1.0.0
      */
     fun <T : Any> copyProperties(destClass: KClass<T>, srcObj: Any, propertyMap: Map<String, String>? = null): T {
         val constructor = requireNotNull(destClass.getEmptyConstructor()) {
-            "类${destClass.qualifiedName}必须提供无参构造器，才能执行属性拷贝。"
+            "Class ${destClass.qualifiedName} must provide a no-arg constructor in order to perform property copying."
         }
         val destObj = constructor.call()
         copyProperties(srcObj, destObj, propertyMap)
@@ -57,18 +57,18 @@ object BeanKit {
     }
 
     /**
-     * 根据字段映射，拷贝源对象的属性，到指定目标对象的对应属性
+     * Copy the properties of the source object to the corresponding properties of the specified target object, according to the field mapping.
      *
-     * @param T 目标类型
-     * @param srcObj 源对象
-     * @param destObj 目标对象
-     * @param propertyMap 字段映射 Map(源对象属性名，目标对象属性名)，为null或空将尝试拷贝所有源对象的属性到目标对象的对应属性(如果存在的话)
-     * @return 目标类的对象
+     * @param T target type
+     * @param srcObj source object
+     * @param destObj target object
+     * @param propertyMap field mapping Map(source object property name, target object property name); if null or empty, will try to copy all source object properties to the corresponding properties of the target object (if they exist)
+     * @return the target class object
      * @author K
      * @since 1.0.0
      */
     fun <T : Any> copyProperties(srcObj: Any, destObj: T, propertyMap: Map<String, String>? = null): T {
-        val map = if (propertyMap.isNullOrEmpty()) { // 将拷贝所有源对象的属性
+        val map = if (propertyMap.isNullOrEmpty()) { // Will copy all properties of the source object
             val desProps = destObj::class.memberProperties.map { it.name }.toSet()
             srcObj::class.memberProperties
                 .filter { it.name in desProps }
@@ -86,14 +86,14 @@ object BeanKit {
     }
 
     /**
-     * 拷贝除了主键外的所有其它属性
+     * Copy all properties except the primary key.
      *
-     * @param T 实体对象类型
-     * @param src 源对象
-     * @param dest 目标对象
-     * @return 目标类的对象
-     * @throws java.lang.reflect.InvocationTargetException 目标调用时发生异常
-     * @throws IllegalAccessException 如果请求的方法不能通过反射访问
+     * @param T entity object type
+     * @param src source object
+     * @param dest target object
+     * @return the target class object
+     * @throws java.lang.reflect.InvocationTargetException if an exception occurs while invoking the target
+     * @throws IllegalAccessException if the requested method cannot be accessed via reflection
      * @author K
      * @since 1.0.0
      */
@@ -105,16 +105,16 @@ object BeanKit {
     }
 
     /**
-     * 拷贝对象，排除指定的属性(不支持嵌套/索引/映射/组合)
+     * Copy the object, excluding the specified properties (does not support nested/indexed/mapped/composite).
      *
-     * @param T 目标类型
-     * @param source 源对象
-     * @param target 目标对象
-     * @param excludeProperties 不拷贝的属性可变数组
-     * @throws java.lang.reflect.InvocationTargetException 目标调用时发生异常
-     * @throws IllegalAccessException 如果请求的方法不能通过反射访问
-     * @throws NoSuchMethodException 如果找不到指定的可访问的方法
-     * @throws java.beans.IntrospectionException 内省异常
+     * @param T target type
+     * @param source source object
+     * @param target target object
+     * @param excludeProperties vararg array of properties not to copy
+     * @throws java.lang.reflect.InvocationTargetException if an exception occurs while invoking the target
+     * @throws IllegalAccessException if the requested method cannot be accessed via reflection
+     * @throws NoSuchMethodException if the specified accessible method cannot be found
+     * @throws java.beans.IntrospectionException introspection exception
      * @author K
      * @since 1.0.0
      */
@@ -141,20 +141,20 @@ object BeanKit {
     }
 
     /**
-     * 重置所有的非id属性的值
+     * Reset the values of all non-id properties.
      *
-     * @param T 实体类型
-     * @param entity 目标实体bean
-     * @throws java.lang.reflect.InvocationTargetException 目标调用时发生异常
-     * @throws IllegalAccessException 如果请求的方法不能通过反射访问
-     * @throws InstantiationException 实例化异常
+     * @param T entity type
+     * @param entity target entity bean
+     * @throws java.lang.reflect.InvocationTargetException if an exception occurs while invoking the target
+     * @throws IllegalAccessException if the requested method cannot be accessed via reflection
+     * @throws InstantiationException instantiation exception
      * @author K
      * @since 1.0.0
      */
     fun <T> resetPropertiesExcludeId(entity: IIdEntity<T>) {
         val id = entity.id
         val constructor = requireNotNull(entity::class.getEmptyConstructor()) {
-            "类${entity::class.qualifiedName}必须提供无参构造器，才能重置属性。"
+            "Class ${entity::class.qualifiedName} must provide a no-arg constructor in order to reset properties."
         }
         val emptyEntity: IIdEntity<T> = constructor.call()
         copyProperties(emptyEntity, entity, null)
@@ -162,29 +162,29 @@ object BeanKit {
     }
 
     /**
-     * 批量属性拷贝
+     * Batch property copy.
      *
-     * @param T 目标类型
-     * @param targetClass 目标类
-     * @param srcObjs 源对象集合
-     * @return List(目标类对象)
+     * @param T target type
+     * @param targetClass target class
+     * @param srcObjs collection of source objects
+     * @return List(target class object)
      * @author K
      * @since 1.0.0
      */
     fun <T : Any> batchCopyProperties(targetClass: KClass<T>, srcObjs: Collection<Any>): List<T> =
         srcObjs.map { copyProperties(targetClass, it) }
 
-    //region 封装org.apache.commons.beanutils.BeanUtils和PropertyUtils
+    //region Wraps org.apache.commons.beanutils.BeanUtils and PropertyUtils
     /**
-     * 基于可用的属性的getters和setters克隆(浅克隆)一个bean，即使该bean本身未实现Cloneable接口
+     * Clone (shallow clone) a bean based on the available property getters and setters, even if the bean itself does not implement the Cloneable interface.
      *
-     * @param T bean类型
-     * @param bean 被克隆的bean
-     * @return 克隆后的bean
-     * @throws java.lang.reflect.InvocationTargetException 目标调用时发生异常
-     * @throws IllegalAccessException 如果请求的方法不能通过反射访问
-     * @throws NoSuchMethodException 如果找不到指定的可访问的方法
-     * @throws InstantiationException 实例化异常
+     * @param T bean type
+     * @param bean the bean to be cloned
+     * @return the cloned bean
+     * @throws java.lang.reflect.InvocationTargetException if an exception occurs while invoking the target
+     * @throws IllegalAccessException if the requested method cannot be accessed via reflection
+     * @throws NoSuchMethodException if the specified accessible method cannot be found
+     * @throws InstantiationException instantiation exception
      * @author K
      * @since 1.0.0
      */
@@ -194,14 +194,14 @@ object BeanKit {
     }
 
 //    /**
-//     * 拷贝(浅克隆)所有源bean的属性值到目标bean相同的属性值，能进行类型转换
+//     * Copy (shallow clone) all property values of the source bean to the same property values of the target bean; supports type conversion.
 //     *
-//     * @param orig 源bean
-//     * @param dest 目标bean
-//     * @param T 目标类型
-//     * @return 目标对象
-//     * @throws java.lang.reflect.InvocationTargetException 目标调用时发生异常
-//     * @throws IllegalAccessException 如果请求的方法不能通过反射访问
+//     * @param orig source bean
+//     * @param dest target bean
+//     * @param T target type
+//     * @return target object
+//     * @throws java.lang.reflect.InvocationTargetException if an exception occurs while invoking the target
+//     * @throws IllegalAccessException if the requested method cannot be accessed via reflection
 //     * @author K
 //     * @since 1.0.0
 //     */
@@ -213,15 +213,15 @@ object BeanKit {
 //    }
 
     /**
-     * 拷贝(浅克隆)所有源bean的属性值到目标bean相同的属性值，不能进行类型转换
+     * Copy (shallow clone) all property values of the source bean to the same property values of the target bean; does not support type conversion.
      *
-     * @param T 目标bean类型
-     * @param orig 源bean
-     * @param dest 目标bean
-     * @return 目标bean
-     * @throws java.lang.reflect.InvocationTargetException 目标调用时发生异常
-     * @throws IllegalAccessException 如果请求的方法不能通过反射访问
-     * @throws NoSuchMethodException 如果找不到指定的可访问的方法
+     * @param T target bean type
+     * @param orig source bean
+     * @param dest target bean
+     * @return target bean
+     * @throws java.lang.reflect.InvocationTargetException if an exception occurs while invoking the target
+     * @throws IllegalAccessException if the requested method cannot be accessed via reflection
+     * @throws NoSuchMethodException if the specified accessible method cannot be found
      * @author K
      * @since 1.0.0
      */
@@ -231,41 +231,41 @@ object BeanKit {
     }
 
     /**
-     * 返回指定bean的所有属性名及其值
+     * Return all property names and their values of the specified bean.
      *
-     * @param bean 被提取属性的bean
-     * @return Map(属性名，属性值)
-     * @throws java.lang.reflect.InvocationTargetException 目标调用时发生异常
-     * @throws IllegalAccessException 如果请求的方法不能通过反射访问
-     * @throws NoSuchMethodException 如果找不到指定的可访问的方法
+     * @param bean the bean to extract properties from
+     * @return Map(property name, property value)
+     * @throws java.lang.reflect.InvocationTargetException if an exception occurs while invoking the target
+     * @throws IllegalAccessException if the requested method cannot be accessed via reflection
+     * @throws NoSuchMethodException if the specified accessible method cannot be found
      * @author K
      * @since 1.0.0
      */
     fun extract(bean: Any): Map<String, Any?> = PropertyUtils.describe(bean)
 
     /**
-     * 返回指定属性的值
+     * Return the value of the specified property.
      *
-     * @param bean 目标bean
-     * @param name 属性名(可以嵌套/索引/映射/组合)
-     * @return 属性值
-     * @throws java.lang.reflect.InvocationTargetException 目标调用时发生异常
-     * @throws IllegalAccessException 如果请求的方法不能通过反射访问
-     * @throws NoSuchMethodException 如果找不到指定的可访问的方法
+     * @param bean target bean
+     * @param name property name (may be nested/indexed/mapped/composite)
+     * @return property value
+     * @throws java.lang.reflect.InvocationTargetException if an exception occurs while invoking the target
+     * @throws IllegalAccessException if the requested method cannot be accessed via reflection
+     * @throws NoSuchMethodException if the specified accessible method cannot be found
      * @author K
      * @since 1.0.0
      */
     fun getProperty(bean: Any, name: String): Any? = PropertyUtils.getProperty(bean, name)
 
     /**
-     * 设置属性值(浅克隆), 能进行类型转换
+     * Set property value (shallow clone); supports type conversion.
      *
-     * @param T bean类型
-     * @param bean 目标bean
-     * @param name 属性名(可以嵌套/索引/映射/组合)
-     * @param value 属性值
-     * @return 目标bean
-     * @throws java.lang.reflect.InvocationTargetException 目标调用时发生异常
+     * @param T bean type
+     * @param bean target bean
+     * @param name property name (may be nested/indexed/mapped/composite)
+     * @param value property value
+     * @return target bean
+     * @throws java.lang.reflect.InvocationTargetException if an exception occurs while invoking the target
      * @throws IllegalAccessException
      * @author K
      * @since 1.0.0
@@ -282,22 +282,22 @@ object BeanKit {
     }
 
     /**
-     * 通过反射直接设置字段值，用于无 setter 的只读属性（如 Kotlin data class 的 val）。
+     * Set a field value directly via reflection; used for read-only properties without a setter (e.g. a Kotlin data class `val`).
      *
-     * 字段查找会尝试两种命名：原始属性名；以及 JavaBean 风格 `isXxx` -> `xxx` 的回退。
-     * 沿继承链向上查找；命中后必要时通过 [ConvertUtils] 做一次类型转换再赋值。
+     * Field lookup tries two namings: the original property name; and the JavaBean-style `isXxx` -> `xxx` fallback.
+     * Searches up the inheritance chain; once found, performs a type conversion via [ConvertUtils] if necessary before assigning.
      *
-     * @param bean 目标对象
-     * @param name 属性名
-     * @param value 待写入值，null 直接写入
-     * @throws NoSuchFieldException 当继承链上都找不到该字段时
+     * @param bean target object
+     * @param name property name
+     * @param value value to write; null is written directly
+     * @throws NoSuchFieldException when the field cannot be found anywhere in the inheritance chain
      * @author K
      * @since 1.0.0
      */
     private fun setPropertyByField(bean: Any, name: String, value: Any?) {
         val fieldNamesToTry = sequence {
             yield(name)
-            // JavaBean boolean 常以 isXxx 暴露，backing field 多为 xxx
+            // JavaBean boolean is usually exposed as isXxx, with the backing field typically named xxx
             if (name.startsWith("is") && name.length > 2 && Character.isUpperCase(name[2])) {
                 yield(name[2].lowercaseChar().toString() + name.substring(3))
             }
@@ -329,6 +329,6 @@ object BeanKit {
         throw NoSuchFieldException("Property '$name' has no setter and no accessible field in class '${bean.javaClass.name}'.")
     }
 
-    //endregion 封装org.apache.commons.beanutils.BeanUtils和PropertyUtils
+    //endregion Wraps org.apache.commons.beanutils.BeanUtils and PropertyUtils
 
 }

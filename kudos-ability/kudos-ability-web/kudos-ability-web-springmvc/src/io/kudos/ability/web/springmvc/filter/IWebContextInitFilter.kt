@@ -4,7 +4,7 @@ import jakarta.servlet.Filter
 
 
 /**
- * 上下文初始化过滤器
+ * Web context initialization filter.
  *
  * @author K
  * @author AI: Codex

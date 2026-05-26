@@ -6,53 +6,53 @@ import java.time.LocalDateTime
 
 
 /**
- * 角色缓存项
+ * Cache entry for a role.
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthRoleCacheEntry (
 
-    /** 主键 */
+    /** Primary key. */
     override val id: String,
 
-    /** 角色编码 */
+    /** Role code. */
     val code: String?,
 
-    /** 角色名称 */
+    /** Role name. */
     val name: String?,
 
-    /** 租户id */
+    /** Tenant id. */
     val tenantId: String?,
 
-    /** 子系统编码 */
+    /** Subsystem code. */
     val subsysCode: String?,
 
-    /** 备注 */
+    /** Remark. */
     val remark: String?,
 
-    /** 是否激活 */
+    /** Whether the role is active. */
     val active: Boolean?,
 
-    /** 是否内置 */
+    /** Whether the role is built-in. */
     val builtIn: Boolean?,
 
-    /** 创建者id */
+    /** Creator user id. */
     val createUserId: String?,
 
-    /** 创建者名称 */
+    /** Creator user name. */
     val createUserName: String?,
 
-    /** 创建时间 */
+    /** Creation time. */
     val createTime: LocalDateTime?,
 
-    /** 更新者id */
+    /** Updater user id. */
     val updateUserId: String?,
 
-    /** 更新者名称 */
+    /** Updater user name. */
     val updateUserName: String?,
 
-    /** 更新时间 */
+    /** Last update time. */
     val updateTime: LocalDateTime?,
 
 ) : IIdEntity<String>, Serializable {

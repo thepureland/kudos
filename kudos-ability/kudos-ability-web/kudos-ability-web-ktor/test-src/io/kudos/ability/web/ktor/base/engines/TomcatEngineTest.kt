@@ -17,7 +17,7 @@ import kotlin.test.assertEquals
 
 
 /**
- * tomcat引擎ktor测试
+ * Ktor test for the Tomcat engine.
  *
  * @author K
  * @author AI: Codex

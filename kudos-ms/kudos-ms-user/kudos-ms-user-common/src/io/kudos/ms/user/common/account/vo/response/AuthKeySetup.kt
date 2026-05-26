@@ -4,26 +4,26 @@ import java.io.Serializable
 
 
 /**
- * 用户 OTP/TOTP 启用设置返回值。
+ * Return value for user OTP/TOTP enrollment.
  *
- * 服务端生成 Base32 secret 后落库（[io.kudos.ms.user.core.account.model.po.UserAccount.authenticationKey]），
- * 同时把 `otpauth://` URL 返回给客户端用于二维码渲染（前端可用 zxing/qrcode.js 等本地渲染）。
+ * After the server generates a Base32 secret and persists it ([io.kudos.ms.user.core.account.model.po.UserAccount.authenticationKey]),
+ * it also returns the `otpauth://` URL to the client for QR-code rendering (frontend can render locally with zxing/qrcode.js etc.).
  *
- * 流程：
- *   1) 管理员或用户本人调用 resetAuthKey → 后端生成 secret，落库 + 返回本 DTO
- *   2) 客户端把 [otpauthUrl] 渲染为二维码
- *   3) 用户用 Google Authenticator 等扫描，App 端存下 secret
- *   4) 用户输入 6 位 TOTP 验证码，前端调 verifyAuthCode 校验
+ * Flow:
+ *   1) Administrator or the user themselves calls resetAuthKey -> backend generates the secret, persists it, and returns this DTO
+ *   2) Client renders [otpauthUrl] as a QR code
+ *   3) User scans with Google Authenticator etc., the app stores the secret
+ *   4) User enters the 6-digit TOTP code, frontend calls verifyAuthCode to verify
  *
  * @author K
  * @since 1.0.0
  */
 data class AuthKeySetup(
 
-    /** Base32 编码的 secret；与 [io.kudos.ms.user.core.account.model.po.UserAccount.authenticationKey] 落库内容一致 */
+    /** Base32-encoded secret; matches the persisted content of [io.kudos.ms.user.core.account.model.po.UserAccount.authenticationKey] */
     val secret: String,
 
-    /** `otpauth://totp/...?secret=...` URL，供前端渲染二维码 */
+    /** `otpauth://totp/...?secret=...` URL, for the frontend to render the QR code */
     val otpauthUrl: String,
 
 ) : Serializable {

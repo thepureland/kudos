@@ -15,11 +15,13 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 /**
- * Hash 缓存的 Caffeine 本地实现，内存结构模拟 Redis Hash + Set + ZSet；
- * 同时实现 [IHashCacheSync] 供收到 Redis 通知后清理本地。
+ * Caffeine-based local implementation of hash cache; the in-memory layout mimics Redis
+ * Hash + Set + ZSet. Also implements [IHashCacheSync] so the local cache can be cleared after
+ * receiving a Redis notification.
  *
- * 主数据用 Caffeine 承载，按 cacheName 分桶设置 [maximumSize]，驱逐、删除、覆盖写入时同步清理
- * Set/ZSet 二级索引，避免主数据已不存在但索引仍返回旧 id。
+ * Main data is backed by Caffeine, bucketed by cacheName with a [maximumSize] limit. On eviction,
+ * deletion, or overwrite, the Set/ZSet secondary indexes are kept in sync so they cannot return
+ * stale ids whose main entries no longer exist.
  *
  * @author K
  * @author AI: Codex
@@ -33,14 +35,14 @@ class CaffeineHashCache(
         require(maximumSize > 0) { "maximumSize must be positive" }
     }
 
-    /** 主数据：cacheName → Caffeine(id → entity)；模拟 Redis hash，并提供容量上限 */
+    /** Main data: cacheName -> Caffeine(id -> entity); mimics a Redis hash and provides a capacity limit */
     private val mainData = ConcurrentHashMap<String, Cache<String, Any>>()
-    /** Set 二级索引：cacheName → (propertyKey → ids)；模拟 Redis set，用于按属性等值查询 */
+    /** Set secondary index: cacheName -> (propertyKey -> ids); mimics a Redis set, used for equality lookup by property */
     private val setIndex = ConcurrentHashMap<String, ConcurrentHashMap<String, MutableSet<String>>>()
-    /** ZSet 二级索引：cacheName → (propertyKey → (id → score))；模拟 Redis zset，用于按属性排序/范围 */
+    /** ZSet secondary index: cacheName -> (propertyKey -> (id -> score)); mimics a Redis zset, used for sort/range by property */
     private val zsetIndex = ConcurrentHashMap<String, ConcurrentHashMap<String, MutableMap<String, Double>>>()
 
-    /** 取/惰性创建主数据空间 */
+    /** Get / lazily create the main data space */
     private fun main(cacheName: String): Cache<String, Any> =
         mainData.computeIfAbsent(cacheName) {
             Caffeine.newBuilder()
@@ -54,18 +56,18 @@ class CaffeineHashCache(
                 .build()
         }
 
-    /** 取/惰性创建 Set 索引空间 */
+    /** Get / lazily create the Set index space */
     private fun setIdx(cacheName: String) = setIndex.getOrPut(cacheName) { ConcurrentHashMap() }
-    /** 取/惰性创建 ZSet 索引空间 */
+    /** Get / lazily create the ZSet index space */
     private fun zsetIdx(cacheName: String) = zsetIndex.getOrPut(cacheName) { ConcurrentHashMap() }
 
-    /** Set 索引的复合 key：避免不同属性间命名冲突 */
+    /** Composite key for the Set index: avoids naming conflicts across different properties */
     private fun setKey(property: String, value: String) = "set:$property:$value"
-    /** ZSet 索引的复合 key：同上，单层 zset 按属性独立 */
+    /** Composite key for the ZSet index: same as above, a single-layer zset per property */
     private fun zsetKey(property: String) = "zset:$property"
 
     /**
-     * 从所有二级索引中移除指定 id，并清理空索引桶。
+     * Remove the given id from all secondary indexes and clean up empty index buckets.
      */
     private fun removeFromIndexes(cacheName: String, id: String) {
         setIndex[cacheName]?.entries?.removeIf { (_, ids) ->
@@ -79,15 +81,17 @@ class CaffeineHashCache(
     }
 
     /**
-     * 主键在 Hash field / 索引中的规范形式，避免 CHAR 等类型尾部空格与调用方传入的 trim 后主键不一致导致无法命中。
+     * Canonical form of the primary key used in Hash fields / indexes, so trailing whitespace from
+     * types like CHAR cannot diverge from the trimmed PK supplied by callers and miss the cache.
      */
     private fun normalizePkField(id: Any?): String = (id ?: "").toString().trim()
 
     /**
-     * 把任意值转 Double 作为 zset 的 score。
-     * 非数值字符串或其它类型回落到 `-Double.MAX_VALUE`——不是 `Double.MIN_VALUE`，那是最小正数会让负分排错位置。
+     * Convert any value into a Double for use as a zset score.
+     * Non-numeric strings or other types fall back to `-Double.MAX_VALUE` — not `Double.MIN_VALUE`,
+     * which is the smallest positive value and would mis-order negative scores.
      *
-     * @param value 任意值
+     * @param value any value
      * @return Double score
      * @author K
      * @author AI: Codex
@@ -95,20 +99,21 @@ class CaffeineHashCache(
      */
     private fun toDouble(value: Any): Double = when (value) {
         is Number -> value.toDouble()
-        // -Double.MAX_VALUE 是负方向最远；Double.MIN_VALUE 实为最小**正**数，
-        // 作为下界回退会让所有负 score 成员排在更前面（错误顺序）。
+        // -Double.MAX_VALUE is the most negative value; Double.MIN_VALUE is actually the smallest
+        // positive value and, used as a lower-bound fallback, would push members with negative
+        // scores to the front (wrong order).
         is String -> value.toDoubleOrNull() ?: -Double.MAX_VALUE
         else -> -Double.MAX_VALUE
     }
 
     /**
-     * 反射取实体上指定属性的值。
-     * 顺序：字段 (setAccessible) → `getXxx` → `isXxx`；都没有返回 null。
-     * 失败仅 try-catch 吃掉异常，调用方对 null 已有降级。
+     * Reflectively get the value of the given property on an entity.
+     * Order: field (setAccessible) -> `getXxx` -> `isXxx`; returns null if none of them exists.
+     * Failures are swallowed in try-catch; callers already have fallbacks for null.
      *
-     * @param entity 目标对象
-     * @param propertyName 属性名
-     * @return 属性值；查不到返回 null
+     * @param entity target object
+     * @param propertyName property name
+     * @return the property value; null if it cannot be resolved
      * @author K
      * @author AI: Codex
      * @since 1.0.0
@@ -259,7 +264,7 @@ class CaffeineHashCache(
             val first = orders.first()
             val prop = first.property
             val desc = first.direction == DirectionEnum.DESC
-            // 同 toDouble：用 -Double.MAX_VALUE 作下界回退，避免负值被排错位置
+            // Same as toDouble: use -Double.MAX_VALUE as the lower-bound fallback so negative values are not mis-ordered
             val fallback = -Double.MAX_VALUE
             entities = if (desc) entities.sortedByDescending { getPropertyValue(it, prop)?.let { v -> toDouble(v) } ?: fallback }
             else entities.sortedBy { getPropertyValue(it, prop)?.let { v -> toDouble(v) } ?: fallback }

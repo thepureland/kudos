@@ -5,69 +5,69 @@ import java.time.LocalDateTime
 
 
 /**
- * 资源详情响应VO
+ * Resource detail response VO
  *
  * @author K
  * @since 1.0.0
  */
 data class SysResourceDetail (
 
-    /** 主键 */
+    /** Primary key */
     override val id: String = "",
 
 
-    /** 名称 */
+    /** Name */
     val name: String = "",
 
-    /** url */
+    /** URL */
     val url: String? = null,
 
-    /** 资源类型字典代码 */
+    /** Resource type dictionary code */
     val resourceTypeDictCode: String = "",
 
-    /** 父id */
+    /** Parent id */
     val parentId: String? = null,
 
-    /** 在同父节点下的排序号 */
+    /** Order number among siblings under the same parent */
     val orderNum: Int? = null,
 
-    /** 图标 */
+    /** Icon */
     val icon: String? = null,
 
-    /** 子系统编码 */
+    /** Subsystem code */
     val subSystemCode: String = "",
 
-    /** 备注 */
+    /** Remark */
     val remark: String? = null,
 
-    /** 是否启用 */
+    /** Whether enabled */
     val active: Boolean = true,
 
-    /** 是否内置 */
+    /** Whether built-in */
     val builtIn: Boolean = false,
 
-    /** 创建者id */
+    /** Creator id */
     val createUserId: String? = null,
 
-    /** 创建者名称 */
+    /** Creator name */
     val createUserName: String? = null,
 
-    /** 创建时间 */
+    /** Create time */
     val createTime: LocalDateTime? = null,
 
-    /** 更新者id */
+    /** Updater id */
     val updateUserId: String? = null,
 
-    /** 更新者名称 */
+    /** Updater name */
     val updateUserName: String? = null,
 
-    /** 更新时间 */
+    /** Update time */
     val updateTime: LocalDateTime? = null,
 
 ) : IIdEntity<String> {
 
 
-    /** 所有父项ID */
+    /** All parent IDs */
     var parentIds: List<String>? = null
 
 }

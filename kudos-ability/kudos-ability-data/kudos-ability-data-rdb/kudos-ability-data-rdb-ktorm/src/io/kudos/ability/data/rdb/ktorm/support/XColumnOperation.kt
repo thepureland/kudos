@@ -9,16 +9,18 @@ import org.ktorm.schema.ColumnDeclaring
 import org.ktorm.schema.VarcharSqlType
 
 /**
- * Ktorm [ColumnDeclaring] 上的"列 vs 列"或"列 vs 值"扩展操作集合。
+ * Extension operators on Ktorm [ColumnDeclaring] for "column vs column" or "column vs value" comparisons.
  *
- * Ktorm 原生 DSL 提供 `eq` / `like` 等，但缺少：
- *  - 大小写不敏感的等值 / 模糊匹配（[ieq] / [ilike]，通过 `UPPER()` 实现）
- *  - 字符串列与字符串列 / 字符串值的大小比较（[columnGt] / [columnLt] / [columnGe] / [columnLe]）
+ * Ktorm's native DSL provides `eq` / `like`, but lacks:
+ *  - Case-insensitive equality / fuzzy match ([ieq] / [ilike], implemented via `UPPER()`).
+ *  - String-column vs string-column / string-value ordering comparisons
+ *    ([columnGt] / [columnLt] / [columnGe] / [columnLe]).
  *
- * 之所以叫 `column*` 系列而不是直接重载 `>`，是因为 Ktorm 已经把 `greater` / `greaterEq`
- * 用于 `Comparable<*>` 列，与本处需要 `String` 列字典序比较的语义不同。
+ * These are named with a `column*` prefix rather than overloading `>` because Ktorm already uses
+ * `greater` / `greaterEq` for `Comparable<*>` columns, which has different semantics from the
+ * lexicographic comparison on `String` columns required here.
  *
- * 所有方法都是纯 Kotlin 扩展，无副作用、无状态。
+ * All methods are pure Kotlin extensions — side-effect-free and stateless.
  *
  * @author K
  * @author AI: Codex
@@ -27,7 +29,7 @@ import org.ktorm.schema.VarcharSqlType
 
 
 /**
- * 大小写不敏感的 LIKE（列 vs 列）：`UPPER(left) LIKE right`。右侧表达式自身需已大写。
+ * Case-insensitive LIKE (column vs column): `UPPER(left) LIKE right`. The right expression must already be uppercased.
  */
 infix fun ColumnDeclaring<*>.ilike(expr: ColumnDeclaring<String>): BinaryExpression<Boolean> {
     return BinaryExpression(
@@ -39,15 +41,15 @@ infix fun ColumnDeclaring<*>.ilike(expr: ColumnDeclaring<String>): BinaryExpress
 }
 
 /**
- * 大小写不敏感的 LIKE（列 vs 字面值）：`UPPER(left) LIKE UPPER(value)`。
- * 字面值会通过 [String.uppercase] 转大写后参与匹配。
+ * Case-insensitive LIKE (column vs literal): `UPPER(left) LIKE UPPER(value)`.
+ * The literal is uppercased via [String.uppercase] before matching.
  */
 infix fun ColumnDeclaring<*>.ilike(value: String): BinaryExpression<Boolean> {
     return this ilike ArgumentExpression(value.uppercase(), VarcharSqlType)
 }
 
 /**
- * 大小写不敏感的等值（列 vs 列）：`UPPER(left) = right`。右侧表达式自身需已大写。
+ * Case-insensitive equality (column vs column): `UPPER(left) = right`. The right expression must already be uppercased.
  */
 infix fun ColumnDeclaring<*>.ieq(expr: ColumnDeclaring<String>): BinaryExpression<Boolean> {
     return BinaryExpression(
@@ -59,15 +61,15 @@ infix fun ColumnDeclaring<*>.ieq(expr: ColumnDeclaring<String>): BinaryExpressio
 }
 
 /**
- * 大小写不敏感的等值（列 vs 字面值）：`UPPER(left) = UPPER(value)`。
- * 字面值会通过 [String.uppercase] 转大写后比较。
+ * Case-insensitive equality (column vs literal): `UPPER(left) = UPPER(value)`.
+ * The literal is uppercased via [String.uppercase] before comparison.
  */
 infix fun ColumnDeclaring<*>.ieq(value: String): BinaryExpression<Boolean> {
     return this ieq ArgumentExpression(value.uppercase(), VarcharSqlType)
 }
 
 /**
- * 字符串列大于字符串列：`left > right`（按 DB 字典序）。
+ * String column greater than string column: `left > right` (DB lexicographic order).
  */
 infix fun ColumnDeclaring<*>.columnGt(expr: ColumnDeclaring<String>): BinaryExpression<Boolean> {
     return BinaryExpression(
@@ -79,14 +81,14 @@ infix fun ColumnDeclaring<*>.columnGt(expr: ColumnDeclaring<String>): BinaryExpr
 }
 
 /**
- * 字符串列大于字符串字面值：`left > value`。
+ * String column greater than string literal: `left > value`.
  */
 infix fun ColumnDeclaring<*>.columnGt(value: String): BinaryExpression<Boolean> {
     return this columnGt ArgumentExpression(value, VarcharSqlType)
 }
 
 /**
- * 字符串列小于字符串列：`left < right`。
+ * String column less than string column: `left < right`.
  */
 infix fun ColumnDeclaring<*>.columnLt(expr: ColumnDeclaring<String>): BinaryExpression<Boolean> {
     return BinaryExpression(
@@ -98,14 +100,14 @@ infix fun ColumnDeclaring<*>.columnLt(expr: ColumnDeclaring<String>): BinaryExpr
 }
 
 /**
- * 字符串列小于字符串字面值：`left < value`。
+ * String column less than string literal: `left < value`.
  */
 infix fun ColumnDeclaring<*>.columnLt(value: String): BinaryExpression<Boolean> {
     return this columnLt ArgumentExpression(value, VarcharSqlType)
 }
 
 /**
- * 字符串列大于等于字符串列：`left >= right`。
+ * String column greater than or equal to string column: `left >= right`.
  */
 infix fun ColumnDeclaring<*>.columnGe(expr: ColumnDeclaring<String>): BinaryExpression<Boolean> {
     return BinaryExpression(
@@ -117,14 +119,14 @@ infix fun ColumnDeclaring<*>.columnGe(expr: ColumnDeclaring<String>): BinaryExpr
 }
 
 /**
- * 字符串列大于等于字符串字面值：`left >= value`。
+ * String column greater than or equal to string literal: `left >= value`.
  */
 infix fun ColumnDeclaring<*>.columnGe(value: String): BinaryExpression<Boolean> {
     return this columnGe ArgumentExpression(value, VarcharSqlType)
 }
 
 /**
- * 字符串列小于等于字符串列：`left <= right`。
+ * String column less than or equal to string column: `left <= right`.
  */
 infix fun ColumnDeclaring<*>.columnLe(expr: ColumnDeclaring<String>): BinaryExpression<Boolean> {
     return BinaryExpression(
@@ -136,7 +138,7 @@ infix fun ColumnDeclaring<*>.columnLe(expr: ColumnDeclaring<String>): BinaryExpr
 }
 
 /**
- * 字符串列小于等于字符串字面值：`left <= value`。
+ * String column less than or equal to string literal: `left <= value`.
  */
 infix fun ColumnDeclaring<*>.columnLe(value: String): BinaryExpression<Boolean> {
     return this columnLe ArgumentExpression(value, VarcharSqlType)
