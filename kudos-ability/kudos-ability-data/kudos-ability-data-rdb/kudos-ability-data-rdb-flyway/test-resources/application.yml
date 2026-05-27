@@ -65,12 +65,18 @@ spring:
 kudos:
   ability:
     flyway:
-      #fly数据源配置
+      # New structure: ds → modules (CSV or list form)
       datasource-config:
-        #demo：代表resource下db/{demo}/模块,对应的jdbc多数据源的数据源名
-        module1: ds1
-        module2: ds1
-        moduleX: no_exists
+        ds1: module1,module2   # module2 has no scripts on disk → should warn only, not fail
+        no_exists:             # intentionally points at a non-existent ds for the negative test
+          - moduleX
+      # Optional ds execution order; here we explicitly assert ds1 runs first
+      # (which already matches the declaration order).
+      execution-order:
+        - ds1
+        - no_exists
+      auto-config:
+        enabled: false
 
 logging:
   level:

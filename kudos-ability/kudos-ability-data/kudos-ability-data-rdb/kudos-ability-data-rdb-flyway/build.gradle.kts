@@ -1,6 +1,7 @@
 dependencies {
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-jdbc"))
     api(libs.spring.boot.starter.flyway)
+    api(libs.flyway.database.postgresql)
     api(libs.baomidou.dynamic.datasource.starter)
 
     // h2
