@@ -10,9 +10,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.flyway.autoconfigure.FlywayMigrationStrategy
 import org.springframework.boot.flyway.autoconfigure.FlywayProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 
 /**
@@ -21,6 +23,10 @@ import org.springframework.context.annotation.PropertySource
  * Wired after [JdbcAutoConfiguration] (once dynamic data sources are ready); via `initMethod="migrate"`,
  * [FlywayMultiDataSourceMigrator] runs migrations as soon as the bean is created. Setting
  * `kudos.ability.flyway.enabled=false` disables everything (e.g. read-only replicas / offline ops).
+ *
+ * [FlywayPreConfiguration] + [FlywayModuleStrategy] are imported here to suppress Spring Boot's
+ * default Flyway behavior (it would otherwise try to migrate `classpath:db/migration` against the
+ * primary data source).
  *
  * @author K
  * @author AI: Codex
@@ -34,6 +40,7 @@ import org.springframework.context.annotation.PropertySource
 )
 @EnableConfigurationProperties(FlywayProperties::class)
 @ConditionalOnProperty(prefix = "kudos.ability.flyway", name = ["enabled"], havingValue = "true", matchIfMissing = true)
+@Import(FlywayPreConfiguration::class)
 open class FlywayAutoConfiguration : IComponentInitializer {
 
     /**
@@ -48,12 +55,20 @@ open class FlywayAutoConfiguration : IComponentInitializer {
     /**
      * Multi-data-source configuration bean, mapped to `kudos.ability.flyway.*` in yml.
      * Does not overlap with Spring Boot's `spring.flyway.*`: this config only governs the
-     * "module → data source key" mapping; Flyway's own behavior (baseline / encoding / outOfOrder, etc.)
+     * "data source key → modules" mapping; Flyway's own behavior (baseline / encoding / outOfOrder, etc.)
      * is driven by [FlywayProperties].
      */
     @Bean
     @ConfigurationProperties(prefix = "kudos.ability.flyway")
     open fun flywayMultiDataSourceProperties(): FlywayMultiDataSourceProperties = FlywayMultiDataSourceProperties()
+
+    /**
+     * No-op [FlywayMigrationStrategy] that prevents Spring Boot's default migration initializer
+     * from running against the bare-bones Flyway bean defined in [FlywayPreConfiguration].
+     */
+    @Bean
+    @ConditionalOnMissingBean(FlywayMigrationStrategy::class)
+    open fun flywayMigrationStrategy(): FlywayMigrationStrategy = FlywayModuleStrategy()
 
     /** kudos component initializer name, used by [IComponentInitializer] for logging and order tracking. */
     override fun getComponentName(): String = "kudos-ability-data-rdb-flyway"
