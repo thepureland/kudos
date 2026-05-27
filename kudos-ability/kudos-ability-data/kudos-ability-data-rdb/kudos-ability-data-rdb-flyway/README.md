@@ -1,41 +1,51 @@
 # kudos-ability-data-rdb-flyway
 
-Spring Boot 启动期的多数据源 Flyway 迁移器。把 SQL 脚本按"模块 × 数据库类型"分目录组织，
-启动时按声明顺序逐模块跑 Flyway，任何一个模块失败都打断启动（不会在错位的 schema 上跑业务）。
+Multi-data-source Flyway migrator that runs at Spring Boot startup. SQL scripts are organized by
+"module × database type"; at startup each module is migrated in the declared order, and any single
+module's failure aborts startup (so the app never runs against a half-migrated schema).
 
-## 何时用它
+## When to use it
 
-- 单进程同时管理多个 RDB 数据源（比如 `master` + `audit_log` + `tenant_*`），每个数据源
-  跑自己一套迁移
-- 同一份 SQL 脚本要兼容多种数据库类型（h2 跑测试 / postgresql 跑生产），脚本按 dbType 分目录
+- A single process manages multiple RDB data sources (e.g. `master` + `audit_log` + `tenant_*`),
+  each with its own set of migrations.
+- The same SQL needs to run against multiple database types (h2 for tests / postgresql for prod);
+  scripts are split per dbType subdirectory.
 
-如果只有一个数据源，Spring Boot 自带的 `spring-boot-starter-flyway` 已经够用，本模块就是 overkill。
+If you only have one data source, Spring Boot's stock `spring-boot-starter-flyway` is enough and
+this module is overkill.
 
-## 约定
+## Convention
 
 ```
 classpath:sql/
-    └─ <moduleName>/                ← 一个 kudos 业务模块一个目录
-        └─ <dbType>/                ← postgresql / h2 / mysql ...（RdbTypeEnum#name.lowercase()）
-            ├─ V1.0.0__init.sql     ← Flyway 标准命名
+    └─ <moduleName>/                ← one directory per kudos business module
+        └─ <dbType>/                ← postgresql / h2 / mysql ... (RdbTypeEnum#name.lowercase())
+            ├─ V1.0.0__init.sql     ← Flyway standard naming
             └─ V1.0.1__add_x.sql
 ```
 
-每个业务模块用独立的 Flyway 元数据表 `flyway_history_<moduleName>`，互不污染。
+Each module uses its own Flyway metadata table `flyway_history_<moduleName>`, so they never
+contaminate one another.
 
-## 配置
+## Configuration
 
 ```yaml
 kudos:
   ability:
     flyway:
-      enabled: true                # 可设 false 整体禁用启动迁移（只读副本场景）
-      datasource-config:           # 模块 → 动态数据源 key 映射，按声明顺序迁移
-        sys: master
-        audit_log: audit
-        tenant: master
+      enabled: true                # set to false to disable startup migration entirely
+                                   # (e.g. read-only replicas)
+      datasource-config:           # ds → module list, migrated in declaration order
+        master: sys,tenant         # CSV form
+        audit:                     # list form
+          - audit_log
+      execution-order:             # optional: explicitly override ds execution order;
+        - master                   # unlisted entries keep their original relative order
+        - audit                    # and follow at the end
+      auto-config:
+        enabled: false             # see "Two modes" below
 
-# Flyway 自身参数走 Spring Boot 标准前缀
+# Flyway's own parameters live under the standard Spring Boot prefix
 spring:
   flyway:
     baseline-on-migrate: true
@@ -47,51 +57,78 @@ spring:
       app_schema: public
 ```
 
-`kudos.ability.flyway.*` 和 `spring.flyway.*` 不重叠：前者只决定"哪个模块用哪个数据源"，
-后者控制 Flyway 自身行为（baseline / encoding / outOfOrder ...）。
+`kudos.ability.flyway.*` and `spring.flyway.*` do not overlap: the former only decides "which data
+source runs which modules and in what order"; the latter controls Flyway's own behavior
+(baseline / encoding / outOfOrder / placeholders ...).
 
-## 模块入口
+## Two modes
 
-| 类 | 角色 |
+| Mode | `auto-config.enabled` | Behavior |
+|---|---|---|
+| Manual (default) | `false` | Migrate only the modules listed in `datasource-config`; modules on disk but not declared are silently skipped; modules declared but missing on disk are warned. |
+| Auto-scan | `true` | Scan `classpath:sql/*`; **every discovered module must have a ds mapping under `datasource-config`**, otherwise startup aborts. (Auto only relaxes discovery, not the mapping decision.) |
+
+## Module entry points
+
+| Class | Role |
 |---|---|
-| `FlywayAutoConfiguration` | 装配入口；`@ConditionalOnProperty(kudos.ability.flyway.enabled, default=true)` 决定是否启用 |
-| `FlywayMultiDataSourceMigrator` | 启动期被调用的迁移器，扫 classpath + 走 properties + 逐模块迁移 |
-| `FlywayMultiDataSourceProperties` | 模块名 → 数据源 key 的 yml 绑定 |
-| `FlywayKit` | 单模块迁移的纯函数实现，**脱离 Spring 也能用**（代码生成器 / CLI 工具直接调） |
+| `FlywayAutoConfiguration` | Wiring entry; `@ConditionalOnProperty(kudos.ability.flyway.enabled, default=true)` controls whether it activates. |
+| `FlywayMultiDataSourceMigrator` | Startup-time migrator; scans classpath, reconciles with properties, runs migrations by ds in order. `migrateByModule(name)` is the single-module entry point. |
+| `FlywayMultiDataSourceProperties` | yml binding for `ds → modules`; values may be CSV strings or YAML lists. |
+| `FlywayPreConfiguration` + `FlywayModuleStrategy` | Suppress Spring Boot's default Flyway behavior (otherwise it would try to migrate `classpath:db/migration` against the primary data source). |
+| `FlywayKit` | Pure-function single-module migration; **also usable outside Spring** (code generators / CLI tools can call it directly). |
 
-## 失败语义
+## Failure semantics
 
-- Flyway `migrate()` 报 `success=false` —— 抛 `IllegalStateException`，打断启动
-- 配置里模块对应的数据源 key 不存在 —— 抛 `IllegalStateException`
-- 同一个模块名在多个 classpath URL 同时出现 —— 抛 `IllegalStateException`
-- 配置里声明的模块名磁盘上找不到 —— 仅打 warn 日志，继续
-- `spring.flyway.placeholders`、`placeholder-prefix`、`placeholder-suffix`、`placeholder-separator`
-  会透传给每个模块的 Flyway 实例
+- Flyway `migrate()` reports `success=false` → throws `IllegalStateException` and aborts startup.
+- The data source key configured for a module does not exist → throws `IllegalStateException`; the
+  error message lists which yml file(s) the `datasource-config` came from.
+- The same module name appears under multiple classpath URLs → throws `IllegalStateException`.
+- A module declared in config has no scripts on disk → logs a warning and continues.
+- With `auto-config.enabled=true`, a module exists on disk but has no mapping in `datasource-config`
+  → throws `IllegalStateException`.
+- A `execution-order` mis-indented under `datasource-config` is ignored by the reserved-key
+  defense, never interpreted as a ds name.
+- `spring.flyway.placeholders` / `placeholder-prefix` / `placeholder-suffix` / `placeholder-separator`
+  are all propagated to every per-module Flyway instance.
 
-设计原则：**宁可启动不来，也不让应用跑在不一致的 schema 上**。
+Design principle: **better to fail startup than to run the app against an inconsistent schema**.
 
-## 依赖
+## Error tracing
+
+When migration fails, the error message lists which configuration sources contributed
+`kudos.ability.flyway.datasource-config.*` entries (powered by
+`YamlPropertySourceFactory.getSourceMap()`). In multi-jar / multi-yml deployments this lets you
+quickly pinpoint which dependency wrote the offending config.
+
+## Dependencies
 
 ```kotlin
 api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-jdbc"))
 api(libs.spring.boot.starter.flyway)
+api(libs.flyway.database.postgresql)        // Flyway 10+ split the PG adapter into its own artifact;
+                                            // without it, startup against PG (incl. 18) throws "Unsupported Database".
 api(libs.baomidou.dynamic.datasource.starter)
 ```
 
-通过 `DsContextProcessor` 拿动态数据源 —— 因此**目前依赖 baomidou dynamic-datasource starter**。
-如果未来要解耦，需要把"按 key 取 DataSource"抽象成一个 SPI。
+Data sources are resolved via `DsContextProcessor`, so this module **currently depends on the
+baomidou dynamic-datasource starter**. Decoupling would require abstracting "look up DataSource by
+key" into a SPI.
 
-## 已知限制 / 后续工作
+## Known limitations / future work
 
-- ❗ 没有 Flyway callback / hook 暴露（pre-migrate / post-migrate）
-- ✅ Flyway placeholders 已透传：支持 `spring.flyway.placeholders` 以及 placeholder 前缀 / 后缀 /
-  分隔符配置
-- ❗ 紧耦合 `DsContextProcessor` —— 不用 baomidou dynamic-datasource 就用不了本模块
-- ❗ 没有 dry-run / repair / clean 入口；运维脚本要绕过本模块直接用 Flyway CLI
-- ❗ 测试覆盖到 happy path、缺失数据源、placeholders 替换；jar 协议路径扫描、重复模块检测、
-  Flyway 失败等分支未直接单测
+- ❗ No Flyway callback / hook surface exposed (pre-migrate / post-migrate).
+- ✅ Flyway placeholders are propagated: `placeholders / prefix / suffix / separator` all reach
+  every per-module Flyway instance.
+- ❗ Tightly coupled to `DsContextProcessor` — this module is unusable without baomidou
+  dynamic-datasource.
+- ❗ No dry-run / repair / clean entry points; ops scripts must bypass this module and use the
+  Flyway CLI directly.
+- ❗ Test coverage: happy path, missing data source, placeholder substitution, CSV/List parsing,
+  execution-order. The jar-protocol path scan, duplicate-module detection, and auto-mode
+  missing-mapping branches are not directly unit-tested yet.
 
-## 用法示例：脱离 Spring 跑迁移（代码生成器场景）
+## Example: running migrations outside Spring (code generator scenario)
 
 ```kotlin
 val ds = HikariDataSource(/* ... */)

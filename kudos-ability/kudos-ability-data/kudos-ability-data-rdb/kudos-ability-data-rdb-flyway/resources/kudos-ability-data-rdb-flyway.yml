@@ -1,28 +1,37 @@
 kudos:
   ability:
     flyway:
-      #fly数据源配置
+      # ds → modules mapping; values accept either a CSV string or a YAML list
       datasource-config:
-        #demo：代表resource下db/{demo}/模块,对应的jdbc多数据源的数据源名
-        demo: master
+        # data source "master" runs the SQL scripts under module "demo"
+        master: demo
+      # Optional: override data source execution order; unlisted entries keep their original
+      # relative order from datasource-config and follow at the end.
+      # execution-order:
+      #   - master
+      # Optional: enable auto-scan; at startup classpath:sql/* is scanned, and every discovered
+      # module MUST appear in datasource-config — otherwise startup aborts. Auto only relaxes
+      # discovery; the ds mapping decision is never relaxed.
+      auto-config:
+        enabled: false
 
 spring:
   flyway:
-    # 启用Flyway功能
+    # Enable Flyway
     enabled: true
-    # 禁用Flyway的clean命令，使用clean命令会删除schema下的所有表
+    # Disable Flyway's clean command (clean drops all tables under the schema)
     clean-disabled: true
-    # 在执行migrate命令时需要有flyway_schema_history表，通过baseline命令可以生成该表
+    # `migrate` needs a flyway_schema_history table; `baseline` creates it if missing
     baseline-on-migrate: true
-    # 指定baseline版本号，低于该版本的SQL脚本在migrate是不会执行
+    # Baseline version; scripts with a lower version are not executed by migrate
     baseline-version: 0
-    # 设置字符编码
+    # Character encoding
     encoding: UTF-8
-    # 不允许不按顺序迁移
+    # Disallow out-of-order migration
     out-of-order: false
-    # 设置Flyway管控的schema，不设置的话为datasourcel.url中指定的schema
+    # Schema(s) managed by Flyway; defaults to the schema in datasource.url when unset
     #schemas: yt-boss
-    # 执行migrate时开启校验
+    # Validate migrations on migrate
     validate-on-migrate: false
-    # 是否进行占位符替换
+    # Placeholder replacement
     placeholder-replacement: false
