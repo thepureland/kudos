@@ -7,6 +7,7 @@ import io.kudos.ability.cache.common.notify.ICacheMessageHandler
 import io.kudos.ability.cache.remote.redis.RedisHashCache
 import io.kudos.ability.cache.remote.redis.RedisKeyValueCacheManager
 import io.kudos.ability.cache.remote.redis.notice.RedisCacheMessageHandler
+import io.kudos.ability.cache.remote.redis.support.RedisCacheKeyConversionService
 import io.kudos.ability.cache.remote.redis.support.RedisRemoteCacheProcessor
 import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.init.RedisAutoConfiguration
@@ -121,6 +122,10 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
             .entryTtl(Duration.ofSeconds(900)) // default 15 minutes
             .serializeKeysWith(keySerializationPair)
             .serializeValuesWith(valueSerializationPair)
+            // Override Spring's default `SimpleKey::toString` conversion so raw-String access and
+            // single-param SimpleKey access land on the same Redis key. See
+            // [RedisCacheKeyConversionService] for the rationale.
+            .withConversionService(RedisCacheKeyConversionService.create())
         val connectionFactory = redisTemplate.connectionFactory!!
         val redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory)
         return RedisKeyValueCacheManager(redisCacheWriter, defaultRedisCacheConfiguration)
