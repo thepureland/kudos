@@ -24,6 +24,9 @@ data class AuthRoleQuery (
     /** Subsystem code. */
     val subsysCode: String? = null,
 
+    /** Filter roles by direct parent (NULL filter = no constraint; querying for roots needs a special UI affordance — leaving Boolean here would force a flag-vs-value collision). */
+    val parentId: String? = null,
+
     /** Remark. */
     val remark: String? = null,
 

@@ -96,4 +96,99 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
         assertTrue(users.any { it.username == "svc-user-test-2-249363d1" })
     }
 
+    // ---------- Role inheritance (parent_id) ----------
+
+    private val rootRoleId = "249363d1-0000-0000-0000-000000000040"
+    private val midRoleId = "249363d1-0000-0000-0000-000000000041"
+    private val leafRoleId = "249363d1-0000-0000-0000-000000000042"
+    private val otherSubsysRoleId = "249363d1-0000-0000-0000-000000000043"
+    private val otherTenantRoleId = "249363d1-0000-0000-0000-000000000044"
+
+    @Test
+    fun getAncestorRoleIds_returnsChainDirectParentFirst() {
+        val chain = authRoleService.getAncestorRoleIds(leafRoleId)
+        assertEquals(listOf(midRoleId, rootRoleId), chain, "leaf -> mid -> root, ordered closest first")
+    }
+
+    @Test
+    fun getAncestorRoleIds_rootHasNoAncestors() {
+        assertTrue(authRoleService.getAncestorRoleIds(rootRoleId).isEmpty())
+    }
+
+    @Test
+    fun update_settingSelfAsParent_rejected() {
+        val form = io.kudos.ms.auth.common.role.vo.request.AuthRoleFormUpdate(
+            id = midRoleId,
+            code = null,
+            name = null,
+            tenantId = null,
+            subsysCode = null,
+            parentId = midRoleId,
+            remark = null,
+        )
+        val err = assertFailsWith<IllegalArgumentException> { authRoleService.update(form) }
+        assertTrue(err.message!!.contains("itself") || err.message!!.contains("its own parent"))
+    }
+
+    @Test
+    fun update_settingDescendantAsParent_rejected() {
+        // Try to make leaf the parent of mid → would close mid <-> leaf cycle.
+        val form = io.kudos.ms.auth.common.role.vo.request.AuthRoleFormUpdate(
+            id = midRoleId,
+            code = null,
+            name = null,
+            tenantId = null,
+            subsysCode = null,
+            parentId = leafRoleId,
+            remark = null,
+        )
+        val err = assertFailsWith<IllegalArgumentException> { authRoleService.update(form) }
+        assertTrue(err.message!!.contains("cycle"))
+    }
+
+    @Test
+    fun update_settingCrossTenantParent_rejected() {
+        val form = io.kudos.ms.auth.common.role.vo.request.AuthRoleFormUpdate(
+            id = midRoleId,
+            code = null,
+            name = null,
+            tenantId = "svc-tenant-inh-1",
+            subsysCode = "ams",
+            parentId = otherTenantRoleId,
+            remark = null,
+        )
+        val err = assertFailsWith<IllegalArgumentException> { authRoleService.update(form) }
+        assertTrue(err.message!!.contains("tenant"))
+    }
+
+    @Test
+    fun update_settingCrossSubsystemParent_rejected() {
+        val form = io.kudos.ms.auth.common.role.vo.request.AuthRoleFormUpdate(
+            id = midRoleId,
+            code = null,
+            name = null,
+            tenantId = "svc-tenant-inh-1",
+            subsysCode = "ams",
+            parentId = otherSubsysRoleId,
+            remark = null,
+        )
+        val err = assertFailsWith<IllegalArgumentException> { authRoleService.update(form) }
+        assertTrue(err.message!!.contains("subsystem"))
+    }
+
+    @Test
+    fun update_settingNonExistentParent_rejected() {
+        val form = io.kudos.ms.auth.common.role.vo.request.AuthRoleFormUpdate(
+            id = midRoleId,
+            code = null,
+            name = null,
+            tenantId = null,
+            subsysCode = null,
+            parentId = "00000000-0000-0000-0000-deadbeefdead",
+            remark = null,
+        )
+        val err = assertFailsWith<IllegalArgumentException> { authRoleService.update(form) }
+        assertTrue(err.message!!.contains("not found"))
+    }
+
 }
