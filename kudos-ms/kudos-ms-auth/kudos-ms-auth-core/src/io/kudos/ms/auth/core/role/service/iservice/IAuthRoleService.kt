@@ -240,5 +240,15 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      */
     fun copyRole(sourceId: String, code: String, name: String, copyResources: Boolean): String
 
+    /**
+     * Walks up [roleId]'s parent chain and returns all ancestor role ids (direct parent first,
+     * then grandparent, etc.), excluding [roleId] itself. Empty when the role has no parent or
+     * doesn't exist.
+     *
+     * Intended for the admin UI's "show inheritance chain" view. Effective-permission resolution
+     * uses ResourceIdsByUserIdCache's internal walk and doesn't need to call this.
+     */
+    fun getAncestorRoleIds(roleId: String): List<String>
+
 
 }

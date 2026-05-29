@@ -27,6 +27,13 @@ interface AuthRole : IDbEntity<String, AuthRole> {
     /** Subsystem code */
     var subsysCode: String
 
+    /**
+     * Parent role id (NULL = root). Children inherit the parent's resource grants
+     * via ResourceIdsByUserIdCache's ancestor walk. Must reference a role in the
+     * same tenant + subsystem; cycle prevention is enforced at the service layer.
+     */
+    var parentId: String?
+
     /** Remark */
     var remark: String?
 

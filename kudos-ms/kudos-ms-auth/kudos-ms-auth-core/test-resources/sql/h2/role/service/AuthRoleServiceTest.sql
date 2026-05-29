@@ -18,3 +18,11 @@ merge into "user_account" ("id", "username", "tenant_id", "login_password", "sup
 merge into "auth_role_user" ("id", "role_id", "user_id", "create_user_id", "create_user_name") values
     ('249363d1-0000-0000-0000-000000000023', '249363d1-0000-0000-0000-000000000022', '249363d1-0000-0000-0000-000000000016', 'system', '系统'),
     ('249363d1-0000-0000-0000-000000000024', '249363d1-0000-0000-0000-000000000022', '249363d1-0000-0000-0000-000000000017', 'system', '系统');
+
+-- 角色继承链：inh-root -> inh-mid -> inh-leaf；inh-other 与 root 同租户不同子系统，inh-other-tenant 是另一租户。
+merge into "auth_role" ("id", "code", "name", "tenant_id", "subsys_code", "parent_id", "remark", "active", "built_in", "create_user_id", "create_user_name") values
+    ('249363d1-0000-0000-0000-000000000040', 'svc-role-inh-root',         'inh-root',         'svc-tenant-inh-1', 'ams',              null,                                     'inheritance test', true, false, 'system', '系统'),
+    ('249363d1-0000-0000-0000-000000000041', 'svc-role-inh-mid',          'inh-mid',          'svc-tenant-inh-1', 'ams',              '249363d1-0000-0000-0000-000000000040', 'inheritance test', true, false, 'system', '系统'),
+    ('249363d1-0000-0000-0000-000000000042', 'svc-role-inh-leaf',         'inh-leaf',         'svc-tenant-inh-1', 'ams',              '249363d1-0000-0000-0000-000000000041', 'inheritance test', true, false, 'system', '系统'),
+    ('249363d1-0000-0000-0000-000000000043', 'svc-role-inh-other-subsys', 'inh-other-subsys', 'svc-tenant-inh-1', 'svc-subsys-other', null,                                     'inheritance test', true, false, 'system', '系统'),
+    ('249363d1-0000-0000-0000-000000000044', 'svc-role-inh-other-tenant', 'inh-other-tenant', 'svc-tenant-inh-2', 'ams',              null,                                     'inheritance test', true, false, 'system', '系统');
