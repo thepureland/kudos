@@ -117,7 +117,10 @@ class WebLogAuditAspect {
                 logVo.logs.forEach { it.description = tag + it.description.orEmpty() }
             }
             runCatching {
-                val requestBody = AuditLogTool.getRequestData(request)
+                // Pass logVo so the body lands in the audit detail already masked — the same
+                // `LogDesensitize` field set collected during `before` is reused here without
+                // another reflection scan.
+                val requestBody = AuditLogTool.getRequestData(request, logVo)
                 AuditLogTool.createSysAuditLogModel(logVo, requestBody)
                     ?.let { auditService?.submit(it) }
             }.onFailure { log.error(it, "Audit log component, interceptor exception!") }
