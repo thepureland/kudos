@@ -1,0 +1,18 @@
+# kudos-ability-security-jwt 模块默认配置
+# 业务工程必须在自己的 application.yml 中至少配置 key.key-store / key.store-pass / key.alias 才会启用 JWT
+kudos:
+  ability:
+    security:
+      jwt:
+        # key:
+        #   key-store: classpath:my-jwt.p12   # 留空时不装配 JWT bean
+        #   store-pass: ${JWT_KEYSTORE_PASSWORD}
+        #   alias: my-jwt-key
+        claims:
+          iss: kudos              # iss 默认值，业务自行覆盖
+          # sub: 默认不设，由 createDefault(subject) 显式传入
+          # aud: 业务自填（relying party 标识）
+          exp: 3600               # 单位秒；getExpireAt() = now() + exp
+          nbf: now()              # now() | 数字（前推秒数）| 其它（视为 null 不下发 nbf 声明）
+          iat: now()              # 仅识别 now()；其它视为 null
+          jti: uuid()             # 仅识别 uuid()；其它视为空串

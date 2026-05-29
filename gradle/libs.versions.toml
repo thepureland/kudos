@@ -121,6 +121,13 @@ springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openap
 spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail"}
 spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis"}
 spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb"}
+# spring-security-oauth2-jose pulls NimbusJwtEncoder / NimbusJwtDecoder plus nimbus-jose-jwt
+# (JWKSet / RSAKey / JWSAlgorithm). Version managed by spring-boot BOM.
+spring-security-oauth2-jose = { module = "org.springframework.security:spring-security-oauth2-jose" }
+# Bouncy Castle PKIX — test-only dep used by the JWT module to programmatically build a self-signed
+# X.509 + PKCS12 keystore at test setup time, instead of committing a binary keystore blob to the
+# repo. Standard Java has no portable API for X.509 cert creation.
+bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version = "1.78.1" }
 spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache"}
 spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc"}
 # Micrometer core — version managed by spring-boot BOM. Used by kudos-ability-data-rdb-jdbc as
