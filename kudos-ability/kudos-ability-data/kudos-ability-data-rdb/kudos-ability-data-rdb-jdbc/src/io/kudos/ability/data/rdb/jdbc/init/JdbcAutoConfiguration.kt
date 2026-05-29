@@ -2,15 +2,19 @@ package io.kudos.ability.data.rdb.jdbc.init
 
 import com.baomidou.dynamic.datasource.creator.DataSourceCreator
 import com.baomidou.dynamic.datasource.creator.DefaultDataSourceCreator
+import com.baomidou.dynamic.datasource.event.DataSourceInitEvent
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties
 import io.kudos.ability.data.rdb.jdbc.aop.DynamicDataSourceAspect
+import io.kudos.ability.data.rdb.jdbc.datasource.DataSourceClearListener
 import io.kudos.ability.data.rdb.jdbc.datasource.DefaultDynamicDataSourceLoad
 import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import io.kudos.ability.data.rdb.jdbc.datasource.DsDataSourceCreator
+import io.kudos.ability.data.rdb.jdbc.datasource.HikariDataSourceMeterInitEvent
 import io.kudos.ability.data.rdb.jdbc.datasource.IDynamicDataSourceLoad
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Bean
@@ -94,4 +98,39 @@ open class JdbcAutoConfiguration : IComponentInitializer {
     /** kudos component initializer name, used for [IComponentInitializer] logging and ordering. */
     override fun getComponentName() = "kudos-ability-data-rdb-jdbc"
 
+    /**
+     * Wires [HikariDataSourceMeterInitEvent] when Micrometer is on the classpath — replaces
+     * baomidou's default `EncDataSourceInitEvent` (which is `@ConditionalOnMissingBean`). The
+     * delegate retains the encryption flow, and HikariCP connection-pool metrics get exposed via
+     * the application's [io.micrometer.core.instrument.MeterRegistry].
+     *
+     * Nested @Configuration so the surrounding [JdbcAutoConfiguration] still loads cleanly on
+     * deployments without Micrometer; Spring Boot only loads this inner class when
+     * `MeterRegistry` is resolvable, deferring the import of [HikariDataSourceMeterInitEvent].
+     */
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnClass(name = ["io.micrometer.core.instrument.MeterRegistry"])
+    open class MicrometerConfiguration {
+        @Bean
+        @ConditionalOnMissingBean(DataSourceInitEvent::class)
+        open fun hikariDataSourceMeterInitEvent(): DataSourceInitEvent = HikariDataSourceMeterInitEvent()
+    }
+
+    /**
+     * Registers [DataSourceClearListener] when `kudos-ability-cache-common` is on the classpath
+     * (the source of [io.kudos.ability.cache.common.support.CacheCleanRegister]). Without the cache
+     * module, this listener has nothing to hook onto, so the bean is simply not created.
+     *
+     * Nested @Configuration with string-based `@ConditionalOnClass` defers loading
+     * [DataSourceClearListener] (which imports cache-common types) until cache-common is actually
+     * present — apps without the cache module still load [JdbcAutoConfiguration] cleanly.
+     */
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnClass(name = ["io.kudos.ability.cache.common.support.ICacheCleanListener"])
+    open class CacheCleanListenerConfiguration {
+        @Bean
+        @ConditionalOnMissingBean
+        open fun dataSourceClearListener(processor: DsContextProcessor): DataSourceClearListener =
+            DataSourceClearListener(processor)
+    }
 }
