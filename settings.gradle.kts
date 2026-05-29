@@ -91,6 +91,9 @@ include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-l
 // ui
 include("kudos-ability:kudos-ability-ui:kudos-ability-ui-javafx")
 
+// security
+include("kudos-ability:kudos-ability-security:kudos-ability-security-jwt")
+
 // web
 include("kudos-ability:kudos-ability-web:kudos-ability-web-common")
 include("kudos-ability:kudos-ability-web:kudos-ability-web-springmvc")
