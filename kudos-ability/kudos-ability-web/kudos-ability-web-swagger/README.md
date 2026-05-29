@@ -1,4 +1,4 @@
-# kudos-ability-web-swagger3
+# kudos-ability-web-swagger
 
 基于 [springdoc-openapi](https://springdoc.org/) 3.x 的 OpenAPI 3.0 文档支持。
 
@@ -25,7 +25,7 @@
 `SoulOpenAPIService extends OpenAPIService`，用来把 knife4j 的 `@ApiSupport(order = N)` 注解
 映射成 OpenAPI tag 的 `x-order` extension（用于自定义 UI 模块排序）。该扩展仅在使用
 knife4j UI 时有意义；kudos 当前没有 knife4j 业务诉求，因此**不强制把 knife4j 拉进 classpath**。
-将来某个 app 真正接入 knife4j 时，再补一个独立的 `kudos-ability-web-swagger3-knife4j`
+将来某个 app 真正接入 knife4j 时，再补一个独立的 `kudos-ability-web-swagger-knife4j`
 sub-module 即可。
 
 ### 与 web-springmvc 的关系
@@ -75,7 +75,7 @@ springdoc:
 ```kotlin
 // build.gradle.kts of business app
 dependencies {
-    api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-swagger3"))
+    api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-swagger"))
     api(libs.springdoc.openapi.starter.webmvc.ui)   // 额外引入 UI bundle
 }
 ```
