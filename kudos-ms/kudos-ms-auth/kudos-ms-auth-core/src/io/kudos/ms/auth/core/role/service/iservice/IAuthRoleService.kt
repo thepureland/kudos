@@ -3,6 +3,9 @@ package io.kudos.ms.auth.core.role.service.iservice
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import io.kudos.ms.auth.common.role.vo.AuthRoleCacheEntry
 import io.kudos.ms.auth.common.role.vo.response.AuthRoleRow
+import io.kudos.ms.auth.common.role.vo.response.BatchBindResultVo
+import io.kudos.ms.auth.common.role.vo.response.EffectivePermissionsVo
+import io.kudos.ms.auth.common.role.vo.response.RoleDeleteImpactVo
 import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
@@ -192,6 +195,50 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
      * @return List<SysResourceCacheEntry> List of resource cache objects; returns empty list if user does not exist or has no resources
      */
     fun getResources(userId: String): List<SysResourceCacheEntry>
+
+    /**
+     * One-shot snapshot of a user's effective permissions: direct roles + group memberships +
+     * group-inherited roles + resources per role. Replaces a fan-out of 1 + 1 + N + M + 3 calls
+     * from the console UI with a single round-trip.
+     *
+     * Returns [EffectivePermissionsVo.empty] when the user has neither direct nor inherited
+     * grants — never throws for missing users; the contract is "what does this user effectively
+     * have", not "does this user exist".
+     *
+     * @param userId User id to inspect.
+     */
+    fun getEffectivePermissions(userId: String): EffectivePermissionsVo
+
+    /**
+     * Aggregate impact summary for deleting a batch of roles: counts of distinct users and
+     * groups currently bound to any role in [roleIds]. Used by the admin UI's pre-delete
+     * confirmation so operators see the blast radius without spawning 2N GETs.
+     *
+     * Empty input yields zero counts; missing role ids contribute zero (the contract is
+     * "how many bindings would be removed if I deleted these", not "are these ids real").
+     */
+    fun getDeleteImpact(roleIds: Collection<String>): RoleDeleteImpactVo
+
+    /**
+     * Batch-bind a set of users to a set of roles (Cartesian product). For each role, calls
+     * the existing batch-bind path; partial failure is captured per-role and returned in
+     * [BatchBindResultVo.failures] so the admin UI can show "succeeded for 3 of 5 roles" with
+     * actionable per-role error messages.
+     *
+     * Atomicity scope: each role's bind is its own transaction; cross-role atomicity would
+     * require holding a multi-row write lock, which isn't worth it for an admin-side bulk action.
+     */
+    fun batchBindUsers(roleIds: Collection<String>, userIds: Collection<String>): BatchBindResultVo
+
+    /**
+     * Atomic role-copy: read source role's detail, save a new role with the supplied [code] and
+     * [name] (other fields inherited from the source), optionally copy the source's resource
+     * grants in the same transaction.
+     *
+     * Returns the new role id. Throws if the source doesn't exist or the new code/name collides
+     * with an existing role under the same tenant + subsystem.
+     */
+    fun copyRole(sourceId: String, code: String, name: String, copyResources: Boolean): String
 
 
 }
