@@ -105,6 +105,7 @@ spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-bo
 testcontainers = { module = "org.testcontainers:testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
+testcontainers-mongodb = { module = "org.testcontainers:testcontainers-mongodb" }
 
 # kudos-tools
 freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
@@ -119,6 +120,7 @@ springdoc-openapi-starter-webmvc-api = { module = "org.springdoc:springdoc-opena
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
 spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail"}
 spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis"}
+spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-boot-starter-data-mongodb"}
 spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache"}
 spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc"}
 # Micrometer core — version managed by spring-boot BOM. Used by kudos-ability-data-rdb-jdbc as

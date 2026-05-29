@@ -6,6 +6,7 @@ dependencies {
     }
     api(libs.testcontainers.kafka)
     api(libs.testcontainers.junit.jupiter)
+    api(libs.testcontainers.mongodb)
 
     // On macOS, starting Lettuce/Netty without the native DNS resolver falls back to the JVM default,
     // which may affect /etc/hosts, Bonjour, etc. Add the proper classifier for the current host architecture;
