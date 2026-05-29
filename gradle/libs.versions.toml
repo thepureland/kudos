@@ -49,6 +49,7 @@ minio = "9.0.1"
 controlsfx = "11.2.3"
 commons-fileupload = "1.6.0"
 servlet-api = "6.1.0"
+springdoc-openapi = "3.0.1"
 
 
 [libraries]
@@ -114,6 +115,8 @@ spring-web = { module = "org.springframework:spring-web"}
 spring-session-core = { module = "org.springframework.session:spring-session-core"}
 spring-session-data-redis = { module = "org.springframework.session:spring-session-data-redis"}
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web"}
+springdoc-openapi-starter-webmvc-api = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc-openapi" }
+springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
 spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail"}
 spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis"}
 spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache"}
