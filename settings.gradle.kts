@@ -94,6 +94,7 @@ include("kudos-ability:kudos-ability-web:kudos-ability-web-common")
 include("kudos-ability:kudos-ability-web:kudos-ability-web-springmvc")
 include("kudos-ability:kudos-ability-web:kudos-ability-web-ktor")
 include("kudos-ability:kudos-ability-web:kudos-ability-web-swagger")
+include("kudos-ability:kudos-ability-web:kudos-ability-web-guest")
 
 
 // ams

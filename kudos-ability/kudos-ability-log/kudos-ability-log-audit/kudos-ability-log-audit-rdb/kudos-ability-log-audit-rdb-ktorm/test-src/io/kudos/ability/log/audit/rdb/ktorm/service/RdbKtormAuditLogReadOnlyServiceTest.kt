@@ -222,6 +222,49 @@ internal open class RdbKtormAuditLogReadOnlyServiceTest {
         assertEquals(10, page.pageSize)
     }
 
+    @Test
+    fun pagingSearch_operatorLike_fuzzyMatchesOperatorDisplayName() {
+        seed("ro-12a", operator = "u-1", operatorName = "Alice Liu")
+        seed("ro-12b", operator = "u-2", operatorName = "Bob Lin")
+        seed("ro-12c", operator = "u-3", operatorName = "Charlie")
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { operatorLike = "Li" }, pageNo = 1, pageSize = 10,
+        )
+
+        // Matches both "Alice Liu" and "Bob Lin"; "Charlie" doesn't contain "Li" as substring.
+        assertEquals(2L, page.total)
+        assertEquals(setOf("ro-12a", "ro-12b"), page.items.map { it.id }.toSet())
+    }
+
+    @Test
+    fun pagingSearch_moduleCodeLike_fuzzyMatchesPartialModulePath() {
+        seed("ro-13a", operator = "u-x", moduleCode = "user.account")
+        seed("ro-13b", operator = "u-x", moduleCode = "user.organization")
+        seed("ro-13c", operator = "u-x", moduleCode = "sys.dict")
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { moduleCodeLike = "user" }, pageNo = 1, pageSize = 10,
+        )
+
+        assertEquals(2L, page.total)
+        assertEquals(setOf("ro-13a", "ro-13b"), page.items.map { it.id }.toSet())
+    }
+
+    @Test
+    fun pagingSearch_operateType_exactStringMatch() {
+        seed("ro-14a", operator = "u-x", operateTypeText = "create")
+        seed("ro-14b", operator = "u-x", operateTypeText = "delete")
+        seed("ro-14c", operator = "u-x", operateTypeText = "createUser") // wouldn't match "create" exactly
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { operateType = "create" }, pageNo = 1, pageSize = 10,
+        )
+
+        assertEquals(1L, page.total)
+        assertEquals("ro-14a", page.items.single().id)
+    }
+
     // ----- Fixtures -----
 
     /**
@@ -232,6 +275,9 @@ internal open class RdbKtormAuditLogReadOnlyServiceTest {
         id: String,
         tenant: String? = "t-default",
         operator: String? = "u-default",
+        operatorName: String? = null,
+        moduleCode: String? = "USER",
+        operateTypeText: String? = null,
         operateTypeId: Int? = 2,
         desc: String? = "default",
         operateTime: LocalDateTime = LocalDateTime.now(),
@@ -243,8 +289,9 @@ internal open class RdbKtormAuditLogReadOnlyServiceTest {
             this.entityId = "entity-$id"
             this.description = desc
             this.operateTypeId = operateTypeId
-            this.operateType = "type-$operateTypeId"
-            this.moduleCode = "USER"
+            this.operateType = operateTypeText ?: "type-$operateTypeId"
+            this.moduleCode = moduleCode
+            this.operator = operatorName
             this.operatorId = operator
             this.tenantId = tenant
             this.operateTime = Date.from(operateTime.atZone(java.time.ZoneId.systemDefault()).toInstant())

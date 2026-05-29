@@ -112,6 +112,15 @@ open class RdbKtormAuditLogReadOnlyService : IAuditLogReadOnlyService {
         query.operateTypeId?.let { predicates += SysAuditLogTable.operateTypeId eq it }
         query.operatorId?.let { predicates += SysAuditLogTable.operatorId eq it }
         query.operatorUserType?.let { predicates += SysAuditLogTable.operatorUserType eq it }
+        query.operatorLike?.takeIf { it.isNotEmpty() }?.let {
+            predicates += SysAuditLogTable.operator like "%$it%"
+        }
+        query.moduleCodeLike?.takeIf { it.isNotEmpty() }?.let {
+            predicates += SysAuditLogTable.moduleCode like "%$it%"
+        }
+        query.operateType?.takeIf { it.isNotEmpty() }?.let {
+            predicates += SysAuditLogTable.operateType eq it
+        }
         query.entityId?.let { predicates += SysAuditLogTable.entityId eq it }
         query.operateTimeFrom?.let { predicates += SysAuditLogTable.operateTime greaterEq it }
         query.operateTimeTo?.let { predicates += SysAuditLogTable.operateTime less it }
