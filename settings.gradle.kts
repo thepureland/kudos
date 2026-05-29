@@ -85,6 +85,7 @@ include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-l
 include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb")
 include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb:kudos-ability-log-audit-rdb-common")
 include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-rdb:kudos-ability-log-audit-rdb-ktorm")
+include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-mongo")
 
 
 // ui
