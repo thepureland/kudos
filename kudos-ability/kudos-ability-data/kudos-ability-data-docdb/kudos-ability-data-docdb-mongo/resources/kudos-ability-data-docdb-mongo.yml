@@ -1,0 +1,18 @@
+# kudos-ability-data-docdb-mongo 模块默认配置
+# 连接信息走 Spring Boot 的 spring.data.mongodb.*；本命名空间只放 kudos 特有开关
+kudos:
+  ability:
+    docdb:
+      mongo:
+        big-integer-as-string: true     # 将 BigInteger 以 String 形式写入 MongoDB，保住任意精度
+
+# 连接示例（业务在自己工程里覆盖）
+# spring:
+#   data:
+#     mongodb:
+#       host: localhost
+#       port: 27017
+#       database: mydb
+#       username: app
+#       password: app-pwd
+#       authentication-database: admin
