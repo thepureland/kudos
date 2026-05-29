@@ -112,6 +112,10 @@ class RedisKeyValueCacheManager(
             .disableCachingNullValues()
             .serializeKeysWith(defaultCacheConfiguration.keySerializationPair)
             .serializeValuesWith(defaultCacheConfiguration.valueSerializationPair)
+            // Propagate the outer config's conversion service so per-cache instances pick up the
+            // same SimpleKey → String fix (see RedisCacheKeyConversionService); otherwise each
+            // `defaultCacheConfig()` call here would silently restore Spring's default mapping.
+            .withConversionService(defaultCacheConfiguration.conversionService)
         cacheConfig.ttl?.let { ttl ->
             redisCacheConfiguration = redisCacheConfiguration.entryTtl(Duration.ofSeconds(ttl.toLong()))
         }

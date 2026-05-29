@@ -2,9 +2,13 @@ spring:
   cloud:
     stream:
       bindings:
-        #生产者
+        # Audit-log producer
         logAudit-out-0:
-          #主题名称
+          # topic name
           destination: LOG_AUDIT_TOPIC
-          #分组名称
+          # consumer group
           group: logAudit
+        # Monitor-message producer — paired with MqMonitorService (@MqProducer bindingName = "logMonitor-out-0").
+        logMonitor-out-0:
+          destination: LOG_MONITOR_TOPIC
+          group: logMonitor

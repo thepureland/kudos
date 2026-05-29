@@ -2,6 +2,8 @@ package io.kudos.ability.log.audit.common.starter
 
 import io.kudos.ability.log.audit.common.annotation.LogAuditAspect
 import io.kudos.ability.log.audit.common.annotation.WebLogAuditAspect
+import io.kudos.ability.log.audit.common.api.IMonitorService
+import io.kudos.ability.log.audit.common.api.LoggingMonitorService
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
@@ -49,6 +51,22 @@ open class LogAuditCommonConfiguration : IComponentInitializer {
     @Bean
     @ConditionalOnMissingBean
     open fun webLogAuditAspect() = WebLogAuditAspect()
+
+    /**
+     * Default [IMonitorService] fallback that logs every submitted
+     * [io.kudos.ability.log.audit.common.entity.SysMonitorMsgVo] at ERROR level via slf4j.
+     * Activated only when no other `IMonitorService` bean exists — apps pulling in
+     * `kudos-ability-log-audit-mq` (or wiring a custom one) automatically replace this.
+     *
+     * Closes the long-standing "IMonitorService interface with no default implementation"
+     * gap: before this, any call to
+     * [io.kudos.ability.log.audit.common.support.MonitorMsgTool.pushErrMsg] on an app without an
+     * MQ module would explode with `NoSuchBeanDefinitionException` during an existing error-
+     * handling flow.
+     */
+    @Bean
+    @ConditionalOnMissingBean(IMonitorService::class)
+    open fun loggingMonitorService(): IMonitorService = LoggingMonitorService()
 
     override fun getComponentName() = "kudos-ability-log-audit-common"
 }
