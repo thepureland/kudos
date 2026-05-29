@@ -1,7 +1,9 @@
 package io.kudos.ability.log.audit.mq.init
 
 import io.kudos.ability.log.audit.common.api.IAuditService
+import io.kudos.ability.log.audit.common.api.IMonitorService
 import io.kudos.ability.log.audit.mq.beans.MqAuditService
+import io.kudos.ability.log.audit.mq.beans.MqMonitorService
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
@@ -36,6 +38,17 @@ open class LogAuditMqAutoConfiguration : IComponentInitializer {
     @Bean
     @Primary
     open fun mqAuditService(): IAuditService = MqAuditService()
+
+    /**
+     * MQ-delivery [IMonitorService] implementation.
+     *
+     * `@Primary` ensures this bean wins over the SLF4J fallback (`LoggingMonitorService`) registered
+     * by `kudos-ability-log-audit-common` whenever this MQ module is present on the classpath.
+     * Apps that explicitly want the SLF4J fallback must exclude this module or override the bean.
+     */
+    @Bean
+    @Primary
+    open fun mqMonitorService(): IMonitorService = MqMonitorService()
 
     override fun getComponentName() = "kudos-ability-log-audit-mq"
 
