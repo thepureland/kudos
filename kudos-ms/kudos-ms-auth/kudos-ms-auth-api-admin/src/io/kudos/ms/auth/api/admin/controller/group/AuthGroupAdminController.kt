@@ -1,12 +1,15 @@
 package io.kudos.ms.auth.api.admin.controller.group
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
+import io.kudos.ms.auth.common.group.vo.request.AuthGroupBatchBindUsersRequest
 import io.kudos.ms.auth.common.group.vo.request.AuthGroupFormCreate
 import io.kudos.ms.auth.common.group.vo.request.AuthGroupFormUpdate
 import io.kudos.ms.auth.common.group.vo.request.AuthGroupQuery
 import io.kudos.ms.auth.common.group.vo.response.AuthGroupDetail
 import io.kudos.ms.auth.common.group.vo.response.AuthGroupEdit
 import io.kudos.ms.auth.common.group.vo.response.AuthGroupRow
+import io.kudos.ms.auth.common.group.vo.response.GroupDeleteImpactVo
+import io.kudos.ms.auth.common.role.vo.response.BatchBindResultVo
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupRoleService
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupService
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupUserService
@@ -80,5 +83,26 @@ class AuthGroupAdminController :
     @DeleteMapping("/unbindRole")
     fun unbindRole(@RequestParam groupId: String, @RequestParam roleId: String): Boolean =
         authGroupRoleService.unbind(groupId, roleId)
+
+    // -- Aggregators ------------------------------------------------------------
+    //
+    // Mirror of the admin endpoints on AuthRoleAdminController; same rationale (single round
+    // trip in place of an N+M fan-out from the console UI).
+
+    /**
+     * Pre-delete impact summary across a batch of groups: distinct counts of users currently
+     * belonging to, and roles currently granted by, any group in the supplied list.
+     */
+    @PostMapping("/getDeleteImpact")
+    fun getDeleteImpact(@RequestBody groupIds: List<String>): GroupDeleteImpactVo =
+        service.getDeleteImpact(groupIds)
+
+    /**
+     * Cartesian-product batch-bind for groups: every user in `userIds` is added to every group
+     * in `groupIds`. Per-group transactional boundary — partial failures returned in the response.
+     */
+    @PostMapping("/batchBindUsers")
+    fun batchBindUsers(@RequestBody request: AuthGroupBatchBindUsersRequest): BatchBindResultVo =
+        service.batchBindUsers(request.groupIds, request.userIds)
 
 }

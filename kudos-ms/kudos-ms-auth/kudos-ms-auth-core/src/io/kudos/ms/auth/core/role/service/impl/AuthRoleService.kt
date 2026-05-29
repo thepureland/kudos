@@ -6,18 +6,27 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.common.role.vo.AuthRoleCacheEntry
 import io.kudos.ms.auth.common.role.vo.request.AuthRoleQuery
 import io.kudos.ms.auth.common.role.vo.response.AuthRoleRow
+import io.kudos.ms.auth.common.role.vo.response.BatchBindResultVo
+import io.kudos.ms.auth.common.role.vo.response.EffectivePermissionsVo
+import io.kudos.ms.auth.common.role.vo.response.RoleDeleteImpactVo
+import io.kudos.ms.auth.core.group.cache.AuthGroupHashCache
+import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupRoleService
+import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupUserService
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByRoleIdCache
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.event.AuthRoleBatchDeleted
 import io.kudos.ms.auth.core.role.event.AuthRoleDeleted
 import io.kudos.ms.auth.core.role.event.AuthRoleInserted
 import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
 import io.kudos.ms.auth.core.role.model.po.AuthRole
+import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleResourceService
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleService
+import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleUserService
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.sys.core.resource.cache.SysResourceHashCache
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
@@ -25,6 +34,7 @@ import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import jakarta.annotation.Resource
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 
 
@@ -66,6 +76,31 @@ open class AuthRoleService(
 
     @Resource
     private lateinit var eventPublisher: ApplicationEventPublisher
+
+    // -- Below are injected for the aggregator methods (getEffectivePermissions, getDeleteImpact,
+    //    batchBindUsers, copyRole). They cross resource boundaries (role↔group, role↔resource) on
+    //    purpose; the alternative would be a separate "permissions facade" service, but the role
+    //    service already mixes cross-MS concerns (e.g. sysResourceHashCache) so adding these stays
+    //    in the same architectural style. None of these create a cycle: group services do not depend
+    //    on the role service.
+
+    @Resource
+    private lateinit var authRoleUserDao: AuthRoleUserDao
+
+    @Resource
+    private lateinit var authRoleUserService: IAuthRoleUserService
+
+    @Resource
+    private lateinit var authRoleResourceService: IAuthRoleResourceService
+
+    @Resource
+    private lateinit var authGroupUserService: IAuthGroupUserService
+
+    @Resource
+    private lateinit var authGroupRoleService: IAuthGroupRoleService
+
+    @Resource
+    private lateinit var authGroupHashCache: AuthGroupHashCache
 
     private val log = LogFactory.getLog(this::class)
 
@@ -231,5 +266,123 @@ open class AuthRoleService(
         return resourceIds.mapNotNull { resourcesMap[it] }
     }
 
+    // -----------------------------------------------------------------------
+    // Aggregators — replace front-end N+1 fan-outs with one-trip composite calls.
+    // -----------------------------------------------------------------------
+
+    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+    override fun getEffectivePermissions(userId: String): EffectivePermissionsVo {
+        // Direct role IDs: bypass IAuthRoleUserService.getRoleIdsByUserId because that's actually
+        // the cached *effective* set (it includes group-inherited roles). The dao gives the bare
+        // role_user table — which is what "direct" means.
+        val directRoleIds: List<String> = authRoleUserDao.searchRoleIdsByUserId(userId)
+        val groupIds: Set<String> = authGroupUserService.getGroupIdsByUserId(userId)
+
+        if (directRoleIds.isEmpty() && groupIds.isEmpty()) return EffectivePermissionsVo.empty()
+
+        // groupId -> role IDs inherited via that group (deduplicated by Set on the read side).
+        val roleIdsByGroup: Map<String, Set<String>> = groupIds.associateWith { gid ->
+            authGroupRoleService.getRoleIdsByGroupId(gid)
+        }
+
+        // Resolve all role metadata once (direct + inherited, dedup), then partition.
+        val allRoleIds: Set<String> = (directRoleIds.asSequence() + roleIdsByGroup.values.asSequence().flatten()).toSet()
+        val rolesMap: Map<String, AuthRoleCacheEntry> =
+            if (allRoleIds.isEmpty()) emptyMap() else authRoleHashCache.getRolesByIds(allRoleIds)
+
+        val directRoles: List<AuthRoleCacheEntry> = directRoleIds.mapNotNull { rolesMap[it] }
+        val groupsList: List<AuthGroupCacheEntryAlias> =
+            if (groupIds.isEmpty()) emptyList() else authGroupHashCache.getGroupsByIds(groupIds).values.toList()
+        val rolesByGroup: Map<String, List<AuthRoleCacheEntry>> =
+            roleIdsByGroup.mapValues { (_, rids) -> rids.mapNotNull { rolesMap[it] } }
+
+        // Resources per role: one cache hit per role for the id list, one batch lookup for metadata.
+        // Empty roles are pruned so the JSON doesn't carry useless `roleId: []` pairs.
+        val resourcesByRole: Map<String, List<SysResourceCacheEntry>> = allRoleIds.associateWith { rid ->
+            val resIds = resourceIdsByRoleIdCache.getResourceIds(rid)
+            if (resIds.isEmpty()) emptyList() else {
+                val map = sysResourceHashCache.getResourcesByIds(resIds.toSet())
+                resIds.mapNotNull { map[it] }
+            }
+        }.filterValues { it.isNotEmpty() }
+
+        return EffectivePermissionsVo(
+            directRoles = directRoles,
+            groups = groupsList,
+            rolesByGroup = rolesByGroup,
+            resourcesByRole = resourcesByRole,
+        )
+    }
+
+    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+    override fun getDeleteImpact(roleIds: Collection<String>): RoleDeleteImpactVo {
+        if (roleIds.isEmpty()) return RoleDeleteImpactVo.zero()
+        // Union over all roles. Sets de-duplicate so a user/group bound to multiple roles in the
+        // batch counts once — matches the UI's "this batch's blast radius" phrasing.
+        val allUserIds = HashSet<String>()
+        val allGroupIds = HashSet<String>()
+        for (rid in roleIds) {
+            allUserIds.addAll(authRoleUserService.getUserIdsByRoleId(rid))
+            allGroupIds.addAll(authGroupRoleService.getGroupIdsByRoleId(rid))
+        }
+        return RoleDeleteImpactVo(users = allUserIds.size, groups = allGroupIds.size)
+    }
+
+    @Transactional
+    override fun batchBindUsers(roleIds: Collection<String>, userIds: Collection<String>): BatchBindResultVo {
+        if (roleIds.isEmpty() || userIds.isEmpty()) return BatchBindResultVo.empty()
+        var ok = 0
+        val failures = mutableListOf<BatchBindResultVo.BatchBindFailure>()
+        // Per-role transaction boundary: each batchBind is its own commit so a bad row doesn't
+        // strand the rest. The admin UI displays partial-failure detail; cross-role atomicity
+        // isn't worth the multi-row write lock.
+        for (rid in roleIds) {
+            try {
+                authRoleUserService.batchBind(rid, userIds)
+                ok++
+            } catch (e: Exception) {
+                log.warn("Batch-bind failed for role ${rid}: ${e.message}")
+                failures += BatchBindResultVo.BatchBindFailure(ownerId = rid, reason = e.message ?: e.javaClass.simpleName)
+            }
+        }
+        return BatchBindResultVo(ok = ok, failures = failures)
+    }
+
+    @Transactional
+    override fun copyRole(sourceId: String, code: String, name: String, copyResources: Boolean): String {
+        require(code.isNotBlank()) { "Target role code must not be blank" }
+        require(name.isNotBlank()) { "Target role name must not be blank" }
+        val source = authRoleHashCache.getRoleById(sourceId)
+            ?: throw IllegalArgumentException("Source role not found: $sourceId")
+
+        // Build the new PO from the source's audit-neutral fields. Audit columns (createUserId
+        // etc.) are left null so BaseCrudService's audit interceptor stamps the current operator.
+        val newRole = AuthRole.Companion {
+            this.code = code
+            this.name = name
+            // Required non-null fields on the PO; the cache entry's tenantId / subsysCode are
+            // nullable so we fall back to empty-string when (somehow) absent rather than NPE.
+            this.tenantId = source.tenantId ?: ""
+            this.subsysCode = source.subsysCode ?: ""
+            this.remark = source.remark
+            this.active = source.active ?: true
+            this.builtIn = false  // copies are never built-in regardless of source
+        }
+        val newId: String = dao.insert(newRole)
+        log.debug("Copied role ${sourceId} -> ${newId} (copyResources=${copyResources})")
+        eventPublisher.publishEvent(AuthRoleInserted(newId))
+
+        if (copyResources) {
+            val resourceIds = authRoleResourceService.getResourceIdsByRoleId(sourceId)
+            if (resourceIds.isNotEmpty()) {
+                authRoleResourceService.batchBind(newId, resourceIds)
+                log.debug("Copied ${resourceIds.size} resource grants from role ${sourceId} to ${newId}.")
+            }
+        }
+        return newId
+    }
 
 }
+
+/** Local alias so the type appears in the import block above for clarity. */
+private typealias AuthGroupCacheEntryAlias = io.kudos.ms.auth.common.group.vo.AuthGroupCacheEntry
