@@ -1,7 +1,9 @@
 package io.kudos.ability.log.audit.rdb.ktorm.init
 
 import io.kudos.ability.data.rdb.ktorm.init.KtormAutoConfiguration
+import io.kudos.ability.log.audit.common.api.IAuditLogReadOnlyService
 import io.kudos.ability.log.audit.common.api.IAuditService
+import io.kudos.ability.log.audit.rdb.ktorm.service.RdbKtormAuditLogReadOnlyService
 import io.kudos.ability.log.audit.rdb.ktorm.service.RdbKtormAuditService
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
@@ -42,6 +44,15 @@ open class LogAuditRdbKtormAutoConfiguration : IComponentInitializer {
     @Bean("rdbKtormAuditService")
     @ConditionalOnMissingBean(name = ["rdbKtormAuditService"])
     open fun rdbKtormAuditService(): IAuditService = RdbKtormAuditService()
+
+    /**
+     * Read-side companion to [rdbKtormAuditService]. Bean-name guarded so the admin / forensics
+     * caller can `@Resource("rdbKtormAuditLogReadOnlyService")` even when multiple
+     * [IAuditLogReadOnlyService] beans coexist (e.g. a future ClickHouse impl in the same app).
+     */
+    @Bean("rdbKtormAuditLogReadOnlyService")
+    @ConditionalOnMissingBean(name = ["rdbKtormAuditLogReadOnlyService"])
+    open fun rdbKtormAuditLogReadOnlyService(): IAuditLogReadOnlyService = RdbKtormAuditLogReadOnlyService()
 
     override fun getComponentName() = "kudos-ability-log-audit-rdb-ktorm"
 }
