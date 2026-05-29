@@ -1,0 +1,15 @@
+# kudos-ability-web-swagger3 模块默认配置
+# 业务工程可在自己的 application.yml 中按需覆盖任一字段
+kudos:
+  ability:
+    web:
+      swagger:
+        enabled: true
+        production: false
+        title: kudos
+        description: kudos OpenAPI documentation
+        version: 1.0.0
+        contact:
+          contact-name: ""
+          contact-url: ""
+          contact-email: ""
