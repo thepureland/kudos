@@ -1,0 +1,21 @@
+# kudos-ability-web-guest 模块默认配置
+# 业务工程在自己的 application.yml 中按需覆盖任一字段；enabled 默认 false，需要业务显式开启
+kudos:
+  ability:
+    web:
+      guest:
+        enabled: false                 # 总开关；过滤器仅做 doFilter 透传
+        cookie:
+          name: gi                     # 访客 Cookie 名
+          path: /                      # Cookie 路径作用域
+          max-age: 14d                 # 客户端侧 Cookie 有效期；Redis 端 TTL 用 repository.timeout
+          same-site: lax               # Lax / Strict / None；None 需配合 Secure + 反代 TLS
+          http-only: true              # 拒绝 JS 读 Cookie
+          cipher-Key: "d2tlLzY5WjZ0VUlRaE44RitZZU9nQVp1aEp0alhEMVc="   # 生产必须覆盖
+        repository:
+          group-name:                  # 留空走默认 RedisTemplate；多 Redis 时填名字
+          prefix: guest-prefix         # 访客 key 前缀
+          timeout: 5m                  # 访客 Redis TTL；每次访问自动续期
+          payload:                     # 可选：随访客 key 一起存的负载数据
+            param-names: [ ]           # 要采集的 HTTP query 参数名
+            client-infos: [ ]          # 要采集的 ClientInfo 属性名（domain / requestReferer / requestType 等）

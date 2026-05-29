@@ -44,6 +44,24 @@ class AuditLogQuery : Serializable {
     /** Operator user type — exact match. */
     var operatorUserType: String? = null
 
+    /**
+     * Fuzzy match on `operator` (display name) (`LIKE '%value%'`). Admin UIs typically search by
+     * operator name rather than id, so this complements [operatorId]. Null / empty skips the filter.
+     */
+    var operatorLike: String? = null
+
+    /**
+     * Fuzzy match on `module_code` (`LIKE '%value%'`). Allows partial-prefix module filtering in
+     * admin UIs (e.g. "user" matches "user.account" and "user.organization"). Null / empty skips.
+     */
+    var moduleCodeLike: String? = null
+
+    /**
+     * Free-text operation type — exact match on `operate_type` column. Complements [operateTypeId]
+     * for callers that have only the display string. Null skips.
+     */
+    var operateType: String? = null
+
     /** Business entity id (the affected object's id) — exact match. */
     var entityId: String? = null
 
