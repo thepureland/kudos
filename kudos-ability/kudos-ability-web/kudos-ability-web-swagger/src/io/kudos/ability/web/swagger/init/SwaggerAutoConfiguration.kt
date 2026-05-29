@@ -70,5 +70,5 @@ open class SwaggerAutoConfiguration(
             .contact(contact)
     }
 
-    override fun getComponentName() = "kudos-ability-web-swagger3"
+    override fun getComponentName() = "kudos-ability-web-swagger"
 }

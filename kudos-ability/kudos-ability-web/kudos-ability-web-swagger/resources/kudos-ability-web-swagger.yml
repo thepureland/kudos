@@ -1,4 +1,4 @@
-# kudos-ability-web-swagger3 模块默认配置
+# kudos-ability-web-swagger 模块默认配置
 # 业务工程可在自己的 application.yml 中按需覆盖任一字段
 kudos:
   ability:
