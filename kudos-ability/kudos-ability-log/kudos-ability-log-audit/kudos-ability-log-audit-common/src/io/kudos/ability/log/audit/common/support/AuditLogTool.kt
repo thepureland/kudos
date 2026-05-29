@@ -1,6 +1,7 @@
 package io.kudos.ability.log.audit.common.support
 
 import io.kudos.ability.log.audit.common.annotation.Audit
+import io.kudos.ability.log.audit.common.annotation.LogDesensitize
 import io.kudos.ability.log.audit.common.annotation.WebAudit
 import io.kudos.ability.log.audit.common.entity.*
 import io.kudos.base.bean.BeanKit
@@ -14,10 +15,15 @@ import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletRequestWrapper
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.aspectj.lang.JoinPoint
 import org.springframework.core.DefaultParameterNameDiscoverer
 import org.springframework.core.ParameterNameDiscoverer
 import org.springframework.web.util.ContentCachingRequestWrapper
+import java.lang.reflect.Modifier
 import java.util.ArrayList
 import java.util.Date
 import java.util.LinkedList
@@ -117,7 +123,14 @@ object AuditLogTool {
      * [io.kudos.ability.log.audit.common.filter.WebLogAuditFilter] do not have
      * their entire request path broken by the audit aspect.
      */
-    fun getRequestData(request: HttpServletRequest?): String {
+    fun getRequestData(request: HttpServletRequest?): String = getRequestData(request, logVo = null)
+
+    /**
+     * Same as [getRequestData] but applies [LogDesensitize] masking when [logVo] carries
+     * `requestDesensitizePropertyNames`. Empty / non-JSON / unconfigured names short-circuit
+     * to the raw body — masking is purely best-effort and never blocks the audit submission.
+     */
+    fun getRequestData(request: HttpServletRequest?, logVo: LogVo?): String {
         if (request == null) return ""
         // Accept either a direct ContentCachingRequestWrapper or something wrapped around one.
         val cached = when {
@@ -126,7 +139,105 @@ object AuditLogTool {
                 request.request as ContentCachingRequestWrapper
             else -> null
         }
-        return cached?.let { String(it.contentAsByteArray) } ?: ""
+        val raw = cached?.let { String(it.contentAsByteArray) } ?: ""
+        return maybeDesensitizeJsonRequestBody(raw, logVo)
+    }
+
+    /**
+     * Walks the class hierarchy of [joinPoint]'s first argument, collects every field marked
+     * `@LogDesensitize`, and stores the names on [logVo] for downstream JSON masking.
+     *
+     * Inherited fields are included — typical request DTOs extend a `BasePayload` that carries
+     * common audit-sensitive fields. Static fields are skipped to dodge companion-object backing
+     * fields synthesized by Kotlin.
+     *
+     * Called by [createLogVo] at `before`-advice time; idempotent — re-invoking with the same
+     * arguments overwrites the existing names with the same Set.
+     */
+    fun applyRequestDesensitizeFromFirstJoinPointArg(joinPoint: JoinPoint?, logVo: LogVo?) {
+        if (joinPoint == null || logVo == null) return
+        val args = joinPoint.args
+        if (args.isNullOrEmpty() || args[0] == null) return
+        val first = args[0] ?: return
+        val keys = LinkedHashSet<String>()
+        collectDesensitizeFieldNamesFromClass(first.javaClass, keys)
+        if (keys.isNotEmpty()) {
+            logVo.requestDesensitizePropertyNames = keys
+        }
+    }
+
+    private fun collectDesensitizeFieldNamesFromClass(clazz: Class<*>, out: MutableSet<String>) {
+        var c: Class<*>? = clazz
+        while (c != null && c != Any::class.java) {
+            for (field in c.declaredFields) {
+                if (Modifier.isStatic(field.modifiers)) continue
+                if (field.isAnnotationPresent(LogDesensitize::class.java)) {
+                    out += field.name
+                }
+            }
+            c = c.superclass
+        }
+    }
+
+    /**
+     * Public entry for the non-Web `@Audit` path (where the "request body" is the JSON-serialized
+     * model object passed into [createLogVo]). Returns the input unchanged when [logVo] has no
+     * desensitize names configured.
+     */
+    fun desensitizeJsonByLogVo(logVo: LogVo?, json: String): String = maybeDesensitizeJsonRequestBody(json, logVo)
+
+    /**
+     * Top-level JSON object: replace every key listed in [logVo].requestDesensitizePropertyNames
+     * with [maskHead1Tail3] of its value. Nested objects / arrays are not traversed (matches soul's
+     * behavior — the typical request DTO surfaces sensitive fields at the top level).
+     *
+     * Failures (parse errors, unexpected types) silently fall back to the raw text so a malformed
+     * body can never block audit submission.
+     */
+    private fun maybeDesensitizeJsonRequestBody(raw: String, logVo: LogVo?): String {
+        val names = logVo?.requestDesensitizePropertyNames
+        if (names.isNullOrEmpty()) return raw
+        if (raw.isBlank() || !isLikelyJsonObject(raw)) return raw
+        return try {
+            val element = Json.parseToJsonElement(raw)
+            val obj = element as? JsonObject ?: return raw
+            if (obj.isEmpty()) return raw
+            var changed = false
+            val mutated = LinkedHashMap<String, kotlinx.serialization.json.JsonElement>(obj.size)
+            for ((key, value) in obj) {
+                if (key in names && value !is JsonNull) {
+                    val asText = when (value) {
+                        is JsonPrimitive -> value.content
+                        else -> value.toString()
+                    }
+                    mutated[key] = JsonPrimitive(maskHead1Tail3(asText))
+                    changed = true
+                } else {
+                    mutated[key] = value
+                }
+            }
+            if (changed) JsonObject(mutated).toString() else raw
+        } catch (e: Exception) {
+            LOG.debug("Failed to desensitize JSON request body; falling back to raw text: {0}", e.message)
+            raw
+        }
+    }
+
+    private fun isLikelyJsonObject(s: String): Boolean {
+        val t = s.trim()
+        return t.startsWith("{") && t.endsWith("}")
+    }
+
+    /**
+     * Head-1 + `"****"` + tail-3. Values up to 4 chars long are fully masked to `"****"`
+     * (otherwise a 4-char value would reveal head + nothing). Mirrors soul's contract.
+     */
+    private fun maskHead1Tail3(raw: String?): String? {
+        if (raw == null) return null
+        val len = raw.length
+        if (len == 0) return raw
+        if (len <= 4) return "****"
+        return raw.substring(0, 1) + "****" + raw.substring(len - 3)
     }
 
     /**
@@ -137,9 +248,13 @@ object AuditLogTool {
      */
     fun createLogVo(audit: Audit, model: Any, joinPoint: JoinPoint): LogVo {
         val logVo = LogVo()
+        applyRequestDesensitizeFromFirstJoinPointArg(joinPoint, logVo)
         val baseLog: BaseLog = logVo.addAuditLog(audit)
         if (audit.ignoreForm == YesNotEnum.NOT) {
-            KudosContextHolder.get().clientInfo?.requestContentString = JsonKit.toJson(model)
+            // Mask the serialized payload before it lands in the audit-visible client-info bucket;
+            // re-serializing through Json keeps formatting compact and avoids leaking the raw value.
+            val serialized = JsonKit.toJson(model)
+            KudosContextHolder.get().clientInfo?.requestContentString = desensitizeJsonByLogVo(logVo, serialized)
         }
         try {
             processBizData(baseLog, audit.descriptionFormatter, joinPoint)
@@ -161,9 +276,12 @@ object AuditLogTool {
      */
     fun createLogVo(audit: WebAudit, request: HttpServletRequest, joinPoint: JoinPoint): LogVo {
         val logVo = LogVo()
+        applyRequestDesensitizeFromFirstJoinPointArg(joinPoint, logVo)
         val baseLog: BaseLog = logVo.addAuditLog(audit)
         if (audit.ignoreForm == YesNotEnum.NOT) {
-            val body: String = getRequestData(request)
+            // Pass logVo so [LogDesensitize]-marked fields are masked at body-extraction time —
+            // the same body lands in client-info and in the audit detail.
+            val body: String = getRequestData(request, logVo)
             KudosContextHolder.get().clientInfo?.requestContentString = body
         }
         // request.getParameter returns null when the parameter is missing (Java API); use isNullOrBlank to guard against NPE.

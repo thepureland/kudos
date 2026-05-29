@@ -1,3 +1,12 @@
+# Disable the kudos cache autoconfig in this module's tests: kudos-ability-cache-common is on the
+# test classpath (so DataSourceClearListenerTest can exercise CacheCleanRegister), but neither
+# cache-local-caffeine nor cache-remote-redis are — so LinkableCacheAutoConfiguration would fail
+# wiring localCacheManager. Cache-driven datasource refresh is covered separately by the unit test.
+kudos:
+  ability:
+    cache:
+      enabled: false
+
 spring:
 #  sql:
 #    init:

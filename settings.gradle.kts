@@ -93,6 +93,7 @@ include("kudos-ability:kudos-ability-ui:kudos-ability-ui-javafx")
 include("kudos-ability:kudos-ability-web:kudos-ability-web-common")
 include("kudos-ability:kudos-ability-web:kudos-ability-web-springmvc")
 include("kudos-ability:kudos-ability-web:kudos-ability-web-ktor")
+include("kudos-ability:kudos-ability-web:kudos-ability-web-swagger")
 
 
 // ams

@@ -47,6 +47,10 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             BeanKit.copyProperties(any, entity)
             entity
         } as E
+        // Auto-fill audit columns (createTime / createUserId / updateTime / updateUserId) when the
+        // entity is auditable — runs before the property-key snapshot below so the audit fields
+        // become part of the INSERT statement.
+        setInsertDefault(entity)
         val idPropName = getPkColumn().name.underscoreToHump()
         // When the user has explicitly set id on the entity, insert with that value (supports non-auto-increment
         // primary keys such as string/uuid or pre-generated ints); otherwise exclude id so the DB auto-increments.
@@ -82,7 +86,10 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     override fun batchInsert(objects: Collection<Any>, countOfEachBatch: Int): Int {
         if (objects.isEmpty()) return 0
         return if (objects.first() is IDbEntity<*, *>) {
-            batchInsertOnly(objects as Collection<E>, countOfEachBatch, *objects.first().properties.keys.toTypedArray())
+            // Fill audit defaults before snapshotting the property keys; otherwise the auto-filled
+            // columns would be missing from the INSERT column list.
+            (objects as Collection<E>).forEach { setInsertDefault(it) }
+            batchInsertOnly(objects, countOfEachBatch, *objects.first().properties.keys.toTypedArray())
         } else {
             val propertyNames = getEntityProperties()
             val columnMap = ColumnHelper.columnOf(table(), *propertyNames.toTypedArray())
@@ -91,7 +98,10 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                 val counts = database().batchInsert(table()) {
                     it.forEach { insertPayload ->
                         item {
-                            val propMap = BeanKit.extract(insertPayload)
+                            val propMap = BeanKit.extract(insertPayload).toMutableMap()
+                            // Plain-bean path: inject audit defaults into the property map so even
+                            // DTO-style payloads end up with consistent createTime / createUserId.
+                            setInsertDefault(propMap)
                             for ((name, value) in propMap) {
                                 if (name in propertyNames) {
                                     val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
@@ -108,6 +118,11 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     override fun batchInsertOnly(entities: Collection<E>, countOfEachBatch: Int, vararg propertyNames: String): Int {
+        // Auto-fill audit defaults on each entity. propertyNames passed in by the caller stays
+        // authoritative — if the caller intentionally excluded audit columns from the SQL, we still
+        // fill the in-memory entity but the columns just aren't written. That mirrors the
+        // pre-existing semantics of "caller picks the column list".
+        entities.forEach { setInsertDefault(it) }
         val columnMap = ColumnHelper.columnOf(table(), *propertyNames)
         var totalCount = 0
         GroupExecutor(entities, countOfEachBatch) {
@@ -447,25 +462,47 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     }
 
     /**
-     * Set the fields that are auto-updated.
+     * Set the fields that are auto-updated on update. Delegates to [AuditDefaults.fillForUpdate]
+     * for testable, centralized rules; only auto-fills `updateTime` and `updateUserId`, never
+     * touching creation fields.
      *
      * @param e database table entity
      */
     private fun setDefault(e: E) {
-        if (e is IAuditable && e.updateTime == null) {
-            e.updateTime = LocalDateTime.now()
+        if (e is IAuditable) {
+            AuditDefaults.fillForUpdate(e)
         }
     }
 
     /**
-     * Set the fields that are auto-updated.
+     * Map variant for callers that carry update values as a map (e.g. updateProperties paths).
+     * Only auto-fills when the table entity actually implements [IAuditable] — extra columns on a
+     * non-auditable table would error.
      *
      * @param properties Map(property name, property value)
      */
     private fun setDefault(properties: MutableMap<String, Any?>) {
-        val key = IAuditable::updateTime.name
-        if (!properties.containsKey(key) && entityClass().superclasses.contains(IAuditable::class)) {
-            properties[key] = LocalDateTime.now()
+        if (entityClass().superclasses.contains(IAuditable::class)) {
+            AuditDefaults.fillForUpdate(properties)
+        }
+    }
+
+    /**
+     * Set the audit fields that should be auto-populated on insert. Fills `createTime`,
+     * `createUserId`, `updateTime`, `updateUserId` when they are null — matches MyBatis-Plus's
+     * `INSERT` field-filling default in soul. Existing values are never overridden so data-import
+     * scripts can still inject explicit timestamps.
+     */
+    private fun setInsertDefault(e: E) {
+        if (e is IAuditable) {
+            AuditDefaults.fillForInsert(e)
+        }
+    }
+
+    /** Map variant of [setInsertDefault] — for the plain-bean insert path that carries values as a map. */
+    private fun setInsertDefault(properties: MutableMap<String, Any?>) {
+        if (entityClass().superclasses.contains(IAuditable::class)) {
+            AuditDefaults.fillForInsert(properties)
         }
     }
 

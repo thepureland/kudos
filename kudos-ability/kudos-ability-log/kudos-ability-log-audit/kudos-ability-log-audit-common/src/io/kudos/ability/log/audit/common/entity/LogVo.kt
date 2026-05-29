@@ -18,6 +18,20 @@ class LogVo : ILogVo {
     /** Audit-log entries accumulated for the current method call. */
     var logs = mutableListOf<BaseLog>()
 
+    /**
+     * JSON property names whose value must be desensitized before the request body is persisted to
+     * the audit trail. Populated by
+     * [io.kudos.ability.log.audit.common.support.AuditLogTool.applyRequestDesensitizeFromFirstJoinPointArg]
+     * by scanning `@LogDesensitize`-marked fields on the controller method's first parameter DTO.
+     *
+     * Carried on the LogVo so the `before` advice (which sees the JoinPoint) can collect the names
+     * once, and the `afterReturning` advice (which actually masks the captured body) can apply them
+     * without re-scanning reflection on the hot path.
+     *
+     * `null` or empty means "no masking required" — the body is written verbatim.
+     */
+    var requestDesensitizePropertyNames: Set<String>? = null
+
     /** Appends a log entry derived from the [WebAudit] annotation. */
     fun addAuditLog(audit: WebAudit): BaseLog {
         val sysLog = BaseLog(audit)
