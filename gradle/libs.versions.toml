@@ -118,6 +118,10 @@ spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-star
 spring-boot-starter-data-redis = { module = "org.springframework.boot:spring-boot-starter-data-redis"}
 spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache"}
 spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc"}
+# Micrometer core — version managed by spring-boot BOM. Used by kudos-ability-data-rdb-jdbc as
+# compileOnly to expose HikariCP connection-pool metrics (active / idle / pending / acquire / usage)
+# without forcing every consumer to pull Actuator.
+micrometer-core = { module = "io.micrometer:micrometer-core"}
 spring-boot-starter-jetty = { module = "org.springframework.boot:spring-boot-starter-jetty"}
 #spring-boot-starter-undertow = { module = "org.springframework.boot:spring-boot-starter-undertow"}
 spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway"}
