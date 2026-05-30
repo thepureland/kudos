@@ -15,4 +15,10 @@ dependencies {
     // under test depends on. Apps don't get this transitively from our prod deps; they wire
     // it themselves via spring-boot-starter-security. Test-side dep keeps prod scope minimal.
     testImplementation(libs.spring.boot.starter.security)
+    // Spring MVC + MockMvc for the end-to-end filter chain integration test.
+    testImplementation(libs.spring.boot.starter.web)
+    testImplementation(libs.spring.boot.starter.webmvc.test)
+    // Programmatically build PKCS12 keystore at test setup so the JWT module's loadKeyPair path
+    // gets exercised. Same pattern used in kudos-ability-security-jwt's tests.
+    testImplementation(libs.bouncycastle.bcpkix)
 }

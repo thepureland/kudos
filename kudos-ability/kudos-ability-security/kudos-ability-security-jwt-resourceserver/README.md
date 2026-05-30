@@ -155,13 +155,17 @@ class CustomSecurityConfig {
 
 ## 测试覆盖
 
-- `JwtResourceServerAutoConfigurationTest` (3) —— 用 `ApplicationContextRunner`：
+- `JwtResourceServerAutoConfigurationTest` (3) —— 用 `ApplicationContextRunner` 测装配条件 + properties 绑定：
   - 默认 `enabled` 缺失 → `@Configuration` 类整体跳过，`JwtResourceServerProperties` bean 也不装
   - `enabled=true` → properties 绑定生效，`enabled` 字段 true，`permittedPaths` 默认空
   - yml 索引列表 `permitted-paths[0]` / `[1]` / `[2]` 按顺序绑定到 `List<String>`
-
-未覆盖：真实 `SecurityFilterChain` 端到端鉴权（需要完整 web context + JWT token，业务工程
-自己在 `@SpringBootTest + MockMvc` 里测）。
+- `JwtResourceServerFilterChainIT` (5) —— `@SpringBootTest` + MockMvc 端到端鉴权：
+  - BC 生成 PKCS12 keystore + 父模块 `JwtEncoder` 签发真实 token
+  - `/private` 无 Authorization → 401
+  - `/private` + 有效 JWT → 200，body 含 `sub` claim 解析后的用户名
+  - `/private` + 过期 JWT → 401（`JwtExpValidator` 命中）
+  - `/api/public/echo`（在 `permitted-paths` 里）无 token → 200
+  - `/api/public/echo` 带有效 token → 200（permitAll 不拒绝带 token 的请求）
 
 ## 已知限制 / 后续工作
 
