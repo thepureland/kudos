@@ -22,6 +22,9 @@ interface IAuthRoleFormBase {
     /** Subsystem code. */
     val subsysCode: String?
 
+    /** Whether assigning this role requires an approval workflow. Null defaults to false. */
+    val approvalRequired: Boolean?
+
     /** Remark. */
     @get:MaxLength(128)
     val remark: String?
