@@ -128,6 +128,13 @@ spring-boot-starter-data-mongodb = { module = "org.springframework.boot:spring-b
 # spring-security-oauth2-jose pulls NimbusJwtEncoder / NimbusJwtDecoder plus nimbus-jose-jwt
 # (JWKSet / RSAKey / JWSAlgorithm). Version managed by spring-boot BOM.
 spring-security-oauth2-jose = { module = "org.springframework.security:spring-security-oauth2-jose" }
+# Spring Security web filter chain + DSL. Versions managed by spring-boot BOM.
+spring-security-config = { module = "org.springframework.security:spring-security-config" }
+spring-security-web = { module = "org.springframework.security:spring-security-web" }
+# OAuth2 Resource Server — gives us the `oauth2ResourceServer.jwt(...)` DSL on HttpSecurity.
+spring-security-oauth2-resource-server = { module = "org.springframework.security:spring-security-oauth2-resource-server" }
+# Spring Boot's security starter — provides SecurityAutoConfiguration bundles for tests + apps.
+spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
 # Bouncy Castle PKIX — test-only dep used by the JWT module to programmatically build a self-signed
 # X.509 + PKCS12 keystore at test setup time, instead of committing a binary keystore blob to the
 # repo. Standard Java has no portable API for X.509 cert creation.

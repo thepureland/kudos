@@ -95,6 +95,7 @@ include("kudos-ability:kudos-ability-ui:kudos-ability-ui-javafx")
 
 // security
 include("kudos-ability:kudos-ability-security:kudos-ability-security-jwt")
+include("kudos-ability:kudos-ability-security:kudos-ability-security-jwt-resourceserver")
 
 // web
 include("kudos-ability:kudos-ability-web:kudos-ability-web-common")
