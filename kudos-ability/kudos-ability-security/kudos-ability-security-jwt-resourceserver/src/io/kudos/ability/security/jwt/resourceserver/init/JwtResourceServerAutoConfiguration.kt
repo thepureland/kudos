@@ -1,6 +1,7 @@
 package io.kudos.ability.security.jwt.resourceserver.init
 
 import io.kudos.ability.security.jwt.resourceserver.init.properties.JwtResourceServerProperties
+import io.kudos.ability.security.jwt.resourceserver.support.KudosJwtRolesGrantedAuthoritiesConverter
 import io.kudos.ability.security.jwt.support.JwtExpValidator
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.IComponentInitializer
@@ -16,6 +17,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter
 import org.springframework.security.web.SecurityFilterChain
 
 /**
@@ -88,6 +91,25 @@ open class JwtResourceServerAutoConfiguration : IComponentInitializer {
         }
 
         val permitted = properties.permittedPaths.toTypedArray()
+        // Authority extraction. Stock JwtGrantedAuthoritiesConverter handles `scope` → `SCOPE_*`.
+        // When the deployment also wants `roles` → `ROLE_*` for `hasRole(...)` checks, layer the
+        // kudos converter on top — its output union'd with the scope converter via a wrapper.
+        val rolesClaim = properties.authorities.rolesClaim.takeIf { it.isNotBlank() }
+        val authConverter = JwtAuthenticationConverter().apply {
+            val scopeConverter = JwtGrantedAuthoritiesConverter()
+            if (rolesClaim != null) {
+                val rolesConverter = KudosJwtRolesGrantedAuthoritiesConverter(rolesClaim)
+                setJwtGrantedAuthoritiesConverter { jwt ->
+                    val out = mutableListOf<org.springframework.security.core.GrantedAuthority>()
+                    scopeConverter.convert(jwt)?.let { out += it }
+                    out += rolesConverter.convert(jwt)
+                    out
+                }
+            } else {
+                setJwtGrantedAuthoritiesConverter(scopeConverter)
+            }
+        }
+
         return http
             .csrf { it.disable() }
             .authorizeHttpRequests { auth ->
@@ -97,7 +119,10 @@ open class JwtResourceServerAutoConfiguration : IComponentInitializer {
                 auth.anyRequest().authenticated()
             }
             .oauth2ResourceServer { rs ->
-                rs.jwt { jwt -> jwt.decoder(decoder) }
+                rs.jwt { jwt ->
+                    jwt.decoder(decoder)
+                    jwt.jwtAuthenticationConverter(authConverter)
+                }
             }
             .build()
     }

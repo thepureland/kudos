@@ -6,4 +6,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 class JwtResourceServerProperties {
     var enabled: Boolean = false
     var permittedPaths: List<String> = emptyList()
+    var authorities: Authorities = Authorities()
+
+    class Authorities {
+        var rolesClaim: String = ""
+    }
 }

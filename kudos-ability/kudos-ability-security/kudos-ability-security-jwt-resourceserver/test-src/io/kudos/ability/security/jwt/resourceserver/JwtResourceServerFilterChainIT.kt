@@ -130,18 +130,55 @@ internal class JwtResourceServerFilterChainIT {
         }
     }
 
-    private fun mintToken(subject: String, ttl: Duration): String {
+    private fun mintToken(
+        subject: String,
+        ttl: Duration,
+        roles: List<String> = emptyList(),
+    ): String {
         // Backdate iat to 1 hour ago so even an "already-expired" token (negative ttl) still
         // satisfies the spec contract `exp > iat` — JwtClaimsSet.Builder rejects exp <= iat.
         val iat = Instant.now().minus(Duration.ofHours(1))
-        val claims = JwtClaimsSet.builder()
+        val builder = JwtClaimsSet.builder()
             .subject(subject)
             .issuedAt(iat)
             .expiresAt(iat.plus(Duration.ofHours(1)).plus(ttl))
             .id(UUID.randomUUID().toString())
-            .build()
-        return encoder.encode(JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.RS256).build(), claims))
+        if (roles.isNotEmpty()) builder.claim("roles", roles)
+        return encoder.encode(JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.RS256).build(), builder.build()))
             .tokenValue
+    }
+
+    @Test
+    fun authoritiesEndpoint_withRolesClaim_surfacesRolePrefixedAuthorities() {
+        // Proves the KudosJwtRolesGrantedAuthoritiesConverter is wired into the filter chain via
+        // the autoconfig: a token whose `roles` claim says ["ADMIN", "AUDITOR"] produces an
+        // Authentication whose authorities contain ROLE_ADMIN + ROLE_AUDITOR.
+        val token = mintToken(subject = "alice", ttl = Duration.ofMinutes(5), roles = listOf("ADMIN", "AUDITOR"))
+        val response = mockMvc.get("/private/authorities") {
+            header("Authorization", "Bearer $token")
+        }.andExpect {
+            status { isOk() }
+        }.andReturn().response.contentAsString
+        val authorities = response.split(",").toSet()
+        kotlin.test.assertTrue(
+            "ROLE_ADMIN" in authorities,
+            "roles=[ADMIN, ...] must surface as ROLE_ADMIN authority; got: $authorities",
+        )
+        kotlin.test.assertTrue("ROLE_AUDITOR" in authorities)
+    }
+
+    @Test
+    fun authoritiesEndpoint_withoutRolesClaim_hasNoRoleAuthorities() {
+        // Defensive: a token without the roles claim must NOT produce phantom ROLE_* authorities.
+        val token = mintToken(subject = "alice", ttl = Duration.ofMinutes(5)) // no roles
+        val response = mockMvc.get("/private/authorities") {
+            header("Authorization", "Bearer $token")
+        }.andReturn().response.contentAsString
+        val rolePrefixed = response.split(",").filter { it.startsWith("ROLE_") }
+        kotlin.test.assertEquals(
+            emptyList(), rolePrefixed,
+            "no roles claim → no ROLE_* authorities; got: $rolePrefixed",
+        )
     }
 
     /** Two endpoints — one private (default secured), one public (permitted-paths bypass). */
@@ -159,6 +196,10 @@ internal class JwtResourceServerFilterChainIT {
         @GetMapping("/private", produces = [MediaType.TEXT_PLAIN_VALUE])
         fun private(@org.springframework.security.core.annotation.AuthenticationPrincipal jwt: org.springframework.security.oauth2.jwt.Jwt): String =
             "hello ${jwt.subject}"
+
+        @GetMapping("/private/authorities", produces = [MediaType.TEXT_PLAIN_VALUE])
+        fun authorities(authentication: org.springframework.security.core.Authentication): String =
+            authentication.authorities.joinToString(",") { it.authority ?: "" }
     }
 
     @RestController
@@ -223,6 +264,7 @@ internal class JwtResourceServerFilterChainIT {
             registry.add("kudos.ability.security.jwt.key.alias") { KEYSTORE_ALIAS }
             registry.add("kudos.ability.security.jwt.resource-server.enabled") { "true" }
             registry.add("kudos.ability.security.jwt.resource-server.permitted-paths[0]") { "/api/public/**" }
+            registry.add("kudos.ability.security.jwt.resource-server.authorities.roles-claim") { "roles" }
         }
     }
 }

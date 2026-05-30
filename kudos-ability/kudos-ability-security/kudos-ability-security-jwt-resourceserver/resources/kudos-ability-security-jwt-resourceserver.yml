@@ -11,3 +11,5 @@ kudos:
           #   - /actuator/info
           #   - /api/public/**
           #   - /login/**
+          authorities:
+            roles-claim: ""            # 留空 → 仅用 scope 转 SCOPE_*；设值（如 roles / groups）→ 读列表/空格分隔字符串映射成 ROLE_*
