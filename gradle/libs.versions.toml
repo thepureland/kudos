@@ -109,6 +109,7 @@ testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
 testcontainers-mongodb = { module = "org.testcontainers:testcontainers-mongodb" }
 testcontainers-clickhouse = { module = "org.testcontainers:testcontainers-clickhouse" }
+testcontainers-influxdb = { module = "org.testcontainers:testcontainers-influxdb" }
 
 # kudos-tools
 freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
