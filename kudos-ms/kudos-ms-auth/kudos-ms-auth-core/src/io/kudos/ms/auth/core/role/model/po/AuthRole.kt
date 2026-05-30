@@ -27,6 +27,9 @@ interface AuthRole : IDbEntity<String, AuthRole> {
     /** Subsystem code */
     var subsysCode: String
 
+    /** Parent role id (NULL = root). Children inherit the parent's resource grants. */
+    var parentId: String?
+
     /** Remark */
     var remark: String?
 

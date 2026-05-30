@@ -28,6 +28,9 @@ object AuthRoles : StringIdTable<AuthRole>("auth_role") {
     /** Subsystem code */
     var subsysCode = varchar("subsys_code").bindTo { it.subsysCode }
 
+    /** Parent role id (NULL = root role). */
+    var parentId = varchar("parent_id").bindTo { it.parentId }
+
     /** Remark */
     var remark = varchar("remark").bindTo { it.remark }
 
