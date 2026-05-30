@@ -40,6 +40,9 @@ data class AuthRoleCacheEntry (
     /** Whether the role is built-in. */
     val builtIn: Boolean?,
 
+    /** Whether assigning this role requires an approval workflow. */
+    val approvalRequired: Boolean? = null,
+
     /** Creator user id. */
     val createUserId: String?,
 
