@@ -114,19 +114,46 @@ kudos:
 
 ## ktorm + ClickHouse 兼容性说明
 
-- **支持**：`INSERT ... VALUES`, `SELECT ... FROM` 标准 SQL，本模块只用这一类
-- **不支持**：`UPDATE` / `DELETE`（ClickHouse 22.x 后通过 `ALTER TABLE ... UPDATE` 支持但延迟生效；
-  audit 不需要）；分页 `LIMIT OFFSET` ktorm 默认 dialect 也兼容
-- **跳过**：本模块不在 ClickHouse 上跑 SELECT，所以 ktorm dialect / 分页问题无关紧要
+- **写端用 ktorm DSL**：`database.insert(table) { set(col, value) }` 翻译成标准 INSERT，兼容
+- **读端用 raw JDBC**：ktorm 没有 ClickHouse 方言插件，`select(specific_column)` / `count()` /
+  `totalRecordsInAllPages` / `.limit(offset, size)` 全部抛 `translate(...) must not be null`。
+  `RdbClickhouseAuditLogReadOnlyService` 借 `Database.useConnection { conn -> ... }` 直发
+  `PreparedStatement` —— ClickHouse SQL 标准简单（`SELECT ... WHERE ... ORDER BY ...
+  LIMIT N OFFSET M`），手写也清晰可控
+- **时间字段 `DateTime64` 用字符串绑参**：`ps.setTimestamp` 在 ClickHouse JDBC 上会做 TZ 平移，
+  跟我们 INSERT 时的字符串字面值不一致；统一用 `yyyy-MM-dd HH:mm:ss` 字符串 `ps.setString`,
+  让 ClickHouse 服务端自己做 String→DateTime64 转换
+- **不支持**：`UPDATE` / `DELETE`（ClickHouse 22.x 后 `ALTER TABLE ... UPDATE` 延迟生效）；
+  audit 业务不需要
+
+## 模块入口（含读端）
+
+| 路径 | 角色 |
+|---|---|
+| `service/RdbClickhouseAuditService` | `IAuditService` 写端（forEach insert 循环） |
+| `service/RdbClickhouseAuditLogReadOnlyService` | `IAuditLogReadOnlyService` 读端（raw JDBC + 动态 WHERE） |
+| `table/SysAuditLogTable` / `SysAuditDetailLogTable` | ktorm Table 元数据（仅写端用） |
+| `init/LogAuditRdbClickhouseAutoConfiguration` | 装配 `clickhouseAuditService` + `clickhouseAuditLogReadOnlyService` bean |
+| `resources/db/V1.0.0__create_sys_audit_log_clickhouse.sql` | 简化 ClickHouse DDL |
 
 ## 测试覆盖
 
-- `RdbClickhouseAuditServiceTest` —— 与真实 ClickHouse 24.8 (testcontainer) 集成；覆盖：
+- `RdbClickhouseAuditServiceTest` (7) —— 写端：
   - submit 一个完整 model 后主表 + 详情表都写入正确行数
   - tenantId / subSysCode 优先 entity 自己 → 回退 model 顶层
   - 空 model 返回 true（no-op success）
   - 仅 entity 无 detail 也能正常写主表
   - 仅 detail 无 entity 也能正常写详情表（少见但合法）
+- `RdbClickhouseAuditLogReadOnlyServiceTest` (14) —— 读端：
+  - `findById` 命中 / null
+  - `findDetailById` 命中 / audit 存在但无 detail / audit 不存在
+  - `pagingSearch` 空表返回空 page
+  - 无过滤时按 `operate_time DESC` 排
+  - `tenantId` exact / `descriptionLike` substring / `descriptionLike = ""` 视同无过滤
+  - 时间窗口 `[from, to)` 闭/开
+  - 多 page 切片正确
+  - `pageNo < 1` / `pageSize < 1` 被钳位到 1
+  - 多字段组合 AND（tenantId + operatorId + descriptionLike）
 
 未覆盖：`@Primary` / qualifier 解析（属 Spring 自身机制）；
 ClickHouse 集群部署（不属模块职责）。
@@ -134,7 +161,6 @@ ClickHouse 集群部署（不属模块职责）。
 ## 已知限制 / 后续工作
 
 - ❗ 单节点 schema（`MergeTree`，非 `Replicated`）；集群部署需业务覆盖 DDL
-- ❗ 无内置查询（read-only service）—— 后续可补 `RdbClickhouseAuditLogReadOnlyService`
 - ❗ 无 Monitor / MonitorRecord service —— soul 的 ClickHouse 模块带这两个，本 MVP 不含
 - ❗ 与 `audit-rdb-ktorm` 共存时业务侧需 qualifier；不推荐同时引入两个 RDB backend
 - ❗ ClickHouse JDBC `0.9.6` 驱动 jar 较大（~10MB），不打瘦应用镜像
