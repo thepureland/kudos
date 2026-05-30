@@ -22,8 +22,6 @@ data class AuthRoleFormUpdate (
 
     override val subsysCode: String?,
 
-    override val parentId: String? = null,
-
     override val remark: String?,
 
 ) : IIdEntity<String>, IAuthRoleFormBase

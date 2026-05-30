@@ -28,9 +28,6 @@ data class AuthRoleCacheEntry (
     /** Subsystem code. */
     val subsysCode: String?,
 
-    /** Parent role id; NULL = root role. */
-    val parentId: String? = null,
-
     /** Remark. */
     val remark: String?,
 

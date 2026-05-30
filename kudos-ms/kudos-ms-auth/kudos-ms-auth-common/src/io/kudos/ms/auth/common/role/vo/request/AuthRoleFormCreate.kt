@@ -16,8 +16,6 @@ data class AuthRoleFormCreate (
 
     override val subsysCode: String? ,
 
-    override val parentId: String? = null,
-
     override val remark: String? ,
 
 ) : IAuthRoleFormBase

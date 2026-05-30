@@ -170,7 +170,6 @@ open class AuthRoleService(
 
     @Transactional
     override fun insert(any: Any): String {
-        validateParentId(any, selfId = null)
         val id = super.insert(any)
         log.debug("Added role with id ${id}.")
         eventPublisher.publishEvent(AuthRoleInserted(id))
@@ -179,9 +178,8 @@ open class AuthRoleService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = BeanKit.getProperty(any, AuthRole::id.name) as String
-        validateParentId(any, selfId = id)
         val success = super.update(any)
+        val id = BeanKit.getProperty(any, AuthRole::id.name) as String
         if (success) {
             log.debug("Updated role with id ${id}.")
             eventPublisher.publishEvent(AuthRoleUpdated(id))
@@ -189,66 +187,6 @@ open class AuthRoleService(
             log.error("Failed to update role with id ${id}!")
         }
         return success
-    }
-
-    /**
-     * Guards against the three ways a bad parent_id can corrupt the inheritance graph: pointing
-     * at self, pointing at a non-existent role, pointing at a role in a different tenant or
-     * subsystem (cross-tenant inheritance is nonsensical), or closing a cycle by pointing at a
-     * descendant.
-     *
-     * Skipped when the incoming `any` doesn't carry a parent_id at all (e.g. the activate-flag
-     * sub-update via [updateActive] sets only `id` + `active`).
-     */
-    private fun validateParentId(any: Any, selfId: String?) {
-        val parentId = try {
-            BeanKit.getProperty(any, AuthRole::parentId.name) as? String
-        } catch (_: Throwable) {
-            return  // PO snippet without parent_id set — nothing to validate
-        } ?: return  // parent_id explicitly null = root role; no constraints
-
-        require(parentId.isNotBlank()) { "parent_id must not be blank; use null for a root role." }
-        if (selfId != null) {
-            require(parentId != selfId) { "A role cannot be its own parent (id=${selfId})." }
-        }
-
-        val parent = dao.get(parentId)
-            ?: throw IllegalArgumentException("Parent role not found: $parentId")
-
-        // Same-tenant + same-subsystem invariant. Inheritance across tenants would let one
-        // tenant grant another's resources via a parent link, breaking isolation.
-        val newRoleTenantId = BeanKit.getProperty(any, AuthRole::tenantId.name) as? String
-        val newRoleSubsysCode = BeanKit.getProperty(any, AuthRole::subsysCode.name) as? String
-        if (newRoleTenantId != null && newRoleTenantId != parent.tenantId) {
-            throw IllegalArgumentException(
-                "Parent role's tenant (${parent.tenantId}) does not match child's tenant ($newRoleTenantId)."
-            )
-        }
-        if (newRoleSubsysCode != null && newRoleSubsysCode != parent.subsysCode) {
-            throw IllegalArgumentException(
-                "Parent role's subsystem (${parent.subsysCode}) does not match child's subsystem ($newRoleSubsysCode)."
-            )
-        }
-
-        // Cycle: if the proposed parent has the role-being-updated anywhere in its ancestor chain,
-        // OR if the role-being-updated has the proposed parent in its descendant set, then the
-        // edge would close a loop. Only meaningful on update — a brand-new role has no descendants.
-        if (selfId != null) {
-            val proposedParentAncestors = dao.searchAncestorRoleIds(setOf(parentId))
-            if (selfId in proposedParentAncestors) {
-                throw IllegalArgumentException(
-                    "Setting parent_id=$parentId on role $selfId would close a cycle."
-                )
-            }
-            // Belt-and-braces: also check via descendants of self. Covers the case where the
-            // proposed parent already exists in self's subtree.
-            val selfDescendants = dao.searchDescendantRoleIds(selfId)
-            if (parentId in selfDescendants) {
-                throw IllegalArgumentException(
-                    "Setting parent_id=$parentId on role $selfId would close a cycle (parent is a descendant)."
-                )
-            }
-        }
     }
 
     @Transactional
@@ -442,29 +380,6 @@ open class AuthRoleService(
             }
         }
         return newId
-    }
-
-    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-    override fun getAncestorRoleIds(roleId: String): List<String> {
-        // Walk root → ... → direct parent. The dao returns an unordered set; sort by depth-from-root
-        // by re-walking from the role itself one hop at a time.
-        val ancestors = dao.searchAncestorRoleIds(setOf(roleId))
-        if (ancestors.isEmpty()) return emptyList()
-        // Order: direct parent first, then grandparent, etc. — that's the most intuitive for the
-        // admin UI's chain display.
-        val ordered = mutableListOf<String>()
-        var current: String? = roleId
-        val cap = 64
-        var depth = 0
-        while (current != null && depth < cap) {
-            val parentEntry = dao.get(current) ?: break
-            val parent = parentEntry.parentId ?: break
-            if (parent in ordered) break // cycle defense
-            ordered += parent
-            current = parent
-            depth++
-        }
-        return ordered
     }
 
 }

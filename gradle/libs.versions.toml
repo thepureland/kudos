@@ -50,7 +50,6 @@ controlsfx = "11.2.3"
 commons-fileupload = "1.6.0"
 servlet-api = "6.1.0"
 springdoc-openapi = "3.0.1"
-clickhouse-jdbc = "0.9.6"
 
 
 [libraries]
@@ -107,7 +106,6 @@ testcontainers = { module = "org.testcontainers:testcontainers" }
 testcontainers-kafka = { module = "org.testcontainers:testcontainers-kafka" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
 testcontainers-mongodb = { module = "org.testcontainers:testcontainers-mongodb" }
-testcontainers-clickhouse = { module = "org.testcontainers:testcontainers-clickhouse" }
 
 # kudos-tools
 freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
@@ -130,10 +128,6 @@ spring-security-oauth2-jose = { module = "org.springframework.security:spring-se
 # X.509 + PKCS12 keystore at test setup time, instead of committing a binary keystore blob to the
 # repo. Standard Java has no portable API for X.509 cert creation.
 bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version = "1.78.1" }
-# ClickHouse JDBC driver — used by kudos-ability-log-audit-rdb-clickhouse. Version pinned because
-# Spring Boot BOM does not manage ClickHouse. Use the "shaded" classifier so Apache HTTP Client +
-# Lz4 + other transitive deps don't conflict with other modules.
-clickhouse-jdbc = { module = "com.clickhouse:clickhouse-jdbc", version.ref = "clickhouse-jdbc" }
 spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache"}
 spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc"}
 # Micrometer core — version managed by spring-boot BOM. Used by kudos-ability-data-rdb-jdbc as

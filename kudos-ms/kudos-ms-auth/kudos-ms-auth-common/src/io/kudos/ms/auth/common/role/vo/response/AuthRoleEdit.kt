@@ -26,9 +26,6 @@ data class AuthRoleEdit (
     /** Subsystem code. */
     val subsysCode: String? = null,
 
-    /** Parent role id; NULL = root role. */
-    val parentId: String? = null,
-
     /** Remark. */
     val remark: String? = null,
 
