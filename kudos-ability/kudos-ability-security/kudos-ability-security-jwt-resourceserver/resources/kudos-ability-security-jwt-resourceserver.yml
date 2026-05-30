@@ -1,0 +1,13 @@
+# kudos-ability-security-jwt-resourceserver 模块默认配置
+# 必须显式 enabled=true 才会装配 SecurityFilterChain
+kudos:
+  ability:
+    security:
+      jwt:
+        resource-server:
+          enabled: false               # 模块默认不装；业务工程显式开启
+          # permitted-paths:           # 不需要 JWT 的路径白名单
+          #   - /actuator/health
+          #   - /actuator/info
+          #   - /api/public/**
+          #   - /login/**
