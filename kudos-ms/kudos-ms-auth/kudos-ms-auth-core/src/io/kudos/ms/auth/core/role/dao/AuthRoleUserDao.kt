@@ -3,9 +3,11 @@ package io.kudos.ms.auth.core.role.dao
 import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
+import io.kudos.base.query.enums.OperatorEnum
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.auth.core.role.model.table.AuthRoleUsers
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 
 /**
@@ -37,24 +39,49 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
     }
 
     /**
-     * Queries role IDs by user id.
+     * Queries role IDs **currently active** for a user. A temporal grant (with start_time/end_time)
+     * counts only while [now] falls inside its window; permanent grants (both NULL) always count.
+     * This is the permission-resolution contract — the caches that drive access checks call it.
      *
      * @param userId user id
-     * @return List<role id>
+     * @param now the instant to evaluate the validity window against (defaults to current time)
+     * @return List<role id> for grants active at [now]
      */
-    fun searchRoleIdsByUserId(userId: String): List<String> {
+    fun searchRoleIdsByUserId(userId: String, now: LocalDateTime = LocalDateTime.now()): List<String> {
         val criteria = Criteria(AuthRoleUser::userId eq userId)
-        return searchProperty(criteria, AuthRoleUser::roleId).filterNotNull()
+        return search(criteria).filter { isActiveAt(it, now) }.map { it.roleId }
     }
 
     /**
-     * Returns all role-user relations grouped by user id as "user id -> list of role ids".
+     * Returns all **currently active** role-user relations grouped by user id as
+     * "user id -> list of role ids". Out-of-window temporal grants are excluded; permanent grants
+     * (start_time/end_time both NULL) are always included.
      *
+     * @param now the instant to evaluate the validity windows against (defaults to current time)
      * @return Map<user id, List<role id>>
      */
-    fun searchAllUserIdToRoleIdsForCache(): Map<String, List<String>> {
-        val all = allSearch()
+    fun searchAllUserIdToRoleIdsForCache(now: LocalDateTime = LocalDateTime.now()): Map<String, List<String>> {
+        val all = allSearch().filter { isActiveAt(it, now) }
         return all.groupBy { it.userId }.mapValues { (_, list) -> list.map { it.roleId } }
+    }
+
+    /**
+     * Returns grants whose validity window has already ended (end_time < [now]). Used by the purge
+     * sweep. NULL end_time (never-expires) rows are excluded by the comparison. Indexed on end_time.
+     *
+     * @param now the instant to compare expiry against (defaults to current time)
+     * @return the expired grant rows (carry id / roleId / userId for deletion + cache eviction)
+     */
+    open fun searchExpiredGrants(now: LocalDateTime = LocalDateTime.now()): List<AuthRoleUser> {
+        val criteria = Criteria(AuthRoleUser::endTime.name, OperatorEnum.LT, now)
+        return search(criteria)
+    }
+
+    /** A grant is active at [now] when now is within [start, end] (NULL bounds are open). */
+    private fun isActiveAt(grant: AuthRoleUser, now: LocalDateTime): Boolean {
+        val start = grant.startTime
+        val end = grant.endTime
+        return (start == null || !start.isAfter(now)) && (end == null || !end.isBefore(now))
     }
 
     /**
