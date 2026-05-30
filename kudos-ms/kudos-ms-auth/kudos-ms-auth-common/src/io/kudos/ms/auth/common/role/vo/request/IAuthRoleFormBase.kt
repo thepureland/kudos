@@ -25,6 +25,13 @@ interface IAuthRoleFormBase {
     /** Whether assigning this role requires an approval workflow. Null defaults to false. */
     val approvalRequired: Boolean?
 
+    /**
+     * Data-scope policy code (see DataScopeEnum: ALL / ORG_AND_CHILD / ORG / SELF / CUSTOM).
+     * Null is treated as ALL (no row restriction). CUSTOM additionally uses the role's
+     * auth_role_org grants, managed separately via the data-scope admin endpoint.
+     */
+    val dataScope: String?
+
     /** Remark. */
     @get:MaxLength(128)
     val remark: String?
