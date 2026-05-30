@@ -51,6 +51,7 @@ commons-fileupload = "1.6.0"
 servlet-api = "6.1.0"
 springdoc-openapi = "3.0.1"
 clickhouse-jdbc = "0.9.6"
+influxdb-client = "6.7.0"
 
 
 [libraries]
@@ -134,6 +135,9 @@ bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version = "1
 # Spring Boot BOM does not manage ClickHouse. Use the "shaded" classifier so Apache HTTP Client +
 # Lz4 + other transitive deps don't conflict with other modules.
 clickhouse-jdbc = { module = "com.clickhouse:clickhouse-jdbc", version.ref = "clickhouse-jdbc" }
+# InfluxDB 2.x Java client. Spring Boot BOM does not manage it; pin here. The `-java` variant
+# bundles both sync and reactive query/write APIs.
+influxdb-client-java = { module = "com.influxdb:influxdb-client-java", version.ref = "influxdb-client" }
 spring-boot-starter-cache = { module = "org.springframework.boot:spring-boot-starter-cache"}
 spring-boot-starter-jdbc = { module = "org.springframework.boot:spring-boot-starter-jdbc"}
 # Micrometer core — version managed by spring-boot BOM. Used by kudos-ability-data-rdb-jdbc as
