@@ -1,7 +1,9 @@
 package io.kudos.ability.log.audit.mongo.init
 
+import io.kudos.ability.log.audit.common.api.IAuditLogReadOnlyService
 import io.kudos.ability.log.audit.common.api.IAuditService
 import io.kudos.ability.log.audit.mongo.repository.SysAuditLogRepository
+import io.kudos.ability.log.audit.mongo.service.MongoAuditLogReadOnlyService
 import io.kudos.ability.log.audit.mongo.service.MongoAuditService
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
@@ -38,6 +40,18 @@ open class LogAuditMongoAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean(IAuditService::class)
     open fun mongoAuditService(repository: SysAuditLogRepository): IAuditService =
         MongoAuditService(repository)
+
+    /**
+     * Read-side companion. Bean-name guarded (`@Bean("mongoAuditLogReadOnlyService")` would
+     * mirror the ktorm module's pattern, but type-based @ConditionalOnMissingBean is enough here
+     * because the typical kudos deployment uses one audit backend; admins call the appropriate
+     * impl by `@Qualifier` only when multiple back-ends coexist).
+     */
+    @Bean
+    @ConditionalOnMissingBean(IAuditLogReadOnlyService::class)
+    open fun mongoAuditLogReadOnlyService(
+        mongoTemplate: org.springframework.data.mongodb.core.MongoTemplate,
+    ): IAuditLogReadOnlyService = MongoAuditLogReadOnlyService(mongoTemplate)
 
     override fun getComponentName() = "kudos-ability-log-audit-mongo"
 }
