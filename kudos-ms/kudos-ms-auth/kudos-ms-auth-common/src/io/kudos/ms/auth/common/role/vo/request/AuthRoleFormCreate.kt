@@ -18,6 +18,8 @@ data class AuthRoleFormCreate (
 
     override val approvalRequired: Boolean? = false,
 
+    override val dataScope: String? = null,
+
     override val remark: String? ,
 
 ) : IAuthRoleFormBase
