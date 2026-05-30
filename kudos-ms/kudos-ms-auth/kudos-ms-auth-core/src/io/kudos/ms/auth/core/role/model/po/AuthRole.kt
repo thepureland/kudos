@@ -30,6 +30,9 @@ interface AuthRole : IDbEntity<String, AuthRole> {
     /** Parent role id (NULL = root). Children inherit the parent's resource grants. */
     var parentId: String?
 
+    /** Data-scope policy code (see DataScopeEnum); NULL = ALL (no row restriction). */
+    var dataScope: String?
+
     /** Remark */
     var remark: String?
 
