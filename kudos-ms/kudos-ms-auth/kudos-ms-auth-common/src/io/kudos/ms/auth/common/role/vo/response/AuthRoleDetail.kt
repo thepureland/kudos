@@ -27,6 +27,9 @@ data class AuthRoleDetail (
     /** Subsystem code. */
     val subsysCode: String? = null,
 
+    /** Data-scope policy code (see DataScopeEnum); NULL = ALL. */
+    val dataScope: String? = null,
+
     /** Remark. */
     val remark: String? = null,
 
