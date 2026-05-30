@@ -39,6 +39,9 @@ interface AuthRole : IDbEntity<String, AuthRole> {
     /** Whether built-in */
     var builtIn: Boolean?
 
+    /** Whether assigning this role requires an approval workflow (see auth_role_grant_request). */
+    var approvalRequired: Boolean?
+
     /** Creator id */
     var createUserId: String?
 
