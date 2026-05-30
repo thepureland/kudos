@@ -6,6 +6,7 @@ import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -70,6 +71,23 @@ class AuthRoleDataScopeServiceTest : RdbAndRedisCacheTestBase() {
         val n = service.bindOrgs(bindTestRoleId, listOf(orgChild, orgChild, orgGrand))
         assertEquals(2, n)
         assertEquals(setOf(orgChild, orgGrand), service.getOrgIdsByRoleId(bindTestRoleId))
+    }
+
+    // ---- Update a role's scope code ----
+
+    @Test
+    fun updateScope_validCode_succeeds() {
+        assertTrue(service.updateScope(bindTestRoleId, "ORG"))
+    }
+
+    @Test
+    fun updateScope_nullMeansAll_succeeds() {
+        assertTrue(service.updateScope(bindTestRoleId, null))
+    }
+
+    @Test
+    fun updateScope_unknownCode_rejected() {
+        assertFailsWith<IllegalArgumentException> { service.updateScope(bindTestRoleId, "BOGUS_SCOPE") }
     }
 
     // ---- Effective data-scope resolution (most permissive across roles) ----

@@ -16,6 +16,18 @@ import io.kudos.ms.auth.core.role.datascope.model.po.AuthRoleOrg
 interface IAuthRoleDataScopeService : IBaseCrudService<String, AuthRoleOrg> {
 
     /**
+     * Update just a role's data-scope policy code (a focused alternative to the full role form).
+     * Validates [dataScope] against [io.kudos.ms.auth.common.datascope.enums.DataScopeEnum] and
+     * publishes a role-updated event so the role cache (and thus resolution) reflects the change.
+     *
+     * @param roleId role id
+     * @param dataScope the new policy code (ALL / ORG_AND_CHILD / ORG / SELF / CUSTOM); NULL ⇒ ALL
+     * @return whether the update succeeded
+     * @throws IllegalArgumentException if [dataScope] is non-null/blank and not a recognised code
+     */
+    fun updateScope(roleId: String, dataScope: String?): Boolean
+
+    /**
      * Returns the org ids granted to a role for CUSTOM data scope.
      *
      * @param roleId role id

@@ -6,12 +6,16 @@ import io.kudos.ms.auth.common.datascope.enums.DataScopeEnum
 import io.kudos.ms.auth.common.datascope.vo.response.DataScopeVo
 import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.datascope.dao.AuthRoleOrgDao
 import io.kudos.ms.auth.core.role.datascope.model.po.AuthRoleOrg
 import io.kudos.ms.auth.core.role.datascope.service.iservice.IAuthRoleDataScopeService
+import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
+import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import io.kudos.ms.user.core.org.dao.UserOrgDao
 import jakarta.annotation.Resource
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
@@ -51,7 +55,36 @@ open class AuthRoleDataScopeService(
     @Resource
     private lateinit var userOrgDao: UserOrgDao
 
+    @Resource
+    private lateinit var authRoleDao: AuthRoleDao
+
+    @Resource
+    private lateinit var eventPublisher: ApplicationEventPublisher
+
     private val log = LogFactory.getLog(this::class)
+
+    @Transactional
+    override fun updateScope(roleId: String, dataScope: String?): Boolean {
+        // Validate the code (NULL/blank is allowed and means ALL). Reject unrecognised codes so a
+        // typo can't silently disable row filtering.
+        val normalized = dataScope?.trim()?.takeIf { it.isNotEmpty() }
+        if (normalized != null) {
+            require(DataScopeEnum.fromCode(normalized) != null) { "Unknown data scope code: ${dataScope}" }
+        }
+        // Partial update — set only data_scope (mirrors AuthRoleService.updateActive).
+        val role = AuthRole {
+            this.id = roleId
+            this.dataScope = normalized
+        }
+        val success = authRoleDao.update(role)
+        if (success) {
+            log.debug("Updated data scope of role ${roleId} to ${normalized ?: "ALL(null)"}.")
+            eventPublisher.publishEvent(AuthRoleUpdated(roleId))
+        } else {
+            log.error("Failed to update data scope of role ${roleId}!")
+        }
+        return success
+    }
 
     @Transactional(readOnly = true)
     override fun getOrgIdsByRoleId(roleId: String): Set<String> = dao.searchOrgIdsByRoleId(roleId)
