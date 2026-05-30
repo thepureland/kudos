@@ -111,7 +111,38 @@ kudos:
           permitted-paths:
             - /actuator/health
             - /api/public/**
+          authorities:
+            roles-claim: roles      # 让 hasRole(...) 工作；不需要时留空
 ```
+
+## 角色映射 (`authorities.roles-claim`)
+
+Spring 默认的 `JwtGrantedAuthoritiesConverter` 只把 `scope` claim 映射成 `SCOPE_*` 权限
+（OAuth2 标准 scope-based auth）。但绝大多数业务需要 **role-based** 鉴权
+（`@PreAuthorize("hasRole('ADMIN')")` / `auth.hasRole("ADMIN")`），这要求当前 Authentication
+的权限里有 `ROLE_ADMIN`。
+
+设 `kudos.ability.security.jwt.resource-server.authorities.roles-claim=roles`（或
+`groups` 等业务自选 claim 名）后，本模块装的
+`KudosJwtRolesGrantedAuthoritiesConverter` 会：
+
+- 读 JWT 的 `roles` claim（默认名，按 yml 改）
+- `List<String>` → 每个值大写 + 加 `ROLE_` 前缀（已经有前缀的不重复加）
+- `String` （空格分隔） → 同样处理（兼容 IdP 不发数组的情况）
+- 其它类型 / 缺失 → 静默返回空（绝不抛异常，否则会让所有请求 500）
+
+例：
+
+```json
+{
+  "sub": "alice",
+  "roles": ["admin", "auditor"],
+  "scope": "read:users write:users"
+}
+```
+
+最终 Authentication 的 authorities = `{ SCOPE_read:users, SCOPE_write:users, ROLE_ADMIN, ROLE_AUDITOR }`。
+`hasRole("ADMIN")` ✅，`hasAuthority("SCOPE_read:users")` ✅。
 
 业务侧 Controller 照常写，需要鉴权的端点直接拿当前用户：
 
@@ -159,13 +190,18 @@ class CustomSecurityConfig {
   - 默认 `enabled` 缺失 → `@Configuration` 类整体跳过，`JwtResourceServerProperties` bean 也不装
   - `enabled=true` → properties 绑定生效，`enabled` 字段 true，`permittedPaths` 默认空
   - yml 索引列表 `permitted-paths[0]` / `[1]` / `[2]` 按顺序绑定到 `List<String>`
-- `JwtResourceServerFilterChainIT` (5) —— `@SpringBootTest` + MockMvc 端到端鉴权：
+- `KudosJwtRolesGrantedAuthoritiesConverterTest` (8) —— 纯单元测 roles claim → ROLE_* 映射：
+  缺失 / 列表 / 空格分隔字符串 / 已带 ROLE_ 前缀（不重复加） / 大小写归一 / 空串过滤 /
+  非字符串非集合不抛异常 / 自定义 claim 名生效
+- `JwtResourceServerFilterChainIT` (7) —— `@SpringBootTest` + MockMvc 端到端鉴权：
   - BC 生成 PKCS12 keystore + 父模块 `JwtEncoder` 签发真实 token
   - `/private` 无 Authorization → 401
   - `/private` + 有效 JWT → 200，body 含 `sub` claim 解析后的用户名
   - `/private` + 过期 JWT → 401（`JwtExpValidator` 命中）
   - `/api/public/echo`（在 `permitted-paths` 里）无 token → 200
   - `/api/public/echo` 带有效 token → 200（permitAll 不拒绝带 token 的请求）
+  - 带 `roles=["ADMIN", "AUDITOR"]` 的 token → Authentication.authorities 含 `ROLE_ADMIN` + `ROLE_AUDITOR`（验 converter 装上）
+  - 无 roles claim 的 token → Authentication.authorities 不含任何 `ROLE_*`（防幻影权限）
 
 ## 已知限制 / 后续工作
 
