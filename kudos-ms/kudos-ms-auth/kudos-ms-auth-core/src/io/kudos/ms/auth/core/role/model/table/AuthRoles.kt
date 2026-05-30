@@ -31,6 +31,9 @@ object AuthRoles : StringIdTable<AuthRole>("auth_role") {
     /** Parent role id (NULL = root role). */
     var parentId = varchar("parent_id").bindTo { it.parentId }
 
+    /** Data-scope policy code (see DataScopeEnum); NULL = ALL. */
+    var dataScope = varchar("data_scope").bindTo { it.dataScope }
+
     /** Remark */
     var remark = varchar("remark").bindTo { it.remark }
 
