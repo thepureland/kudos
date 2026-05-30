@@ -40,6 +40,9 @@ object AuthRoles : StringIdTable<AuthRole>("auth_role") {
     /** Whether built-in */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
 
+    /** Whether assigning this role requires approval. */
+    var approvalRequired = boolean("approval_required").bindTo { it.approvalRequired }
+
     /** Creator id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 

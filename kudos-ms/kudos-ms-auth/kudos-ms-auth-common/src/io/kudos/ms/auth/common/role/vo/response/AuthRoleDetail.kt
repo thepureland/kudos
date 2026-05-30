@@ -36,6 +36,9 @@ data class AuthRoleDetail (
     /** Whether the role is built-in. */
     val builtIn: Boolean? = null,
 
+    /** Whether assigning this role requires approval. */
+    val approvalRequired: Boolean? = null,
+
     /** Creator user id. */
     val createUserId: String? = null,
 
