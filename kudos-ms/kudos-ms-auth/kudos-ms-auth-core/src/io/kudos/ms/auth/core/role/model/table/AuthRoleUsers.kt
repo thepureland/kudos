@@ -21,6 +21,12 @@ object AuthRoleUsers : StringIdTable<AuthRoleUser>("auth_role_user") {
     /** User id */
     var userId = varchar("user_id").bindTo { it.userId }
 
+    /** Grant effective time; NULL = effective immediately. */
+    var startTime = datetime("start_time").bindTo { it.startTime }
+
+    /** Grant expiry time; NULL = never expires. */
+    var endTime = datetime("end_time").bindTo { it.endTime }
+
     /** Creator id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
 
