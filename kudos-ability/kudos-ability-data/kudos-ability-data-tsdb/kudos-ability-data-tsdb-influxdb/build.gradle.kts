@@ -6,4 +6,5 @@ dependencies {
     api(libs.influxdb.client.java)
 
     testImplementation(project(":kudos-test:kudos-test-common"))
+    testImplementation(project(":kudos-test:kudos-test-container"))
 }

@@ -126,15 +126,18 @@ fun influxDBClient(props: InfluxdbProperties): InfluxDBClient {
 
 ## 测试覆盖
 
-- `InfluxdbAutoConfigurationTest` —— 用 `ApplicationContextRunner` 测装配条件矩阵：
+- `InfluxdbAutoConfigurationTest` (5) —— 用 `ApplicationContextRunner` 测装配条件矩阵：
   - 仅有默认 yml（无 `url` / `token`）时 `InfluxDBClient` bean 不装配
   - 仅设 `url` 时不装配；仅设 `token` 时也不装配
-  - `url` + `token` 都设时 client 装配（实例真实可用，但因测试不依赖真实 InfluxDB 服务，
-    只验证 bean 类型，不发请求）
+  - `url` + `token` 都设时 client 装配（不发请求，只验类型）
   - 业务自定义 `InfluxDBClient` bean 时 `@ConditionalOnMissingBean` 让位
+- `InfluxdbIntegrationTest` (3) —— 与真实 InfluxDB 2.7 (testcontainer) 端到端集成：
+  - autoconfig 装的 client 跑 `ping()` 健康检查返回 true（证明 URL + token 真实可用）
+  - `Point` 经 `writeApiBlocking.writePoint` 写入 → Flux query 回读 → field/tag/value 完整往返
+  - measurement 过滤正确（写入 measurement-B 不被 filter measurement-A 误命中）
 
-未覆盖：真实 InfluxDB 集成（write/query 端到端）—— testcontainer 启动开销大且非业务核心
-路径，业务工程在自己的 IT 测试中按需补全。
+未覆盖：multi-DS 路由（未移植）；Flux 高阶语法（aggregateWindow / pivot / join 等属
+业务侧 query 编写技巧，不属本模块装配职责）。
 
 ## 已知限制 / 后续工作
 
