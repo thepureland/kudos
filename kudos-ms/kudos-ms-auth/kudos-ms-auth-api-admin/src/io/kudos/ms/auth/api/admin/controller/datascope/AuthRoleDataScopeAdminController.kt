@@ -33,6 +33,13 @@ class AuthRoleDataScopeAdminController(
     private val service: IAuthRoleDataScopeService,
 ) {
 
+    /** Update just a role's data-scope policy code (focused alternative to the full role form). */
+    @PostMapping("/updateScope")
+    fun updateScope(
+        @RequestParam roleId: String,
+        @RequestParam(required = false) dataScope: String?,
+    ): Boolean = service.updateScope(roleId, dataScope)
+
     /** Custom data-scope org ids granted to a role (only meaningful when its data_scope = CUSTOM). */
     @GetMapping("/getRoleOrgIds")
     fun getRoleOrgIds(@RequestParam roleId: String): Set<String> =
