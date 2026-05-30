@@ -170,6 +170,7 @@ open class AuthRoleService(
 
     @Transactional
     override fun insert(any: Any): String {
+        validateParentId(any, selfId = null)
         val id = super.insert(any)
         log.debug("Added role with id ${id}.")
         eventPublisher.publishEvent(AuthRoleInserted(id))
@@ -178,8 +179,9 @@ open class AuthRoleService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val success = super.update(any)
         val id = BeanKit.getProperty(any, AuthRole::id.name) as String
+        validateParentId(any, selfId = id)
+        val success = super.update(any)
         if (success) {
             log.debug("Updated role with id ${id}.")
             eventPublisher.publishEvent(AuthRoleUpdated(id))
@@ -380,6 +382,85 @@ open class AuthRoleService(
             }
         }
         return newId
+    }
+
+    // -----------------------------------------------------------------------
+    // Role inheritance (parent_id) — validation + ancestor walk.
+    // -----------------------------------------------------------------------
+
+    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+    override fun getAncestorRoleIds(roleId: String): List<String> {
+        // Walk the parent chain, nearest ancestor first. Depth-capped and visited-tracked so a
+        // malformed cycle (forbidden at write time, but defended here too) can never spin.
+        val result = ArrayList<String>()
+        val seen = HashSet<String>().apply { add(roleId) }
+        var current = dao.get(roleId)?.parentId?.takeIf { it.isNotBlank() }
+        var depth = 0
+        while (current != null && depth < MAX_PARENT_WALK_DEPTH) {
+            if (!seen.add(current)) break // converged or cycle
+            result.add(current)
+            current = dao.get(current)?.parentId?.takeIf { it.isNotBlank() }
+            depth++
+        }
+        return result
+    }
+
+    /**
+     * Validate a role's parent_id before insert/update. A null/blank parent means "root role" and is
+     * always valid. Otherwise the parent must:
+     *  - not be the role itself (a role cannot be its own parent);
+     *  - reference an existing role;
+     *  - live in the same tenant and the same subsystem (inheritance never crosses those boundaries);
+     *  - not be the role's own descendant (which would close a cycle).
+     *
+     * @param any the create/update form being persisted
+     * @param selfId the id of the role being updated, or null on insert
+     */
+    private fun validateParentId(any: Any, selfId: String?) {
+        val parentId = (BeanKit.getProperty(any, AuthRole::parentId.name) as String?)
+            ?.takeIf { it.isNotBlank() }
+            ?: return // root role — nothing to validate
+
+        // A role cannot be its own parent.
+        require(selfId == null || parentId != selfId) {
+            "A role cannot be its own parent (id=${selfId})."
+        }
+
+        // The parent must exist.
+        val parent = dao.get(parentId)
+            ?: throw IllegalArgumentException("Parent role not found: ${parentId}")
+
+        // Resolve the effective tenant / subsystem of the role being persisted. On update the form
+        // may omit them (partial update), in which case the stored values are preserved — fall back
+        // to the existing row so the comparison is against what will actually be persisted.
+        val existing = selfId?.let { dao.get(it) }
+        val tenantId = (BeanKit.getProperty(any, AuthRole::tenantId.name) as String?) ?: existing?.tenantId
+        val subsysCode = (BeanKit.getProperty(any, AuthRole::subsysCode.name) as String?) ?: existing?.subsysCode
+
+        require(parent.tenantId == tenantId) {
+            "Parent role ${parentId} belongs to a different tenant (parent=${parent.tenantId}, role=${tenantId})."
+        }
+        require(parent.subsysCode == subsysCode) {
+            "Parent role ${parentId} belongs to a different subsystem (parent=${parent.subsysCode}, role=${subsysCode})."
+        }
+
+        // Cycle prevention (update only — a brand-new role has no descendants yet). The chosen parent
+        // must be neither a descendant of the role, nor have the role already among its ancestors.
+        if (selfId != null) {
+            val descendants = dao.searchDescendantRoleIds(selfId)
+            require(parentId !in descendants) {
+                "Parent role ${parentId} is a descendant of role ${selfId}; assigning it would create a cycle."
+            }
+            val parentAncestors = dao.searchAncestorRoleIds(setOf(parentId))
+            require(selfId !in parentAncestors) {
+                "Role ${selfId} is already an ancestor of parent ${parentId}; assigning it would create a cycle."
+            }
+        }
+    }
+
+    companion object {
+        /** Safety cap on the parent-chain walk; cycles are forbidden at write time but defended here too. */
+        private const val MAX_PARENT_WALK_DEPTH = 64
     }
 
 }

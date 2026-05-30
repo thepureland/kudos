@@ -5,6 +5,7 @@
 | 子目录 | 内容 |
 |---|---|
 | [`kudos-ability-security-jwt`](kudos-ability-security-jwt/README.md) | JWT 签发/校验（RS256 + PKCS12 keystore + spring-security-oauth2-jose） |
+| [`kudos-ability-security-jwt-resourceserver`](kudos-ability-security-jwt-resourceserver/README.md) | JWT OAuth2 Resource Server 默认 `SecurityFilterChain` 装配 |
 
-后续可能新增：spring-security 整合（filter chain）、captcha（滑块/点选验证码）、device fingerprint。
-对应 soul 的 `security-spring` / `security-captcha-tianai` / `security-device`，体量大，按需独立移植。
+后续可能新增：captcha（滑块/点选验证码）、device fingerprint。
+对应 soul 的 `security-captcha-tianai` / `security-device`，体量大，按需独立移植。

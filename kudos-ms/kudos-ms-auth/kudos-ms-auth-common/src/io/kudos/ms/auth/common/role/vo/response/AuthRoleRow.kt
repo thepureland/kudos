@@ -27,6 +27,9 @@ data class AuthRoleRow (
     /** Subsystem code. */
     val subsysCode: String? = null,
 
+    /** Parent role id; NULL = root role. */
+    val parentId: String? = null,
+
     /** Data-scope policy code (see DataScopeEnum); NULL = ALL. */
     val dataScope: String? = null,
 
