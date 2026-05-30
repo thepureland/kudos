@@ -59,6 +59,7 @@ IPv6**，把本 Document 的 `operateIp` 改成 `BigInteger?` 即可——上游
 | `repository/SysAuditLogRepository` | `MongoRepository<SysAuditLogDocument, String>` 标准 CRUD |
 | `entity/SysAuditLogDocument` | `@Document(collection = "sys_audit_log")` 主文档 |
 | `entity/SysAuditDetailLogDocument` | 嵌入子文档（无独立 collection） |
+| `service/MongoAuditLogReadOnlyService` | `IAuditLogReadOnlyService` 实现（findById / findDetailById / pagingSearch） |
 
 ## 使用示例
 
@@ -82,20 +83,51 @@ spring:
 
 ## 与其它 audit backend 的搭配
 
+模块装配的 bean 名是 `mongoAuditService` / `mongoAuditLogReadOnlyService`，跟 `audit-rdb-ktorm`
+的 `rdbKtormAuditService` / `audit-rdb-clickhouse` 的 `clickhouseAuditService` 同模式
+（`@Bean(name=...)` + `@ConditionalOnMissingBean(name=...)`）。**所以多 backend 共存合法**：
+
 | 依赖组合 | 行为 |
 |---|---|
-| 仅依赖 `kudos-ability-log-audit-mongo` | 全部 audit 走 Mongo |
-| `mongo` + `rdb-ktorm` | 看 Spring 装配顺序：先就位的 `IAuditService` bean 赢，另一个 `@ConditionalOnMissingBean` 后退。**不推荐两个同时拉**——建议显式 `@Primary` 或排除其一 |
-| `mongo` + `mq` | MQ producer 一般走 `mqAuditService` 作为 `@Primary`，Mongo 留作消费端落库 |
+| 仅依赖 `kudos-ability-log-audit-mongo` | `@Resource IAuditService` 直接拿到 Mongo impl（上下文里唯一） |
+| `mongo` + `rdb-ktorm` | 两个 `IAuditService` 同时注册。业务侧用 `@Resource("mongoAuditService")` 或 `@Resource("rdbKtormAuditService")` 显式指定，或自己加一个 `@Primary` 决定默认 |
+| `mongo` + `mq` | MQ 装的 `mqAuditService` 带 `@Primary` 默认赢；想读 Mongo 库时用 `@Resource("mongoAuditLogReadOnlyService")` |
+| 读端 + 任意写端 backend | 同上 —— 读端独立路由：`@Resource("mongoAuditLogReadOnlyService")` 拿 Mongo 读，`@Resource("rdbKtormAuditLogReadOnlyService")` 拿 ktorm 读，互不干扰 |
+
+## 读端：`MongoAuditLogReadOnlyService`
+
+写入跟 ktorm 一样有读端对称 `IAuditLogReadOnlyService` 实现。三个方法：
+
+| 方法 | 行为 |
+|---|---|
+| `findById(id)` | 查主文档；null 时返回 null（不抛） |
+| `findDetailById(auditId)` | 查主文档 id=auditId，取嵌入 `detail` 字段并映射到 `SysAuditDetailLogVo`；主文档不存在 / 主文档无 detail 都返回 null |
+| `pagingSearch(query, pageNo, pageSize)` | 用 `Criteria` AND 组合 `AuditLogQuery` 非空字段；默认按 `operateTime DESC` 排；执行一次 `count()` + 一次 `find` |
+
+`_Like` 类过滤（`operatorLike` / `moduleCodeLike` / `descriptionLike`）翻译成 case-insensitive
+substring regex，调用方输入经过 `Pattern.quote` 转义——业务侧填入 `.` / `*` 等正则元字符
+按字面字符匹配，不被当作通配符或正则注入向量。
+
+时间窗口 `[operateTimeFrom, operateTimeTo)` 闭/开区间跟 ktorm 一致。
 
 ## 测试覆盖
 
-- `MongoAuditServiceTest` —— 与真实 Mongo 7 (testcontainer) 集成；覆盖：
+- `MongoAuditServiceTest` (6) —— 与真实 Mongo 7 (testcontainer) 集成；覆盖：
   - submit 一个完整 model 后 collection 里出现对应 docs，字段 1:1
   - tenantId / subSysCode 优先 entity 自己 → 回退 model 顶层
   - detail 嵌入正确（按 `auditId === SysAuditLogVo.id` 匹配）
   - empty entities list 返回 true（no-op success，不算失败）
   - 没有匹配 detail 的 entity 也能正常入库（`detail` 字段为 null）
+- `MongoAuditLogReadOnlyServiceTest` (15) —— 读端覆盖：
+  - `findById` 命中 / null
+  - `findDetailById` 嵌入子文档读取 / 主文档无 detail / 主文档不存在
+  - `pagingSearch` 各 query 字段过滤（tenantId / operatorLike / descriptionLike）
+  - 默认 `operate_time DESC` 排序
+  - 时间窗口 `[from, to)` 闭/开区间
+  - 多 page 切片正确
+  - `pageNo < 1` / `pageSize < 1` 被钳位到 1
+  - `descriptionLike = ""` 视同无过滤
+  - regex metachar 被转义（`.` 不当作通配符）
 
 未覆盖：`@ConditionalOnMissingBean` 让位行为（属于 Spring 自身机制，重复测试性价比低）。
 

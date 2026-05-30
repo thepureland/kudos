@@ -1,0 +1,13 @@
+# kudos-ability-data-tsdb-influxdb 模块默认配置
+# 业务工程必须配置 url + token 才会装配 InfluxDBClient bean。
+kudos:
+  ability:
+    tsdb:
+      influxdb:
+        # url: http://localhost:8086        # 留空 → 不装配 InfluxDBClient
+        # token: ${INFLUXDB_TOKEN}          # 留空 → 不装配 InfluxDBClient
+        # org: my-org
+        # bucket: my-bucket
+        # log-level: NONE                   # NONE / BASIC / HEADERS / BODY
+        # read-timeout: 10s                 # 当前 MVP 不生效；自定义需声明 InfluxDBClient bean
+        # write-timeout: 10s
