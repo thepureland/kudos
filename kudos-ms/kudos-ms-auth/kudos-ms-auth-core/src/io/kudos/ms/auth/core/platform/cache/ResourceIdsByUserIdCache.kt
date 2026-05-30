@@ -9,6 +9,7 @@ import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
 import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
@@ -54,10 +55,19 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
     private lateinit var authGroupRoleDao: AuthGroupRoleDao
 
     @Autowired
+    private lateinit var authRoleDao: AuthRoleDao
+
+    @Autowired
     private lateinit var userAccountDao: UserAccountDao
 
     companion object {
         private const val CACHE_NAME = "AUTH_RESOURCE_IDS_BY_USER_ID"
+
+        /**
+         * Safety cap on the in-memory parent-chain walk. Cycles are forbidden at write time, but a
+         * malformed snapshot must never make the cache spin; once this depth is reached the walk stops.
+         */
+        private const val MAX_PARENT_WALK_DEPTH = 64
     }
 
     override fun cacheName(): String = CACHE_NAME
@@ -75,11 +85,15 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
         val userIdToGroupIds = authGroupUserDao.searchAllUserIdToGroupIdsForCache()
         val groupIdToRoleIds = authGroupRoleDao.searchAllGroupIdToRoleIdsForCache()
         val roleIdToResourceIdsMap = authRoleResourceDao.searchAllRoleIdToResourceIdsForCache()
+        // Snapshot of every role's parent (NULL pruned), so the per-user loop can expand
+        // effective roles with parent-inherited roles in memory rather than re-querying.
+        val roleIdToParentId = authRoleDao.searchAllRoleIdToParentIdForCache()
 
         log.debug(
             "Loaded ${users.size} users, ${userIdToDirectRoleIds.size} direct-role groups, " +
                 "${userIdToGroupIds.size} user-group groups, ${groupIdToRoleIds.size} group-role groups, " +
-                "and ${roleIdToResourceIdsMap.size} role-resource groups from the database."
+                "${roleIdToResourceIdsMap.size} role-resource groups, and ${roleIdToParentId.size} role-parent links " +
+                "from the database."
         )
 
         if (clear) {
@@ -93,6 +107,7 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
                 directRoleIds = userIdToDirectRoleIds[userId].orEmpty(),
                 groupIds = userIdToGroupIds[userId].orEmpty(),
                 groupIdToRoleIds = groupIdToRoleIds,
+                roleIdToParentId = roleIdToParentId,
             )
             if (effectiveRoleIds.isEmpty()) return@forEach
             val resourceIds = effectiveRoleIds.flatMap { roleId ->
@@ -129,28 +144,37 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
         val groupDerived = if (groupIds.isEmpty()) emptyList() else {
             groupIds.flatMap { gid -> authGroupRoleDao.searchRoleIdsByGroupId(gid) }
         }
-        val effectiveRoleIds = (direct + groupDerived).distinct()
-        if (effectiveRoleIds.isEmpty()) {
+        val grantedRoleIds = (direct + groupDerived).distinct()
+        if (grantedRoleIds.isEmpty()) {
             log.debug("User ${userId} has no roles assigned, directly or via group inheritance.")
             return emptyList()
         }
 
+        // Role inheritance: a role X with parent Y implicitly grants Y's resources too. Walk up
+        // the parent chain from every granted role and union with the original set.
+        val ancestorRoleIds = authRoleDao.searchAncestorRoleIds(grantedRoleIds)
+        val effectiveRoleIds = (grantedRoleIds + ancestorRoleIds).distinct()
+
         val resultList = authRoleResourceDao.searchResourceIdsByRoleIds(effectiveRoleIds)
         log.debug(
-            "Loaded ${effectiveRoleIds.size} effective roles for user ${userId} (direct ${direct.size} + group-inherited ${groupDerived.size}) from the database, " +
-                "yielding ${resultList.size} resource IDs (after deduplication)."
+            "Loaded ${effectiveRoleIds.size} effective roles for user ${userId} " +
+                "(direct ${direct.size} + group-inherited ${groupDerived.size} + parent-inherited ${ancestorRoleIds.size}) " +
+                "from the database, yielding ${resultList.size} resource IDs (after deduplication)."
         )
         return resultList.toList()
     }
 
     /**
-     * Merge directly bound roles and group-inherited roles into a deduplicated list of effective roles.
-     * Short-circuits: returns an empty list immediately when both inputs are empty.
+     * Merge directly bound roles and group-inherited roles into a deduplicated list of effective roles,
+     * then expand the set with every role reachable by walking up the parent chain (role inheritance).
+     * Short-circuits: returns an empty list immediately when both direct and group inputs are empty.
      *
      * @param directRoleIds role id collection directly held by the user
      * @param groupIds group id collection the user belongs to
      * @param groupIdToRoleIds group id -> list of role ids held by that group (pre-loaded in batch to avoid N+1)
-     * @return deduplicated list of effective role ids
+     * @param roleIdToParentId role id -> direct parent role id snapshot (NULL parents pruned), used to
+     *   expand granted roles with parent-inherited roles entirely in memory
+     * @return deduplicated list of effective role ids (granted + ancestors)
      * @author K
      * @since 1.0.0
      */
@@ -158,10 +182,27 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
         directRoleIds: Collection<String>,
         groupIds: Collection<String>,
         groupIdToRoleIds: Map<String, List<String>>,
+        roleIdToParentId: Map<String, String> = emptyMap(),
     ): List<String> {
         if (directRoleIds.isEmpty() && groupIds.isEmpty()) return emptyList()
         val groupDerived = groupIds.flatMap { groupIdToRoleIds[it].orEmpty() }
-        return (directRoleIds + groupDerived).distinct()
+        val granted = (directRoleIds + groupDerived).distinct()
+        if (roleIdToParentId.isEmpty()) return granted
+
+        // Walk up the parent chain from each granted role, collecting ancestors in memory. The depth
+        // cap guards against a malformed snapshot that contains a cycle (validation forbids cycles at
+        // write time, but the cache must never spin even if a bad row slips through).
+        val seen = LinkedHashSet(granted)
+        granted.forEach { start ->
+            var current = roleIdToParentId[start]
+            var depth = 0
+            while (current != null && depth < MAX_PARENT_WALK_DEPTH) {
+                if (!seen.add(current)) break // already visited -> chain converged or cycle
+                current = roleIdToParentId[current]
+                depth++
+            }
+        }
+        return seen.toList()
     }
 
     /**

@@ -24,6 +24,9 @@ data class AuthRoleQuery (
     /** Subsystem code. */
     val subsysCode: String? = null,
 
+    /** Filter roles by direct parent id. */
+    val parentId: String? = null,
+
     /** Filter roles by data-scope policy code (see DataScopeEnum). */
     val dataScope: String? = null,
 

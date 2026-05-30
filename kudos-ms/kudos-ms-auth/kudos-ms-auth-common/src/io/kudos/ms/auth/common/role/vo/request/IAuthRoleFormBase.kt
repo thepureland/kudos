@@ -22,6 +22,13 @@ interface IAuthRoleFormBase {
     /** Subsystem code. */
     val subsysCode: String?
 
+    /**
+     * Parent role id (NULL = root role). Service-side validation: must reference an existing role
+     * in the same tenant + subsystem, must not be the role itself, and must not be a descendant
+     * (which would close a cycle).
+     */
+    val parentId: String?
+
     /** Whether assigning this role requires an approval workflow. Null defaults to false. */
     val approvalRequired: Boolean?
 

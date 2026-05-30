@@ -7,6 +7,14 @@ merge into "auth_role" ("id", "code", "name", "tenant_id", "subsys_code", "remar
     ('249363d1-0000-0000-0000-000000000029', 'svc-role-test-5-bq0Y0mrl', 'svc-role-test-5-name-bq0Y0mrl', 'svc-tenant-role-test-2-bq0Y0mrl', 'ams', 'from AuthRoleServiceTest', true, false, 'system', '系统'),
     ('249363d1-0000-0000-0000-000000000022', 'svc-role-user-test-1-249363d1', 'svc-rol-use-tes-1-name-249363d1', 'svc-tenant-user-test-1-249363d1', 'ams', 'from UserAccountServiceTest', true, false, 'system', '系统');
 
+-- auth_role 角色继承链：root(030) <- mid(031) <- leaf(032)，外加跨租户(033)、跨子系统(034)兄弟，用于 parent_id 校验与祖先遍历用例
+merge into "auth_role" ("id", "code", "name", "tenant_id", "subsys_code", "parent_id", "remark", "active", "built_in", "create_user_id", "create_user_name") values
+    ('249363d1-0000-0000-0000-000000000030', 'svc-role-hier-root-bq0Y0mrl', 'svc-role-hier-root-name', 'svc-tenant-hier-1-bq0Y0mrl', 'ams', null, 'hierarchy root', true, false, 'system', '系统'),
+    ('249363d1-0000-0000-0000-000000000031', 'svc-role-hier-mid-bq0Y0mrl', 'svc-role-hier-mid-name', 'svc-tenant-hier-1-bq0Y0mrl', 'ams', '249363d1-0000-0000-0000-000000000030', 'hierarchy mid', true, false, 'system', '系统'),
+    ('249363d1-0000-0000-0000-000000000032', 'svc-role-hier-leaf-bq0Y0mrl', 'svc-role-hier-leaf-name', 'svc-tenant-hier-1-bq0Y0mrl', 'ams', '249363d1-0000-0000-0000-000000000031', 'hierarchy leaf', true, false, 'system', '系统'),
+    ('249363d1-0000-0000-0000-000000000033', 'svc-role-hier-othertenant-bq0Y0mrl', 'svc-role-hier-othertenant-name', 'svc-tenant-hier-2-bq0Y0mrl', 'ams', null, 'cross-tenant sibling', true, false, 'system', '系统'),
+    ('249363d1-0000-0000-0000-000000000034', 'svc-role-hier-othersubsys-bq0Y0mrl', 'svc-role-hier-othersubsys-name', 'svc-tenant-hier-1-bq0Y0mrl', 'svc-subsys-hier-other-bq0Y0mrl', null, 'cross-subsystem sibling', true, false, 'system', '系统');
+
 -- user_account: 供 getUsersByRoleCode 用例使用
 merge into "user_account" ("id", "username", "tenant_id", "login_password", "supervisor_id", "org_id", "remark", "active", "built_in", "create_user_id", "create_user_name") values
     ('249363d1-0000-0000-0000-000000000016', 'svc-user-test-1-249363d1', 'svc-tenant-user-test-1-249363d1', 'encrypted-pwd-1-249363d1', '00000000-0000-0000-0000-000000000000', '249363d1-0000-0000-0000-000000000020', 'from UserAccountServiceTest', true, false, 'system', '系统'),

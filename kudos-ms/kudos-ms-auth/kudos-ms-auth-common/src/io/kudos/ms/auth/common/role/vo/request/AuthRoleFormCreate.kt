@@ -16,6 +16,8 @@ data class AuthRoleFormCreate (
 
     override val subsysCode: String? ,
 
+    override val parentId: String? = null,
+
     override val approvalRequired: Boolean? = false,
 
     override val dataScope: String? = null,
