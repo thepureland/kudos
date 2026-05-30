@@ -83,11 +83,16 @@ spring:
 
 ## 与其它 audit backend 的搭配
 
+模块装配的 bean 名是 `mongoAuditService` / `mongoAuditLogReadOnlyService`，跟 `audit-rdb-ktorm`
+的 `rdbKtormAuditService` / `audit-rdb-clickhouse` 的 `clickhouseAuditService` 同模式
+（`@Bean(name=...)` + `@ConditionalOnMissingBean(name=...)`）。**所以多 backend 共存合法**：
+
 | 依赖组合 | 行为 |
 |---|---|
-| 仅依赖 `kudos-ability-log-audit-mongo` | 全部 audit 走 Mongo |
-| `mongo` + `rdb-ktorm` | 看 Spring 装配顺序：先就位的 `IAuditService` bean 赢，另一个 `@ConditionalOnMissingBean` 后退。**不推荐两个同时拉**——建议显式 `@Primary` 或排除其一 |
-| `mongo` + `mq` | MQ producer 一般走 `mqAuditService` 作为 `@Primary`，Mongo 留作消费端落库 |
+| 仅依赖 `kudos-ability-log-audit-mongo` | `@Resource IAuditService` 直接拿到 Mongo impl（上下文里唯一） |
+| `mongo` + `rdb-ktorm` | 两个 `IAuditService` 同时注册。业务侧用 `@Resource("mongoAuditService")` 或 `@Resource("rdbKtormAuditService")` 显式指定，或自己加一个 `@Primary` 决定默认 |
+| `mongo` + `mq` | MQ 装的 `mqAuditService` 带 `@Primary` 默认赢；想读 Mongo 库时用 `@Resource("mongoAuditLogReadOnlyService")` |
+| 读端 + 任意写端 backend | 同上 —— 读端独立路由：`@Resource("mongoAuditLogReadOnlyService")` 拿 Mongo 读，`@Resource("rdbKtormAuditLogReadOnlyService")` 拿 ktorm 读，互不干扰 |
 
 ## 读端：`MongoAuditLogReadOnlyService`
 
