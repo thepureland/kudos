@@ -21,6 +21,12 @@ interface AuthRoleUser : IDbEntity<String, AuthRoleUser> {
     /** User id */
     var userId: String
 
+    /** Grant effective time; NULL = effective immediately. */
+    var startTime: LocalDateTime?
+
+    /** Grant expiry time; NULL = never expires. */
+    var endTime: LocalDateTime?
+
     /** Creator id */
     var createUserId: String?
 
