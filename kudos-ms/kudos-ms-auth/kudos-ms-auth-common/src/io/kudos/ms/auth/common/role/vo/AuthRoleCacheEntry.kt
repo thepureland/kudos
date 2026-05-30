@@ -31,6 +31,9 @@ data class AuthRoleCacheEntry (
     /** Parent role id; NULL = root role. */
     val parentId: String? = null,
 
+    /** Data-scope policy code (see DataScopeEnum); NULL = ALL. */
+    val dataScope: String? = null,
+
     /** Remark. */
     val remark: String?,
 
