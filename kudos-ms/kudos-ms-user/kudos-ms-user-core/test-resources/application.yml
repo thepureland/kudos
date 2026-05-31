@@ -34,11 +34,11 @@ spring:
 kudos:
   ability:
     flyway:
-      #fly数据源配置
+      # datasource-config format: {datasource-key: [module-names]}
       datasource-config:
-        #demo：代表resource下db/{demo}/模块,对应的jdbc多数据源的数据源名
-        sys: tcp-ds1
-        user: tcp-ds1
+        tcp-ds1: sys,user
+      execution-order:
+        - tcp-ds1
 
 
 logging:
