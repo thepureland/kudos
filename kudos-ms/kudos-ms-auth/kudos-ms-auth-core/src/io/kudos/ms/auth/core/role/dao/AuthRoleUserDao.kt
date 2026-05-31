@@ -96,6 +96,19 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
     }
 
     /**
+     * Returns all raw auth_role_user rows for [roleId], including time-window fields
+     * (startTime / endTime). Used by the temporal-grant admin view to show who holds this
+     * role and when each grant expires.
+     *
+     * @param roleId role id
+     * @return full grant rows (all windows, including past and future)
+     */
+    open fun searchGrantsByRoleId(roleId: String): List<AuthRoleUser> {
+        val criteria = Criteria(AuthRoleUser::roleId eq roleId)
+        return search(criteria)
+    }
+
+    /**
      * Returns all role-user relations grouped by role id as "role id -> list of user ids".
      *
      * @return Map<role id, List<user id>>

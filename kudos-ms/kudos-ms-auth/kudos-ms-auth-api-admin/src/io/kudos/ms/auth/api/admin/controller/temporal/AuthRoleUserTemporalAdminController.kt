@@ -1,10 +1,13 @@
 package io.kudos.ms.auth.api.admin.controller.temporal
 
 import io.kudos.ms.auth.common.temporal.vo.request.AuthRoleUserTemporalBindRequest
+import io.kudos.ms.auth.common.temporal.vo.response.RoleTemporalGrantRow
 import io.kudos.ms.auth.core.role.temporal.service.iservice.IAuthRoleUserTemporalService
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 /**
@@ -27,6 +30,11 @@ import org.springframework.web.bind.annotation.RestController
 class AuthRoleUserTemporalAdminController(
     private val service: IAuthRoleUserTemporalService,
 ) {
+
+    /** List all grant rows for a role (active, past, future, and permanent). */
+    @GetMapping("/getGrantsByRole")
+    fun getGrantsByRole(@RequestParam roleId: String): List<RoleTemporalGrantRow> =
+        service.getGrantsByRoleId(roleId)
 
     /** Grant a role to a user with an optional validity window (replace semantics). */
     @PostMapping("/bind")
