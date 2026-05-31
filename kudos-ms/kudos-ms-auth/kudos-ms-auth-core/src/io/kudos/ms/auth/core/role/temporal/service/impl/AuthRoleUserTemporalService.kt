@@ -1,6 +1,7 @@
 package io.kudos.ms.auth.core.role.temporal.service.impl
 
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.auth.common.temporal.vo.response.RoleTemporalGrantRow
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
@@ -33,6 +34,24 @@ open class AuthRoleUserTemporalService(
     private lateinit var eventPublisher: ApplicationEventPublisher
 
     private val log = LogFactory.getLog(this::class)
+
+    @Transactional(readOnly = true)
+    override fun getGrantsByRoleId(roleId: String, now: LocalDateTime): List<RoleTemporalGrantRow> {
+        return dao.searchGrantsByRoleId(roleId)
+            .sortedWith(compareBy({ it.userId }, { it.startTime ?: LocalDateTime.MAX }))
+            .map { grant ->
+                val start = grant.startTime
+                val end = grant.endTime
+                val isActive = (start == null || !start.isAfter(now)) && (end == null || !end.isBefore(now))
+                RoleTemporalGrantRow(
+                    id = grant.id,
+                    userId = grant.userId,
+                    startTime = grant.startTime,
+                    endTime = grant.endTime,
+                    active = isActive,
+                )
+            }
+    }
 
     @Transactional
     override fun bindTemporal(

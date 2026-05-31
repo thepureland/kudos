@@ -1,5 +1,6 @@
 package io.kudos.ms.auth.core.role.temporal.service.iservice
 
+import io.kudos.ms.auth.common.temporal.vo.response.RoleTemporalGrantRow
 import java.time.LocalDateTime
 
 /**
@@ -15,6 +16,16 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 interface IAuthRoleUserTemporalService {
+
+    /**
+     * Returns all grant rows for a role (including past, future and permanent grants) so the admin
+     * can see who holds the role and manage the time windows.
+     *
+     * @param roleId the role whose grants to list
+     * @param now the instant to evaluate the active flag against (defaults to current time)
+     * @return grant rows sorted by userId then by startTime (nulls last)
+     */
+    fun getGrantsByRoleId(roleId: String, now: java.time.LocalDateTime = java.time.LocalDateTime.now()): List<RoleTemporalGrantRow>
 
     /**
      * Grant [roleId] to [userId] with an optional validity window (replace semantics — any existing
