@@ -210,6 +210,19 @@ interface IAuthRoleService : IBaseCrudService<String, AuthRole> {
     fun getEffectivePermissions(userId: String): EffectivePermissionsVo
 
     /**
+     * Batch aggregator for the resource / menu permission console: for each supplied resource id,
+     * the distinct, alphabetically sorted names of the roles that have been granted that resource.
+     *
+     * Resources with no granting role are omitted from the result map (the contract is "which roles
+     * can reach these resources", not "echo back every id"). Replaces the page's per-row fan-out over
+     * `listRoleIdsByResource` + role-name lookups with a single round-trip.
+     *
+     * @param resourceIds resource ids to resolve; empty input yields an empty map.
+     * @return resourceId -> sorted distinct role names, excluding resources with no roles.
+     */
+    fun getRoleNamesByResourceIds(resourceIds: Collection<String>): Map<String, List<String>>
+
+    /**
      * Aggregate impact summary for deleting a batch of roles: counts of distinct users and
      * groups currently bound to any role in [roleIds]. Used by the admin UI's pre-delete
      * confirmation so operators see the blast radius without spawning 2N GETs.
