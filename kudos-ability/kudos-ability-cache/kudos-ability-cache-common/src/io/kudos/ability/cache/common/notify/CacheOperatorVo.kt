@@ -8,7 +8,7 @@ import io.kudos.context.kit.SpringKit
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import java.io.Serial
 import java.io.Serializable
-import java.util.UUID
+import io.kudos.base.lang.string.RandomStringKit
 
 /**
  * Cache operation value object.
@@ -58,7 +58,7 @@ class CacheOperatorVo(
      * Generated when the object is constructed; null when deserialized from an old node (Java serialization
      * compatibility for new fields). Consumers must handle null.
      */
-    var messageId: String? = UUID.randomUUID().toString()
+    var messageId: String? = RandomStringKit.uuid()
 
     /**
      * Sender node id; populated in [doNotify]. Helps consumers identify loopback / troubleshoot cross-node issues.

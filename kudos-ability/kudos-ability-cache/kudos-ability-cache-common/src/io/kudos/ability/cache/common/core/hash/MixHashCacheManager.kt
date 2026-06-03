@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import java.util.UUID
+import io.kudos.base.lang.string.RandomStringKit
 
 /**
  * Hash cache strategy wrapper manager: creates an [IHashCache] view (local / remote / two-tier) for each hash cache name based on configuration.
@@ -48,7 +48,7 @@ class MixHashCacheManager {
     private var nodeId: String? = null
 
     private val hashCaches: MutableMap<String, IHashCache> = mutableMapOf()
-    private val effectiveNodeId: String by lazy { nodeId ?: UUID.randomUUID().toString() }
+    private val effectiveNodeId: String by lazy { nodeId ?: RandomStringKit.uuid() }
 
     /**
      * Invoked after system initialization completes; loads all hash cache configurations and creates the strategy wrapper views.

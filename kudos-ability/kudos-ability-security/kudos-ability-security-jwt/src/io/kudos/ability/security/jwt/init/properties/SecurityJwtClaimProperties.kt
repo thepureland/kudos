@@ -2,7 +2,7 @@ package io.kudos.ability.security.jwt.init.properties
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 import java.time.Instant
-import java.util.UUID
+import io.kudos.base.lang.string.RandomStringKit
 
 /**
  * Default-claim configuration for tokens minted by [io.kudos.ability.security.jwt.support.JwtParametersTool].
@@ -70,7 +70,7 @@ class SecurityJwtClaimProperties {
 
     /** Resolves [jti]; `"uuid()"` → fresh UUID (no hyphens); otherwise empty string. */
     fun resolveJwtId(): String =
-        if (jti == UUID_FN) UUID.randomUUID().toString().replace("-", "") else ""
+        if (jti == UUID_FN) RandomStringKit.uuidWithoutDelimiter() else ""
 
     companion object {
         private const val NOW = "now()"

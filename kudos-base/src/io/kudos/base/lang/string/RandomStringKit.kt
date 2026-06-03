@@ -4,8 +4,8 @@ import io.kudos.base.lang.string.RandomStringKit.random
 import org.apache.commons.lang3.RandomStringUtils
 import java.security.SecureRandom
 import java.util.Random
-import java.util.UUID
 import kotlin.math.abs
+import kotlin.uuid.Uuid
 
 /**
  * Random string utilities.
@@ -18,22 +18,22 @@ object RandomStringKit {
     private val random = SecureRandom()
 
     /**
-     * Wraps Java's UUID.
+     * Wraps Kotlin's Uuid.
      *
      * @return a UUID delimited with "-"
      * @author K
      * @since 1.0.0
      */
-    fun uuid(): String = UUID.randomUUID().toString()
+    fun uuid(): String = Uuid.random().toString()
 
     /**
-     * Wraps Java's UUID without "-" delimiters.
+     * Wraps Kotlin's Uuid without "-" delimiters.
      *
      * @return a UUID without "-" delimiters
      * @author K
      * @since 1.0.0
      */
-    fun uuidWithoutDelimiter(): String = UUID.randomUUID().toString().replace("-".toRegex(), "")
+    fun uuidWithoutDelimiter(): String = Uuid.random().toHexString()
 
     /**
      * Randomly generates a Long via SecureRandom.
