@@ -4,6 +4,7 @@
 
 | 子目录 | 内容 |
 |---|---|
+| [`kudos-ability-security-common`](kudos-ability-security-common/README.md) | `PasswordEncoder`（BCrypt）+ `Authenticator`（RFC 6238 TOTP）Spring bean |
 | [`kudos-ability-security-jwt`](kudos-ability-security-jwt/README.md) | JWT 签发/校验（RS256 + PKCS12 keystore + spring-security-oauth2-jose） |
 | [`kudos-ability-security-jwt-resourceserver`](kudos-ability-security-jwt-resourceserver/README.md) | JWT OAuth2 Resource Server 默认 `SecurityFilterChain` 装配 |
 

@@ -22,6 +22,14 @@ open class MsgSendService(
     dao: MsgSendDao
 ) : BaseCrudService<String, MsgSend, MsgSendDao>(dao), IMsgSendService {
 
+    override fun findByIdempotencyKey(tenantId: String, idempotencyKey: String): MsgSend? =
+        dao.andSearch(
+            mapOf(
+                MsgSend::tenantId to tenantId,
+                MsgSend::idempotencyKey to idempotencyKey,
+            )
+        ).firstOrNull()
+
     override fun updateSendStatus(sendId: String, sendStatusDictCode: String): Boolean =
         dao.updateProperties(
             sendId,

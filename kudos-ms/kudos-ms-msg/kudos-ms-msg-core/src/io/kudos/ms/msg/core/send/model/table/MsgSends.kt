@@ -49,6 +49,9 @@ object MsgSends : StringIdTable<MsgSend>("msg_send") {
     /** Scheduled job ID */
     var jobId = varchar("job_id").bindTo { it.jobId }
 
+    /** Idempotency key — unique per tenant; identifies a business request so retries are deduplicated */
+    var idempotencyKey = varchar("idempotency_key").bindTo { it.idempotencyKey }
+
     /** Tenant ID */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
 

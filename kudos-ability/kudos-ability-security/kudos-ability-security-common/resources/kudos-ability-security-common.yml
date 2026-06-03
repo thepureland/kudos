@@ -1,0 +1,9 @@
+# kudos-ability-security-common 模块默认配置
+kudos:
+  ability:
+    security:
+      common:
+        totp:
+          # 单位为 30 秒 TOTP 步长。验证时容忍 [-window-size, +window-size] 区间。
+          # 1 = 严格（±30 秒）；3 = soul 旧默认（±90 秒），过于宽松；上限 17。
+          window-size: 1
