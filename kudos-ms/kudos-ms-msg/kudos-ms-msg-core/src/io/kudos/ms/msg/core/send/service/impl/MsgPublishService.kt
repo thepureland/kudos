@@ -57,6 +57,19 @@ open class MsgPublishService(
             return null
         }
 
+        // Idempotency short-circuit: if the caller supplied an idempotencyKey and a prior publish with the
+        // same (tenantId, idempotencyKey) already persisted a MsgSend, return that id instead of creating
+        // duplicate instance/send records. Concurrent races are caught by the unique index
+        // uq_msg_send__tenant_idempotency — the losing transaction fails and, on retry, hits this branch.
+        val idempotencyKey = request.idempotencyKey?.takeIf { it.isNotBlank() }
+        if (idempotencyKey != null) {
+            val existing = msgSendService.findByIdempotencyKey(request.tenantId, idempotencyKey)
+            if (existing != null) {
+                log.info("Idempotent publish hit: tenantId={0}, key={1}, existing sendId={2}", request.tenantId, idempotencyKey, existing.id)
+                return existing.id
+            }
+        }
+
         val template = msgTemplateService.getTemplateByEvent(
             tenantId = request.tenantId,
             eventTypeDictCode = request.eventTypeDictCode,
@@ -103,6 +116,7 @@ open class MsgPublishService(
             successCount = 0
             failCount = 0
             jobId = null
+            this.idempotencyKey = idempotencyKey
             tenantId = request.tenantId
         }
         val sendId = msgSendService.insert(send)

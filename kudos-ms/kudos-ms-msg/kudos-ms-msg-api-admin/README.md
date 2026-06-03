@@ -12,7 +12,7 @@ Msg 服务的 **管理端 REST 控制器层**——路径前缀 `/api/admin/msg/
 
 | Controller | 路径前缀 | 委托 service | 模式 |
 |------------|----------|--------------|------|
-| `MsgTemplateAdminController` | `/api/admin/msg/template` | `IMsgTemplateService` | `BaseCrudController` |
+| `MsgTemplateAdminController` | `/api/admin/msg/template` | `IMsgTemplateService` | `BaseCrudController` + `@WebAudit`（create/update/delete 落审计日志） |
 | `MsgInstanceAdminController` | `/api/admin/msg/instance` | `IMsgInstanceService` | `BaseCrudController` |
 | `MsgSendAdminController` | `/api/admin/msg/send` | `IMsgSendService` | `BaseCrudController` |
 | `MsgReceiveAdminController` | `/api/admin/msg/receive` | `IMsgReceiveService` | `BaseCrudController` |
@@ -88,10 +88,12 @@ kudos 自带的 dispatcher 替代了 Spring Boot 的 auto-config SPI，新增 co
 ```
 api(project(":kudos-ms:kudos-ms-msg:kudos-ms-msg-core"))
 api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-springmvc"))
+api(project(":kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-log-audit-common"))
 testImplementation(project(":kudos-test:kudos-test-container"))
 ```
 
-仅 core + web-springmvc——没有任何 distributed / cache / discovery 依赖；这些都是
+core + web-springmvc + log-audit-common（仅为 `@WebAudit` 注解；审计存储由部署侧选
+log-audit-rdb / mongo / mq）——没有任何 distributed / cache / discovery 依赖；这些都是
 public / internal 启动模块的职责，让 admin 保持纯 controller 层。
 
 ## 与 api-public / api-internal 的边界
@@ -126,10 +128,12 @@ public / internal 启动模块的职责，让 admin 保持纯 controller 层。
 
 ## 已知限制 / 后续工作
 
-- ❗ **无 `@PreAuthorize`**：admin 控制器靠网关 / `EnableKudos` 框架级过滤器做访问控制；
-  漏配置或绕过网关时 `batchDelete` 等敏感 endpoint 直接暴露。建议至少在
-  `MsgTemplateAdminController.delete` / `batchDelete` / `MsgSendAdminController.save`
-  上加 method-level 鉴权
+- ⚙️ **无 `@PreAuthorize`（刻意，按全项目约定）**：method-level `@PreAuthorize` 在整个 kudos
+  代码库零先例——授权统一靠网关 / `EnableKudos` 框架级过滤器。admin 沿用此约定。部署时务必确保
+  网关对 `/api/admin/**`、`batchDelete` 等敏感 endpoint 配了访问控制，否则绕过网关会直接暴露
+- ✅ **模板 CRUD 审计**（已实现）：`MsgTemplateAdminController` create/update/delete/batchDelete
+  用 `@WebAudit` 标注，由 `WebLogAuditAspect` 落审计日志（需部署侧接入审计存储才真正写库）。
+  其余 admin 控制器如需审计，照此加注解即可
 - ❗ **路由由 `BaseCrudController` 反射生成**——没有显式 enum 路由列表，IDE 跳转 +
   OpenAPI 生成都依赖反射 introspection，外部接入文档难写
 - ❗ **错误响应靠全局 handler**——controller 不显式声明 `@ResponseStatus` / problem+json，

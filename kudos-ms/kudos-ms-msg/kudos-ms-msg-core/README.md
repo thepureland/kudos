@@ -49,6 +49,31 @@ UNREAD ── markRead ──► READ
 | `kudos-ability-comm-email` | SMTP 投递通道 |
 | `kudos-ability-comm-sms-aws` | AWS SNS SMS 投递通道 |
 
+## 投递渠道（`send/channel/`）
+
+发布与消费解耦：`MsgPublishService` 只把渲染结果按 `publishMethod` 投到 MQ，真正的发送在各渠道
+监听器里完成。渠道路由是**运行时**的——每个监听器是一个 `INotifyListener`，框架按
+`notifyType = MsgPublishMethodEnum.listenerType` 自动分发。
+
+```
+AbstractMsgChannelDispatchListener   ← 模板方法：状态流转 / 联系方式批量查询 / 无联系方式(NO_CONTACT)
+        ▲          ▲                    与渠道拒收(CHANNEL_REJECT)记账 / MsgReceive 落库 / 成功失败聚合
+        │          │
+  Email 渠道    SMS 渠道               ← 子类只实现：contactWayDictCode + doDispatch(实际发送)
+ (contact 201) (contact 101)
+```
+
+| 渠道 | 类 | 联系方式码 | 生效条件 | 底层 |
+|---|---|---|---|---|
+| Email | `email/MsgEmailDispatchListener` | `201` | `kudos.msg.email.server-host` | `comm-email`（一次批量发，回调给成功/失败邮箱列表） |
+| SMS | `sms/MsgSmsDispatchListener` | `101` | `kudos.msg.sms.aws.access-key-id` | `comm-sms-aws`（按号码逐条异步发，N 个回调用 countdown 聚合） |
+
+**新增渠道**：
+1. 在 `MsgPublishMethodEnum` 加渠道项（含 listenerType），并同步 `publish_method` 字典
+2. 新建 `XxxDispatchListener : AbstractMsgChannelDispatchListener`，实现 `publishMethod` /
+   `contactWayDictCode` / `doDispatch`，用 `@ConditionalOnProperty` 控制生效
+3. 不需要改发布侧、其它渠道，也不需要重新部署它们
+
 ## 装配
 
 `MsgAutoConfiguration`：
@@ -66,19 +91,32 @@ UNREAD ── markRead ──► READ
 
 ## 已知限制 / 后续工作
 
-- ❗ **重复发送幂等性缺失**：`send(templateCode, params, receivers)` 没有 idempotencyKey
-  参数——同一业务请求重试会产生多条 msg_instance / msg_receive。建议接入业务侧
-  request id 或自实现幂等表
-- ❗ **投递通道选择硬编码**：`MsgSendService` 走具体 `comm-email` / `comm-sms-aws` 实现——
-  切换通道需重新部署。未实现 Strategy / Factory 模式让运行时路由
+- ✅ **重复发送幂等性**（已实现）：`MsgPublishRequest.idempotencyKey` 传业务请求唯一标识
+  （如业务侧 request id）后，相同 `(tenantId, idempotencyKey)` 的重复 publish 直接返回已有
+  `MsgSend.id`，不再产生重复 msg_instance / msg_send。落库由 `msg_send.idempotency_key` +
+  唯一索引 `uq_msg_send__tenant_idempotency` 保证；并发竞态下后到的事务因唯一索引失败，重试时
+  命中短路分支。**不传 / 传空** 则保持旧行为（每次都新建记录）。注意短路是在模板渲染 / 落库
+  *之前* 做一次 select 预检，幂等命中不会渲染模板
+- ✅ **投递通道运行时路由**（已实现）：发布侧 `MsgPublishService` 按 `request.publishMethod` 把
+  事件投到 MQ（notifyType = `publishMethod.listenerType`，如 `msg.dispatch.email`）；消费侧每个渠道
+  是一个 `INotifyListener` bean，由 notify 框架按 notifyType 自动路由——**加渠道 = 加一个 bean，
+  无需改其它渠道或发布侧、无需重新部署**。共用的派发骨架（状态流转 / 联系方式查询 / 无联系方式与
+  渠道拒收记账 / 成功失败聚合）抽到 `AbstractMsgChannelDispatchListener`，渠道子类只实现两点：
+  联系方式字典码 + 实际发送。详见下方「投递渠道」
 - ❗ **`MsgUnreceived` 重试无调度器**：失败消息入暂存表后没有自动重试 cron——需业务自建
   定时任务从 `msg_unreceived` 拉数据走 re-send 路径
-- ❗ **控制器无 `@PreAuthorize`**：admin 控制器靠网关 / 外部鉴权过滤器做访问控制；漏
-  配置时 `bulkSend` 等敏感 endpoint 直接暴露
-- ❗ **模板内容大小无上限**：`msg_template.content` 在 h2 是 `varchar`（无界，等价 CLOB），
-  跨方言移植到 mysql / pg 时也建议给上限；当前 form 校验未限 maxLength，恶意大模板可
-  导致渲染 OOM
-- ❗ **没有审计日志**：模板创建 / 修改 / 删除关键操作不写 AuditLog——合规审计场景需自接入
+- ⚙️ **控制器无 `@PreAuthorize`（刻意，按全项目约定）**：method-level `@PreAuthorize` 在整个
+  kudos 代码库零先例——授权统一由网关 / 外部鉴权过滤器做。msg 沿用此约定，不引入 method security。
+  部署时务必确保网关对 `/api/admin/**`、`bulkSend` 等敏感 endpoint 配了访问控制，否则会直接暴露
+- ✅ **模板内容大小上限**（form 层已实现）：`IMsgTemplateFormBase` 各字段加了 `@MaxLength`
+  约束（与 `msg_template` DDL 列宽对齐；`content` / `defaultContent` 无界列封顶
+  `CONTENT_MAX_LENGTH=65535`，对齐 MySQL `TEXT`），由 BaseCrudController save/update 的
+  `@Valid` 强制，挡住恶意大模板导致的渲染 OOM。**仍待办（属 msg-sql）**：`msg_template.content`
+  在 SQL 层仍是无界 `varchar`/CLOB，跨方言移植 mysql/pg 时建议显式给列上限
+- ✅ **模板 CRUD 审计日志**（已实现，在 `msg-api-admin`）：`MsgTemplateAdminController` 的
+  create / update / delete / batchDelete 用 `@WebAudit`（opType=CREATE/UPDATE/DELETE，
+  moduleCode=`msg-template`）标注，由 `WebLogAuditAspect` 拦截落审计日志。注解是被动的——
+  需部署侧接入审计存储（log-audit-rdb / mongo / mq 之一）才会真正写库，未接入时注解无副作用
 
 ## 依赖
 
