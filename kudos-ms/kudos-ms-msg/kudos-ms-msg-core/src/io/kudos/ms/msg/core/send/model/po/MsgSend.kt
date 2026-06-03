@@ -49,6 +49,9 @@ interface MsgSend : IDbEntity<String, MsgSend> {
     /** Scheduled job ID */
     var jobId: String?
 
+    /** Idempotency key — unique per tenant; identifies a business request so retries are deduplicated */
+    var idempotencyKey: String?
+
     /** Tenant ID */
     var tenantId: String
 

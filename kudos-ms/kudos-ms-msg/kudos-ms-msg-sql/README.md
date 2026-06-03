@@ -31,6 +31,7 @@ resources/sql/msg/
 | `V1.0.0.23__init_msg_send.sql` | `msg_send` DDL（FK → `msg_instance.id`） |
 | `V1.0.0.24__init_msg_receive.sql` | `msg_receive` DDL（FK → `msg_send.id`） |
 | `V1.0.0.25__init_msg_unreceived.sql` | `msg_unreceived` DDL（FK → `msg_send.id`，含 `idx_msg_unreceived_send` / `idx_msg_unreceived_receiver_unresolved`） |
+| `V1.0.0.26__alter_msg_send_idempotency.sql` | 给 `msg_send` 加 `idempotency_key` 列 + 唯一索引 `uq_msg_send__tenant_idempotency`（`tenant_id` + `idempotency_key`），支撑 publish 幂等去重 |
 
 ## 表关系
 

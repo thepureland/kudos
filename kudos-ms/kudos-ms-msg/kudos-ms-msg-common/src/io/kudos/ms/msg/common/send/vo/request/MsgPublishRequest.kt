@@ -38,4 +38,12 @@ data class MsgPublishRequest(
 
     /** Locale; null leaves it unconstrained and lets the publish service pick the first match. */
     val localeDictCode: String? = null,
+
+    /**
+     * Optional idempotency key identifying this business request (e.g. the caller's request id).
+     * When supplied, a repeated publish with the same (tenantId, idempotencyKey) returns the
+     * existing MsgSend.id instead of creating duplicate instance/send records. null/blank disables
+     * deduplication (every call creates a new record, the legacy behavior).
+     */
+    val idempotencyKey: String? = null,
 )

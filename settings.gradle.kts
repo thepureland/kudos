@@ -94,6 +94,7 @@ include("kudos-ability:kudos-ability-log:kudos-ability-log-audit:kudos-ability-l
 include("kudos-ability:kudos-ability-ui:kudos-ability-ui-javafx")
 
 // security
+include("kudos-ability:kudos-ability-security:kudos-ability-security-common")
 include("kudos-ability:kudos-ability-security:kudos-ability-security-jwt")
 include("kudos-ability:kudos-ability-security:kudos-ability-security-jwt-resourceserver")
 
