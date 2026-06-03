@@ -11,7 +11,7 @@ import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
 import jakarta.servlet.http.HttpServletRequest
-import java.util.UUID
+import io.kudos.base.lang.string.RandomStringKit
 
 
 /**
@@ -52,7 +52,7 @@ open class WebContextInitFilter : IWebContextInitFilter {
             context.addHeaderAttributes(name to request.getHeader(name))
         }
         context.traceKey = request.getHeader(Consts.RequestHeader.TRACE_KEY)?.takeIf { it.isNotBlank() }
-            ?: UUID.randomUUID().toString()
+            ?: RandomStringKit.uuid()
 
         // client info
         val clientInfoBuilder = ClientInfo.Builder()

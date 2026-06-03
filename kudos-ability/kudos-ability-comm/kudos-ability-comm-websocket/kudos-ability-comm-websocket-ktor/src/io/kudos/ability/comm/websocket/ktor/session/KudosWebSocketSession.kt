@@ -5,7 +5,7 @@ import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.send
-import java.util.UUID
+import io.kudos.base.lang.string.RandomStringKit
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -34,7 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class KudosWebSocketSession(
     val raw: DefaultWebSocketServerSession,
-    override val sessionId: String = UUID.randomUUID().toString(),
+    override val sessionId: String = RandomStringKit.uuid(),
     override val userId: String? = null,
     override val tenantId: String? = null,
 ) : KudosWebSocketSessionRef {

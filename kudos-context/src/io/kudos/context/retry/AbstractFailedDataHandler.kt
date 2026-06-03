@@ -6,7 +6,7 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.util.UUID
+import io.kudos.base.lang.string.RandomStringKit
 
 /**
  * Abstract base class for failed-data handlers.
@@ -50,7 +50,7 @@ abstract class AbstractFailedDataHandler<T> : IFailedDataHandler<T> {
      *
      * File naming:
      * - Timestamp: System.currentTimeMillis(), used for ordering
-     * - UUID: UUID.randomUUID(), ensures uniqueness
+     * - UUID: RandomStringKit.uuid(), ensures uniqueness
      * - Format: timestamp-UUID.json
      *
      * Exception handling:
@@ -64,7 +64,7 @@ abstract class AbstractFailedDataHandler<T> : IFailedDataHandler<T> {
     override fun persistFailedData(data: T): String = try {
         val dir = Paths.get(filePath()).resolve(businessType)
         if (Files.notExists(dir)) Files.createDirectories(dir)
-        val file = dir.resolve("${System.currentTimeMillis()}-${UUID.randomUUID()}.json")
+        val file = dir.resolve("${System.currentTimeMillis()}-${RandomStringKit.uuid()}.json")
         Files.write(file, JsonKit.writeAnyAsBytes(data))
         file.toAbsolutePath().toString()
     } catch (e: IOException) {

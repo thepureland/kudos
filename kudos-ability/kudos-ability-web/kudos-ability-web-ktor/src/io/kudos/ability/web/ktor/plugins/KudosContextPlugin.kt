@@ -5,7 +5,7 @@ import io.ktor.util.*
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextElement
 import kotlinx.coroutines.withContext
-import java.util.UUID
+import io.kudos.base.lang.string.RandomStringKit
 
 /**
  * Key used to store the [KudosContext] in Ktor call attributes.
@@ -55,7 +55,7 @@ fun ApplicationCall.kudosContext(): KudosContext =
  * install(KudosContextPlugin) {
  *     factory = { call ->
  *         KudosContext().apply {
- *             traceKey = call.request.headers["X-Trace-Id"] ?: UUID.randomUUID().toString()
+ *             traceKey = call.request.headers["X-Trace-Id"] ?: RandomStringKit.uuid()
  *             // other custom fields...
  *         }
  *     }
@@ -88,7 +88,7 @@ class KudosContextPlugin private constructor(
          */
         var factory: (ApplicationCall) -> KudosContext = { call ->
             KudosContext().apply {
-                traceKey = call.request.headers["X-Trace-Id"] ?: UUID.randomUUID().toString()
+                traceKey = call.request.headers["X-Trace-Id"] ?: RandomStringKit.uuid()
             }
         }
     }

@@ -39,7 +39,7 @@ import org.springframework.data.redis.listener.ChannelTopic
 import org.springframework.data.redis.listener.RedisMessageListenerContainer
 import org.springframework.data.redis.serializer.RedisSerializationContext
 import java.time.Duration
-import java.util.UUID
+import io.kudos.base.lang.string.RandomStringKit
 
 
 /**
@@ -187,7 +187,7 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
     @Bean("cacheNodeId")
     @ConditionalOnMissingBean(name = ["cacheNodeId"])
     open fun cacheNodeId(redisCacheProperties: RedisCacheProperties): String =
-        redisCacheProperties.nodeId?.trim()?.takeIf { it.isNotBlank() } ?: UUID.randomUUID().toString()
+        redisCacheProperties.nodeId?.trim()?.takeIf { it.isNotBlank() } ?: RandomStringKit.uuid()
 
     /** Cache message SPI implementation (send + receive loopback + error log on deserialization failure). */
     @Bean

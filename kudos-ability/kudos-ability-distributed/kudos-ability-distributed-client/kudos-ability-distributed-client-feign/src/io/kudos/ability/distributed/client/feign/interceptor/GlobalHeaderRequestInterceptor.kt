@@ -11,7 +11,7 @@ import org.springframework.core.annotation.AnnotationAwareOrderComparator
 import java.nio.charset.StandardCharsets
 import java.time.Clock
 import java.util.Base64
-import java.util.UUID
+import io.kudos.base.lang.string.RandomStringKit
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -56,7 +56,7 @@ import javax.crypto.spec.SecretKeySpec
 class GlobalHeaderRequestInterceptor(
     private val properties: OpenFeignProperties = OpenFeignProperties(),
     private val clock: Clock = Clock.systemUTC(),
-    private val nonceSupplier: () -> String = { UUID.randomUUID().toString() }
+    private val nonceSupplier: () -> String = { RandomStringKit.uuid() }
 ) : RequestInterceptor {
 
     /**
@@ -105,7 +105,7 @@ class GlobalHeaderRequestInterceptor(
         // tracing can stitch them into one trace. The previous implementation only generated without
         // writing back, producing a new UUID per outbound call and fragmenting the trace.
         val traceKey = context.traceKey?.takeIf { it.isNotBlank() }
-            ?: UUID.randomUUID().toString().also { context.traceKey = it }
+            ?: RandomStringKit.uuid().also { context.traceKey = it }
         val dataSourceId = context.dataSourceId
         requestTemplate.header(Consts.RequestHeader.TENANT_ID, tenantId.toString())
         requestTemplate.header(Consts.RequestHeader.SUB_SYS_CODE, subSysCode)

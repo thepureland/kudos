@@ -61,5 +61,5 @@ open class ResourceEventCaptor {
         raw.clear()
     }
 
-    inline fun <reified T> lastOf(): T? = raw.filterIsInstance<T>().lastOrNull()
+    final inline fun <reified T> lastOf(): T? = raw.filterIsInstance<T>().lastOrNull()
 }
