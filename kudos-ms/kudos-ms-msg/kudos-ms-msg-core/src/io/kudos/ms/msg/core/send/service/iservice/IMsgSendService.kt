@@ -30,4 +30,13 @@ interface IMsgSendService : IBaseCrudService<String, MsgSend> {
      */
     fun finishSend(sendId: String, successDelta: Int, failDelta: Int, finalStatusDictCode: String): Boolean
 
+    /**
+     * Looks up an existing send record by its idempotency key within a tenant.
+     *
+     * Backed by the unique index `uq_msg_send__tenant_idempotency`, so at most one record matches.
+     *
+     * @return the matching MsgSend, or null when no prior publish used this key
+     */
+    fun findByIdempotencyKey(tenantId: String, idempotencyKey: String): MsgSend?
+
 }
