@@ -38,7 +38,7 @@ github-caffeine = "3.2.4"
 alibabacloud-dysmsapi = "4.0.10"
 alibaba-fastjson2 = "2.0.62"
 apache-seata = "2.6.0"
-amazon-awssdk = "2.44.8"
+amazon-awssdk = "2.46.1"
 apache-common-pool2 = "2.13.1"
 baomidou-dynamic-datasource = "4.5.0"
 redisson = "4.4.0"
@@ -49,9 +49,9 @@ minio = "9.0.1"
 controlsfx = "11.2.3"
 commons-fileupload = "1.6.0"
 servlet-api = "6.1.0"
-springdoc-openapi = "3.0.1"
-clickhouse-jdbc = "0.9.6"
-influxdb-client = "6.7.0"
+springdoc-openapi = "3.0.3"
+clickhouse-jdbc = "0.9.8"
+influxdb-client = "8.0.0"
 
 
 [libraries]
@@ -138,7 +138,7 @@ spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-
 # Bouncy Castle PKIX — test-only dep used by the JWT module to programmatically build a self-signed
 # X.509 + PKCS12 keystore at test setup time, instead of committing a binary keystore blob to the
 # repo. Standard Java has no portable API for X.509 cert creation.
-bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version = "1.78.1" }
+bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version = "1.84" }
 # ClickHouse JDBC driver — used by kudos-ability-log-audit-rdb-clickhouse. Version pinned because
 # Spring Boot BOM does not manage ClickHouse. Use the "shaded" classifier so Apache HTTP Client +
 # Lz4 + other transitive deps don't conflict with other modules.
