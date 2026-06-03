@@ -317,6 +317,22 @@ open class AuthRoleService(
     }
 
     @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+    override fun getRoleNamesByResourceIds(resourceIds: Collection<String>): Map<String, List<String>> {
+        if (resourceIds.isEmpty()) return emptyMap()
+        // resourceId -> role ids granted that resource (one cache hit per resource).
+        val roleIdsByResource: Map<String, Set<String>> = resourceIds.toSet().associateWith { resId ->
+            authRoleResourceService.getRoleIdsByResourceId(resId)
+        }
+        // Resolve every referenced role's metadata once, then map ids -> names.
+        val allRoleIds: Set<String> = roleIdsByResource.values.asSequence().flatten().toSet()
+        val rolesMap: Map<String, AuthRoleCacheEntry> =
+            if (allRoleIds.isEmpty()) emptyMap() else authRoleHashCache.getRolesByIds(allRoleIds)
+        return roleIdsByResource
+            .mapValues { (_, rids) -> rids.mapNotNull { rolesMap[it]?.name }.distinct().sorted() }
+            .filterValues { it.isNotEmpty() }
+    }
+
+    @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
     override fun getDeleteImpact(roleIds: Collection<String>): RoleDeleteImpactVo {
         if (roleIds.isEmpty()) return RoleDeleteImpactVo.zero()
         // Union over all roles. Sets de-duplicate so a user/group bound to multiple roles in the
