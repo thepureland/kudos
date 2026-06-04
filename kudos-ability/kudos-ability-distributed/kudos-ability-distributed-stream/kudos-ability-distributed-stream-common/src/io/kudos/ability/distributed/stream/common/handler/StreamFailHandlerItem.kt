@@ -5,9 +5,13 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Stream message failure handler registry.
  * Manages and looks up failure handlers by binding name.
+ *
+ * Concurrency: writes happen mainly during Spring configuration (single-threaded), reads during
+ * message handling (multi-threaded). Backed by [ConcurrentHashMap] so even runtime dynamic handler
+ * registration is safe — no ConcurrentModificationException or visibility issues.
  */
 object StreamFailHandlerItem {
-    /** bindName -> IStreamFailHandler registry; written during Spring configuration, read during message handling. */
+    /** bindName -> IStreamFailHandler registry; written during Spring configuration, read during message handling. Backed by [ConcurrentHashMap] for lock-free reads. */
     private val STREAM_HANDLER = ConcurrentHashMap<String, IStreamFailHandler>()
 
     /**

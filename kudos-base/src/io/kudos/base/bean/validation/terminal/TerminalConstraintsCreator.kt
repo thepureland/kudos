@@ -9,6 +9,7 @@ import io.kudos.base.lang.reflect.getSuperClass
 import io.kudos.base.lang.reflect.getSuperInterfaces
 import jakarta.validation.Constraint
 import jakarta.validation.Valid
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.full.*
@@ -23,8 +24,13 @@ object TerminalConstraintsCreator {
 
     /**
      * Map(beanClassName-propertyPrefix, Map(propertyName, LinkedHashMap(constraintName, Array(Map(annotationPropertyName, annotationPropertyValue)))))
+     *
+     * Request-level validation hot-path cache ([create] is called for Controller / Service argument
+     * validation), read and written concurrently. Backed by [ConcurrentHashMap] for lock-free reads and
+     * thread-safe writes; [create] uses `computeIfAbsent` to avoid redundant recomputation.
      */
-    private val constrainCacheMap = mutableMapOf<String, Map<String, LinkedHashMap<String, Array<Map<String, Any>>>>>()
+    private val constrainCacheMap =
+        ConcurrentHashMap<String, Map<String, LinkedHashMap<String, Array<Map<String, Any>>>>>()
 
     /**
      * Generates the terminal validation rules for the given bean class.
@@ -40,11 +46,16 @@ object TerminalConstraintsCreator {
         propertyPrefix: String = ""
     ): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
         val cacheKey = "${beanClass.qualifiedName}-$propertyPrefix"
-        constrainCacheMap[cacheKey]?.takeUnless { SystemKit.isDebug() }?.let { return it }
-        val annotations = mutableMapOf<String, MutableList<Annotation>>()
-        parseAnnotations(annotations, beanClass, null)
-        return genRule(annotations, propertyPrefix, beanClass).also {
-            constrainCacheMap[cacheKey] = it
+        // Debug 模式跳缓存（保留原行为：调试期总走重算，便于改注解后立即生效）
+        if (SystemKit.isDebug()) {
+            val annotations = mutableMapOf<String, MutableList<Annotation>>()
+            parseAnnotations(annotations, beanClass, null)
+            return genRule(annotations, propertyPrefix, beanClass).also { constrainCacheMap[cacheKey] = it }
+        }
+        return constrainCacheMap.computeIfAbsent(cacheKey) {
+            val annotations = mutableMapOf<String, MutableList<Annotation>>()
+            parseAnnotations(annotations, beanClass, null)
+            genRule(annotations, propertyPrefix, beanClass)
         }
     }
 
