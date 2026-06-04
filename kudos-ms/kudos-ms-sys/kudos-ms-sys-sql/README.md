@@ -71,3 +71,18 @@ resources/sql/sys/h2/
 - **平台级数据**（`tenant_id` 为 NULL）唯一约束需使用 `nulls not distinct`（参见 V1.0.0.21）；普通 `UNIQUE` 在多数 RDB 上视 NULL 互不相等，会让平台级行重复插入而不报错。
 - **缓存依赖的 seed 数据**：新增以 `*Cache` 在启动期 `doReload` 的表时，配套提交 `seed_*` 迁移，避免空库时缓存为 null 引起 NPE。
 - **外键 / 高频过滤列必须建索引**：参考 V1.0.0.20。Ktorm 不会自动建索引；缺索引在多租户大表上会快速劣化。
+
+## 已知限制 / 后续工作
+
+- ❗ **仅 h2 方言落地** — `resources/sql/sys/h2/` 是唯一目录；切到 MySQL / PG 时
+  `nulls not distinct` / `comment on column` / 视图 DDL 需要重写
+- ❗ **种子缓存数据为单租户兜底** — `V1.0.0.24` / `V1.0.0.25` seed 行只保证 `tenant_id=null`
+  的平台级缓存可用；新建租户时缓存为空需业务方手动 reload，否则首次访问 NPE 风险
+- ❗ **视图依赖宿主 RDB 特性** — `v_sys_dict_item` / `v_sys_access_rule_ip` 用了 RDB
+  视图语法；某些云数据库 / TiDB / OceanBase 视图行为有差异，迁移需验证
+- ❗ **缺 `R_*_*` repeatable 脚本约定** — 当前全是 V_*；字典 seed / 视图等理想上应改 R_*
+  便于反复 apply
+- ❗ **跨方言 baseline 不一致** — 一旦切到非 h2，前 19 个 V_* 都需逐个适配；目前没有自动化
+  方言转换工具
+- ❗ **DDL 与 Ktorm 表对应靠命名约定** — `Sys<Foo>Table` ↔ `V_X__init_sys_<foo>.sql`
+  没有任何编译期 / 测试期校验；新增表时漏对应一边会运行期 404

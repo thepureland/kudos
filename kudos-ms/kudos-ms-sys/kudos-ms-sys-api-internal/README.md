@@ -132,3 +132,18 @@ kudos-ms-sys-api-internal
 - **新增模块**：在 `controller/<新模块>/` 下新建 `Sys*InternalController`，并保证 `core` 中已有对应 `Sys*Api` Bean 注入。`@ComponentScan` 已覆盖整个 `controller` 子树，不需要改装配。
 - **Pair / 不可序列化类型**：尽量避免；如必须使用，按 `SysDictInternalController` 模式提供 HTTP 适配端点，并在 `client` 侧的 fallback / proxy 帮助类（`dict/support/FeignDictItemCodeFinder`）里封装调用。
 - **本地开发不需要 Nacos**：可改用 `api-public + api-admin` 组合（参考各模块 README）；但客户端走 Feign 时仍需 internal 控制器，最低限度需要本模块。
+
+## 已知限制 / 后续工作
+
+- ❗ **`ISysCacheApi` 空接口导致 `SysCacheInternalController` 不存在** — common 中已有
+  `@FeignClient(name="sys-cache")` 装配，但没有真实 HTTP 端点；任何调用都会走 fallback
+- ❗ **Pair 适配端点的 key 拼接用单字符 `|`** — 入参字段含 `|` 时会拼出错误的 key；
+  long-term 应改 URL-safe 编码或换 JSON body
+- ❗ **本模块强依赖 Nacos** — 通过 `discovery-nacos` + `config-nacos` 引入；本地开发无 Nacos
+  时无法直接 bootRun，需切到 `api-admin`
+- ❗ **interservice cache provider 装配未声明能力开关** — 业务方不需要跨服务缓存协议时
+  也会被动引入相关 bean；缺少 `@ConditionalOnProperty` 让它可选
+- ❗ **18 个控制器没有任何监控埋点** — 调用次数 / 失败率 / 延迟仅靠 `actuator/metrics` 通用埋点；
+  Feign 客户端那侧的 fallback 与服务端这侧的失败不直接关联
+- ❗ **缺少端点白名单/黑名单机制** — 集群内 RPC 端点无法选择性禁用某些方法；想"灰度禁用 sys
+  对外的某个能力"需要改源码

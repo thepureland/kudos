@@ -74,6 +74,15 @@ class MixHashCacheManager {
         }
     }
 
+    /**
+     * 取 [CacheConfig] 上配置的策略；未配置时默认 REMOTE（与 KV 缓存默认 LOCAL_REMOTE 不同——
+     * hash 缓存数据量通常较大，全量本地化容易爆内存，所以默认只走远端）。
+     *
+     * @param config 缓存配置
+     * @return 解析后的策略
+     * @author K
+     * @since 1.0.0
+     */
     private fun parseStrategy(config: CacheConfig): CacheStrategy = config.resolvedStrategy ?: CacheStrategy.REMOTE
 
     fun getHashCache(cacheName: String): IHashCache? {

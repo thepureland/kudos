@@ -45,3 +45,17 @@ main 类，可独立 `bootRun`，专门跑管理端 HTTP（与 `api-public` / `a
 > 当前 build 中**没有其他模块依赖 `kudos-ms-user-api-admin`**——它既不向 `api-public`
 > 也不向 `api-internal` 提供 controller bean。如需把管理 API 与用户 / 内部 API
 > 合并到同一进程，应在对应模块的 `build.gradle.kts` 显式 `api(project(...))` 拉入。
+
+## 已知限制 / 后续工作
+
+- ❗ **控制器无 `@PreAuthorize`** — 路由 `/api/admin/user/...` 鉴权完全依赖上游网关 +
+  `kudos-ms-auth` 的 `UserContextWebFilter`；网关漏配会让账户 CRUD 等敏感操作直接暴露
+- ❗ **`Passport` 没有 admin 路径** — 改他人密码、强制下线等"特权登录态操作"目前需直接调
+  `IUserAccountService.changePassword`，绕过 `IPassportApi` 的状态机；缺少专用的 admin
+  passport API，操作语义不够明确
+- ❗ **批量操作缺幂等控制** — `batchDelete` / `batchActivate` 等没有 idempotencyKey；
+  重试可能导致重复审计 / 缓存抖动
+- ❗ **没有审计字段过滤** — controller 返回的 `*Detail` 直接暴露 `login_password` / `authentication_key`
+  之类哈希字段（虽然 service 层应已脱敏，但缺少 controller 层守卫；脱敏遗漏会泄露敏感数据）
+- ❗ **未与 `api-public` / `api-internal` 联合部署** — 当前是独立进程；若运维想"三合一"部署
+  减少端口数，需要业务方在 build.gradle.kts 主动聚合并手动协调 controller 路径冲突

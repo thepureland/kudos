@@ -184,6 +184,21 @@ class StreamProducerHelper {
         }
     }
 
+    /**
+     * 把业务数据包装成 Spring [Message]：headers 来自 [StreamHeader.initHeader] 默认值
+     * + [StreamHeader.SCST_BIND_NAME] 标记当前 binding 名。
+     *
+     * SCST_BIND_NAME 是给全局异常处理器（`StreamGlobalExceptionHandler`）定位故障 binding 用的——
+     * 缺失这个 header 异常持久化会找不到对应的 fail handler。
+     *
+     * @param T payload 类型
+     * @param bindingName Stream binding 名（与 yml 中 bindings.{name}.destination 配套）
+     * @param data 业务数据
+     * @return 包装好的 Message
+     * @throws IllegalArgumentException bindingName 未在 properties 中配置
+     * @author K
+     * @since 1.0.0
+     */
     @Suppress("UNCHECKED_CAST")
     private fun <T> createMessage(bindingName: String, data: T): Message<StreamMessageVo<T>> {
         val destination = requireNotNull(properties.bindings[bindingName]) { "Stream binding not configured: $bindingName" }.destination

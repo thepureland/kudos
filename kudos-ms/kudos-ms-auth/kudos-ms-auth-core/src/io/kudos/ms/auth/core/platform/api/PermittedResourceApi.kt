@@ -36,6 +36,17 @@ open class PermittedResourceApi : IPermittedResource {
         return buildMenuTree(permitted)
     }
 
+    /**
+     * 把"用户被授权的菜单资源列表"装配成树。
+     *
+     * 关键设计：当父节点不在授权集合中（被裁掉了），该菜单**挂为根**而不是丢弃——
+     * 避免"用户有子菜单权限但因父被裁出现悬空层级"导致整支菜单消失。
+     *
+     * @param resources 用户授权的资源列表（已通过 ResourceTypeEnum.MENU 过滤）
+     * @return 菜单根节点列表
+     * @author K
+     * @since 1.0.0
+     */
     private fun buildMenuTree(resources: List<SysResourceCacheEntry>): List<MenuTreeNode> {
         val idSet = resources.mapTo(HashSet()) { it.id }
         val nodeMap = resources.associate { it.id to it.toNode() }
@@ -53,6 +64,13 @@ open class PermittedResourceApi : IPermittedResource {
         return roots
     }
 
+    /**
+     * 把缓存条目 [SysResourceCacheEntry] 映射成 [MenuTreeNode]——仅复制菜单展示需要的几个字段。
+     *
+     * @return 菜单节点（children 由 [buildMenuTree] 后续挂载）
+     * @author K
+     * @since 1.0.0
+     */
     private fun SysResourceCacheEntry.toNode(): MenuTreeNode = MenuTreeNode().also { node ->
         node.id = id
         node.title = name

@@ -73,6 +73,17 @@ class DefaultCacheConfigProvider(itemsProperties: CacheItemsProperties) : ICache
         }
     }
 
+    /**
+     * 解析"key=val&key=val"形式的配置串为 [CacheConfig]，给 yml 配置里把缓存项写成单行 query-string 用。
+     *
+     * 默认值：`writeOnBoot=false` / `active=true`（开缓存但不预热），由 [BeanKit.setProperty] 按 key
+     * 反射 setter 覆盖。
+     *
+     * @param cacheItem 形如 `name=foo&strategy=LOCAL_REMOTE&ttl=600` 的配置串
+     * @return 解析好的 [CacheConfig]
+     * @author K
+     * @since 1.0.0
+     */
     private fun cacheItemToConfig(cacheItem: String): CacheConfig {
         val config = CacheConfig().apply {
             writeOnBoot = false

@@ -96,3 +96,16 @@ FormUpdate / Query），关系型 VO（`AuthRoleUserDetail` / `AuthRoleResourceD
   并在 `auth-client` / `auth-api-internal` 同步加 Proxy / Controller。
 - 保持本模块**无数据库类型与 Spring 运行期注解**——除已存在的方法级路由 `compileOnly`
   外，不应引入 `@Component` / `@Service` / Jackson 配置等。
+
+## 已知限制 / 后续工作
+
+- ❗ **`group` 域无对外契约** — `IAuthGroupApi` 未定义，跨服务想读"用户所在组"必须走 admin HTTP
+  或自建 Proxy；建议按 role 模式补全契约
+- ❗ **`spring-web` 注解依赖 compileOnly** — 业务方把本模块用作纯 SDK（不依赖 spring-web）时，
+  `IAuth*Api` 上的 `@*Mapping` 反射元数据不可见，Feign 拼路径会失败
+- ❗ **依赖 `kudos-ms-user-common`** — `UserAccountCacheEntry` 用作"角色 → 用户"展示载体；
+  user-common 改字段会编译期串到 auth-common 所有调用方
+- ❗ **`*CacheEntry` 与 core 的多级缓存类型耦合** — common 直接持有 `*CacheEntry`，但实际产生
+  这些条目的是 core 的 hash cache；core 改 entry 字段时 common 必须同步，破坏分层
+- ❗ **方法级路由约定无静态检查** — 任何人在 `IAuth*Api` 类型上加 `@RequestMapping` 不会被发现，
+  会让 Feign 拼路径出错

@@ -105,6 +105,18 @@ class BaseLog : Serializable {
         initModule(audit.subSysCode)
     }
 
+    /**
+     * 解析 module 元数据（moduleId + moduleName）并写到本 [BaseLog]。
+     *
+     * 多 [ISysAuditModule] 实现按"链式"解析：遍历直到分别解出 id 和 name；
+     * 单实现场景 first 即命中；多实现场景允许业务按子系统拆分注册不同的解析器。
+     *
+     * subsysCode 为空时回退到当前请求的 `KudosContextHolder.subSystemCode`。
+     *
+     * @param subsysCode 子系统编码；空字符串时走 context 回退
+     * @author K
+     * @since 1.0.0
+     */
     private fun initModule(subsysCode: String) {
         val beansOfType = SpringKit.getBeansOfType<ISysAuditModule>()
         if (beansOfType.isEmpty()) return

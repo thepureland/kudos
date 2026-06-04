@@ -78,3 +78,18 @@ resources/sql/auth/h2/
   DO NOTHING` 或先 `DELETE` 再 `INSERT`），否则多次 Flyway 验签会失败。
 - **视图（`v_*`）与业务查询强相关**：本模块当前无视图；若后续加，需同步 `core` 的 DAO /
   实体与 `common` 的 VO。
+
+## 已知限制 / 后续工作
+
+- ❗ **仅 H2 方言** — `resources/sql/auth/h2/` 是唯一目录；MySQL / PG 移植需要业务方手动复制 +
+  按方言差异适配
+- ❗ **跨服务种子未做幂等保护** — `V1.0.0.0~V1.0.0.6` 向 `sys_*` 表 INSERT 时如果重新 baseline，
+  Flyway 校验会跳过但 INSERT 不会重做；多次部署到不同库时容易因为种子 id 冲突翻车
+- ❗ **`auth_group.path` 字符串祖先链未做长度上限** — 组层级超深时 `path` 列可能超出 varchar 长度，
+  需在 DDL 上设合理上限并在 service 层校验
+- ❗ **缺少级联删除约束** — 删除角色时 `auth_role_user` / `auth_role_resource` 中的引用不会
+  自动清理；目前靠 service 层先删关联再删主体，绕过 service 会留死数据
+- ❗ **没有索引** — `auth_role_user(role_id)` / `auth_role_resource(role_id)` 等高频过滤列
+  当前缺索引；用户量 / 权限规模上来后查询性能会快速劣化
+- ❗ **缺 `R_*_*` repeatable 脚本** — 当前全是 V_*；系统角色 seed 数据建议改 R_*
+  以支持反复 apply

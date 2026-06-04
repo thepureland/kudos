@@ -108,3 +108,16 @@ class MyBizService(
   再在 **core** 实现，最后在本模块对应业务目录下新增 `proxy/IAuth*Proxy` 与
   `fallback/Auth*Fallback`，保持四者（common / core / client.proxy / client.fallback）一一对应。
 - 不要在本模块写业务逻辑——`client` 是"远端调用对端"的薄包装，所有业务实现都属于 `core`。
+
+## 已知限制 / 后续工作
+
+- ❗ **只有 `IAuthRoleProxy` 一个 Proxy** — `group` 域目前不开 Feign，跨服务读用户组归属
+  必须走 admin HTTP 或自建 Proxy
+- ❗ **`AuthRoleFallback` 缺新方法时编译不报错** — 新增 `IAuthRoleApi` 方法时 fallback 不会被
+  强制 override，漏写会让降级路径走默认抛错
+- ❗ **Fallback 读写语义混杂** — 单个 fallback 类同时处理读 / 写接口的降级；不同语义的方法
+  共享同一类，重构时容易混淆
+- ❗ **熔断阈值默认值无文档** — `auth-role` Feign name 的熔断 / 超时配置依赖
+  `kudos-ability-distributed-client-feign` 的全局配置，没有给业务方提供"默认值是什么"的速查
+- ❗ **fallback 不区分 4xx vs 5xx** — 业务侧拿到 fallback 返回值时分不清是"对端拒绝"还是
+  "对端不可达"；监控埋点需在 `AbstractFeignFallbackSupport` 内统一

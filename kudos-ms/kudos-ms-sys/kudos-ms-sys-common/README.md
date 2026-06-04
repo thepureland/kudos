@@ -101,3 +101,18 @@
 - 新增契约：在对应业务模块下增加或扩展 **`api` / `vo` / `enums`**；若确属横切能力，再考虑放入 **`platform`**。
 - 保持本模块**无数据库类型**、无 ORM / Ktorm 依赖。`api` 接口仅依赖 `kudos-context`、Spring Web 注解与少量基础类型。
 - 新增 `ISys*Api` 方法时，**必须** 标注 `@GetMapping` / `@PostMapping("/api/internal/sys/<module>/<methodName>")` —— `api-internal` 控制器仅依靠这些注解暴露 HTTP，Feign 客户端也依靠它们路由。漏标的方法在 `client` 一侧会直接 404。
+
+## 已知限制 / 后续工作
+
+- ❗ **`ISysCacheApi` 是空接口** — 占位契约，没有任何方法；保留只为让 `Sys*Proxy` / `Sys*Fallback`
+  装配合法。若未来要让其他微服务读缓存配置元数据，需先在此处添加方法
+- ❗ **方法级路由约定无静态检查** — 任何人在 `ISys*Api` 类型上加 `@RequestMapping` 不会被发现，
+  会让 Feign 拼路径出错
+- ❗ **`SysDictTypes` 启动期校验副作用** — 由 `core.dict.support.SysDictTypesStartupValidator`
+  在启动时校验真实存在；common 模块的常量改动需要等 core 启动才发现失效
+- ❗ **`Pair` 不能作为 Feign 入参** — 部分批量端点的入参用了 Kotlin `Pair`，Jackson 序列化后
+  无法在远端还原；解决方案在 `api-internal` 侧另开 `List<List<String>>` 适配端点（详见 `api-internal` README）
+- ❗ **`SysConsts` 常量硬编码** — `ATOMIC_SERVICE_NAME` / `DEFAULT_SUB_SYSTEM_CODE` 等没有
+  配置式接入点；业务定制需全工程 grep 替换
+- ❗ **跨服务 VO 改动无版本控制** — auth / msg / user 直接源码依赖 sys-common；不兼容的 VO 改动
+  必须全工程编译跑通才能发现
