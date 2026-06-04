@@ -80,6 +80,18 @@ open class RdbKtormAuditService : IAuditService {
         }
     }
 
+    /**
+     * 把 [SysAuditLogVo] 各字段写入 ktorm batch insert 的 [AssignmentsBuilder]。
+     *
+     * `tenantId` / `subSysCode` 两个字段优先取 entity 自带值；为空时回退到 [SysAuditLogModel] 上下文级别的值——
+     * 兼容业务侧只在 model 级标注 tenant/subSys 的简写场景。
+     *
+     * @param item ktorm 赋值构造器
+     * @param entity 单条审计记录
+     * @param model 整批审计模型（提供上下文 tenant / subSys 回退）
+     * @author K
+     * @since 1.0.0
+     */
     private fun applyAuditLog(
         item: org.ktorm.dsl.AssignmentsBuilder,
         entity: SysAuditLogVo,
@@ -109,6 +121,15 @@ open class RdbKtormAuditService : IAuditService {
         }
     }
 
+    /**
+     * 把 [SysAuditDetailLogVo] 各字段写入 ktorm batch insert 的 [AssignmentsBuilder]。
+     * 与 [applyAuditLog] 分开是因为审计详情和主审计是两张表，sub-insert 走不同 builder。
+     *
+     * @param item ktorm 赋值构造器
+     * @param detail 单条详情记录
+     * @author K
+     * @since 1.0.0
+     */
     private fun applyDetailLog(
         item: org.ktorm.dsl.AssignmentsBuilder,
         detail: SysAuditDetailLogVo,

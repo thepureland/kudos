@@ -61,3 +61,14 @@ kudos-ms-sys-api-public
 
 - 若需「纯 Web 网关入口」专用配置（如 CORS、全局 filter、统一异常处理装配），可放在 `io.kudos.ms.sys.api.public` 下并由本模块扫描；**业务接口仍建议放在 api-admin / api-internal**，便于权限与路由前缀统一。
 - **不要在本模块加业务 Controller**——一旦 public 自带控制器，"public + admin" 与 "public + internal" 的组合就会暴露不一致的端点集，破坏路径双轨制（`/api/admin/**` vs `/api/internal/**`）的清晰边界。
+
+## 已知限制 / 后续工作
+
+- ❗ **本模块无业务路径，单独跑无意义** — `SysApiWebApplication` 启动后仅装配 Web 栈 + actuator，
+  不挂任何 controller；除做"启动验证" / "本地空容器复现 bug"之外没有生产用途
+- ❗ **`@ComponentScan("io.kudos.ms.sys.api.public")` 覆盖范围窄** — 包内目前仅 `init`，
+  未来加任何业务 controller 都会破坏与 `api-admin` / `api-internal` 的端点边界
+- ❗ **健康检查端点未在本模块明确装配** — actuator 是否暴露取决于 classpath 上是否有
+  `spring-boot-starter-actuator`；本模块 build 未显式声明，靠传递依赖兜底
+- ❗ **缺少独立 dev profile** — 三个 api-* 共用同一份 `application.yml`，本地切到本模块跑时
+  无法快速切配置，需要业务方自建 profile

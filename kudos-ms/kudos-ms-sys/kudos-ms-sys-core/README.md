@@ -38,7 +38,7 @@
 
 | 子包 | 内容 |
 |------|------|
-| `platform.init` | **`SysAutoConfiguration`**：`@Configuration` + `@ComponentScan("io.kudos.ms.sys.core")`，`@AutoConfigureAfter(KtormAutoConfiguration::class)`；实现 `IComponentInitializer`，组件名 `kudos-ms-sys-core`，参与 Kudos 启动编排（不依赖 Spring Boot 原生 `META-INF/spring.factories`）。详见 [project_autoconfig_spi](../../../.claude/memory/project_autoconfig_spi.md) 描述的 IComponentInitializer 机制。 |
+| `platform.init` | **`SysAutoConfiguration`**：`@Configuration` + `@ComponentScan("io.kudos.ms.sys.core")`，`@AutoConfigureAfter(KtormAutoConfiguration::class)`；实现 [`IComponentInitializer`](../../../kudos-context/src/io/kudos/context/init/IComponentInitializer.kt)，组件名 `kudos-ms-sys-core`，参与 Kudos 启动编排（[`ComponentInitializationDispatcher`](../../../kudos-context/src/io/kudos/context/init/ComponentInitializationDispatcher.kt) 收集所有实现并按 `@AutoConfigureBefore/After` 拓扑排序后逐个调 `initialize()`，**不**依赖 Spring Boot 原生 `META-INF/spring.factories`）。 |
 | `platform.cache` | **`CacheConfigProvider`**：领域缓存的容量 / TTL 集中配置入口。 |
 | `platform.service.impl` | **`CrudLogSyncSupport`** 等横切工具：审计日志钩子，被各业务 Service 选择性调用。 |
 

@@ -400,6 +400,22 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
 
     //endregion Delete
 
+    /**
+     * 按主键 + 可选 [Criteria] 更新指定属性。
+     *
+     * 设计细节：
+     * - id 必须非空（更新一定要锁定行），propertyMap 中的 id 字段会被显式跳过避免误改主键
+     * - criteria 用于在 id 上加额外约束（乐观锁场景：where id = ? AND version = ?）
+     * - 返回是否恰好更新 1 行；> 1 不会发生（id 是主键），< 1 通常是 criteria 不匹配
+     *
+     * @param id 主键值
+     * @param propertyMap 待更新的属性 map
+     * @param criteria 附加 where 条件
+     * @return 是否更新成功
+     * @throws IllegalArgumentException id 为 null
+     * @author K
+     * @since 1.0.0
+     */
     private fun updateByCriteria(id: PK?, propertyMap: Map<String, *>, criteria: Criteria?): Boolean {
         require(id != null) { "Database entity primary key must not be null on update operations!" }
         val props = propertyMap.toMutableMap()
@@ -419,6 +435,24 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         } == 1
     }
 
+    /**
+     * 批量更新实体集合，按 [countOfEachBatch] 切片走 ktorm `batchUpdate`，减少单事务过长的风险。
+     *
+     * - `propertyNames` + `exclude` 一起决定"包含"/"排除"哪些列：
+     *   - `exclude=false`：只更新 propertyNames 列出的字段（白名单）
+     *   - `exclude=true`：propertyNames 列出的字段不更新（黑名单）
+     * - id 永远不会被更新（即便误传入 propertyNames）
+     *
+     * @param entities 待更新实体集合（不能为空）
+     * @param countOfEachBatch 每批大小，控制单 SQL 的 IN list 长度
+     * @param criteria 附加 where 条件（每个实体共享同一条）
+     * @param exclude 是否把 propertyNames 当排除列表
+     * @param propertyNames 列名数组；空数组配合 exclude=false 表示更新所有非 id 列
+     * @return 实际更新的总行数
+     * @throws IllegalArgumentException entities 为空集合
+     * @author K
+     * @since 1.0.0
+     */
     private fun batchUpdateByCriteria(
         entities: Collection<E>,
         countOfEachBatch: Int,

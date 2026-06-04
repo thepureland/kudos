@@ -60,6 +60,15 @@ open class MsgTemplateRenderer {
         )
     }
 
+    /**
+     * 自动注入到模板上下文的时间相关变量：业务模板写 `{time}` / `{date}` / `{year}` 等即可使用。
+     * 月日 padStart 到 2 位（'09' 而非 '9'），避免业务侧需要再做 zero-pad。
+     *
+     * @param now 当前时间
+     * @return time/date/year/month/day 五个变量的 map
+     * @author K
+     * @since 1.0.0
+     */
     private fun autoParams(now: LocalDateTime): Map<String, Any> {
         return mapOf(
             "time" to now.format(TIME_FMT),

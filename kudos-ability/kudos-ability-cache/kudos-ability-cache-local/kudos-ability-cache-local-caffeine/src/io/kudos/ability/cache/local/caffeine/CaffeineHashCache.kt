@@ -275,6 +275,20 @@ class CaffeineHashCache(
         return entities.drop(offset).take(pSize)
     }
 
+    /**
+     * 在内存里判定单个 entity 是否满足 [Criteria]——本地缓存没有 SQL where 引擎，只能 in-memory eval。
+     *
+     * Criteria 组之间是 AND 关系（任一组不匹配即整体 false）；组内类型：
+     * - 单条 [Criterion]：调 [matchesCriterion]
+     * - Array：OR 组，任一元素匹配即视为该组通过
+     * - 嵌套 [Criteria]：递归
+     *
+     * @param entity 待匹配实体
+     * @param criteria 查询条件
+     * @return 是否匹配
+     * @author K
+     * @since 1.0.0
+     */
     private fun matchesCriteria(entity: Any, criteria: Criteria): Boolean {
         for (group in criteria.getCriterionGroups()) {
             when (group) {
@@ -286,6 +300,23 @@ class CaffeineHashCache(
         return true
     }
 
+    /**
+     * 在内存里判定 entity 是否满足单个 [Criterion]。
+     *
+     * 操作符分流：
+     * - EQ / IN：toString 比对（兼容字符串化 id）
+     * - GT/GE/LT/LE：toDouble 比对（数值字段）
+     * - 其余：退化到 EQ
+     *
+     * null 处理：actual 或 expected 任一为 null 时返回 `c.operator.acceptNull`，
+     * 与 SQL IS NULL / IS NOT NULL 语义对齐。
+     *
+     * @param entity 待匹配实体
+     * @param c 单个条件
+     * @return 是否匹配
+     * @author K
+     * @since 1.0.0
+     */
     private fun matchesCriterion(entity: Any, c: Criterion): Boolean {
         val actual = getPropertyValue(entity, c.property) ?: return c.operator.acceptNull
         val expected = c.value ?: return c.operator.acceptNull
