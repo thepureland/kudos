@@ -5,11 +5,9 @@ import kotlin.test.*
 /**
  * test for DefaultKeysGenerator
  *
- * Covers the unambiguous key-composition rules (scalar params, a single collection/array param,
- * the "::" delimiter, key count = product of element counts). The multi-collection cartesian
- * expansion described in the class KDoc is intentionally not asserted here: the current
- * implementation aligns expanded params position-by-position rather than producing a true
- * cartesian product, which is a known divergence from the doc.
+ * Covers positional-zip key composition: scalar params repeated across all keys, collection/array
+ * params consumed element-by-element, the "::" delimiter, key count = the common collection length,
+ * and the equal-length requirement on participating collection/array params.
  *
  * @author K
  * @since 1.0.0
@@ -57,5 +55,30 @@ internal class DefaultKeysGeneratorTest {
         assertFailsWith<IllegalStateException> {
             generator.generate(null, null, intArrayOf(1, 2, 3))
         }
+    }
+
+    @Test
+    fun equalLengthCollectionsAreZippedPositionally() {
+        // positional zip: i-th key = i-th element of each collection (NOT a cartesian product)
+        val keys = generator.generate(null, null, listOf("a", "b"), arrayOf("c", "d"))
+        assertEquals(listOf("a::c", "b::d"), keys)
+    }
+
+    @Test
+    fun scalarIsRepeatedAcrossZippedCollections() {
+        val keys = generator.generate(null, null, "1", listOf("a", "b", "c"), arrayOf("x", "y", "z"))
+        assertEquals(listOf("1::a::x", "1::b::y", "1::c::z"), keys)
+    }
+
+    @Test
+    fun mismatchedCollectionLengthsAreRejected() {
+        assertFailsWith<IllegalStateException> {
+            generator.generate(null, null, listOf("a", "b"), arrayOf("c", "d", "e"))
+        }
+    }
+
+    @Test
+    fun emptyCollectionProducesNoKeys() {
+        assertTrue(generator.generate(null, null, "1", emptyList<String>()).isEmpty())
     }
 }
