@@ -30,12 +30,12 @@ merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_nu
     ('69018bce-68b0-486d-a966-bdd5ca70b263', '1c147a5b-0543-497d-bcae-221aec84256c', '22', 'send_status.22', 5, '最终发送失败', true),
     ('e6a86d53-0edb-4cce-819c-76268ffc177b', '1c147a5b-0543-497d-bcae-221aec84256c', '31', 'send_status.31', 6, '已从消息队列消费', true),
     ('a8b39fc9-e82b-44d2-b607-03296caa7880', '1c147a5b-0543-497d-bcae-221aec84256c', '32', 'send_status.32', 7, '发送完成，但是部分用户发送失败', true),
-    ('0e26e39f-fc29-47d1-bad7-4a6c66878900', '1c147a5b-0543-497d-bcae-221aec84256c', '33', 'send_status.33', 8, '发送成功', true),
+    ('0e26e39f-fc29-47d1-bad7-4a6c66878900', '1c147a5b-0543-497d-bcae-221aec84256c', '33', 'send_status.33', 8, '发送成功', true);
 
 -- tmpl_type
 merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values
     ('64bd32cf-5593-48a5-babb-48736fa6378e', '331dd7f9-77b7-49af-87d0-a1d7046bfb20', 'auto', 'tmpl_type.auto', 1, '自动通知模板', true),
-    ('6376df77-effb-47ab-ad69-a9956d798324', '331dd7f9-77b7-49af-87d0-a1d7046bfb20', 'manual', 'tmpl_type.manual', 2, '手工信息模板', true),
+    ('6376df77-effb-47ab-ad69-a9956d798324', '331dd7f9-77b7-49af-87d0-a1d7046bfb20', 'manual', 'tmpl_type.manual', 2, '手工信息模板', true);
 
 -- receive_status
 merge into "sys_dict_item" ("id", "dict_id", "item_code", "item_name", "order_num", "remark", "built_in") values
