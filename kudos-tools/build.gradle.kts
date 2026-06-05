@@ -5,6 +5,8 @@ dependencies {
 
     implementation(libs.freemarker)
     implementation(libs.h2database.h2)
+
+    testImplementation(libs.kotlin.test.junit5)
 }
 
 
