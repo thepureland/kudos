@@ -13,7 +13,7 @@ create table if not exists "msg_receiver_group" (
       "create_time"         timestamp(6),
       "update_user_id"      character varying(36),
       "update_user_name"    character varying(32),
-      "update_time"         timestamp(6),
+      "update_time"         timestamp(6)
 );
 
 create unique index "uq_msg_receiver_group__type_code"
