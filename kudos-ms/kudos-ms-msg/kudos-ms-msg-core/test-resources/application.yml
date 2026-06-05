@@ -1,0 +1,50 @@
+spring:
+  datasource:
+    dynamic:
+      primary: tcp-ds1
+      hikari:
+        connection-timeout: 30000
+        validation-timeout: 5000
+        idle-timeout: 600000
+        leak-detection-threshold: 0
+        max-lifetime: 1800000
+        max-pool-size: 10
+        min-idle: 10
+        initialization-fail-timeout: 1
+        is-auto-commit: false
+        is-read-only: false
+        is-isolate-internal-queries: false
+        is-register-mbeans: false
+        is-allow-pool-suspension: false
+      datasource:
+        master:
+          hikari:
+            is-auto-commit: false
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:~/h2/ds-master;DATABASE_TO_LOWER=TRUE;
+          username: sa
+          password: sa
+        tcp-ds1:
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
+          username: sa
+          password: sa
+
+
+kudos:
+  ability:
+    flyway:
+      # datasource-config format: {datasource-key: [module-names]}
+      # All modules target the same tcp-ds1 H2 datasource.
+      # Execution order: sys first (creates sys_cache / sys_dict and other sys tables that the
+      # msg module's `merge into "sys_*"` seed scripts depend on), then user (user tables that
+      # msg-core's dependency on user-core may touch), then msg (creates msg tables + seeds).
+      datasource-config:
+        tcp-ds1: sys,user,msg
+      execution-order:
+        - tcp-ds1
+
+
+logging:
+  level:
+    org.springframework.core.io.support.SpringFactoriesLoader: DEBUG
