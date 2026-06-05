@@ -47,7 +47,7 @@ open class PermittedResourceApi : IPermittedResource {
      * @author K
      * @since 1.0.0
      */
-    private fun buildMenuTree(resources: List<SysResourceCacheEntry>): List<MenuTreeNode> {
+    internal fun buildMenuTree(resources: List<SysResourceCacheEntry>): List<MenuTreeNode> {
         val idSet = resources.mapTo(HashSet()) { it.id }
         val nodeMap = resources.associate { it.id to it.toNode() }
         val roots = mutableListOf<MenuTreeNode>()

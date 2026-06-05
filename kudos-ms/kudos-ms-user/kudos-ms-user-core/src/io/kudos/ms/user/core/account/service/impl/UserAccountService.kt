@@ -260,21 +260,26 @@ open class UserAccountService(
         return GoogleAuthenticator().checkCode(key, code, System.currentTimeMillis())
     }
 
-    /**
-     * Build the label segment of the `otpauth://` URI per RFC 6238 / Google Authenticator conventions.
-     *
-     * Format: URL-encode the whole `issuer:accountName` -- the colon becomes `%3A` after encoding,
-     * which matches what the GA app expects. If issuer or accountName contains spaces / special characters
-     * (common with non-ASCII usernames), failing to encode would corrupt the entire URI.
-     *
-     * @param issuer application identifier (usually the product name)
-     * @param accountName account name (user login name / email)
-     * @return the encoded label segment
-     * @author K
-     * @since 1.0.0
-     */
-    private fun encodeOtpAuthLabel(issuer: String, accountName: String): String =
-        java.net.URLEncoder.encode("$issuer:$accountName", Charsets.UTF_8)
+    companion object {
+
+        /**
+         * Build the label segment of the `otpauth://` URI per RFC 6238 / Google Authenticator conventions.
+         *
+         * Format: URL-encode the whole `issuer:accountName` -- the colon becomes `%3A` after encoding,
+         * which matches what the GA app expects. If issuer or accountName contains spaces / special characters
+         * (common with non-ASCII usernames), failing to encode would corrupt the entire URI.
+         *
+         * Pure function and `internal` so the encoding can be unit-tested directly without a Spring context.
+         *
+         * @param issuer application identifier (usually the product name)
+         * @param accountName account name (user login name / email)
+         * @return the encoded label segment
+         * @author K
+         * @since 1.0.0
+         */
+        internal fun encodeOtpAuthLabel(issuer: String, accountName: String): String =
+            java.net.URLEncoder.encode("$issuer:$accountName", Charsets.UTF_8)
+    }
 
     @Transactional
     override fun freezeAccount(

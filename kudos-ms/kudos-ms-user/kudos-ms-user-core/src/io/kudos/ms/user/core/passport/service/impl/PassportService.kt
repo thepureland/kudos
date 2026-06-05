@@ -154,22 +154,28 @@ open class PassportService(
         return ChangePasswordResultEnum.SUCCESS
     }
 
-    /**
-     * Whether the current moment falls within the freeze effective window.
-     *
-     * - freezeType is null/empty -> no freeze record, always false.
-     * - freezeStartTime is null -> treated as "immediately effective", the lower bound is always satisfied.
-     * - freezeEndTime is null -> treated as "permanently frozen", the upper bound is always satisfied.
-     */
-    private fun isCurrentlyFrozen(
-        freezeType: String?,
-        freezeStartTime: LocalDateTime?,
-        freezeEndTime: LocalDateTime?,
-    ): Boolean {
-        if (freezeType.isNullOrBlank()) return false
-        val now = LocalDateTime.now()
-        val afterStart = freezeStartTime == null || !now.isBefore(freezeStartTime)
-        val beforeEnd = freezeEndTime == null || now.isBefore(freezeEndTime)
-        return afterStart && beforeEnd
+    companion object {
+
+        /**
+         * Whether the current moment falls within the freeze effective window.
+         *
+         * - freezeType is null/empty -> no freeze record, always false.
+         * - freezeStartTime is null -> treated as "immediately effective", the lower bound is always satisfied.
+         * - freezeEndTime is null -> treated as "permanently frozen", the upper bound is always satisfied.
+         *
+         * Pure function (no instance state) and `internal` so it can be unit-tested directly without
+         * standing up the full login pipeline.
+         */
+        internal fun isCurrentlyFrozen(
+            freezeType: String?,
+            freezeStartTime: LocalDateTime?,
+            freezeEndTime: LocalDateTime?,
+        ): Boolean {
+            if (freezeType.isNullOrBlank()) return false
+            val now = LocalDateTime.now()
+            val afterStart = freezeStartTime == null || !now.isBefore(freezeStartTime)
+            val beforeEnd = freezeEndTime == null || now.isBefore(freezeEndTime)
+            return afterStart && beforeEnd
+        }
     }
 }
