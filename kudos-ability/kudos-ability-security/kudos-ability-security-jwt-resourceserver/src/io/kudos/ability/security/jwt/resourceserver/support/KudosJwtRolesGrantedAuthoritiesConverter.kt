@@ -37,7 +37,7 @@ class KudosJwtRolesGrantedAuthoritiesConverter(
 ) : Converter<Jwt, Collection<GrantedAuthority>> {
 
     override fun convert(source: Jwt): Collection<GrantedAuthority> {
-        val raw = source.getClaim<Any?>(rolesClaim) ?: return emptyList()
+        val raw = source.getClaim<Any>(rolesClaim) ?: return emptyList()
         val tokens: List<String> = when (raw) {
             is Collection<*> -> raw.mapNotNull { it?.toString()?.trim()?.takeIf { s -> s.isNotEmpty() } }
             is String -> raw.split(Regex("\\s+")).filter { it.isNotEmpty() }
