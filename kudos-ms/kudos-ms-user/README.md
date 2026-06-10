@@ -100,3 +100,48 @@
   分散在 `PassportService` + `UserAccountProtectionService`，README 仅提及"状态机"未图示
 - ❗ **组织树 path 列没有触发器维护** — `user_org.path` 为祖先链字符串，靠 service 层手动维护；
   绕过 service 直接 DML 改 parent 不会同步 path，会导致树查询错乱
+
+## 改进建议（自动分析 2026-06-11）
+
+> 本次自动审查已直接修复两处低风险问题：
+> 1. `kudos-ms-user-core/src/io/kudos/ms/user/core/org/cache/UserOrgHashCache.kt` —
+>    `getOrgsByTenantId` 的 `@HashCacheableBySecondary(filterExpressions = ["#tenantId", "#active"])`
+>    引用了不存在的 `#active` 参数，SpEL 求值为 null 导致该方法的缓存**每次调用都被静默绕过**，已改为 `["#tenantId"]`。
+> 2. `kudos-ms-user-api-public/.../PassportPublicController.kt` — 公网 `/qrCode` 端点的 `size`
+>    参数无上限（单请求可申请超大 BufferedImage 造成内存 DoS），已 clamp 到 [64, 1024]。
+>
+> 以下为**不宜直接修改**（涉及 public API 契约 / 需设计决策）的发现，按维度归类：
+
+### 安全性（最高优先级）
+
+- ✅ 已修复（2026-06-11）**密码哈希 / TOTP 秘钥随响应 VO 全链路泄露**：采用"出口脱敏"方案——新增
+  `user-common` 的 `UserAccountCredentialsErasure.kt`（`eraseCredentials()` 拷贝并置空
+  `loginPassword` / `securityPassword` / `authenticationKey` / `sessionKey`），在全部服务边界出口统一调用：
+  ① api-internal `UserAccountInternalController.getUserById/getUsersByIds` 与
+  `UserOrgInternalController.getOrgUsers/getOrgAdmins`；
+  ② api-admin `UserOrgAdminController.getOrgUsers/getOrgAdmins`；
+  ③ api-admin `UserAccountAdminController` 覆写 `pagingSearch/getDetail/getEdit`。
+  登录校验仍走 user-core 进程内缓存 / DAO 直查（未脱敏专用通道），不受影响。VO 类结构未变更（保持跨服务契约兼容），
+  彻底拆分"鉴权专用 VO 与公开资料 VO"仍为后续待办。
+- ✅ 已修复（2026-06-11）**登录失败无锁定阈值**：实现简化版"阈值 + 时间窗口"锁定——
+  `PassportService` 在失败累计达 `kudos.ms.user.passport.login-lock.max-error-times`（默认 5，≤0 关闭）后，
+  复用账号冻结机制以专用冻结类型 `autoLoginLock` 自动冻结
+  `kudos.ms.user.passport.login-lock.lock-minutes`（默认 30，≤0 表示锁定至人工解冻）分钟，
+  期间一律返回 `LOCKED`（含正确密码），登录成功重置计数；`user_account_protection`
+  保护策略表（按用户/租户差异化阈值）的接入仍为待办。
+- ❗ **登录审计未落库**：`user_log_login` 表 + `UserLogLoginService` 完整存在，但 `PassportService.login/logout`
+  不写任何登录日志记录——安全审计（异地登录、爆破检测）无数据来源。
+
+### API 契约 / 分层
+
+- admin / internal / public 三层划分总体清晰合理（public 仅 passport、internal 仅缓存条目读、admin 全量 CRUD）。
+  ~~internal 面返回的 `UserAccountCacheEntry` 让"内部读接口"事实上拥有了"读密码哈希"的权限~~——
+  已于 2026-06-11 通过出口脱敏修复（见上「安全性」第 1 条）。
+- **批量 / 列表接口无分页与数量上限**：`IUserAccountApi.getUserIds(tenantId)`、`IUserAccountService.getUsersByTenantId/getUsersByOrgId`、
+  `UserOrgAdminController.getOrgUsers` 等均为全量返回，租户用户量大时单响应可达数十 MB。建议补 `limit/offset` 或复用 `ListSearchPayload` 分页。
+
+### 测试覆盖
+
+- `kudos-ms-user-core` 覆盖良好（25+ 测试类，passport 状态机全枚举）；但 `api-admin` / `api-public` / `api-internal` /
+  `client` 四个模块 **0 个测试**：`PassportPublicController` 的 session 写入与 logout 失效、`UserContextWebFilter` 的
+  Order 语义、各 Fallback 的安全默认值均无回归保护。建议至少为 public 控制器补 MockMvc 测试。

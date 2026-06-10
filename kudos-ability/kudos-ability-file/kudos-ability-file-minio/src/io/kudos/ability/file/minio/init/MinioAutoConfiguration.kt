@@ -36,11 +36,37 @@ open class MinioAutoConfiguration : IComponentInitializer {
 
     @Bean
     @ConditionalOnMissingBean
-    open fun minioClient(minioProperties: MinioProperties): MinioClient =
-        MinioClient.builder()
-            .endpoint(URI(minioProperties.endpoint).toURL())
-            .credentials(minioProperties.accessKey, minioProperties.secretKey)
+    open fun minioClient(minioProperties: MinioProperties): MinioClient {
+        val accessKey = requireConfigured(minioProperties.accessKey, "$PROPERTY_PREFIX.access-key")
+        val secretKey = requireConfigured(minioProperties.secretKey, "$PROPERTY_PREFIX.secret-key")
+        val endpoint = requireConfigured(minioProperties.endpoint, "$PROPERTY_PREFIX.endpoint")
+        return MinioClient.builder()
+            .endpoint(URI(endpoint).toURL())
+            .credentials(accessKey, secretKey)
             .build()
+    }
+
+    /**
+     * Fails fast when a required MinIO property is missing or blank.
+     *
+     * No default credentials ship with this jar (the bundled yml deliberately leaves
+     * access-key/secret-key unset), so a missing value here means the application forgot
+     * to configure them - better to abort startup with a clear hint than to connect to
+     * MinIO with empty credentials and surface an obscure SDK error.
+     *
+     * @param value the configured value, possibly null or blank
+     * @param propertyName full property name, used in the error message
+     * @return the non-blank value
+     * @throws IllegalStateException when the value is null or blank
+     */
+    internal fun requireConfigured(value: String?, propertyName: String): String {
+        check(!value.isNullOrBlank()) {
+            "MinIO property '$propertyName' is missing or blank. " +
+                    "It has no built-in default and must be configured by the application " +
+                    "(e.g. in application.yml or via an environment variable)."
+        }
+        return value
+    }
 
     @Bean
     @ConditionalOnMissingBean
@@ -69,5 +95,10 @@ open class MinioAutoConfiguration : IComponentInitializer {
     open fun minioClientBuilderFactory() = MinioClientBuilderFactory()
 
     override fun getComponentName() = "kudos-ability-file-minio"
+
+    companion object {
+        /** Configuration prefix for MinIO properties. */
+        const val PROPERTY_PREFIX = "kudos.ability.file.minio"
+    }
 
 }

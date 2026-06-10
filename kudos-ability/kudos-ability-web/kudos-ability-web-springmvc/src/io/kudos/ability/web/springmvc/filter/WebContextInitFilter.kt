@@ -36,10 +36,14 @@ open class WebContextInitFilter : IWebContextInitFilter {
     override fun doFilter(request: ServletRequest, response: ServletResponse, chain: FilterChain) {
         val context = KudosContext()
 
-        // session
-        val session = (request as HttpServletRequest).session
-        session.attributeNames.toList().forEach { name ->
-            context.addSessionAttributes(name to session.getAttribute(name))
+        // session: getSession(false) so a context-copy filter never *creates* sessions —
+        // the no-arg getter would allocate one per anonymous request (and with spring-session,
+        // write it to Redis + emit a Set-Cookie), which is not this filter's business.
+        val httpRequest = request as HttpServletRequest
+        httpRequest.getSession(false)?.let { session ->
+            session.attributeNames.toList().forEach { name ->
+                context.addSessionAttributes(name to session.getAttribute(name))
+            }
         }
 
         // cookie

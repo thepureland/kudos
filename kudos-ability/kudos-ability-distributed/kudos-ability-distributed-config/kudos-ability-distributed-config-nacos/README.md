@@ -143,3 +143,30 @@ api(libs.alibaba.cloud.nacos.config)
 
 testImplementation(project(":kudos-test:kudos-test-container"))
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+- **【功能】缺少"配置热更新 → kudos 侧自动生效"链路**：
+  `src/io/kudos/ability/distributed/config/nacos/NacosConfigDataFinder.kt`
+  只在启动时把 Nacos PropertySource 适配给 `YamlPropertySourceFactory`；配置变更后 kudos 叠加的
+  PropertySource 不会刷新，也没有桥接 Spring 的 `EnvironmentChangeEvent` / `@RefreshScope`。
+  业务要感知变更只能手工 `NacosConfigServiceListener.addListener`。建议提供"变更 → 重建
+  PropertySource → 发布刷新事件"的开箱回调机制。
+- **【安全】`ConfigService` 缓存 key 不含凭证指纹**：
+  `src/io/kudos/ability/distributed/config/nacos/listener/NacosConfigServiceListener.kt`
+  `SERVICE_CACHE` 按 `(serverAddr, namespace)` 分桶（有意不把 password/accessKey 折进 key），
+  但副作用是：同地址同 namespace、**不同凭证**的第二次构造会静默复用第一份连接，第二份凭证被
+  忽略。建议把凭证摘要（如 SHA-256 截断）纳入 key，或检测到凭证不一致时 warn。
+- **【可观测性】解密 hook 无日志且异常会中断整个配置装载**：
+  `src/io/kudos/ability/distributed/config/nacos/NacosConfigDataFinder.kt`
+  `decryptIfNecessary` 中某个 decryptor `decrypt` 抛异常会向上传播、整个 PropertySource 加载失败，
+  且无法定位是哪个 key；解密成功/跳过也无 debug 日志。建议逐 key 捕获并在异常信息中带上
+  属性名（不带值）。
+- **【扩展性】decryptor 只支持 `ServiceLoader`，拿不到 Spring 依赖**：
+  `src/io/kudos/ability/distributed/config/nacos/decrypt/NacosConfigValueDecryptor.kt`
+  ServiceLoader 实例化无法注入容器 bean（典型如 KMS client）。鉴于该 finder 在容器就绪前运行，
+  可考虑支持"静态注册"入口（`NacosConfigDataFinder.registerDecryptor(...)`）作为补充。
+- **【测试】多集群分桶缓存逻辑无单测**：
+  `src/io/kudos/ability/distributed/config/nacos/listener/NacosConfigServiceListener.kt`
+  `CacheKey.of` 的提取逻辑与"同 key 复用、异 key 隔离"语义目前只有 README 描述、无测试锁定
+  （`NacosConfigTest` 走的是单集群集成路径）。

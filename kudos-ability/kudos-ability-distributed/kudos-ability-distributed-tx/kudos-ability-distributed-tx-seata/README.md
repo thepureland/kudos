@@ -138,3 +138,21 @@ testImplementation(libs.spring.boot.starter.web)
 
 Feign + web 是 `compileOnly`——本模块编译时需要 `IFeignRequestContextProcess` / `OncePerRequestFilter`
 类型，但只在条件装配时使用，业务侧需要自己引入完整 web / feign 依赖。
+
+## 改进建议（自动分析 2026-06-11）
+
+- 【功能缺陷】`feign/SeataXidServletFilter.kt`：`OncePerRequestFilter` 默认
+  `shouldNotFilterAsyncDispatch() = true`，Servlet 异步派发（`DeferredResult` / `Callable`）的
+  工作线程不会经过本 filter，异步链路中 `RootContext` 拿不到 XID，分支注册会静默失效。
+  建议在 README 配置示例中明确该限制，或针对异步派发补充 bind 逻辑。
+- 【文档】AT 模式要求业务库存在 `undo_log` 表，但 README 与模块资源都没有提供该表的 DDL
+  或指引（测试里的 `test-resources/sql/postgres/schema.sql` 有，业务侧看不到）；建议在 README
+  补充 undo_log 建表说明或链接 Seata 官方脚本。
+- 【安全性】配置示例中 nacos registry/config 未提及鉴权参数（`username` / `password` /
+  `access-key`）；启用了鉴权的 nacos 环境若缺省会启动失败或匿名接入，建议示例中以环境变量
+  占位补充。
+- 【可观测性】XID 透传链路（出站写 header / 入站 bind）没有任何 debug 日志，跨服务回滚失效
+  时排障只能抓包；建议在 `SeataFeignXidProcessor` / `SeataXidServletFilter` 各加一行 debug 日志。
+- 【可扩展性】`feign/SeataFeignXidProcessor.kt` 仅覆盖 Feign 出站；RestTemplate / WebClient
+  调用方没有对应的 XID 注入实现，跨服务事务只对 Feign 生效——建议在 README 标注边界或预留
+  对应扩展点。

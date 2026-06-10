@@ -13,7 +13,10 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
 import io.ktor.websocket.readText
 
-private val log = LogFactory.getLog(KudosWebSocketRegistry::class)
+/** Private logger-category anchor: this file only contains top-level functions, so a dedicated object keeps log events attributed to the routing component instead of an unrelated class. */
+private object KudosWebSocketRouting
+
+private val log = LogFactory.getLog(KudosWebSocketRouting::class)
 
 /**
  * Ktor `Route` extension that mounts an [IKudosWebSocketHandler] on the WebSocket route at

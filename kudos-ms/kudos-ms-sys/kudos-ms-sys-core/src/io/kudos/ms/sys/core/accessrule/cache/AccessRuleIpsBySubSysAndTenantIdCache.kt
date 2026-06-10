@@ -226,8 +226,11 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
 
     /**
      * Flatten DB row [SysAccessRuleIpRow] into cache entry [SysAccessRuleIpCacheEntry].
-     * Only keeps fields actually used during authorization (IP range / type / expiration time);
+     * Only keeps fields actually used during authorization (IP range / IP type / rule type / expiration time);
      * other columns are excluded from the cache to reduce memory footprint.
+     *
+     * The parent rule's `accessRuleTypeDictCode` is carried into each entry so `checkIpAccess`
+     * can distinguish blacklist (deny on hit) from whitelist (allow on hit) rules.
      *
      * @param ruleIpRecords DB row list
      * @return List of cache entries
@@ -241,7 +244,8 @@ open class AccessRuleIpsBySubSysAndTenantIdCache : AbstractKeyValueCacheHandler<
                 ipStart = it.ipStart,
                 ipEnd = it.ipEnd,
                 ipTypeDictCode = it.ipTypeDictCode,
-                expirationTime = it.expirationTime
+                expirationTime = it.expirationTime,
+                accessRuleTypeDictCode = it.accessRuleTypeDictCode
             )
         }
     }

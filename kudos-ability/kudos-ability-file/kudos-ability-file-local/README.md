@@ -102,3 +102,34 @@ api(project(":kudos-ability:kudos-ability-file:kudos-ability-file-common"))
 
 testImplementation(project(":kudos-test:kudos-test-common"))
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+### 1. 可维护性 / Kotlin 写法
+
+- `init/LocalDeleteService.kt`、`init/LocalDownLoadService.kt`：
+  `listOf(base, model.bucketName, model.filePath).joinToString(File.separator)` 在
+  bucketName/filePath 为 null 时会把字面量 `"null"` 拼进路径（`List<String?>` 的
+  joinToString 对 null 渲染为 "null"），最终虽落到 `FILE_NO_EXISTS`，但校验与报错信息
+  失真。建议入口处显式 `requireNotNull` 并给出明确参数名。
+- 上述两个类的 `normalize + startsWith(baseDir)` 穿越校验是重复实现（一个 return false、
+  一个抛 `FILE_ACCESS_DENY`），建议抽 internal 工具函数统一维护，避免日后只改一处。
+- `init/LocalUploadService.kt` 的 `createFileDir` 未检查 `mkdirs()` 返回值；并发创建/权限
+  不足时静默失败，错误延迟到写文件时才暴露。建议改用 `Files.createDirectories`（失败即抛）。
+
+### 2. 测试缺口（安全关键）
+
+- **没有 `LocalDownLoadServiceTest`**——`resolveSafePath` 的路径穿越防护
+  （`FILE_ACCESS_DENY`）与正常下载（byte/stream 两条路）完全无测试覆盖。删除侧、上传侧
+  都有穿越用例，下载侧是三者中最常暴露给用户输入的，建议优先补：
+  正常读取 / `../` 穿越拒绝 / 文件不存在抛 `FILE_NO_EXISTS`。
+
+### 3. 可观测性
+
+- 上传成功后无任何 info 级日志（只有 debug 的目录创建）；建议在 saveFile 成功后记一条
+  debug/info 含相对路径与字节数，便于排查"文件去哪了"。
+
+### 4. 功能 / 一致性
+
+- `pathPrefix()` 返回空串导致与 file-minio 返回完整 URL 的行为不一致（已知限制中已述）。
+  若要统一，可加 `kudos.ability.file.local.public-url-prefix` 配置项，默认空串保持兼容。

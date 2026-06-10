@@ -181,7 +181,9 @@ class NormalLockService : ILockProvider<ReentrantLock> {
      * @return true if the lock was acquired, false if the lock is already held
      */
     override fun tryLock(lockKey: String, sec: Int): Boolean {
-        val expireTime = System.currentTimeMillis() + (sec * 1000)
+        // Multiply as Long (1000L): with Int arithmetic a large sec (> ~24.8 days) would overflow to a negative
+        // value, making the lock expire immediately
+        val expireTime = System.currentTimeMillis() + (sec * 1000L)
         // The old implementation called containsKey first then putIfAbsent — the prior check was redundant:
         // putIfAbsent already atomically performs "check + insert" and signals success via its return value.
         // Removing the redundant check makes the logic tighter and saves one map access under concurrency.

@@ -56,6 +56,29 @@ internal class JwtResourceServerAutoConfigurationTest {
                     props.permittedPaths.isEmpty(),
                     "permittedPaths must default to empty (most restrictive default)",
                 )
+                assertTrue(
+                    props.issuer.isEmpty(),
+                    "issuer must default to blank — validation off, backward compatible",
+                )
+                assertTrue(
+                    props.audience.isEmpty(),
+                    "audience must default to blank — validation off, backward compatible",
+                )
+            }
+    }
+
+    @Test
+    fun enabledTrue_issuerAndAudience_bindFromYml() {
+        runner
+            .withPropertyValues(
+                "kudos.ability.security.jwt.resource-server.enabled=true",
+                "kudos.ability.security.jwt.resource-server.issuer=https://auth.example.com",
+                "kudos.ability.security.jwt.resource-server.audience=order-service",
+            )
+            .run { ctx ->
+                val props = ctx.getBean(JwtResourceServerProperties::class.java)
+                assertEquals("https://auth.example.com", props.issuer)
+                assertEquals("order-service", props.audience)
             }
     }
 

@@ -43,7 +43,14 @@ class SysDictInternalController(
     ): Map<Pair<String, String>, LinkedHashMap<String, String>> =
         sysDictApi.batchGetActiveDictItemMap(dictTypeAndASCodePairs)
 
-    /** Batch adapter for Pair, which is inconvenient over JSON: uses `List<List<String>>` to represent `[dictType, atomicServiceCode]` pairs and returns keys concatenated as `"dictType|atomicServiceCode"`. */
+    /**
+     * Batch adapter for Pair, which is inconvenient over JSON: uses `List<List<String>>` to represent
+     * `[dictType, atomicServiceCode]` pairs.
+     *
+     * Note the key order of the returned map: the in-process API keys its result by the **flipped** pair
+     * `(atomicServiceCode, dictType)` (see `SysDictService.dictCacheKey`), so the concatenated keys here are
+     * `"atomicServiceCode|dictType"` — reversed relative to the input element order.
+     */
     @PostMapping("/api/internal/sys/dict/batchGetActiveDictItems")
     fun batchGetActiveDictItemsHttp(
         @RequestBody pairs: List<List<String>>,
@@ -52,6 +59,10 @@ class SysDictInternalController(
         return sysDictApi.batchGetActiveDictItems(tupled).mapKeys { "${it.key.first}|${it.key.second}" }
     }
 
+    /**
+     * Batch adapter returning the code->name mapping per dictionary; same input convention and
+     * `"atomicServiceCode|dictType"` key order as [batchGetActiveDictItemsHttp].
+     */
     @PostMapping("/api/internal/sys/dict/batchGetActiveDictItemMap")
     fun batchGetActiveDictItemMapHttp(
         @RequestBody pairs: List<List<String>>,

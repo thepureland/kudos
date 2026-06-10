@@ -12,7 +12,9 @@ import io.kudos.base.query.eq
 import io.kudos.base.security.CryptoKit
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.ms.sys.common.tenant.api.ISysTenantApi
+import io.kudos.ms.sys.common.datasource.consts.SysDataSourceConsts
 import io.kudos.ms.sys.common.datasource.vo.SysDataSourceCacheEntry
+import io.kudos.ms.sys.common.datasource.vo.request.SysDataSourceFormUpdate
 import io.kudos.ms.sys.common.datasource.vo.response.SysDataSourceDetail
 import io.kudos.ms.sys.common.datasource.vo.response.SysDataSourceRow
 import io.kudos.ms.sys.core.datasource.cache.SysDataSourceHashCache
@@ -85,9 +87,10 @@ open class SysDataSourceService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val id = requireStringId(any, "data source")
+        val payload = resolveUpdatePayload(any)
+        val id = requireStringId(payload, "data source")
         return completeCrudUpdate(
-            success = super.update(any),
+            success = super.update(payload),
             log = log,
             successMessage = "Updated data source id=$id.",
             failureMessage = "Failed to update data source id=$id!",
@@ -95,6 +98,24 @@ open class SysDataSourceService(
             eventPublisher.publishEvent(SysDataSourceUpdated(id = id))
         }
     }
+
+    /**
+     * Edit forms round-trip with a masked password (admin responses replace the stored ciphertext with
+     * [SysDataSourceConsts.PASSWORD_MASK]), so a blank or masked password in [SysDataSourceFormUpdate]
+     * means "keep the stored password unchanged". This substitutes the currently persisted password back
+     * into the payload before updating, preventing the mask from ever being written to the database.
+     * Real password changes go through [resetPassword] (which encrypts), not this path.
+     *
+     * @param any update payload as received by [update]
+     * @return payload safe to persist
+     * @author K
+     * @author AI: Claude
+     * @since 1.0.0
+     */
+    private fun resolveUpdatePayload(any: Any): Any =
+        if (any is SysDataSourceFormUpdate && shouldKeepStoredPassword(any.password)) {
+            any.copy(password = dao.get(any.id)?.password)
+        } else any
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
@@ -209,3 +230,19 @@ open class SysDataSourceService(
     }
 
 }
+
+/**
+ * Whether the password submitted on an update form means "do not change the stored password":
+ * `null`, blank, or exactly the output mask [SysDataSourceConsts.PASSWORD_MASK] all qualify,
+ * since admin responses never expose the real (encrypted) password and edit forms round-trip the mask.
+ *
+ * Exposed as `internal` purely for unit testing.
+ *
+ * @param password password field of the update form
+ * @return `true` when the stored password should be kept as is
+ * @author K
+ * @author AI: Claude
+ * @since 1.0.0
+ */
+internal fun shouldKeepStoredPassword(password: String?): Boolean =
+    password.isNullOrBlank() || password == SysDataSourceConsts.PASSWORD_MASK

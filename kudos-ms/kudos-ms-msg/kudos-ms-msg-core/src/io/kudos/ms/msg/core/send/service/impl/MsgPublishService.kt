@@ -105,7 +105,7 @@ open class MsgPublishService(
 
         // Persist MsgSend, status=PENDING
         val send = MsgSend().apply {
-            receiverGroupTypeDictCode = "user" // Only supports user-level dispatch; switch to request.receiverGroupType when extending
+            receiverGroupTypeDictCode = RECEIVER_GROUP_TYPE_USER // Only supports user-level dispatch; switch to request.receiverGroupType when extending
             receiverGroupId = null
             this.instanceId = instanceId
             msgTypeDictCode = request.msgTypeDictCode
@@ -147,5 +147,10 @@ open class MsgPublishService(
         msgSendService.updateSendStatus(sendId, newStatus.dictCode)
 
         return sendId
+    }
+
+    companion object {
+        /** `receiver_group_type` dict itemCode for direct user-level dispatch (see V1.0.0.2__insert_sys_dict_item.sql). */
+        private const val RECEIVER_GROUP_TYPE_USER = "user"
     }
 }

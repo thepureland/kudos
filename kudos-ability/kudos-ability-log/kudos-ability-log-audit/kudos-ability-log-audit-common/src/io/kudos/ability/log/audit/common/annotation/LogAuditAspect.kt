@@ -153,7 +153,11 @@ class LogAuditAspect {
                 logVo.logs.forEach { it.description = tag + it.description.orEmpty() }
             }
             runCatching {
-                AuditLogTool.createSysAuditLogModel(logVo, JsonKit.toJson<Any>(model))
+                // Mask @LogDesensitize fields before the serialized model lands in the audit detail's
+                // requestFormData — mirrors what the web path does via getRequestData(request, logVo).
+                // Without this, the non-web path stored the raw sensitive values verbatim.
+                val argJson = AuditLogTool.desensitizeJsonByLogVo(logVo, JsonKit.toJson<Any>(model))
+                AuditLogTool.createSysAuditLogModel(logVo, argJson)
                     ?.let { auditService?.submit(it) }
             }.onFailure { LOG.error(it, "Audit log component, interceptor exception!") }
         } finally {

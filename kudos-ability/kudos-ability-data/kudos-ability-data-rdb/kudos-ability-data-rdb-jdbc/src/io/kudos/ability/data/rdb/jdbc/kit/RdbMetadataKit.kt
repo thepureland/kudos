@@ -67,13 +67,13 @@ object RdbMetadataKit {
     private fun _getTablesByType(conn: Connection, vararg tableTypes: TableTypeEnum?): List<Table> {
         val dbMetaData = conn.metaData
         val types = tableTypes.map { checkNotNull(it) { "table type must not be null" }.name }.toTypedArray()
-        val talbes = mutableListOf<Table>()
+        val tables = mutableListOf<Table>()
         val tableRs = dbMetaData.getTables(conn.catalog, conn.schema, "%", types)
         tableRs.use {
             while (tableRs.next()) {
                 val rawType = tableRs.getString("TABLE_TYPE")
                 val tableTypeStr = if (rawType == "BASE TABLE") "TABLE" else rawType
-                talbes.add(Table().apply {
+                tables.add(Table().apply {
                     name = tableRs.getString("TABLE_NAME")
                     catalog = tableRs.getString("TABLE_CAT")
                     schema = tableRs.getString("TABLE_SCHEM")
@@ -82,7 +82,7 @@ object RdbMetadataKit {
                 })
             }
         }
-        return talbes
+        return tables
     }
 
     /**
@@ -161,22 +161,24 @@ object RdbMetadataKit {
             }
         }
 
-        // Indexes.
+        // Indexes. Per the JDBC spec, getIndexInfo also returns rows of type tableIndexStatistic
+        // (and expression-based index rows on some drivers) whose COLUMN_NAME is null — skip those
+        // instead of crashing; likewise tolerate index columns absent from the column map.
         val indexInfoRs = dbMetaData.getIndexInfo(conn.catalog, conn.schema, tableName, false, false)
         indexInfoRs.use {
             while (indexInfoRs.next()) {
-                val columnName = indexInfoRs.getString("COLUMN_NAME")
-                linkedMap.getValue(columnName).indexed = true
+                val columnName = indexInfoRs.getString("COLUMN_NAME") ?: continue
+                linkedMap[columnName]?.indexed = true
             }
         }
 
 
-        // Unique constraints.
+        // Unique constraints. Same null/absence tolerance as the index loop above.
         val uniqueInfoRs = dbMetaData.getIndexInfo(conn.catalog, conn.schema, tableName, true, false)
         uniqueInfoRs.use {
             while (uniqueInfoRs.next()) {
-                val columnName = uniqueInfoRs.getString("COLUMN_NAME")
-                linkedMap.getValue(columnName).unique = true
+                val columnName = uniqueInfoRs.getString("COLUMN_NAME") ?: continue
+                linkedMap[columnName]?.unique = true
             }
         }
 

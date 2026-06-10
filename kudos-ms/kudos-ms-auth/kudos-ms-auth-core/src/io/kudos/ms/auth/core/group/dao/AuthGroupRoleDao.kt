@@ -89,5 +89,17 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
         return batchDeleteCriteria(criteria)
     }
 
+    /**
+     * Deletes every group binding of a role. Used by the role-delete cascade so a removed role
+     * stops being inherited through any group.
+     *
+     * @param roleId role ID
+     * @return number of rows deleted
+     */
+    open fun deleteByRoleId(roleId: String): Int {
+        val criteria = Criteria(AuthGroupRole::roleId eq roleId)
+        return batchDeleteCriteria(criteria)
+    }
+
 
 }

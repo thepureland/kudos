@@ -18,7 +18,7 @@ object KafkaTestContainer {
 
     private const val IMAGE_NAME = "apache/kafka-native:4.1.1"
 
-    private var imageName = DockerImageName
+    private val imageName = DockerImageName
         .parse(IMAGE_NAME)
 //        .asCompatibleSubstituteFor("apache/kafka")
 

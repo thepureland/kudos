@@ -68,3 +68,13 @@ private val passportProxy: IPassportProxy
   签名漂移（如参数顺序变动）需依赖编译期发现。建议接入 Spring Cloud Contract（`kudos-test-api-contract`）
 - ❗ **`AbstractFeignFallbackSupport.name` 字符串硬编码** — 各 Fallback 在 ctor 里塞自己的类名字符串，
   类被重命名时易遗漏；可改为反射 `this::class.simpleName`
+
+## 改进建议（自动分析 2026-06-11）
+
+- ❗ **`PassportFallback.login` 借用 `LOCKED` 表示降级**（`src/io/kudos/ms/user/client/passport/fallback/PassportFallback.kt`）：
+  `PassportLoginStatusEnum.LOCKED` 的语义是"错误次数超限被锁定"，Feign 降级时返回它会让终端用户
+  被误导为"账号被锁"。本 README 上文"降级策略要点"提到的 `SERVICE_UNAVAILABLE` 枚举值实际**并不存在**
+  （文档与代码不符）。建议在 `PassportLoginStatusEnum` 新增该值后改写（枚举属公共契约，未直接修改）。
+- **降级日志级别不对称**：`PassportFallback` 用 `errorWrite`、`UserAccountFallback` 用 `warnRead`——
+  读 / 写语义区分合理，但同为"远端不可达"事件，监控告警需同时盯两个级别；建议在
+  `AbstractFeignFallbackSupport` 层统一埋 metrics。

@@ -91,17 +91,21 @@ open class AuthRoleUserService(
      *
      * The role's tenant is read from the cache to scope the exclusion lookup.
      *
-     * @param roleId The role to bind users into.
+     * @param roleId The role to bind users into; must reference an existing role.
      * @param userIds Users to bind; already-bound users are silently skipped.
      * @return Count of newly created bindings.
-     * @throws IllegalArgumentException if ANY user would violate an SoD constraint.
-     *   The message names the violating user and the conflicting role pair.
+     * @throws IllegalArgumentException if the role does not exist, or if ANY user would violate
+     *   an SoD constraint (the message names the violating user and the conflicting role pair).
      */
     @Transactional
     override fun batchBind(roleId: String, userIds: Collection<String>): Int {
         if (userIds.isEmpty()) return 0
 
-        val tenantId = authRoleDao.get(roleId)?.tenantId
+        // The role must exist. Binding to a non-existent role used to silently insert orphan
+        // relation rows AND skip the SoD check below (tenantId was null) — reject instead.
+        val role = authRoleDao.get(roleId)
+            ?: throw IllegalArgumentException("Role not found: $roleId — refusing to bind users to a non-existent role.")
+        val tenantId: String? = role.tenantId
         val existing = dao.searchUserIdsByRoleId(roleId).toSet()
         val candidates = userIds.toSet() - existing
         if (candidates.isEmpty()) {
@@ -111,15 +115,7 @@ open class AuthRoleUserService(
 
         // SoD check — only when exclusion rules exist for the tenant.
         if (tenantId != null) {
-            val violations = mutableListOf<String>()
-            for (userId in candidates) {
-                val effectiveRoles = computeEffectiveRoleIds(userId)
-                val violation = exclusionService.findViolation(tenantId, roleId, effectiveRoles)
-                if (violation != null) {
-                    violations += "User $userId: binding role $roleId would conflict with " +
-                        "${violation.roleAId} ↔ ${violation.roleBId} (exclusion ${violation.id})."
-                }
-            }
+            val violations = candidates.mapNotNull { userId -> findSodViolationMessage(tenantId, roleId, userId) }
             if (violations.isNotEmpty()) {
                 throw IllegalArgumentException(
                     "SoD constraint violation — the following assignments were blocked:\n" +
@@ -156,7 +152,26 @@ open class AuthRoleUserService(
     @Transactional(readOnly = true)
     override fun exists(roleId: String, userId: String): Boolean = dao.exists(roleId, userId)
 
-    // ---------- Private helpers ----------
+    // ---------- Shared SoD helpers ----------
+
+    /**
+     * Single-user SoD check shared by [batchBind] and the temporal bind path
+     * ([io.kudos.ms.auth.core.role.temporal.service.impl.AuthRoleUserTemporalService.bindTemporal]):
+     * expands [userId]'s effective role set and asks the exclusion service whether adding
+     * [roleId] would violate any SoD rule of [tenantId].
+     *
+     * `internal open` on purpose: internal so only this module's bind paths can call it, open so
+     * the CGLIB transaction proxy delegates the call to the initialized target bean.
+     *
+     * @return a human-readable violation message naming the user and the conflicting pair, or
+     *   null when the bind is allowed
+     */
+    internal open fun findSodViolationMessage(tenantId: String, roleId: String, userId: String): String? {
+        val effectiveRoles = computeEffectiveRoleIds(userId)
+        val violation = exclusionService.findViolation(tenantId, roleId, effectiveRoles) ?: return null
+        return "User $userId: binding role $roleId would conflict with " +
+            "${violation.roleAId} ↔ ${violation.roleBId} (exclusion ${violation.id})."
+    }
 
     /**
      * Full effective role set for [userId]: direct + group-derived + ancestor (parent-chain) roles.

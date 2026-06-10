@@ -4,6 +4,7 @@ import org.junit.jupiter.api.extension.ConditionEvaluationResult
 import org.junit.jupiter.api.extension.ExecutionCondition
 import org.junit.jupiter.api.extension.ExtensionContext
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 /**
  * Condition executor that checks whether Docker is installed.
@@ -18,8 +19,12 @@ import java.io.IOException
 class DockerInstalledCondition : ExecutionCondition {
     
     companion object {
+        @Volatile
         private var dockerInstalled: Boolean? = null
         private val lock = Any()
+
+        /** Maximum time to wait for `docker --version` before treating Docker as not installed. */
+        private const val CHECK_TIMEOUT_SECONDS = 10L
     }
     
     override fun evaluateExecutionCondition(context: ExtensionContext): ConditionEvaluationResult {
@@ -61,9 +66,13 @@ class DockerInstalledCondition : ExecutionCondition {
             val process = ProcessBuilder("docker", "--version")
                 .redirectErrorStream(true)
                 .start()
-            
-            val exitCode = process.waitFor()
-            exitCode == 0
+
+            // Bounded wait: a hung docker CLI must not block the whole test-discovery phase forever
+            if (!process.waitFor(CHECK_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+                process.destroyForcibly()
+                return false
+            }
+            process.exitValue() == 0
         } catch (e: IOException) {
             // If the command fails (e.g. docker command not found), Docker is not installed
             false

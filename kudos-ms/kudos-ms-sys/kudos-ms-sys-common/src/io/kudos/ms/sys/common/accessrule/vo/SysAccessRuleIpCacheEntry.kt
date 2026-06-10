@@ -29,6 +29,14 @@ data class SysAccessRuleIpCacheEntry (
     /** Expiration time. */
     val expirationTime: LocalDateTime?,
 
+    /**
+     * Access rule type dictionary code of the parent rule (`sys_access_rule.access_rule_type_dict_code`,
+     * see `AccessRuleTypeEnum`: 1=unlimited, 2=whitelist, 3=blacklist, 4=whitelist+blacklist).
+     * Required by `checkIpAccess` to tell a deny rule (blacklist) from an allow rule (whitelist).
+     * `null` only for legacy entries serialized before this field existed; such entries never deny access.
+     */
+    val accessRuleTypeDictCode: String? = null,
+
 ) : IIdEntity<String>, Serializable, IIpBigDecimalToStringSupport {
 
     override fun getIpStartBigDecimal(): BigDecimal? {

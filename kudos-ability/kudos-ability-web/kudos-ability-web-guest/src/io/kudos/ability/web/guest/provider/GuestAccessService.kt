@@ -135,6 +135,8 @@ class GuestAccessService(
             path = properties.cookie.path
             properties.cookie.domain?.takeIf { it.isNotBlank() }?.let { this.domain = it }
             isHttpOnly = properties.cookie.httpOnly
+            // Servlet 6 generic attribute API — jakarta Cookie has no dedicated SameSite setter.
+            properties.cookie.sameSite.takeIf { it.isNotBlank() }?.let { setAttribute("SameSite", it) }
         }
         response.addCookie(cookie)
     }

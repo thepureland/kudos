@@ -1,5 +1,6 @@
 package io.kudos.ability.distributed.discovery.nacos.init
 
+import io.kudos.ability.distributed.discovery.nacos.filter.FeignContextSignatureVerifier
 import io.kudos.ability.distributed.discovery.nacos.filter.FeignContextWebFilter
 import io.kudos.ability.distributed.discovery.nacos.init.properties.NacosDiscoveryProperties
 import io.kudos.context.init.ContextAutoConfiguration
@@ -36,6 +37,11 @@ import org.springframework.context.annotation.Configuration
  *  - urlPatterns covers all paths (`/&#42;`) — the filter internally uses explicit
  *    `FEIGN_REQUEST` / `NOTIFY_REQUEST` markers to block regular browser / curl requests, so no
  *    path whitelisting is needed at the registration layer.
+ *  - When `kudos.ability.distributed.discovery.nacos.feign-context-filter.context-signature-secret`
+ *    is configured (same value as the client's `contextSignatureSecret`), a
+ *    [io.kudos.ability.distributed.discovery.nacos.filter.FeignContextSignatureVerifier] is wired
+ *    into the filter so context headers are only trusted after HMAC + timestamp window + nonce
+ *    replay verification.
  *
  * @author K
  * @author AI: Codex
@@ -58,8 +64,22 @@ open class NacosDiscoveryAutoConfiguration : IComponentInitializer {
     open fun feignContextWebFilterRegistration(
         properties: NacosDiscoveryProperties = NacosDiscoveryProperties()
     ): FilterRegistrationBean<FeignContextWebFilter> {
+        val filterProperties = properties.feignContextFilter
+        // Verifier is only built when the provider configures the shared HMAC secret; otherwise the
+        // filter keeps the legacy unauthenticated behavior (and logs a one-time WARN).
+        val signatureVerifier = filterProperties.contextSignatureSecret
+            ?.takeIf { it.isNotBlank() }
+            ?.let {
+                FeignContextSignatureVerifier(
+                    secret = it,
+                    timestampWindowMillis = filterProperties.contextSignatureTimestampWindowMillis,
+                    nonceCacheMaxSize = filterProperties.contextSignatureNonceCacheMaxSize
+                )
+            }
         val registration = FilterRegistrationBean<FeignContextWebFilter>()
-        registration.setFilter(FeignContextWebFilter(properties.feignContextFilter.allowUnmarkedContextHeaders))
+        registration.setFilter(
+            FeignContextWebFilter(filterProperties.allowUnmarkedContextHeaders, signatureVerifier)
+        )
         registration.addUrlPatterns("/*")
         registration.order = NacosDiscoveryProperties.FILTER_ORDER
         registration.setName("feignContextWebFilter")

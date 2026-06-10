@@ -18,7 +18,10 @@ enum class SysCacheErrorCodeEnum(
     CACHE_KEY_NOT_FOUND("SC00000001", "Cache key not found"),
 
     /** Cache configuration not found */
-    CACHE_CONFIG_NOT_FOUND("SC00000002", "Cache configuration not found");
+    CACHE_CONFIG_NOT_FOUND("SC00000002", "Cache configuration not found"),
+
+    /** Cache value contains sensitive data (e.g. credentials) and must not be exported */
+    CACHE_VALUE_EXPORT_FORBIDDEN("SC00000003", "Cache value contains sensitive data and cannot be exported");
 
     override val i18nKeyPrefix: String
         get() = "sys.error-msg.cache"

@@ -70,3 +70,13 @@ OR now < freeze_end_time)`" 时视为"当前冻结"，登录被拒（返回 `ACC
   MySQL / PG 引入时需要业务方手动复制 + 检查字符集 / 时区差异
 - ❗ **缺少 `R_*_*` repeatable 脚本** — 当前所有都是 `V_*` 一次性脚本；视图 / 函数 / 字典 seed
   数据应改为可重复执行的 `R_*_*` 以便迭代
+
+## 改进建议（自动分析 2026-06-11）
+
+- **迁移文件名拼写错误**（`resources/sql/user/h2/V1.0.0.22__init_user_login_remeber_me.sql`）：
+  `remeber` 应为 `remember`。Flyway 已应用环境改名会破坏迁移历史校验，**不可直接重命名**；
+  只能在下一次 baseline 重置或新方言目录（mysql / postgresql）建立时纠正。
+- **`user_log_login` 缺查询索引**：`UserLogLoginDao` 按 `user_id` / `tenant_id` / `login_time` 组合过滤排序，
+  DDL 未见对应复合索引；登录日志是只增大表，建议补 `(user_id, login_time DESC)` 与 `(tenant_id, login_time DESC)`。
+- **`user_login_remember_me.token` 明文列**：建议 schema 层面预留 `token_hash` 列及迁移路径
+  （配合 core 模块改造为哈希存储，详见 user-core README 同主题条目）。

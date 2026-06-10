@@ -30,11 +30,14 @@ class CacheVersionConfig {
 
     /** Strips the version prefix back to the logical name; returns the input unchanged when the prefix does not match (back-compat with legacy unprefixed data). */
     fun getRealCacheName(cacheName: String): String {
-        return if (cacheName.startsWith(cacheVersion)) {
-            cacheName.replace(cacheVersion + Consts.CACHE_KEY_DEFAULT_DELIMITER, "")
-        } else {
-            cacheName
+        // Mirror getFinalCacheName: a blank version never prefixes, so never strip anything either.
+        // (The legacy implementation used `startsWith(cacheVersion)` + `replace(...)`: with a blank version it
+        // stripped every "::" from the name, and with a non-blank version `replace` removed ALL occurrences of
+        // the prefix string instead of only the leading one.)
+        if (cacheVersion.isBlank()) {
+            return cacheName
         }
+        return cacheName.removePrefix(cacheVersion + Consts.CACHE_KEY_DEFAULT_DELIMITER)
     }
 
     /** Real channel for distributed invalidation broadcasts: `<version>:cache:local-remote:channel`. */

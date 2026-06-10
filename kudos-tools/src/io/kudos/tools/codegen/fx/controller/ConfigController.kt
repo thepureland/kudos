@@ -109,7 +109,8 @@ class ConfigController : Initializable {
      */
     private fun initAutoCompletion() {
         val moduleSuggestionsStr = propertiesLoader.getProperty(Config.PROP_KEY_MODULE_SUGGESTIONS, "")
-        moduleSuggestions = moduleSuggestionsStr.split(",").toHashSet()
+        // trim each entry so values written with a ", " separator by older versions are also healed
+        moduleSuggestions = moduleSuggestionsStr.split(",").map { it.trim() }.toHashSet()
     }
 
     /**
@@ -158,8 +159,6 @@ class ConfigController : Initializable {
             versionTextField.textProperty().bindBidirectional(versionProperty())
             packagePrefixTextField.textProperty().bindBidirectional(packagePrefixProperty())
             locationTextField.textProperty().bindBidirectional(codeLoactionProperty())
-            authorTextField.textProperty().bindBidirectional(authorProperty())
-            versionTextField.textProperty().bindBidirectional(versionProperty())
         }
     }
 
@@ -336,7 +335,8 @@ class ConfigController : Initializable {
             setProperty(Config.PROP_KEY_PACKAGE_PREFIX, config.getPackagePrefix())
             setProperty(Config.PROP_KEY_MODULE_NAME, config.getModuleName())
             setProperty(Config.PROP_KEY_CODE_LOACTION, config.getCodeLoaction())
-            setProperty(Config.PROP_KEY_MODULE_SUGGESTIONS, moduleSuggestions?.joinToString())
+            // use a bare "," separator so initAutoCompletion's split(",") round-trips losslessly
+            setProperty(Config.PROP_KEY_MODULE_SUGGESTIONS, moduleSuggestions?.joinToString(",") ?: "")
             setProperty(Config.PROP_KEY_AUTHOR, config.getAuthor())
             setProperty(Config.PROP_KEY_VERSION, config.getVersion())
         }
@@ -357,10 +357,8 @@ class ConfigController : Initializable {
             val properties = Properties()
             if (!propertiesFile.exists()) { // First use: preset component defaults
                 val parentFile = propertiesFile.parentFile
-                if (!parentFile.exists()) {
-                    if (!parentFile.mkdir()) {
-                        throw Exception(parentFile.toString() + " directory creation failed!")
-                    }
+                if (!parentFile.exists() && !parentFile.mkdirs()) {
+                    throw Exception("$parentFile directory creation failed!")
                 }
                 with(properties) {
                     setProperty(Config.PROP_KEY_DB_URL, "jdbc:h2:tcp://localhost:9092/./h2;DATABASE_TO_UPPER=false")

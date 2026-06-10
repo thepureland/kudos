@@ -131,7 +131,8 @@ class BatchGenerationController : Initializable {
             }
 
             Alert(
-                Alert.AlertType.INFORMATION, "Generation succeeded; see directory: ${CodeGeneratorContext.config.getCodeLoaction()}".trimIndent()
+                Alert.AlertType.INFORMATION,
+                "Generation succeeded; see directory: ${CodeGeneratorContext.config.getCodeLoaction()}"
             ).show()
         } catch (e: Exception) {
             e.printStackTrace()

@@ -352,15 +352,27 @@ open class MixCacheManager : AbstractCacheManager() {
             patternKey = "$patternKey*"
         }
         val mixCache = (cache as MixCache)
-        if (mixCache.strategy == CacheStrategy.SINGLE_LOCAL) {
-            (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(cacheName, patternKey)
-        }
-        if (mixCache.strategy == CacheStrategy.REMOTE) {
-            (remoteCacheManager as IKeyValueCacheManager<*>).evictByPattern(cacheName, patternKey)
-        }
-        if (mixCache.strategy == CacheStrategy.LOCAL_REMOTE) {
-            (remoteCacheManager as IKeyValueCacheManager<*>).evictByPattern(cacheName, patternKey)
-            mixCache.pushMsgRedis(cache.getName(), patternKey)
+        // Naming contract differs between the two managers (see clearLocal): the local (Caffeine) manager
+        // registers caches under the version-prefixed real name and expects it as-is, while the remote (Redis)
+        // manager applies the version prefix internally and expects the logical name. Passing the logical name
+        // to the local manager made pattern eviction a silent no-op whenever a cache version was configured.
+        val localRealName = requireVersionConfig().getFinalCacheName(cacheName)
+        when (mixCache.strategy) {
+            CacheStrategy.SINGLE_LOCAL ->
+                (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(localRealName, patternKey)
+            CacheStrategy.REMOTE ->
+                (remoteCacheManager as IKeyValueCacheManager<*>).evictByPattern(cacheName, patternKey)
+            CacheStrategy.LOCAL_REMOTE -> {
+                (remoteCacheManager as IKeyValueCacheManager<*>).evictByPattern(cacheName, patternKey)
+                // Evict this node's local tier explicitly: the broadcast below is filtered out on loopback by
+                // nodeId (see RedisCacheMessageHandler.receiveMessage), so without this the local copy on the
+                // evicting node would stay stale until TTL — inconsistent with the write-path contract
+                // ("remote first, then local, then broadcast", see MixCache.writeThrough).
+                if (hasLocalCacheManager()) {
+                    (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(localRealName, patternKey)
+                }
+                mixCache.pushMsgRedis(cache.getName(), patternKey)
+            }
         }
     }
 

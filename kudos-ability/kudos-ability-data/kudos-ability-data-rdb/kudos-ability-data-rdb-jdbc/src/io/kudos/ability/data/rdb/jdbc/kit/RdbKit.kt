@@ -81,14 +81,13 @@ object RdbKit {
 
     /**
      * Internal implementation: infers RDB type from connection metadata -> selects the
-     * matching test SQL -> executes it. The statement is **not explicitly closed** —
-     * historical behavior; it will be released when the caller-held connection closes.
+     * matching test SQL -> executes it. The statement is closed via `use` so long-lived
+     * caller-held connections don't accumulate open statements.
      */
     private fun _testConnection(conn: Connection): Boolean {
         val dbMetaData = conn.metaData
         val rdbType = RdbTypeEnum.ofProductName(dbMetaData.databaseProductName)
-        val statement = conn.createStatement()
-        return statement.execute(getTestStatement(rdbType))
+        return conn.createStatement().use { it.execute(getTestStatement(rdbType)) }
     }
 
     /**

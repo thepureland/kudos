@@ -29,9 +29,6 @@ class FilesController : Initializable {
     @FXML
     lateinit var fileTable: TableView<GenFile>
 
-    /** Template fill model used in the current generation pass; created on demand on first generate */
-    private lateinit var templateModel: Map<String, Any?>
-
     /** "Only select entity-related files" checkbox, to avoid accidentally overwriting unrelated files */
     @FXML
     private lateinit var selectEntityRelativeFilesCheckBox: CheckBox
@@ -78,7 +75,6 @@ class FilesController : Initializable {
      * @since 1.0.0
      */
     @FXML
-    @Suppress
     fun generate() {
         val filePathModel = createFilePathModel()
         if (filePathModel.isEmpty()) {
@@ -87,10 +83,11 @@ class FilesController : Initializable {
         }
 
         try {
-            templateModel = CodeGeneratorContext.templateModelCreator.create()
+            val templateModel = CodeGeneratorContext.templateModelCreator.create()
             CodeGenerator(templateModel, filePathModel).generate()
             Alert(
-                Alert.AlertType.INFORMATION, "Generation succeeded, see directory: ${CodeGeneratorContext.config.getCodeLoaction()}".trimIndent()
+                Alert.AlertType.INFORMATION,
+                "Generation succeeded, see directory: ${CodeGeneratorContext.config.getCodeLoaction()}"
             ).show()
         } catch (e: Exception) {
             e.printStackTrace()

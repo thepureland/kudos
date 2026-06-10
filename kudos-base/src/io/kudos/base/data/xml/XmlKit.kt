@@ -9,6 +9,7 @@ import org.xml.sax.InputSource
 import java.io.StringReader
 import java.io.StringWriter
 import java.util.concurrent.ConcurrentHashMap
+import javax.xml.XMLConstants
 import javax.xml.namespace.QName
 import javax.xml.parsers.SAXParserFactory
 import javax.xml.transform.sax.SAXSource
@@ -95,6 +96,9 @@ object XmlKit {
     /**
      * Deserialization (unmarshalling): converts the XML string into an instance of the specified class.
      *
+     * Security: external entity resolution (XXE) and external DTD loading are disabled on the underlying
+     * SAX parser, so crafted payloads cannot read local files or trigger SSRF via entity expansion.
+     *
      * @param T target type
      * @param xml XML string
      * @param clazz target class
@@ -107,6 +111,11 @@ object XmlKit {
         val reader = StringReader(xml)
         val sax = SAXParserFactory.newInstance()
         sax.isNamespaceAware = ignoreNameSpace
+        // Harden against XXE: no external general/parameter entities, no external DTD fetching
+        sax.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
+        sax.setFeature("http://xml.org/sax/features/external-general-entities", false)
+        sax.setFeature("http://xml.org/sax/features/external-parameter-entities", false)
+        sax.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false)
         val xmlReader = sax.newSAXParser().xmlReader
         val source = SAXSource(xmlReader, InputSource(reader))
         val result = createUnmarshaller(clazz).unmarshal(source)
@@ -148,20 +157,18 @@ object XmlKit {
      * Gets or creates a [JAXBContext] for the specified class.
      * Also registers [CollectionWrapper] so that Collection-as-root cases can be handled.
      *
-     * Note: the current implementation builds a new context every call and writes it to the cache via
-     * `putIfAbsent`. The cache therefore retains only the first instance but a new one is still built
-     * each call; to reduce overhead further, switch to a check-then-build pattern.
+     * The context is built at most once per class via `computeIfAbsent` and then served from the cache
+     * ([JAXBContext] itself is thread-safe and safe to share).
      *
      * @param clazz target class
      * @return the corresponding [JAXBContext]
      * @author K
      * @since 1.0.0
      */
-    private fun getJaxbContext(clazz: KClass<*>): JAXBContext {
-        val jaxbContext = JAXBContext.newInstance(clazz.java, CollectionWrapper::class.java)
-        jaxbContexts.putIfAbsent(clazz, jaxbContext)
-        return jaxbContext
-    }
+    private fun getJaxbContext(clazz: KClass<*>): JAXBContext =
+        jaxbContexts.computeIfAbsent(clazz) {
+            JAXBContext.newInstance(clazz.java, CollectionWrapper::class.java)
+        }
 
     /**
      * Wrapper for the case where the root element is a Collection.

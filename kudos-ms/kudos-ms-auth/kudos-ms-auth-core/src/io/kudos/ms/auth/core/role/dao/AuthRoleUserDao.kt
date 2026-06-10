@@ -119,6 +119,22 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
     }
 
     /**
+     * Returns the raw grant rows for a (role, user) pair, including the time-window fields.
+     * Used by the temporal bind to detect an existing permanent grant before replacing.
+     *
+     * @param roleId role id
+     * @param userId user id
+     * @return matching grant rows (normally 0 or 1 thanks to the unique constraint)
+     */
+    open fun searchByRoleIdAndUserId(roleId: String, userId: String): List<AuthRoleUser> {
+        val criteria = Criteria.and(
+            AuthRoleUser::roleId eq roleId,
+            AuthRoleUser::userId eq userId
+        )
+        return search(criteria)
+    }
+
+    /**
      * Deletes a relation by role id and user id.
      *
      * @param roleId role id
@@ -130,6 +146,18 @@ open class AuthRoleUserDao : BaseCrudDao<String, AuthRoleUser, AuthRoleUsers>() 
             AuthRoleUser::roleId eq roleId,
             AuthRoleUser::userId eq userId
         )
+        return batchDeleteCriteria(criteria)
+    }
+
+    /**
+     * Deletes every relation row of a role. Used by the role-delete cascade so a removed role
+     * leaves no orphan grants behind.
+     *
+     * @param roleId role id
+     * @return number of rows deleted
+     */
+    open fun deleteByRoleId(roleId: String): Int {
+        val criteria = Criteria(AuthRoleUser::roleId eq roleId)
         return batchDeleteCriteria(criteria)
     }
 

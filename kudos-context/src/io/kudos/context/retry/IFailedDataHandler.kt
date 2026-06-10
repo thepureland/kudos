@@ -26,10 +26,14 @@ interface IFailedDataHandler<T> {
     val cronExpression: String
 
     /**
-     * Persists failed data locally and returns the written file path; returns null if persistence fails.
+     * Persists failed data locally and returns the written file path.
+     *
+     * Failure contract: an implementation may either return null or throw — note that the default implementation
+     * [AbstractFailedDataHandler.persistFailedData] **throws a RuntimeException** wrapping the IOException rather
+     * than returning null, so callers should be prepared for both.
      *
      * @param data the failed data to save
-     * @return the file path after persistence; null on persistence failure
+     * @return the file path after persistence; null on persistence failure (implementation-dependent, see above)
      * @author K
      * @since 1.0.0
      */

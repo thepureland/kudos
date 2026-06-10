@@ -42,23 +42,19 @@ import javafx.scene.layout.Pane
  */
 object ImplUtils {
     fun getChildren(n: Node?): List<Node?> {
-        return if (n is Parent) getChildren(n as Parent?) else emptyList()
+        return if (n is Parent) getChildren(n) else emptyList()
     }
 
     fun getChildren(p: Parent?): ObservableList<Node?> {
-        var children: ObservableList<Node?>? = null
-
         // previously we used reflection immediately, now we try to avoid reflection
         // by checking the type of the Parent. Still not great...
-        if (p is Pane) {
-            // This should cover the majority of layout containers, including
+        val children: ObservableList<Node?>? = when (p) {
+            // Pane covers the majority of layout containers, including
             // AnchorPane, FlowPane, GridPane, HBox, Pane, StackPane, TilePane, VBox
-            children = p.children
-        } else if (p is Group) {
-            children = p.children
-        } else if (p is Control) {
-            val s = p.skin
-            children = if (s is SkinBase<*>) s.children else null
+            is Pane -> p.children
+            is Group -> p.children
+            is Control -> (p.skin as? SkinBase<*>)?.children
+            else -> null
         }
         return children ?: FXCollections.emptyObservableList()
     }

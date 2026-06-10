@@ -301,7 +301,7 @@ object CryptoKit {
      */
     fun aesDecrypt(contentHex: String): String {
         return if (contentHex.startsWith(PREFIX)) { // encrypted
-            val content = contentHex.replaceFirst(PREFIX.toRegex(), "")
+            val content = contentHex.removePrefix(PREFIX)
             aesDecrypt(content, CryptoKey.KEY_DEFAULT)
         } else { // unencrypted historical data
             contentHex

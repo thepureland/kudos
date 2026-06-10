@@ -194,13 +194,8 @@ object DockerKit {
      * @since 1.0.0
      */
     private fun startDockerOnMac(install: InstallInfo) {
-        // If Desktop is present, just `open` it
-        if (install.desktopAppFound) {
-            runCommand(listOf("open", "-g", "-a", "Docker"), timeoutMillis = 10_000)
-        } else {
-            // CLI-only is rare; still try `open`, it does not matter if it fails
-            runCommand(listOf("open", "-g", "-a", "Docker"), timeoutMillis = 10_000)
-        }
+        // Whether or not Desktop was detected, just try `open`; a failure here is harmless
+        runCommand(listOf("open", "-g", "-a", "Docker"), timeoutMillis = 10_000)
 
         // Fallback: a few machines have a different App name
         if (!isDockerRunning()) {

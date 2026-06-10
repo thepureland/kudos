@@ -45,3 +45,14 @@ api(project(":kudos-context"))
 ```
 
 无具体实现依赖；纯 SPI 模块。
+
+## 改进建议（自动分析 2026-06-11）
+
+- **【对外接口】`ILocker<T : Lock?>` 泛型上界可空**：
+  `src/io/kudos/ability/distributed/lock/common/locker/ILocker.kt`
+  上界写成 `Lock?` 导致 `unlock(lock: T)` 理论上可传 null、实现侧被迫处理可空分支。
+  属 public API 不宜现在改签名；建议下个不兼容版本改为 `T : Lock`。
+- **【对外接口/文档】`waitTime=0` 的语义依赖实现**：
+  `src/io/kudos/ability/distributed/lock/common/annotations/DistributedLock.kt`
+  注解本身不约束实现方对 `waitTime=0`（单次尝试）与负值的处理，目前语义只由 redisson 实现
+  事实定义。建议在 SPI 层（`ILocker.tryLock` KDoc）统一约定非法值（负数）的行为。

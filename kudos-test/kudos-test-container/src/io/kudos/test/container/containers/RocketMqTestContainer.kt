@@ -2,7 +2,6 @@ package io.kudos.test.container.containers
 
 import com.github.dockerjava.api.model.Container
 import io.kudos.base.net.IpKit
-import io.kudos.test.container.containers.H2TestContainer.LABEL
 import io.kudos.test.container.kit.TestContainerKit
 import io.kudos.test.container.kit.bindingPort
 import io.kudos.test.container.main.ManualTestContainerMainSupport
@@ -103,11 +102,14 @@ object RocketMqTestContainer {
     }
 
     /**
-     * Returns the running container instance.
+     * Returns the running name-server container instance.
      *
-     * @return the container instance, or null if none is running
+     * Note: this used to (incorrectly) look up the H2 container's label via a stray static import,
+     * which always returned the H2 container instead of the RocketMQ name server.
+     *
+     * @return the name-server container instance, or null if none is running
      */
-    fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL)
+    fun getRunningContainer() : Container? = TestContainerKit.getRunningContainer(LABEL_NANE_SERVER)
 
     @JvmStatic
     fun main(args: Array<String>?) {

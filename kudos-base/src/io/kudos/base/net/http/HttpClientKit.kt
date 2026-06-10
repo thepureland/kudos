@@ -541,11 +541,23 @@ object HttpClientKit {
         )
 
         val name = filename
-            ?: parseFilenameFromDisposition(headResp.headers().firstValue("Content-Disposition").orElse(null))
-            ?: URI.create(url).path.substringAfterLast('/').ifEmpty { "download.bin" }
+            ?: sanitizeFilename(
+                parseFilenameFromDisposition(headResp.headers().firstValue("Content-Disposition").orElse(null))
+                    ?: URI.create(url).path.substringAfterLast('/')
+            )
 
         val target = dir.resolve(name)
         return download(url, target, resume, overwrite, connectTimeout, block)
+    }
+
+    /**
+     * Sanitizes a server-derived filename (from Content-Disposition or the URL path) so that a malicious
+     * value such as `..\..\evil.exe` or `/etc/cron.d/x` cannot escape the target directory (path traversal).
+     * Only the last path segment is kept; empty/`.`/`..` results fall back to `download.bin`.
+     */
+    private fun sanitizeFilename(name: String): String {
+        val cleaned = name.substringAfterLast('/').substringAfterLast('\\').trim()
+        return if (cleaned.isEmpty() || cleaned == "." || cleaned == "..") "download.bin" else cleaned
     }
 
     /** Extracts filename/filename* from Content-Disposition (simplified RFC 5987 handling). */

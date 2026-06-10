@@ -52,7 +52,9 @@ class WebPCompressor : ImageCompressor {
         destination: String,
         config: CompressionConfig
     ): CompressionResult {
-        val image = ImageIO.read(inputStream)
+        val image = requireNotNull(ImageIO.read(inputStream)) {
+            "cannot decode input stream as image: $destination"
+        }
         val byteArrayOutputStream = ByteArrayOutputStream()
 
         val writer = ImageIO.getImageWritersByMIMEType("image/webp").next()

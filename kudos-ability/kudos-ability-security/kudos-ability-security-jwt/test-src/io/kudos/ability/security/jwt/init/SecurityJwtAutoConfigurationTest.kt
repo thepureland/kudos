@@ -1,5 +1,10 @@
 package io.kudos.ability.security.jwt.init
 
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.crypto.MACSigner
+import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.jwt.SignedJWT
 import io.kudos.ability.security.jwt.support.JwtParametersTool
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
@@ -16,10 +21,13 @@ import java.security.KeyStore
 import java.security.Security
 import java.security.cert.X509Certificate
 import java.time.Duration
+import java.time.Instant
+import java.util.Base64
 import java.util.Date
 import javax.security.auth.x500.X500Principal
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -39,6 +47,9 @@ import kotlin.test.assertTrue
  *    NimbusJwtDecoder + JWKSource chain is exercised end-to-end).
  *  - A custom-provided [JwtEncoder] bean wins over the auto-config's default
  *    (`@ConditionalOnMissingBean` honored).
+ *  - Negative security boundaries: tampered payload (signature no longer covers claims),
+ *    unsigned `alg=none` token, and the HS256 algorithm-confusion forgery (HMAC-signed with the
+ *    RSA public key bytes) are all rejected by the decoder.
  *
  * @author AI: Claude
  * @since 1.0.0
@@ -113,6 +124,100 @@ internal class SecurityJwtAutoConfigurationTest {
                 val beans = ctx.getBeansOfType(JwtEncoder::class.java)
                 assertEquals(1, beans.size, "ConditionalOnMissingBean must keep the autoconfig encoder off the bus")
                 assertTrue(beans.values.single() === userEncoder)
+            }
+    }
+
+    @Test
+    fun decoder_rejectsTokenWithTamperedPayload() {
+        // Signature-bypass boundary: re-encode the payload with a different subject while keeping
+        // the original RS256 signature. The decoder must reject — accepting it would mean claims
+        // are trusted without the signature actually covering them.
+        val keystoreFile = writeKeystore()
+        runner
+            .withPropertyValues(
+                "kudos.ability.security.jwt.key.key-store=file:${keystoreFile.absolutePath}",
+                "kudos.ability.security.jwt.key.store-pass=$KEYSTORE_PASSWORD",
+                "kudos.ability.security.jwt.key.alias=$KEYSTORE_ALIAS",
+                "kudos.ability.security.jwt.claims.iss=https://kudos-integration-test",
+                "kudos.ability.security.jwt.claims.exp=3600",
+            )
+            .run { ctx ->
+                val encoder = ctx.getBean(JwtEncoder::class.java)
+                val decoder = ctx.getBean(JwtDecoder::class.java)
+                val params = ctx.getBean(JwtParametersTool::class.java)
+
+                val token = encoder.encode(params.createDefault("alice")).tokenValue
+                // Baseline: the untampered token decodes fine.
+                assertEquals("alice", decoder.decode(token).subject)
+
+                val parts = token.split(".")
+                val payloadJson = String(Base64.getUrlDecoder().decode(parts[1]), Charsets.UTF_8)
+                val forgedPayload = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(payloadJson.replace("alice", "mallory").toByteArray(Charsets.UTF_8))
+                val forged = "${parts[0]}.$forgedPayload.${parts[2]}"
+
+                assertFails("tampered payload with original signature must be rejected") {
+                    decoder.decode(forged)
+                }
+            }
+    }
+
+    @Test
+    fun decoder_rejectsUnsignedAlgNoneToken() {
+        // The classic `alg=none` attack: an unsigned token claiming the "none" algorithm. The
+        // decoder must reject it — "none" is not in the configured JWS algorithm set, and an
+        // unsigned JWT must never be accepted by a verifying decoder.
+        val keystoreFile = writeKeystore()
+        runner
+            .withPropertyValues(
+                "kudos.ability.security.jwt.key.key-store=file:${keystoreFile.absolutePath}",
+                "kudos.ability.security.jwt.key.store-pass=$KEYSTORE_PASSWORD",
+                "kudos.ability.security.jwt.key.alias=$KEYSTORE_ALIAS",
+            )
+            .run { ctx ->
+                val decoder = ctx.getBean(JwtDecoder::class.java)
+                val enc = Base64.getUrlEncoder().withoutPadding()
+                val exp = Instant.now().plusSeconds(3600).epochSecond
+                val header = enc.encodeToString("""{"alg":"none"}""".toByteArray(Charsets.UTF_8))
+                val payload = enc.encodeToString("""{"sub":"mallory","exp":$exp}""".toByteArray(Charsets.UTF_8))
+
+                assertFails("alg=none token must be rejected") {
+                    decoder.decode("$header.$payload.")
+                }
+            }
+    }
+
+    @Test
+    fun decoder_rejectsHs256TokenSignedWithRsaPublicKeyBytes() {
+        // Algorithm-confusion attack: sign an HS256 token using the (public!) RSA key bytes as
+        // the HMAC secret. A vulnerable verifier that feeds the RSA public key into HMAC
+        // verification would accept this attacker-mintable token. Nimbus's
+        // JWSVerificationKeySelector matches keys by type (HS* requires an `oct` key; the
+        // JWKSource only holds an RSA key), so this must fail — lock that property in.
+        val keystoreFile = writeKeystore()
+        val keyStore = KeyStore.getInstance("PKCS12").apply {
+            keystoreFile.inputStream().use { load(it, KEYSTORE_PASSWORD.toCharArray()) }
+        }
+        val publicKeyBytes = keyStore.getCertificate(KEYSTORE_ALIAS).publicKey.encoded
+        val claims = JWTClaimsSet.Builder()
+            .subject("mallory")
+            .expirationTime(Date(System.currentTimeMillis() + 3_600_000))
+            .build()
+        val forged = SignedJWT(JWSHeader(JWSAlgorithm.HS256), claims)
+            .apply { sign(MACSigner(publicKeyBytes)) }
+            .serialize()
+
+        runner
+            .withPropertyValues(
+                "kudos.ability.security.jwt.key.key-store=file:${keystoreFile.absolutePath}",
+                "kudos.ability.security.jwt.key.store-pass=$KEYSTORE_PASSWORD",
+                "kudos.ability.security.jwt.key.alias=$KEYSTORE_ALIAS",
+            )
+            .run { ctx ->
+                val decoder = ctx.getBean(JwtDecoder::class.java)
+                assertFails("HS256 token signed with the RSA public key bytes must be rejected") {
+                    decoder.decode(forged)
+                }
             }
     }
 

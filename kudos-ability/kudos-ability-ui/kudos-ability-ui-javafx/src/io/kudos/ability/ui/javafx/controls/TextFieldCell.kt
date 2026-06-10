@@ -167,14 +167,12 @@ class TextFieldCell<S, T> @JvmOverloads constructor(private val sc: StringConver
         // Focused and hover states should be set in the CSS.  This is just a test
         // to see what happens when we set the style in code
         textField.focusedProperty().addListener { _, _, newValue ->
-            val tf = graphic as TextField
-            tf.style = if (newValue) STYLE_HAS_FOCUS else STYLE_DEFAULT
+            textField.style = if (newValue) STYLE_HAS_FOCUS else STYLE_DEFAULT
         }
         textField.hoverProperty().addListener { _, _, newValue ->
-            val tf = graphic as TextField
-            tf.style = when {
+            textField.style = when {
                 newValue -> STYLE_HOVER
-                tf.focusedProperty().get() -> STYLE_HAS_FOCUS
+                textField.isFocused -> STYLE_HAS_FOCUS
                 else -> STYLE_DEFAULT
             }
         }

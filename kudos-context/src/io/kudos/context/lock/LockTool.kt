@@ -1,6 +1,7 @@
 package io.kudos.context.lock
 
 import io.kudos.base.enums.ienums.IErrorCodeEnum
+import io.kudos.base.logger.LogFactory
 import io.kudos.context.kit.SpringKit
 import java.util.concurrent.locks.Lock
 import java.util.function.Supplier
@@ -28,7 +29,16 @@ object LockTool {
      * - The Spring context must be ready before the first `lockExecute` call
      */
     private val LOCK_SERVICE: ILockProvider<out Lock> by lazy {
-        SpringKit.getBeansOfType<ILockProvider<*>>().values.minByOrNull { it.order() } ?: NormalLockService()
+        SpringKit.getBeansOfType<ILockProvider<*>>().values.minByOrNull { it.order() }
+            ?: NormalLockService().also {
+                // Surface the fallback explicitly: in multi-instance deployments an in-process lock silently
+                // replacing a distributed lock means mutual exclusion is per-node only — a latent correctness trap.
+                LogFactory.getLog(LockTool::class).warn(
+                    "No ILockProvider bean found in the Spring container; falling back to in-process " +
+                            "NormalLockService. Distributed locking is NOT effective across instances — add a " +
+                            "kudos-ability-distributed-lock-* dependency for multi-instance deployments."
+                )
+            }
     }
 
     /**

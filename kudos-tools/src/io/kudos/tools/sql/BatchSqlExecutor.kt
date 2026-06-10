@@ -18,36 +18,35 @@ fun main() {
 
 
 //    Class.forName("org.h2.Driver")
-    val conne = DriverManager.getConnection(
+    val start = System.currentTimeMillis()
+    var i = 0
+    DriverManager.getConnection(
         "jdbc:h2:tcp://localhost:9092/D:/dev/kudos/kudos-data/kudos-data-jdbc/h2/h2",
         "sa",
         null
-    )
-    val stm = conne.createStatement()
-    val start = System.currentTimeMillis()
-    conne.autoCommit = false
-    var i = 0
-
-    while (lineIterator.hasNext()) {
-        val line = lineIterator.next()
-        @Suppress("SqlSourceToSinkFlow")
-        stm.addBatch(line)
-        i++
-        if (i % 5000 == 0) {
+    ).use { conn ->
+        conn.autoCommit = false
+        conn.createStatement().use { stm ->
+            while (lineIterator.hasNext()) {
+                val line = lineIterator.next()
+                @Suppress("SqlSourceToSinkFlow")
+                stm.addBatch(line)
+                i++
+                if (i % BATCH_SIZE == 0) {
+                    stm.executeBatch()
+                    conn.commit()
+                    println("Committed $i rows in total")
+                }
+            }
+            // Flush the remaining partial batch
             stm.executeBatch()
-            conne.commit()
-            println("Committed ${i} rows in total")
+            conn.commit()
         }
     }
 
-    if(!lineIterator.hasNext()) {
-        stm.executeBatch()
-        conne.commit()
-    }
-
     val end = System.currentTimeMillis()
-    println("Inserted ${i} rows, total elapsed: ${end - start}ms")
-    stm.close()
-    conne.close()
-
+    println("Inserted $i rows, total elapsed: ${end - start}ms")
 }
+
+/** Number of statements per JDBC batch commit */
+private const val BATCH_SIZE = 5000

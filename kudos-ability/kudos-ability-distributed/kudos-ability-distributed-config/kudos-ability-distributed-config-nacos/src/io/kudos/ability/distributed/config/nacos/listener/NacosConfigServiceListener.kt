@@ -47,7 +47,6 @@ class NacosConfigServiceListener {
      * @param group Nacos group
      * @param listener the abstract listener provided by Nacos (application code only needs to implement onChange)
      * @throws NacosException thrown by the Nacos SDK
-     * @throws IllegalArgumentException when [configService] is not yet initialised
      * @author K
      * @since 1.0.0
      */
@@ -62,7 +61,6 @@ class NacosConfigServiceListener {
      * @param dataId Nacos dataId
      * @param group Nacos group
      * @param listener the listener instance to remove (must be the same reference used at registration)
-     * @throws IllegalArgumentException when [configService] is not yet initialised
      * @author K
      * @since 1.0.0
      */

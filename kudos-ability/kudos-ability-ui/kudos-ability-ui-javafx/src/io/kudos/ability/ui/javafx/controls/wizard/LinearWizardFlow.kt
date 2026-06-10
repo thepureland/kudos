@@ -24,7 +24,6 @@
  */
 package io.kudos.ability.ui.javafx.controls.wizard
 
-import java.util.ArrayList
 import java.util.Optional
 
 /**
@@ -39,7 +38,7 @@ import java.util.Optional
 class LinearWizardFlow(pages: Collection<Wizard.WizardPane?>?) : Wizard.Flow {
 
     /** Internal immutable copy, so external mutation of the original collection cannot affect the wizard flow. */
-    private val pages: List<Wizard.WizardPane?>
+    private val pages: List<Wizard.WizardPane?> = pages.orEmpty().toList()
 
     /**
      * Convenience constructor: pass pages directly in vararg form.
@@ -60,8 +59,8 @@ class LinearWizardFlow(pages: Collection<Wizard.WizardPane?>?) : Wizard.Flow {
      * @since 1.0.0
      */
     override fun advance(currentPage: Wizard.WizardPane?): Optional<Wizard.WizardPane> {
-        var pageIndex = pages.indexOf(currentPage)
-        return Optional.ofNullable(pages[++pageIndex])
+        val pageIndex = pages.indexOf(currentPage)
+        return Optional.ofNullable(pages[pageIndex + 1])
     }
 
     /**
@@ -75,9 +74,5 @@ class LinearWizardFlow(pages: Collection<Wizard.WizardPane?>?) : Wizard.Flow {
     override fun canAdvance(currentPage: Wizard.WizardPane?): Boolean {
         val pageIndex = pages.indexOf(currentPage)
         return pages.size - 1 > pageIndex
-    }
-
-    init {
-        this.pages = ArrayList(pages.orEmpty())
     }
 }

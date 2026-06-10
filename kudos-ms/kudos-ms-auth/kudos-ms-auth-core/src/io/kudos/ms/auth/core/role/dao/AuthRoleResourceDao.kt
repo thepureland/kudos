@@ -85,5 +85,17 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
         return batchDeleteCriteria(criteria)
     }
 
+    /**
+     * Deletes every resource grant of a role. Used by the role-delete cascade so a removed role
+     * leaves no orphan resource grants behind.
+     *
+     * @param roleId role id
+     * @return number of rows deleted
+     */
+    open fun deleteByRoleId(roleId: String): Int {
+        val criteria = Criteria(AuthRoleResource::roleId eq roleId)
+        return batchDeleteCriteria(criteria)
+    }
+
 
 }

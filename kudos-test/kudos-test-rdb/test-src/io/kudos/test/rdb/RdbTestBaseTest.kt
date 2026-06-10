@@ -1,6 +1,7 @@
 package io.kudos.test.rdb
 
 import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
+import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.H2TestContainer
 import jakarta.annotation.Resource
 import org.springframework.jdbc.core.JdbcTemplate
@@ -22,6 +23,7 @@ import kotlin.test.assertNotNull
  * @author K
  * @since 1.0.0
  */
+@EnabledIfDockerInstalled
 class RdbTestBaseTest : SqlTestBase() {
 
     companion object Companion {

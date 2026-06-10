@@ -86,7 +86,10 @@ open class AuthRoleApi : IAuthRoleApi {
     }
 
     override fun isUserHasResource(userId: String, resourceId: String): Boolean {
-        return authRoleService.hasResource(userId, resourceId)
+        // Must delegate to the user-level check: IAuthRoleService.hasResource(roleId, resourceId)
+        // expects a ROLE id as its first argument — passing the userId there would silently check
+        // the wrong relation and always deny (or, worse, match on an id collision).
+        return authRoleService.isUserHasResource(userId, resourceId)
     }
 
 

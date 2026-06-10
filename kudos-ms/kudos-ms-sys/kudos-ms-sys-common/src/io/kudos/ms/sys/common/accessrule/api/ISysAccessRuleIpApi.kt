@@ -33,7 +33,10 @@ interface ISysAccessRuleIpApi {
     ): List<SysAccessRuleIpCacheEntry>
 
     /**
-     * Checks whether an IP is allowed to access.
+     * Checks whether an IP is allowed to access (`true` = allow, `false` = deny).
+     *
+     * Hit on a blacklist rule denies; when whitelist rules exist for the dimension,
+     * only a whitelist hit allows; with no effective rule configured, access is allowed by default.
      */
     @GetMapping("/api/internal/sys/accessRuleIp/checkIpAccess")
     fun checkIpAccess(

@@ -45,15 +45,15 @@ StreamProducerFailHandlerProcessor 写 sys_mq_fail_msg 表 / 触发自定义 han
 
 ```
 SysMqFailMsg (表 sys_mq_fail_msg)
-  ├─ bindingName
+  ├─ id
   ├─ topic
-  ├─ messageBody (JSON)
-  ├─ retryCount
-  └─ status (waiting / processing / done)
+  ├─ msg_header_json (JSON)
+  ├─ msg_body_json (JSON)
+  └─ create_time
 ```
 
-`SysMqFailMsgService` 提供失败消息的查询 / 重试 / 删除 API；下游 `cache-remote-redis` 等
-模块用得到。
+`SysMqFailMsgService` 提供失败消息的保存 / 查询 / 删除 API（重投需业务侧自行实现）；下游
+`cache-remote-redis` 等模块用得到。
 
 ### `StreamConsumerEnvironRegistrar` 自动聚合 function definition
 
@@ -94,7 +94,7 @@ kudos:
 | `annotations/MqConsumer` | 消费者注解（注：返回类型必须是 `Consumer<Message<...>>`） |
 | `annotations/MqProducerAspect` | 生产者切面，@AfterReturning 拦截 |
 | `support/StreamProducerHelper` | `sendMessage` / `asyncSendMessage` / `doRealSend` |
-| `support/StreamMessageConverter` | `application/x-kudos-stream` content-type 转换 |
+| `support/StreamMessageConverter` | `application/JdkSerializa` content-type 的 JDK 序列化转换器 |
 | `support/StreamProducerFailHandlerProcessor` | 错误通道入口 → 失败消息持久化 |
 | `handler/StreamGlobalExceptionHandler` | spring-cloud-stream 全局异常入口 |
 | `handler/StreamProducerExceptionHandler` | producer 端异常处理 |
@@ -152,3 +152,35 @@ api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-abil
 api(libs.spring.cloud.stream)
 api(libs.alibaba.fastjson2)
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+- 【安全性】`support/StreamMessageConverter.kt`：`convertFromInternal` 直接用
+  `SerializationKit.deserialize`（commons-lang3，无 `ObjectInputFilter`）反序列化来自 broker 的字节流。
+  若 topic 可被第三方写入或 broker 被攻陷，存在 gadget-chain 反序列化 RCE 风险。建议参照
+  `stream-rocketmq` 的 `batch-consumer.deserialization-filter` 模式，为该转换器增加可配置的
+  JDK 反序列化 allowlist（默认空保持兼容）。
+- 【安全性】`handler/StreamGlobalExceptionHandler.kt`：失败消息的完整 headers + body 以 JSON 明文
+  落库 `sys_mq_fail_msg`，可能包含 tenantId / userId 等上下文敏感字段；建议提供脱敏钩子或在文档中
+  明确该表的数据敏感级别与清理策略。
+- 【功能】`biz/ISysMqFailMsgService.kt`：消费侧失败消息只有 save / query / delete，没有"重投"闭环
+  （producer 侧有文件重试，消费侧入表后无自动恢复）；表也缺 `retry_count` / `status` 字段，难以做
+  自动重投与对账。建议补充 resend API + 状态字段。
+- 【功能】`model/vo/StreamMessageVo.kt`：消息体没有 messageId / 发送时间戳字段，消费端无法做幂等
+  去重，也无法计算端到端消费延迟。建议在 `StreamHeader.initHeader` 写入 msgId + sendTime header。
+- 【功能】`support/StreamProducerHelper.kt`：`createMessage` 未暴露 partition key / message key
+  header，无法支持顺序消息（Kafka partition key、RocketMQ MessageQueueSelector）。建议在
+  `sendMessage` 增加可选的 key 参数并写入对应 binder header。
+- 【可观测性】全模块无 Micrometer 指标：发送失败次数、error channel 触发次数、
+  `streamAsyncSendExecutor` 队列深度、producer-limit 拒绝次数、失败文件重试成功率等都只有日志。
+  建议引入 `MeterRegistry`（ObjectProvider 可选注入，缺失时退化为 no-op）。
+- 【可扩展性】`handler/StreamGlobalExceptionHandler.kt`：`isFromConsumer` 硬编码
+  `kafka_` / `amqp_` / `rocket_` header 前缀，新增 binder（如 Pulsar）需要改公共代码；建议把前缀
+  集合做成配置项或由各 broker 模块注册。
+- 【可维护性】`support/StreamProducerHelper.kt`：`sendMessage` 与 `asyncSendMessage` 的
+  "校验 binding → 限流 → doRealSend → warn" 逻辑重复，可提取私有方法收敛。
+- 【可维护性】`handler/StreamGlobalExceptionHandler.kt`：`headers.get(StreamHeader.TOPIC_KEY).toString()`
+  在 header 缺失时会把字符串 `"null"` 写入 topic 列，建议改为显式空值处理。
+- 【测试】`init/StreamConsumerEnvironRegistrar.kt` 的 yml 聚合逻辑与
+  `StreamGlobalExceptionHandler` 的三入口路由仍无单测（README 已有备注），建议把
+  `isFromConsumer` / definition 合并逻辑抽成纯函数后补测。

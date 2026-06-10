@@ -72,6 +72,30 @@ kudos:
 
 默认仍是 `false`，生产不建议打开。
 
+### 上下文头 HMAC 验签（`FeignContextSignatureVerifier`）
+
+`FEIGN_REQUEST` 标记只能挡外部浏览器请求，挡不住内网被攻破节点伪造 `TENANT_ID`。配置共享
+密钥后 filter 会对 client-feign 发来的签名头做完整校验：
+
+```yaml
+kudos:
+  ability:
+    distributed:
+      discovery:
+        nacos:
+          feign-context-filter:
+            context-signature-secret: ${KUDOS_CONTEXT_SIGNATURE_SECRET}   # 与 client 的 contextSignatureSecret 同值
+            context-signature-timestamp-window-millis: 300000             # 可选，默认 ±5 分钟
+            context-signature-nonce-cache-max-size: 100000                # 可选，nonce 缓存上限
+```
+
+- 验签内容：HMAC-SHA256（常数时间比较）+ 时间戳窗口 + nonce 防重放（进程内有界 TTL 缓存，
+  TTL 与时间戳窗口一致）
+- 缺签名头或校验失败 → 401，且**不写回上下文**；WARN 日志只记失败原因与请求坐标，不落
+  签名值 / 上下文值
+- 未配置密钥 → 保持旧行为（不校验），首个透传请求打一次 WARN 提醒
+- 待办：nonce 缓存是进程内的，多实例部署需换 Redis（`SET NX PX`）做集群级防重放
+
 ## 模块入口
 
 | 路径 | 角色 |
@@ -80,6 +104,7 @@ kudos:
 | `init/DiscoveryLoadbalancerConfiguration` | Zone preference 负载均衡装配 |
 | `loadbalancer/HintZoneServiceInstanceListSupplier` | 按 hint header 过滤实例 |
 | `filter/FeignContextWebFilter` | Provider 端 header → KudosContext 反向写回（默认已装配） |
+| `filter/FeignContextSignatureVerifier` | 上下文头 HMAC 验签（签名 + 时间戳窗口 + nonce 防重放） |
 | `support/IFeignProviderContextProcess` | Provider 端上下文扩展 SPI |
 
 ## 配置示例
@@ -116,6 +141,8 @@ kudos:
   默认 zone / 自定义 metadata key
 - `FeignContextWebFilterTest` —— 不依赖 Nacos，覆盖无透传标记时不污染上下文、Feign 标记
   请求的 header 回写、开发期允许未标记请求透传、provider 扩展 SPI 调用
+- `FeignContextWebFilterSignatureTest` —— 覆盖 HMAC 验签：合法签名通过、篡改租户头被拒、
+  过期时间戳被拒、nonce 重放被拒、配密钥但缺签名头被拒、未配密钥保持旧行为放行
 - `NacosDiscoveryAutoConfigurationTest` —— 覆盖 `FeignContextWebFilter` 注册 bean 的 filter、
   order、name、url pattern
 
@@ -157,3 +184,36 @@ testImplementation(libs.spring.boot.starter.web)
 
 `spring.boot.starter.web` 是 `compileOnly`——本模块编译时需要 servlet API 来定义
 `FeignContextWebFilter`，但运行时由消费方应用决定带哪个 web 实现（servlet / reactive）。
+
+## 改进建议（自动分析 2026-06-11）
+
+- ✅ 已修复（2026-06-11）**【安全】`FeignContextWebFilter` 未校验客户端的 HMAC 签名头**：
+  新增 `filter/FeignContextSignatureVerifier`，配置
+  `kudos.ability.distributed.discovery.nacos.feign-context-filter.context-signature-secret`
+  （与 client-feign 的 `contextSignatureSecret` 同值）后，filter 对
+  `X-Kudos-Context-Timestamp/Nonce/Signature` 做共享密钥 HMAC-SHA256 验签 + 时间戳窗口
+  （`context-signature-timestamp-window-millis`，默认 ±5 分钟）+ nonce 防重放（进程内有界
+  TTL 缓存，`context-signature-nonce-cache-max-size` 默认 10 万）校验；缺签名头或校验失败
+  返回 401 并记录来源 WARN（不落签名值与上下文值），不写回上下文。签名比较用
+  `MessageDigest.isEqual` 常数时间比较。未配置密钥保持旧行为，仅首个透传请求打一次 WARN。
+  剩余待办：nonce 缓存为进程内实现，多实例部署可被"每实例重放一次"，需换 Redis
+  （`SET NX PX`）做集群级防重放。
+- **【缺陷风险】filter 不负责清理 `KudosContext`**：
+  `src/io/kudos/ability/distributed/discovery/nacos/filter/FeignContextWebFilter.kt`
+  写回上下文后没有 try/finally 清理，依赖 `kudos-ability-web-springmvc` 的
+  `WebContextInitFilter` 在 finally 中 `KudosContextHolder.clear()` 兜底。若 provider 应用未引入
+  该 web 模块，容器线程复用时上一请求的租户/数据源会泄漏给下一个请求。建议本 filter 自带
+  finally 还原（保存进入前快照、退出时恢复），或至少在 KDoc/README 标注该强依赖。
+- **【功能】locale 解析仅支持两段式 `lang_COUNTRY`**：
+  `src/io/kudos/ability/distributed/discovery/nacos/filter/FeignContextWebFilter.kt`
+  `local.split("_")` 要求至少两段，纯语言（`zh`）或三段（`zh_Hans_CN`）会被静默忽略。
+  建议改用 `Locale.forLanguageTag` 或兼容 1~3 段解析。
+- **【可维护性】LB order 默认值为未注明来源的魔法数**：
+  `src/io/kudos/ability/distributed/discovery/nacos/init/DiscoveryLoadbalancerConfiguration.kt`
+  `183827463` / `183827465` 与 spring-cloud-alibaba `NacosLoadBalancerClientConfiguration`
+  内部值对齐，但代码中无注释说明来源与"必须比谁大/小"的约束，升级 spring-cloud 时易被破坏。
+  建议补注释并在 supplier 装配处断言相对顺序。
+- **【测试】reactive 分支无测试覆盖**：
+  `src/io/kudos/ability/distributed/discovery/nacos/init/DiscoveryLoadbalancerConfiguration.kt`
+  `ReactiveSupportConfiguration` 的装配条件与 order 包装目前零覆盖（blocking 分支同样只覆盖了
+  纯函数 `filteredByHint`）。可用 `ApplicationContextRunner` 补条件装配单测。

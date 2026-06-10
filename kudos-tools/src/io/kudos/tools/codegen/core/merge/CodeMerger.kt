@@ -84,8 +84,28 @@ class CodeMerger(private val file: File) {
         // The set difference is the user's own imports
         val customImport = oldImports.subtract(newImports.toSet())
         if (customImport.isEmpty()) return
-        val imports = customImport.joinToString(separator = "", postfix = "") { "$it\n" }
-        val index = newFileContent.indexOf("import")
-        newFileContent = StringBuilder(newFileContent).insert(index, imports).toString()
+        val imports = customImport.joinToString(separator = "") { "$it\n" }
+        newFileContent = StringBuilder(newFileContent).insert(findImportInsertIndex(), imports).toString()
+    }
+
+    /**
+     * Determines where the user's own imports should be inserted in the new file content:
+     * before the first existing `import` statement; if the new file has no imports, right after
+     * the `package` declaration line; if there is no package declaration either, at the file start.
+     * Guards against the previous behavior of `indexOf` returning -1 and crashing `insert`.
+     *
+     * @return zero-based insertion offset in [newFileContent]
+     * @author K
+     * @since 1.0.0
+     */
+    private fun findImportInsertIndex(): Int {
+        val importIndex = newFileContent.indexOf("import ")
+        if (importIndex >= 0) return importIndex
+        val packageIndex = newFileContent.indexOf("package ")
+        if (packageIndex >= 0) {
+            val lineEnd = newFileContent.indexOf('\n', packageIndex)
+            if (lineEnd >= 0) return lineEnd + 1
+        }
+        return 0
     }
 }

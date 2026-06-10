@@ -18,7 +18,7 @@ object FeignFallbackStatusResolver {
      * Maps a Feign exception to the HTTP status code used for the fallback.
      */
     fun resolve(cause: Throwable): Int {
-        generateSequence(cause as Throwable?) { it.cause }
+        generateSequence(cause) { it.cause }
             .filterIsInstance<FeignException>()
             .map { it.status() }
             .firstOrNull { it in 100..599 }

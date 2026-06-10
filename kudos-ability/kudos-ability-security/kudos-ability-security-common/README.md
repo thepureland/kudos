@@ -204,3 +204,32 @@ implementation(libs.apache.commons.codec)  // Base32 编码
 
 testImplementation(project(":kudos-test:kudos-test-common"))
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+### 安全性
+- **TOTP 码比较非常数时间**（`src/io/kudos/ability/security/common/support/TotpAuthenticator.kt`
+  → 委托 kudos-base `GoogleAuthenticator.checkCode`）：窗口内逐个用 `==` 数值比较候选码，
+  理论上存在时序侧信道。对 6 位 30 秒 TOTP 的实际可利用性极低（网络抖动远大于比较耗时差），
+  列为低优先级；彻底排除可改用 `MessageDigest.isEqual` 风格的常数时间比较。
+- **`verify` 无速率限制抽象**（`support/Authenticator.kt`）：6 位码空间只有 10^6，windowSize=1
+  时单次窗口可接受 3 个码；不限速的在线暴力破解期望 ~17 万次尝试即可命中。模块本身不做限速
+  没问题，但建议在接口 KDoc / README 使用示例中强制提示业务侧必须配合失败计数 + 锁定
+  （例如 5 次失败锁 15 分钟），否则 2FA 形同虚设。
+
+### 功能缺口（MFA 扩展点）
+- **`Authenticator` 已是天然 SPI**，但 enrollment 周边缺工具（README 已知限制提过 otpauth URI）。
+  建议补充：`TotpUriBuilder(issuer, account, secret)`（处理 URL 编码细节，手拼容易把 `issuer`
+  里的空格/中文搞坏）+ 可选的 anti-replay validator 装饰器（依赖 kudos 缓存模块，记录
+  "secret+window 已用过的 code"）。
+- **HOTP / WebAuthn 扩展**：接口设计已预留（见 `Authenticator` KDoc），暂无实现需求时不必动。
+
+### 可观测性
+- **`verify` 失败无任何日志/事件**（`TotpAuthenticator.kt`）：2FA 校验失败是高价值审计信号
+  （撞库 / 暴力破解前兆）。模块层至少可发布事件或提供回调；注意日志中只能记 userId 维度，
+  **绝不能**记 secret 或用户输入的 code。
+
+### 可扩展性
+- **TOTP 参数硬编码 SHA1 / 6 位 / 30 秒**（`TotpAuthenticator.kt`，已知限制提过）：
+  若未来要兼容企业 IdP 的 SHA256/8 位/60 秒 profile，建议把 `TIME_STEP_SECONDS`、位数、
+  HMAC 算法提为构造参数（默认值保持现状，不破坏兼容）。

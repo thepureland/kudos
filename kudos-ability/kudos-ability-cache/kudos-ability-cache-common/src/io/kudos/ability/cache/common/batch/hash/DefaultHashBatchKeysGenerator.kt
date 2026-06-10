@@ -89,43 +89,35 @@ class DefaultHashBatchKeysGenerator : IKeysGenerator {
     /**
      * 按笛卡尔积语义把多个 collection/array 参数展开成 totalCount 条 key。
      *
-     * 算法：每个集合按"组复制次数" (`totalCount / size`) 横向复制；调用方按 index % size 取段拼出每条 key。
-     * 这是经典的笛卡尔积"小步快走"实现，避免一次性生成全笛卡尔后再投影的内存峰值。
+     * 算法：把每个参与参数规范化为一"列"候选段值（标量参数视为单元素列），再逐列做笛卡尔积展开，
+     * 最后用分隔符把每条组合拼成 key。任一参与的集合/数组为空（totalCount = 0）时返回空列表。
+     *
+     * 历史 bug（已修）：旧实现用 `parts.addAll(listOf(it))` 把**整个集合对象**当作一个段值放入列，
+     * 多参数场景要么 `seg[index]` 越界（IndexOutOfBoundsException），要么把集合 toString 拼进 key。
      *
      * @param function 业务方法
      * @param totalCount 笛卡尔积总数（由 [calTotalCount] 算得）
      * @param params 入参
-     * @return 拍扁后的 key 字符串列表
+     * @return 拍扁后的 key 字符串列表（条数等于 totalCount）
      * @author K
      * @since 1.0.0
      */
-    @Suppress("UNCHECKED_CAST")
     private fun generateKeys(function: KFunction<*>?, totalCount: Int, vararg params: Any): List<String> {
-        val keys = mutableListOf<List<Any>>()
+        if (totalCount == 0) return emptyList()
         val paramIndexes = getParamIndexes(function, *params)
-        for (index in paramIndexes) {
-            val it = params[index]
-            val parts = mutableListOf<Any>()
-            when (it) {
-                is Collection<*> if it.isNotEmpty() -> {
-                    val groupCount = totalCount / it.size
-                    repeat(groupCount) { parts.addAll(listOf(it)) }
-                }
-
-                is Array<*> if it.isNotEmpty() -> {
-                    val groupCount = totalCount / it.size
-                    repeat(groupCount) { parts.addAll(listOf(it)) }
-                }
-
-                is Collection<*> -> { /* parts stays empty */ }
-                is Array<*> -> { /* parts stays empty */ }
-                else -> repeat(totalCount) { parts.add(it) }
+        // one column of candidate segment values per participating parameter
+        val columns: List<List<Any?>> = paramIndexes.map { index ->
+            when (val param = params[index]) {
+                is Collection<*> -> param.toList()
+                is Array<*> -> param.toList()
+                else -> listOf(param)
             }
-            keys.add(parts)
+        }
+        var combos: List<List<Any?>> = listOf(emptyList())
+        for (column in columns) {
+            combos = combos.flatMap { prefix -> column.map { prefix + it } }
         }
         val delimiter = getDelimiter()
-        return (0 until totalCount).map { index ->
-            keys.joinToString(delimiter) { seg -> seg[index].toString() }
-        }
+        return combos.map { segments -> segments.joinToString(delimiter) }
     }
 }

@@ -126,3 +126,18 @@ testImplementation(libs.spring.boot.starter.web)
 testImplementation(libs.spring.boot.starter.webmvc.test)
 testImplementation(libs.spring.boot.starter.jetty)
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+**安全性（生产暴露）**
+- `production=true` 目前是纯标记位，不联动任何行为。建议在 `init/SwaggerAutoConfiguration.kt`
+  中当 `production=true` 时自动注册 `springdoc.api-docs.enabled=false`（或一个对
+  `/v3/api-docs/**` 返回 404 的过滤器），让"生产不暴露文档"成为默认安全姿态而非业务自觉；
+  需要 build 期 codegen 的工程可用显式开关豁免。
+
+**配置不生效**
+- `SwaggerProperties.url` 绑定后从未被使用——`buildInfo()` 只消费 title / description /
+  version / contact。建议接到 `Info().termsOfService(url)` 或外部文档链接，否则删除该字段
+  （`init/SwaggerAutoConfiguration.kt`、`init/properties/SwaggerProperties.kt`）。
+- `SwaggerProperties.groupName` 同为占位字段（已知限制有记录）；若长期无 `GroupedOpenApi`
+  规划，建议标记 `@Deprecated` 引导业务方不要填值。

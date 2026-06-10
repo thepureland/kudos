@@ -134,6 +134,8 @@ internal class JwtResourceServerFilterChainIT {
         subject: String,
         ttl: Duration,
         roles: List<String> = emptyList(),
+        issuer: String? = null,
+        audience: List<String>? = null,
     ): String {
         // Backdate iat to 1 hour ago so even an "already-expired" token (negative ttl) still
         // satisfies the spec contract `exp > iat` — JwtClaimsSet.Builder rejects exp <= iat.
@@ -144,8 +146,28 @@ internal class JwtResourceServerFilterChainIT {
             .expiresAt(iat.plus(Duration.ofHours(1)).plus(ttl))
             .id(UUID.randomUUID().toString())
         if (roles.isNotEmpty()) builder.claim("roles", roles)
+        if (issuer != null) builder.issuer(issuer)
+        if (audience != null) builder.audience(audience)
         return encoder.encode(JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.RS256).build(), builder.build()))
             .tokenValue
+    }
+
+    @Test
+    fun privateEndpoint_foreignIssuerAndAudience_accepted_whenValidationNotConfigured() {
+        // Backward-compat lock-in: this context does NOT set resource-server.issuer / .audience,
+        // so the validator chain must not reject tokens carrying arbitrary iss / aud claims.
+        // The pinned-validation behaviour is covered by JwtIssuerAudienceValidationIT.
+        val token = mintToken(
+            subject = "alice",
+            ttl = Duration.ofMinutes(5),
+            issuer = "https://some-other-service",
+            audience = listOf("another-consumer"),
+        )
+        mockMvc.get("/private") {
+            header("Authorization", "Bearer $token")
+        }.andExpect {
+            status { isOk() }
+        }
     }
 
     @Test

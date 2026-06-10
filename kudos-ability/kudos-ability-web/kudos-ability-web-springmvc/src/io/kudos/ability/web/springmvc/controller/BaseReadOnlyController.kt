@@ -35,7 +35,11 @@ open class BaseReadOnlyController<
     @Autowired
     protected lateinit var service: B
 
-    private var detailVoClass: KClass<D>? = null
+    /** Detail VO class, resolved lazily from the subclass's generic parameter (index 4). */
+    @Suppress("UNCHECKED_CAST")
+    private val detailVoClass: KClass<D> by lazy {
+        GenericKit.getSuperClassGenricClass(this::class, 4) as KClass<D>
+    }
 
     /**
      * Paged list query.
@@ -55,12 +59,7 @@ open class BaseReadOnlyController<
      * @return WebResult(record detail)
      */
     @GetMapping("/getDetail")
-    open fun getDetail(id: PK): D {
-        if (detailVoClass == null) {
-            @Suppress("UNCHECKED_CAST")
-            detailVoClass = GenericKit.getSuperClassGenricClass(this::class, 4) as KClass<D>
-        }
-        return service.get(id, requireNotNull(detailVoClass) { "detailVoClass is null" }) ?: throw ObjectNotFoundException("Record not found!")
-    }
+    open fun getDetail(id: PK): D =
+        service.get(id, detailVoClass) ?: throw ObjectNotFoundException("Record not found!")
 
 }

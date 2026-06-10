@@ -25,26 +25,24 @@ interface IIpBigDecimalToStringSupport {
     /**
      * Returns the String representation of the start IP, compatible with IPv4 and IPv6.
      */
-    fun getIpStartStr(): String? {
-        if (getIpTypeDictCodeStr().isNullOrBlank() || getIpStartBigDecimal() == null)
-            return null
-        return if (IpTypeEnum.IPV4.code == getIpTypeDictCodeStr()) {
-            IpKit.ipv4LongToString(getIpStartBigDecimal()!!.toLong())
-        } else {
-            IpKit.ipv6BigDecimalToFullString(getIpStartBigDecimal())
-        }
-    }
+    fun getIpStartStr(): String? = toIpString(getIpStartBigDecimal())
 
     /**
      * Returns the String representation of the end IP, compatible with IPv4 and IPv6.
      */
-    fun getIpEndStr(): String? {
-        if (getIpTypeDictCodeStr().isNullOrBlank() || getIpEndBigDecimal() == null)
-            return null
-        return if (IpTypeEnum.IPV4.code == getIpTypeDictCodeStr()) {
-            IpKit.ipv4LongToString(getIpEndBigDecimal()!!.toLong())
+    fun getIpEndStr(): String? = toIpString(getIpEndBigDecimal())
+
+    /**
+     * Converts a BigDecimal IP value to its String form, dispatching on the IP type dictionary code.
+     * Returns null when the type code is blank or the value is null.
+     */
+    private fun toIpString(value: BigDecimal?): String? {
+        val typeCode = getIpTypeDictCodeStr()?.takeIf { it.isNotBlank() } ?: return null
+        if (value == null) return null
+        return if (IpTypeEnum.IPV4.code == typeCode) {
+            IpKit.ipv4LongToString(value.toLong())
         } else {
-            IpKit.ipv6BigDecimalToFullString(getIpEndBigDecimal())
+            IpKit.ipv6BigDecimalToFullString(value)
         }
     }
 

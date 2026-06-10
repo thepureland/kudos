@@ -22,7 +22,12 @@ enum class PassportLoginStatusEnum {
     /** Account is disabled (active=false) */
     INACTIVE,
 
-    /** Account is locked (error count exceeded) — currently not further differentiated; reserved enum value */
+    /**
+     * Account is locked: consecutive login failures reached the configured threshold
+     * (kudos.ms.user.passport.login-lock.max-error-times, default 5). The server arms a temporary
+     * freeze (kudos.ms.user.passport.login-lock.lock-minutes, default 30) and rejects all attempts —
+     * including ones with the correct password — until the window expires or an administrator unfreezes.
+     */
     LOCKED,
 
     /**

@@ -6,6 +6,8 @@ kudos:
       jwt:
         resource-server:
           enabled: false               # 模块默认不装；业务工程显式开启
+          issuer: ""                   # 期望的 iss claim；留空不校验。多服务共用 keystore 时务必配置，否则 A 服务的 token 可重放到 B 服务
+          audience: ""                 # 期望的 aud claim（token 的 aud 列表须包含该值）；留空不校验。与 issuer 搭配防横向重放
           # permitted-paths:           # 不需要 JWT 的路径白名单
           #   - /actuator/health
           #   - /actuator/info

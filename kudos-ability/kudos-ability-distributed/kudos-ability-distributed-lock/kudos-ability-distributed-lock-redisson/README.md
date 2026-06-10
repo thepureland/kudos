@@ -124,3 +124,33 @@ api(libs.redisson)
 testImplementation(project(":kudos-test:kudos-test-common"))
 testImplementation(project(":kudos-test:kudos-test-container"))
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+- **【功能】缺少看门狗/自动续期支持**：
+  `src/io/kudos/ability/distributed/lock/redisson/annotations/DistributedLockAspect.kt`
+  `@DistributedLock` 默认 `leaseTime=20` 秒固定租期，业务执行超过租期后锁自动释放、临界区裸奔。
+  Redisson 在 `tryLock(wait, -1, unit)` 时会启用 watchdog 自动续期，但注解层未显式声明/测试
+  `-1` 语义。建议把"`leaseTime=-1` 启用看门狗"作为受支持的契约写入注解 KDoc，并补集成测试。
+- **【安全】SpEL 生成的锁键未净化**：
+  `src/io/kudos/ability/distributed/lock/redisson/annotations/DistributedLockAspect.kt`
+  `genLockKey` 把 SpEL 结果直接拼成 `tenantId::<result>`：用户可控参数中含 `::` 或超长字符串会
+  污染键空间（与其他业务键碰撞）；`tenantId` 为 null 时前缀字面量为 `"null"`，多个无租户调用方
+  会共享同一隔离段。建议对 SpEL 结果做字符白名单过滤或哈希，并对 null 租户给出独立哨兵值。
+- **【可观测性】无锁等待/持有时长与成功率指标**：
+  `src/io/kudos/ability/distributed/lock/redisson/annotations/DistributedLockAspect.kt`
+  仅有 debug/warn 日志，没有 Micrometer Timer（等待耗时、持有耗时）和 Counter（成功/失败次数，
+  按 lockKey 前缀维度）。锁竞争问题在生产几乎只能靠指标定位，建议补埋点；"拿锁失败"日志也应
+  带上 `waitTime`/`leaseTime` 便于排查。
+- **【可维护性】`redissonClient` Bean 在 disabled 时返回 null**：
+  `src/io/kudos/ability/distributed/lock/redisson/init/RedissonLockAutoConfiguration.kt`
+  `enabled=false` 时 `@Bean` 方法返回 null——Spring 虽容忍 null bean，但下游 `@Autowired` 报错
+  信息晦涩。建议改用 `@ConditionalOnProperty("kudos.ability.distributed.lock.redisson.enabled")`
+  控制整个 bean 的注册（需回归验证依赖方）。
+- **【扩展性】切面静态绑定 `RedissonLockKit`，绕过 `ILocker` SPI**：
+  `src/io/kudos/ability/distributed/lock/redisson/annotations/DistributedLockAspect.kt`
+  common 模块定义了 `ILocker` 抽象，但注解切面直接调用 Redisson 专属的 `RedissonLockKit`，
+  未来接 Curator/Etcd 实现时切面无法复用。建议长期把切面下沉到 lock-common 并依赖 `ILocker`。
+- **【测试】SpEL 键生成与回调触发无单测**：
+  `genLockKey` 的两种策略（自动键、SpEL 键）以及 `IDistributedLockCallback` 的
+  success/fail 回调触发路径目前零覆盖，均为低成本纯逻辑单测。

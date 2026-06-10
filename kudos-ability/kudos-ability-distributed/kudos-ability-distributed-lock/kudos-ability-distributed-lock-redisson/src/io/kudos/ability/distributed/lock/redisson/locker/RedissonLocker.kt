@@ -118,6 +118,8 @@ class RedissonLocker : ILocker<RLock> {
         try {
             client().getLock(lockKey).tryLock(timeOut, leaseTime, unit)
         } catch (_: InterruptedException) {
+            // Restore the interrupt flag (same as lock(lockKey)) so callers/thread pools can still observe the interruption.
+            Thread.currentThread().interrupt()
             false
         }
 

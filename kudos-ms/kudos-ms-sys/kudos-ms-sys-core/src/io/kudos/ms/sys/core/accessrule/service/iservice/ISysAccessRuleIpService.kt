@@ -38,7 +38,13 @@ interface ISysAccessRuleIpService : IBaseCrudService<String, SysAccessRuleIp> {
     fun getIpsBySystemAndTenant(systemCode: String, tenantId: String?): List<SysAccessRuleIpCacheEntry>
 
     /**
-     * Check whether an IP is allowed (treats cached `ip_start`/`ip_end` as an unsigned 32-bit interval).
+     * Check whether an IP is **allowed to access** under the given system and tenant dimensions.
+     *
+     * The decision distinguishes rule types (`sys_access_rule.access_rule_type_dict_code`):
+     * - hit on a non-expired **blacklist** rule returns `false` (deny);
+     * - when **whitelist** rules exist for the dimension, returns `true` only if a non-expired
+     *   whitelist rule is hit (whitelist mode = deny by default);
+     * - when no effective rule is configured (or only unlimited-typed ones), returns `true`.
      *
      * **Limitation**: only rules whose `ip_start`/`ip_end` fit into unsigned 32-bit bounds participate;
      * ipv6-dict entries are not handled by this method (extend the API to add support).
@@ -46,7 +52,7 @@ interface ISysAccessRuleIpService : IBaseCrudService<String, SysAccessRuleIp> {
      * @param ip BigDecimal representation of the IP
      * @param systemCode system code
      * @param tenantId tenant id, may be null (platform-level)
-     * @return whether the IP falls within any non-expired, active rule
+     * @return `true` if the IP is allowed to access, `false` if denied
      * @author K
      * @since 1.0.0
      */

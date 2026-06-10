@@ -214,3 +214,32 @@ api(libs.spring.boot.starter.cache)
 
 testImplementation(project(":kudos-test:kudos-test-container"))
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+本次审查已直接修复：`CacheVersionConfig.getRealCacheName` 的 replace-all / 空版本误剥前缀 bug、
+`MixCacheManager.evictByPattern` 的本地层前缀名 no-op 与 LOCAL_REMOTE 本节点本地不失效 bug、
+`DefaultHashBatchKeysGenerator.generateKeys` 多参数路径的越界 / 集合 toString 拼 key bug。
+以下为不宜直接修改的遗留项：
+
+### 安全性
+- **租户 ID 缺失时的命名空间合并**：`kit/TenantCacheTool.kt` 的 `getTenantKey` 在 `tenantId == null`
+  时生成 `"null::key"` 前缀——所有无租户上下文的调用方共享同一命名空间，存在互相读到对方数据的隐患。
+  建议 null 时 fail-fast 或使用独立保留命名空间。
+- **SpEL 字符串拼接**：`support/TenantCacheKeyGenerator.kt` 用
+  `"#tenantId.concat('::').concat($key)"` 字符串拼接构造 SpEL。`key`/`suffix` 来自注解（开发者可控），
+  风险有限，但仍是表达式注入面；建议改为"先求值 suffix 表达式、再在 Kotlin 侧拼接前缀"的程序化方式。
+
+### 一致性 / 可维护性
+- **批量 key 生成器语义分裂**：`batch/keyvalue/DefaultKeysGenerator.kt` 是 positional-zip（等长校验、
+  拒绝笛卡尔积），`batch/hash/DefaultHashBatchKeysGenerator.kt` 是笛卡尔积。两者实现同一个
+  `IKeysGenerator` 接口但语义相反，业务侧在两类注解间迁移时极易踩坑。建议统一语义，或至少在两个注解的
+  KDoc 中醒目标注差异。
+- **`MixCacheManager` 配置缺失时的静默降级**：`loadLocalCacheConfig`/`loadMixCacheConfig` 中
+  `localCacheManager.getCache(realKey)` 可能返回 null 并构造出 `MixCache(strategy, null, null)`，
+  错误延迟到首次访问时才以 `requireNotNull` 暴露。建议装配期即校验并列出缺失项。
+
+### 测试覆盖缺口
+- `MixCacheManager.evictByPattern` / `clearLocal`（本次修复的两个分支均无回归测试）。
+- `DefaultHashBatchKeysGenerator` 多参数笛卡尔积路径（本次修复，无任何测试）。
+- `TenantCacheTool`（租户 key 拼接、clear 仅清本租户语义）与 `CacheNotifyListener`（策略闸门、双类型分发）。

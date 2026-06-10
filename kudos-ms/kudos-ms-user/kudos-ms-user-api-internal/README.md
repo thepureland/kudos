@@ -55,3 +55,15 @@ User 服务**面向其他微服务**的 Spring Boot 进程。作为 Feign 调用
   侧增加 fallback 单测时要记得：服务端没实现 != 客户端调用失败的同一种"远端不可达"
 - ❗ Nacos 必须可达——本模块强依赖 discovery / config；本地开发无 Nacos 时启动会失败，
   需用 `application-local.yml` 关闭注册或 mock 注册中心
+
+## 改进建议（自动分析 2026-06-11）
+
+- ✅ 已修复（2026-06-11）**内部 RPC 返回密码哈希**（`controller/account/UserAccountInternalController.kt` +
+  `controller/org/UserOrgInternalController.kt`）：`getUserById` / `getUsersByIds` / `getOrgUsers` / `getOrgAdmins`
+  返回前统一调用 `user-common` 新增的 `eraseCredentials()` 脱敏拷贝（置空 `loginPassword` / `securityPassword` /
+  `authenticationKey` / `sessionKey`），internal 网段消费方只能拿到用户名 / 组织 / 状态等元数据；
+  密码校验保留在 user-core 进程内（passport 链路直查缓存 / DAO），不受影响。VO 字段集未变，Feign 反序列化兼容。
+- **`getUserIds(tenantId)` / `getOrgUsers(orgId)` 无分页**：全量 id / 实体返回，租户规模大时响应体失控；
+  Feign 默认超时下还可能放大为级联降级。
+- **测试缺失**：internal controller 是纯委托层但零测试——一个 `@WebMvcTest` 即可锁住
+  "接口注解路径与 client proxy 严格对称"这一关键契约。

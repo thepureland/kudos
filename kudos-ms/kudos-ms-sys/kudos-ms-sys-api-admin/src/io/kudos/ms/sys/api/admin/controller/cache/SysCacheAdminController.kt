@@ -89,6 +89,10 @@ open class SysCacheAdminController :
     /**
      * Get the JSON representation of the value for a given key under the specified cache configuration (by id).
      *
+     * Caches holding sensitive values (e.g. the data source cache `SYS_DATA_SOURCE__HASH`, whose
+     * entries embed encrypted DB passwords) are blacklisted at the service layer: requesting them
+     * fails with error code `CACHE_VALUE_EXPORT_FORBIDDEN` instead of leaking credentials.
+     *
      * @param id cache configuration primary key
      * @param key cache key
      * @return JSON string of the value; returns empty string when the value is null or an error occurs

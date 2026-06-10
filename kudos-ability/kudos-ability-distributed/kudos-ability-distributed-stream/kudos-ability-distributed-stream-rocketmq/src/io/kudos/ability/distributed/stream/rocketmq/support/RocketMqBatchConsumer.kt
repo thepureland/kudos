@@ -54,6 +54,11 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
     private val failMsgServiceProvider: () -> ISysMqFailMsgService = { SpringKit.getBean() }
 ) {
 
+    /**
+     * Running flag. Written by the shutdown-hook thread ([destroy]) and read by the daemon
+     * polling thread — must be @Volatile, otherwise the loop may never observe the stop signal.
+     */
+    @Volatile
     private var isRunning = false
     private var daemonThread: Thread? = null
     private val consumer: DefaultLitePullConsumer
@@ -69,11 +74,6 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      * @param pullTime      Commit interval when no batch data is pulled
      * @param saveException Whether to enable exception-data saving; enable for strict business scenarios and provide a
      *   recovery mechanism for the saved exception data to avoid backlog
-     */
-    /**
-     * @param groupName Group name
-     * @param topic     Topic
-     * @param pullTime  Commit interval when no batch data is pulled
      */
     init {
         this.pullTime = pullTime

@@ -38,7 +38,9 @@ class NumberTextFieldTableCellFactory<S> : Callback<TableColumn<S, Int>?, TableC
             }
 
             override fun fromString(string: String): Int? {
-                return if (string.isBlank() || !string.isNumeric()) null else string.toInt()
+                // toIntOrNull (instead of toInt) also guards against digit-only input that
+                // overflows Int, e.g. "99999999999" — isNumeric passes but toInt would throw.
+                return if (string.isBlank() || !string.isNumeric()) null else string.toIntOrNull()
             }
         }) as TableCell<S, Int>
     }

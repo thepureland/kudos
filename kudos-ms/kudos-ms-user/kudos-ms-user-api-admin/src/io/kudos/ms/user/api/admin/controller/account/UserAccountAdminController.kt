@@ -1,6 +1,8 @@
 package io.kudos.ms.user.api.admin.controller.account
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
+import io.kudos.base.query.PagingSearchResult
+import io.kudos.ms.user.common.account.support.eraseCredentials
 import io.kudos.ms.user.common.account.vo.request.UserAccountFormCreate
 import io.kudos.ms.user.common.account.vo.request.UserAccountFormUpdate
 import io.kudos.ms.user.common.account.vo.request.UserAccountQuery
@@ -10,8 +12,10 @@ import io.kudos.ms.user.common.account.vo.response.UserAccountEdit
 import io.kudos.ms.user.common.account.vo.response.UserAccountRow
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
 import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -21,6 +25,11 @@ import java.time.LocalDateTime
 /**
  * User account admin controller.
  *
+ * The inherited CRUD read endpoints (pagingSearch, getDetail, getEdit) are overridden to erase
+ * credential fields ([eraseCredentials]) before serialization: even administrators must not see
+ * password hashes, the TOTP secret or the session key. Password and TOTP maintenance goes through
+ * the dedicated write endpoints (resetPassword, resetAuthKey, ...) which never echo the stored values.
+ *
  * @author K
  * @since 1.0.0
  */
@@ -28,6 +37,23 @@ import java.time.LocalDateTime
 @RequestMapping("/api/admin/user/account")
 class UserAccountAdminController :
     BaseCrudController<String, IUserAccountService, UserAccountQuery, UserAccountRow, UserAccountDetail, UserAccountEdit, UserAccountFormCreate, UserAccountFormUpdate>() {
+
+    /** Paged list query. Credential fields of every row are erased before returning. */
+    @PostMapping("/pagingSearch")
+    override fun pagingSearch(@RequestBody searchPayload: UserAccountQuery): PagingSearchResult<UserAccountRow> {
+        val result = super.pagingSearch(searchPayload)
+        return PagingSearchResult(result.data.map { it.eraseCredentials() }, result.totalCount)
+    }
+
+    /** Return the detail of the record with the given primary key. Credential fields are erased before returning. */
+    @GetMapping("/getDetail")
+    override fun getDetail(id: String): UserAccountDetail =
+        super.getDetail(id).eraseCredentials()
+
+    /** Return the edit record for the given primary key. Credential fields are erased before returning. */
+    @GetMapping("/getEdit")
+    override fun getEdit(id: String): UserAccountEdit =
+        super.getEdit(id).eraseCredentials()
 
     /** Update active status. */
     @PutMapping("/updateActive")

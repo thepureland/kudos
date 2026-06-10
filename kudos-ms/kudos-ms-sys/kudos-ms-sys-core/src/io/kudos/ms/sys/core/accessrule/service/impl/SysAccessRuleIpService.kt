@@ -4,6 +4,7 @@ import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.base.support.service.impl.BaseCrudService
+import io.kudos.ms.sys.common.accessrule.enums.AccessRuleTypeEnum
 import io.kudos.ms.sys.common.accessrule.enums.SysAccessRuleErrorCodeEnum
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
 import io.kudos.ms.sys.common.accessrule.vo.request.SysAccessRuleIpFormCreate
@@ -26,6 +27,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.math.BigDecimal
+import java.time.LocalDateTime
 
 
 /**
@@ -60,16 +62,17 @@ open class SysAccessRuleIpService(
         accessRuleIpsBySubSysAndTenantIdCache.getAccessRuleIps(systemCode, tenantId)
 
     /**
-     * Check whether the given integer IP falls within any non-expired rule whose range
-     * contains the value under the current system and tenant dimensions.
+     * Check whether the given integer IP is **allowed to access** under the current system and tenant dimensions.
+     *
+     * Decision semantics (delegated to [decideIpAccess]; blacklist and whitelist rules are
+     * distinguished by [SysAccessRuleIpCacheEntry.accessRuleTypeDictCode]):
+     * - hit on a non-expired blacklist rule = deny;
+     * - when whitelist rules exist for the dimension, allow only if a non-expired whitelist rule is hit;
+     * - no effective rule configured = allow by default.
      */
     @Transactional(readOnly = true)
-    override fun checkIpAccess(ip: BigDecimal, systemCode: String, tenantId: String?): Boolean {
-        val now = java.time.LocalDateTime.now()
-        return getIpsBySystemAndTenant(systemCode, tenantId).any { rule ->
-            rule.expirationTime?.isBefore(now) != true && ip in rule.ipStart..rule.ipEnd
-        }
-    }
+    override fun checkIpAccess(ip: BigDecimal, systemCode: String, tenantId: String?): Boolean =
+        decideIpAccess(ip, getIpsBySystemAndTenant(systemCode, tenantId), LocalDateTime.now())
 
     @Transactional
     override fun deleteByRuleId(ruleId: String): Int {
@@ -202,4 +205,51 @@ open class SysAccessRuleIpService(
         }
         return count
     }
+}
+
+/**
+ * Pure decision function for IP access: returns whether [ip] is **allowed** to access given the
+ * effective rule entries of one `(systemCode, tenantId)` dimension.
+ *
+ * Rules whose [SysAccessRuleIpCacheEntry.expirationTime] is before [now] are ignored. For the rest:
+ * 1. A hit on a blacklist-typed entry ([AccessRuleTypeEnum.BLACKLIST]) denies access immediately.
+ * 2. If whitelist-typed entries exist ([AccessRuleTypeEnum.WHITELIST] or
+ *    [AccessRuleTypeEnum.WHITELIST_BLACKLIST] -- the latter cannot be told apart per entry yet,
+ *    so it is treated conservatively as a whitelist member), access is allowed only when one of
+ *    them is hit; otherwise access is denied (whitelist mode = deny by default).
+ * 3. When no effective entry exists, or only [AccessRuleTypeEnum.UNLIMITED]-typed entries exist,
+ *    access is allowed by default (no restriction configured).
+ *
+ * Entries with a `null` rule type (legacy cache data serialized before the type field existed)
+ * never deny access: they neither act as blacklist nor add a whitelist requirement.
+ *
+ * Exposed as `internal` purely for unit testing.
+ *
+ * @param ip BigDecimal representation of the IP to check
+ * @param rules cache entries of the dimension being checked
+ * @param now reference time for expiration filtering
+ * @return `true` if access is allowed, `false` if denied
+ * @author K
+ * @since 1.0.0
+ */
+internal fun decideIpAccess(
+    ip: BigDecimal,
+    rules: List<SysAccessRuleIpCacheEntry>,
+    now: LocalDateTime,
+): Boolean {
+    val effective = rules.filter { it.expirationTime?.isBefore(now) != true }
+    if (effective.isEmpty()) return true
+
+    fun hit(rule: SysAccessRuleIpCacheEntry) = ip in rule.ipStart..rule.ipEnd
+
+    val blacklistHit = effective.any {
+        it.accessRuleTypeDictCode == AccessRuleTypeEnum.BLACKLIST.code && hit(it)
+    }
+    if (blacklistHit) return false
+
+    val whitelistRules = effective.filter {
+        it.accessRuleTypeDictCode == AccessRuleTypeEnum.WHITELIST.code ||
+                it.accessRuleTypeDictCode == AccessRuleTypeEnum.WHITELIST_BLACKLIST.code
+    }
+    return whitelistRules.isEmpty() || whitelistRules.any { hit(it) }
 }
