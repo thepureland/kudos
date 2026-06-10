@@ -300,7 +300,7 @@ open class IdEntitiesRedisHashDao(
         val template = getRedisTemplate()
         val hashKeySer = template.hashKeySerializer as? RedisSerializer<Any>
         val hashValSer = template.hashValueSerializer as? RedisSerializer<Any>
-        getRedisTemplate().executePipelined(RedisCallback<Any?> { connection ->
+        template.executePipelined(RedisCallback<Any?> { connection ->
             entities.forEach { entity ->
                 val id = entity.id ?: return@forEach
                 val fieldBytes = hashKeySer?.serialize(normalizePkField(id))
@@ -311,7 +311,7 @@ open class IdEntitiesRedisHashDao(
             }
             null
         })
-        getRedisTemplate().execute { connection ->
+        template.execute { connection ->
             connection.keyCommands().rename(tmpKeyBytes, dataKeyBytes)
             null
         }

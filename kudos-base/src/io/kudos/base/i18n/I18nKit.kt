@@ -294,7 +294,9 @@ object I18nKit {
         for ((module, keyValueMapDef) in moduleMapDef) {
             val keyValueMap = moduleMap[module]
             if (keyValueMap == null) {
-                moduleMap[module] = keyValueMapDef //use default locale
+                // Copy instead of sharing the reference: a later incremental load into this locale
+                // must not mutate the default locale's map through the shared instance.
+                moduleMap[module] = LinkedHashMap(keyValueMapDef) //use default locale
                 continue
             }
             for ((key, value) in keyValueMapDef) {

@@ -1,9 +1,11 @@
 package io.kudos.tools.codegen.core
 
 import io.kudos.base.io.FileKit
+import io.kudos.base.logger.LogFactory
 import io.kudos.tools.codegen.core.merge.CodeMerger
 import io.kudos.tools.codegen.core.merge.PrivateContentEraser
 import io.kudos.tools.codegen.model.vo.GenFile
+import io.kudos.tools.codegen.service.CodeGenColumnService
 import io.kudos.tools.codegen.service.CodeGenFileService
 import io.kudos.tools.codegen.service.CodeGenObjectService
 import java.io.File
@@ -31,10 +33,10 @@ class CodeGenerator(
      * @author K
      * @since 1.0.0
      */
-    fun generate(needPersist : Boolean = true) {
+    fun generate(needPersist: Boolean = true) {
         genFiles.forEach { executeGenerate(it) }
-        if (needPersist) {
-            persistence()
+        if (needPersist && !persistence()) {
+            log.warn("Failed to persist the generation record for table: ${CodeGeneratorContext.tableName}")
         }
     }
 
@@ -50,8 +52,9 @@ class CodeGenerator(
      */
     private fun persistence(): Boolean {
         if (!CodeGenObjectService.saveOrUpdate()) return false
-        if (!io.kudos.tools.codegen.service.CodeGenColumnService.saveColumns(
-                CodeGeneratorContext.tableName, CodeGeneratorContext.columns)) return false
+        if (!CodeGenColumnService.saveColumns(CodeGeneratorContext.tableName, CodeGeneratorContext.columns)) {
+            return false
+        }
         val filenames = genFiles.filter { it.getGenerate() }.map { it.getFilename() }
         return CodeGenFileService.save(filenames)
     }
@@ -86,5 +89,7 @@ class CodeGenerator(
         FreemarkerKit.processTemplate(template, templateModel, absoluteOutputFilePath, "UTF-8")
         codeMerger?.merge() ?: PrivateContentEraser.erase(absoluteOutputFilePath)
     }
+
+    private val log = LogFactory.getLog(this::class)
 
 }

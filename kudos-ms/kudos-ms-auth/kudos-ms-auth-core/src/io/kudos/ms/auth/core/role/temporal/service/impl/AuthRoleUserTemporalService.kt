@@ -2,9 +2,11 @@ package io.kudos.ms.auth.core.role.temporal.service.impl
 
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.common.temporal.vo.response.RoleTemporalGrantRow
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
+import io.kudos.ms.auth.core.role.service.impl.AuthRoleUserService
 import io.kudos.ms.auth.core.role.temporal.service.iservice.IAuthRoleUserTemporalService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
@@ -20,6 +22,10 @@ import java.time.LocalDateTime
  * SoD-checked permanent binds): windowed grants and the expiry sweep are a distinct concern, and a
  * separate bean avoids entangling the hot batch-bind path. Both share [AuthRoleUserDao].
  *
+ * [bindTemporal] enforces the same defences as the permanent bind path: the role must exist, the
+ * grant must not violate any SoD exclusion, and an existing PERMANENT grant is never silently
+ * downgraded to a windowed one — it must be unbound explicitly first.
+ *
  * @author K
  * @author AI: Claude
  * @since 1.0.0
@@ -32,6 +38,14 @@ open class AuthRoleUserTemporalService(
 
     @Autowired
     private lateinit var eventPublisher: ApplicationEventPublisher
+
+    @Autowired
+    private lateinit var authRoleDao: AuthRoleDao
+
+    // The concrete bean (not the interface) on purpose: the shared SoD helper
+    // findSodViolationMessage is internal to this module and not part of IAuthRoleUserService.
+    @Autowired
+    private lateinit var authRoleUserService: AuthRoleUserService
 
     private val log = LogFactory.getLog(this::class)
 
@@ -65,7 +79,31 @@ open class AuthRoleUserTemporalService(
                 "start_time must not be after end_time (role=${roleId}, user=${userId})."
             }
         }
-        // Replace any existing grant for this (role, user) so the supplied window is authoritative.
+
+        // Defence 1 — the role must exist. A temporal grant pointing at a non-existent role would
+        // be an orphan row that skips every downstream check (same fix as batchBind).
+        val role = authRoleDao.get(roleId)
+            ?: throw IllegalArgumentException("Role not found: $roleId — refusing to create a temporal grant for a non-existent role.")
+
+        // Defence 2 — never silently downgrade a permanent grant (start/end both NULL) to a
+        // windowed one: that would let the temporal endpoint revoke-by-replacement. The permanent
+        // grant must be removed explicitly (AuthRoleUserService.unbind) before a window is set.
+        val existing = dao.searchByRoleIdAndUserId(roleId, userId)
+        if (existing.any { it.startTime == null && it.endTime == null }) {
+            throw IllegalArgumentException(
+                "User $userId already holds role $roleId permanently — refusing to replace a permanent " +
+                    "grant with a temporal one. Unbind the permanent grant first if a time window is intended."
+            )
+        }
+
+        // Defence 3 — SoD: a temporal grant confers the same authority as a permanent one while
+        // active, so it must pass the same mutual-exclusion check as the permanent bind path.
+        val violationMessage = authRoleUserService.findSodViolationMessage(role.tenantId, roleId, userId)
+        if (violationMessage != null) {
+            throw IllegalArgumentException("SoD constraint violation — temporal grant blocked:\n$violationMessage")
+        }
+
+        // Replace any existing TEMPORAL grant for this (role, user) so the supplied window is authoritative.
         dao.deleteByRoleIdAndUserId(roleId, userId)
         val grant = AuthRoleUser {
             this.roleId = roleId

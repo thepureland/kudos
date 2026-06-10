@@ -43,8 +43,9 @@ import java.util.Locale
  */
 class StreamGlobalExceptionHandler {
 
+    /** Whether to persist consumer-side exception messages; injected from `kudos.ability.distributed.stream.save-exception`. `var` so Spring's field injection does not have to write a final field reflectively. */
     @Value($$"${kudos.ability.distributed.stream.save-exception:true}")
-    private val saveException = true
+    private var saveException = true
 
     @Resource
     private lateinit var streamExceptionService: ISysMqFailMsgService

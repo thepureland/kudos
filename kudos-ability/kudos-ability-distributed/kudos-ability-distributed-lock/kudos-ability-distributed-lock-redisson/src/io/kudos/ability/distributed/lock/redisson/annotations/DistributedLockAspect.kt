@@ -113,9 +113,8 @@ class DistributedLockAspect {
             return null
         }
         return try {
+            // Business exceptions propagate as-is (no wrapping) so typed catch on the caller side keeps working.
             joinPoint.proceed()
-        } catch (e: Throwable) {
-            throw e
         } finally {
             log.debug("Releasing lock: key=$lockKey")
             runCatching { RedissonLockKit.unlock(lockKey, lockerBeanName) }

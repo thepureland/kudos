@@ -202,7 +202,11 @@ class AliyunSmsHandler {
         // If a custom endpoint is configured (e.g. WireMock), override it.
         if (endpointOverrideStr.isNotBlank()) {
             // Supports both "http://host:port" and "host:port" / a bare domain.
-            val uri = runCatching { URI(endpointOverrideStr) }.getOrNull()
+            // Note: only treat the parse result as authoritative when it has a host — "host:port"
+            // parses as an opaque URI (scheme="host", host=null) and a bare domain parses as a
+            // relative URI (host=null); both must fall back to the raw string, otherwise the
+            // endpoint override would silently become null.
+            val uri = runCatching { URI(endpointOverrideStr) }.getOrNull()?.takeIf { it.host != null }
             val protocol = (uri?.scheme ?: "https").uppercase()
             val hostPort = when {
                 uri == null -> endpointOverrideStr.trim()

@@ -25,11 +25,12 @@ annotation class DistributedLock(
      */
     val key: String = "",
     /**
-     * Wait time for the distributed lock.
+     * Wait time for the distributed lock, in seconds. 0 means a single non-blocking attempt.
      */
     val waitTime: Long = 0,
     /**
-     * Lease time for the distributed lock: the expiration interval.
+     * Lease time for the distributed lock, in seconds: the lock auto-releases after this interval,
+     * even if the business method is still running, so it must cover the worst-case execution time.
      */
     val leaseTime: Long = 20,
     /**

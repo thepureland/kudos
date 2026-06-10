@@ -46,6 +46,19 @@ data class PassportLoginResult(
         fun inactive(): PassportLoginResult =
             PassportLoginResult(status = PassportLoginStatusEnum.INACTIVE, message = "Account is disabled")
 
+        /**
+         * Account locked: consecutive login failures reached the configured threshold.
+         * Further attempts are rejected until the lock window expires or an administrator intervenes.
+         *
+         * @param loginErrorTimes cumulative error count when known, may be null when answered from the freeze gate
+         */
+        fun locked(loginErrorTimes: Int? = null): PassportLoginResult =
+            PassportLoginResult(
+                status = PassportLoginStatusEnum.LOCKED,
+                loginErrorTimes = loginErrorTimes,
+                message = "Account is locked due to too many failed login attempts",
+            )
+
         /** The user has enabled OTP but did not provide authCode; the client should prompt for the OTP and retry. */
         fun otpRequired(): PassportLoginResult =
             PassportLoginResult(status = PassportLoginStatusEnum.OTP_REQUIRED, message = "Please enter the dynamic verification code")

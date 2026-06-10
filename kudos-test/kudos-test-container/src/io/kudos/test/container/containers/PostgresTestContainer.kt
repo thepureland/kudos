@@ -2,7 +2,6 @@ package io.kudos.test.container.containers
 
 import com.github.dockerjava.api.model.Container
 import io.kudos.test.container.kit.TestContainerKit
-import io.kudos.test.container.kit.bindingPort
 import io.kudos.test.container.main.ManualTestContainerMainSupport
 import io.kudos.test.container.support.TestContainerCrossProcessLock
 import org.springframework.test.context.DynamicPropertyRegistry

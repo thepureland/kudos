@@ -95,9 +95,13 @@ class ColumnsController : Initializable {
                         CodeGeneratorContext.tableName = newValue
                         thread {
                             val columns = CodeGenColumnService.readColumns(CodeGeneratorContext.tableName)
-                            Platform.runLater { columnTable.items = FXCollections.observableArrayList(columns) }
-                            if (columnTable.items.all { it.getDetailItem() }) {
-                                detailCheckBox.selectedProperty().value = true
+                            // UI controls must only be touched on the JavaFX application thread,
+                            // and the all-detail check must run after the new items are actually set.
+                            Platform.runLater {
+                                columnTable.items = FXCollections.observableArrayList(columns)
+                                if (columnTable.items.all { it.getDetailItem() }) {
+                                    detailCheckBox.selectedProperty().value = true
+                                }
                             }
                         }
                     }

@@ -96,7 +96,8 @@ open class MinioUploadService : AbstractUploadService() {
      * @param model upload request
      * @param fileDir relative directory allocated by [AbstractUploadService.dispatchFileDir]
      * @return path in the form of `/{bucket}/{objectKey}`
-     * @throws ServiceException on failure, split into two error codes by error type:
+     * @throws ServiceException on failure, split into error codes by error type:
+     *   - [FileErrorCode.FILE_UPLOAD_FAIL]: [UploadFileModel.fileName] contains path-traversal characters (see [resolveFileName])
      *   - [FileErrorCode.FILE_ACCESS_DENY]: [io.minio.errors.ErrorResponseException] (auth/permission/bucket-not-exists, etc.)
      *   - [FileErrorCode.FILE_ACCESS_ERROR]: other local or network exceptions
      * @author K
@@ -104,31 +105,65 @@ open class MinioUploadService : AbstractUploadService() {
      * @since 1.0.0
      */
     override fun saveFile(model: UploadFileModel<*>, fileDir: String): String {
+        val fName = resolveFileName(model)
         try {
             val minioClient: MinioClient = getMinioClient(model)
             createBucket(minioClient, model)
-            val fName = model.fileName?.takeUnless { it.isBlank() }
-                ?: "${RandomStringKit.uuid()}.${model.fileSuffix}"
             val fullFilePath = "$fileDir/$fName"
 
-            val inputStream = requireNotNull(model.inputStreamSource) { "inputStreamSource is null" }.inputStream
-            val result = CompressionPipeline.compress(inputStream, fullFilePath, model.compressionConfig)
+            requireNotNull(model.inputStreamSource) { "inputStreamSource is null" }.inputStream.use { inputStream ->
+                val result = CompressionPipeline.compress(inputStream, fullFilePath, model.compressionConfig)
 
-            val uploadStream = result.outputStream?.let { ByteArrayInputStream(it.toByteArray()) } ?: inputStream
-            val putArgs = PutObjectArgs.builder()
-                .bucket(model.bucketName)
-                .`object`(result.getOutputFilePath())
-                .stream(uploadStream, -1, properties.partSize)
-                .contentType(result.mimeType).build()
+                val uploadStream = result.outputStream?.let { ByteArrayInputStream(it.toByteArray()) } ?: inputStream
+                val putArgs = PutObjectArgs.builder()
+                    .bucket(model.bucketName)
+                    .`object`(result.getOutputFilePath())
+                    .stream(uploadStream, -1, properties.partSize)
+                    .contentType(result.mimeType).build()
 
-            val rs = minioClient.putObject(putArgs)
-            // access path includes bucketName, convenient for the business to store directly and the frontend to concatenate the absolute http address
-            return "/${rs.bucket()}/${rs.`object`()}"
+                val rs = minioClient.putObject(putArgs)
+                // access path includes bucketName, convenient for the business to store directly and the frontend to concatenate the absolute http address
+                return "/${rs.bucket()}/${rs.`object`()}"
+            }
         } catch (e: io.minio.errors.ErrorResponseException) {
             throw ServiceException(FileErrorCode.FILE_ACCESS_DENY, e)
         } catch (e: Exception) {
             throw ServiceException(FileErrorCode.FILE_ACCESS_ERROR, e)
         }
+    }
+
+    /**
+     * Resolves the object base name, rejecting path-traversal characters (same rule as the
+     * file-local implementation).
+     *
+     * S3 keys have no real filesystem-traversal semantics, but the business side concatenates
+     * `publicEndpoint + filePath` into URLs - a `..` segment may be normalized by browsers,
+     * gateways or CDNs into a URL pointing at a different object. So `..`, `/` and `\` in
+     * [UploadFileModel.fileName] are rejected up front; the directory part always comes from
+     * [AbstractUploadService.dispatchFileDir], never from the caller.
+     *
+     * When no file name is given, a UUID-based name with [UploadFileModel.fileSuffix] is generated.
+     * The suffix is normalized first (leading dots stripped, blank treated as absent), so callers may
+     * pass either `txt` or `.txt` — the historical `"uuid" + "." + ".txt"` concatenation produced a
+     * `..` sequence that the traversal check would wrongly reject.
+     *
+     * @param model upload request
+     * @return validated object base name
+     * @throws ServiceException error code [FileErrorCode.FILE_UPLOAD_FAIL] when the name is invalid
+     */
+    internal fun resolveFileName(model: UploadFileModel<*>): String {
+        model.fileName?.takeUnless { it.isBlank() }?.let { fileName ->
+            if (fileName.contains("..") || fileName.contains('/') || fileName.contains('\\')) {
+                throw ServiceException(FileErrorCode.FILE_UPLOAD_FAIL, IllegalArgumentException("invalid fileName: $fileName"))
+            }
+            return fileName
+        }
+        val suffix = model.fileSuffix?.trim()?.trimStart('.')?.takeUnless { it.isEmpty() }
+            ?: return RandomStringKit.uuid()
+        if (suffix.contains("..") || suffix.contains('/') || suffix.contains('\\')) {
+            throw ServiceException(FileErrorCode.FILE_UPLOAD_FAIL, IllegalArgumentException("invalid fileSuffix: $suffix"))
+        }
+        return "${RandomStringKit.uuid()}.$suffix"
     }
 
     /**

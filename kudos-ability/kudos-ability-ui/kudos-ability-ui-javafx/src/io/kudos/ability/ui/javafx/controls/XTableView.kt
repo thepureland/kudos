@@ -103,9 +103,7 @@ open class XTableView<S> : TableView<S>() {
      * @since 1.0.0
      */
     private fun terminatingCellPropertyImpl(): ReadOnlyObjectWrapper<TablePosition<S?, *>?> {
-        if (terminatingCell == null) {
-            terminatingCell = ReadOnlyObjectWrapper(this, "terminatingCell")
-        }
-        return terminatingCell as ReadOnlyObjectWrapper<TablePosition<S?, *>?>
+        return terminatingCell
+            ?: ReadOnlyObjectWrapper<TablePosition<S?, *>?>(this, "terminatingCell").also { terminatingCell = it }
     }
 }

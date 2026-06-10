@@ -62,11 +62,7 @@ open class XTableCellBehavior<S, T>
      * @since 1.0.0
      */
     private fun tryTerminateEdit() {
-//        val cell = control
-//        val table = cell.tableColumn.tableView
-        if (cellContainer is XTableView<*>) {
-            (cellContainer as XTableView<S>).terminateEdit()
-        }
+        (cellContainer as? XTableView<*>)?.terminateEdit()
     }
 
     /**

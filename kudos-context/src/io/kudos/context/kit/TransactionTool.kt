@@ -1,7 +1,6 @@
 package io.kudos.context.kit
 
-import org.apache.commons.logging.Log
-import org.apache.commons.logging.LogFactory
+import io.kudos.base.logger.LogFactory
 import org.springframework.transaction.support.TransactionSynchronization
 import org.springframework.transaction.support.TransactionSynchronizationManager
 
@@ -17,7 +16,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  */
 object TransactionTool {
     /** Logger, used only to record exceptions when a callback fails. */
-    private val log: Log = LogFactory.getLog(TransactionTool::class.java)
+    private val log = LogFactory.getLog(TransactionTool::class)
 
     /**
      * Register a callback that runs only after the transaction commits successfully.
@@ -37,7 +36,7 @@ object TransactionTool {
                         try {
                             r.run()
                         } catch (e: Exception) {
-                            log.error("afterCommit execution failed", e)
+                            log.error(e, "afterCommit execution failed")
                         }
                     }
                 }

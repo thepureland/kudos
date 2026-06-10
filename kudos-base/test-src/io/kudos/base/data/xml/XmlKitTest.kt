@@ -110,7 +110,9 @@ internal class XmlKitTest {
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
         override fun unmarshal(date: String): LocalDate {
-            return formatter.parse(date) as LocalDate
+            // Note: `formatter.parse(date) as LocalDate` would throw ClassCastException (JAXB swallows it
+            // and leaves the field null); LocalDate.parse is the correct way to get a LocalDate.
+            return LocalDate.parse(date, formatter)
         }
 
         override fun marshal(date: LocalDate): String {

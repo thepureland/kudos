@@ -27,7 +27,7 @@ class SysDictAdminController :
      * Return the dictionary for the given id.
      *
      * @param id primary key
-     * @return SysDictItemRow; returns null if not found
+     * @return SysDictCacheEntry; returns null if not found
      */
     @GetMapping("/getDict")
     fun getDict(id: String): SysDictCacheEntry? {

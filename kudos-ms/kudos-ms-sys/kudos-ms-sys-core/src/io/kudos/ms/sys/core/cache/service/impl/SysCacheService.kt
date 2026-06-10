@@ -20,6 +20,7 @@ import io.kudos.ms.sys.core.cache.event.SysCacheInserted
 import io.kudos.ms.sys.core.cache.event.SysCacheUpdated
 import io.kudos.ms.sys.core.cache.model.po.SysCache
 import io.kudos.ms.sys.core.cache.service.iservice.ISysCacheService
+import io.kudos.ms.sys.core.datasource.cache.SysDataSourceHashCache
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -193,6 +194,10 @@ open class SysCacheService(
         require(key.isNotBlank())
         val value = withCacheConfig(id) { cache ->
             val name = cache.name
+            if (isSensitiveValueCache(name)) {
+                log.warn("Refused to export value JSON of sensitive cache ${name} (key=${key}).")
+                throw ServiceException(SysCacheErrorCodeEnum.CACHE_VALUE_EXPORT_FORBIDDEN)
+            }
             if (isKeyValueCache(cache)) {
                 requireKeyExists(name, key, keyValueCache = true)
                 KeyValueCacheKit.getValue(name, key)
@@ -247,4 +252,27 @@ open class SysCacheService(
      * @since 1.0.0
      */
     private fun isKeyValueCache(cache: SysCacheCacheEntry): Boolean = !cache.hash
+
+    companion object {
+
+        /**
+         * Names of caches whose values carry credentials or other secrets (currently the data source
+         * cache, whose entries embed the encrypted DB password). [getValueJson] refuses to export them.
+         * Extend this set when a new cache starts holding sensitive payloads.
+         */
+        private val SENSITIVE_VALUE_CACHE_NAMES = setOf(SysDataSourceHashCache.CACHE_NAME)
+
+        /**
+         * Whether the value of the given cache is considered sensitive and must not be exported as JSON.
+         * Exposed as `internal` purely for unit testing.
+         *
+         * @param cacheName cache region name
+         * @return true if export must be refused
+         * @author K
+         * @author AI: Claude
+         * @since 1.0.0
+         */
+        internal fun isSensitiveValueCache(cacheName: String): Boolean = cacheName in SENSITIVE_VALUE_CACHE_NAMES
+
+    }
 }

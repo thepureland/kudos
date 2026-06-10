@@ -125,3 +125,57 @@ class MyDbTest {
   复用兜底，但偶尔状态污染要手工 `docker rm -f`。
 - ❗ `XGenericContainer.bindingPort` 仍在文件里，但 Postgres 已弃用、其它容器若再用容易
   踩"端口被占"的老坑。仅在需要从容器外固定连接（如 IDE 调试看 DB）时再考虑。
+
+## 改进建议（自动分析 2026-06-11）
+
+> 本次直接修复（不在下列待办内）：`RocketMqTestContainer.getRunningContainer()` 误用静态导入的
+> `H2TestContainer.LABEL`、始终返回 H2 容器的 bug；`DockerInstalledCondition` 双检锁缺 `@Volatile`
+> 且 `waitFor()` 无超时可能挂死测试发现阶段；`RabbitMqTestContainer` 容器定义里误把 `withLabel`
+> 链到 `bindingPort` 返回值上的写法；`PostgresTestContainer` 未使用的 import；`KafkaTestContainer`
+> 不必要的 `var`；`DockerKit.startDockerOnMac` 两个完全相同的 if/else 分支。
+
+### 安全性
+- `kit/XGenericContainer.kt`：`bindingPort` 通过 `Ports.Binding.bindPort` 绑定 **0.0.0.0**。
+  使用固定端口的容器（H2 1521、MySQL 23306 root/mysql、Nacos 28848/38848 且 auth 关闭、
+  Seata 28091、RocketMQ 9876/10909/10911/10912）在测试期间对整个局域网可达。建议提供
+  `bindingPort(hostIp, ...)` 重载并默认绑 127.0.0.1；RocketMQ/Seata 因用宿主机 LAN IP 注册
+  （`IpKit.getLocalIp()`）需逐个评估后再收紧。
+- `containers/NacosTestContainer.kt`：测试实例以 `NACOS_AUTH_ENABLE=false` 运行且端口固定对外，
+  与上一条叠加意味着办公网/共享 CI 上任何人可写该 Nacos。
+
+### 功能缺陷
+- `containers/NacosTestContainer.kt` `registerProperties`：硬编码 `localhost:38848`（Seata 专用
+  实例端口）。常规 `startIfNeeded(registry)` 启动的实例绑定的是 28848，注册出的
+  `spring.cloud.nacos.*.server-addr` 指向错误端口。两个调用方应各自传入正确端口。
+- `containers/RocketMqTestContainer.kt`：只有 name-server 的 `getRunningContainer()`，broker
+  容器没有对应查询方法；`startIfNeeded` 返回 `Pair` 而非具名类型，调用方易混淆先后。
+- `kit/DockerKit.kt` `runCommand`：`catch (e: Exception)` 会吞掉 `InterruptedException` 且不
+  恢复中断标志，建议单独捕获并 `Thread.currentThread().interrupt()`。
+
+### 可扩展性
+- 镜像版本 hardcode 是有意设计（可重现性），但目前只有 H2 支持 `-Dkudos.test.h2.image` 覆盖。
+  建议为所有容器提供统一的 `kudos.test.<id>.image` 系统属性/环境变量覆盖机制（如 arm64 主机
+  替换不兼容镜像时需要）。
+- 14 个 `*TestContainer` 的 `startIfNeeded` / `registerProperties` / `getRunningContainer` /
+  `main` 模板高度重复（约 60 行 × 14 份）。本次修复的 RocketMQ label 复制粘贴 bug 即源于此。
+  建议抽象 `AbstractTestContainer`（持有 label / id / container 定义 / 属性注册回调）统一模板。
+
+### 可观测性
+- `kit/TestContainerKit.kt`、`kit/ManualTestContainerMainSupport.kt` 及各容器用 `println` /
+  `System.err.println` 输出生命周期日志，建议统一换 slf4j（`SeataTestContainer` 已示范
+  `Slf4jLogConsumer` 用法），便于 CI 日志按级别过滤。
+
+### 测试覆盖
+- 本模块自身没有任何测试（无 test-src）。`support/CrossProcessLock`、`TestContainerKit` 的
+  lease 管理（`pruneAndCountActiveLeases` / `readLeasePid` / `safeLabel`）是不依赖 Docker 的
+  纯逻辑，完全可单元测试；`DockerKit.runCommand` 的超时/异常分支同理。
+
+### 可维护性 / API
+- `containers/RocketMqTestContainer.kt`：`LABEL_NANE_SERVER` 拼写错误（NANE→NAME），但属
+  public const，建议新增正确命名常量 + `@Deprecated` 旧名过渡。
+- `containers/NacosTestContainer.kt`：`tokenBytes` 公开暴露了可变 `ByteArray`，外部可改写其
+  内容造成与 `tokenBase64` 不一致；建议降为 private（属 public API 变更，需评审）。
+- `containers/MinioTestContainer.kt`：凭据 `"admin"/"12345678"` 为内联魔法值，其余容器均提取
+  为 `const val USERNAME/PASSWORD`，建议对齐（也便于调用方引用）。
+- `containers/SmtpTestContainer.kt` / `WireMockTestContainer.kt`：`registerProperties` 为空实现，
+  SMTP 建议至少注册 `spring.mail.host/port`，否则调用方还要自己拿端口拼配置。

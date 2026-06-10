@@ -67,4 +67,21 @@ open class AuthRoleExclusionDao : BaseCrudDao<String, AuthRoleExclusion, AuthRol
         )
         return search(criteria).isNotEmpty()
     }
+
+    /**
+     * Deletes every exclusion pair involving the role (on either side). Used by the role-delete
+     * cascade: an exclusion rule that references a removed role is meaningless and would otherwise
+     * linger as a dead constraint.
+     *
+     * Two criteria deletes are issued (one per column) because an OR across the two indexed
+     * columns cannot use both indexes efficiently — same rationale as [searchByRoleIds].
+     *
+     * @param roleId role id
+     * @return number of rows deleted
+     */
+    open fun deleteByRoleId(roleId: String): Int {
+        val byA = batchDeleteCriteria(Criteria(AuthRoleExclusion::roleAId eq roleId))
+        val byB = batchDeleteCriteria(Criteria(AuthRoleExclusion::roleBId eq roleId))
+        return byA + byB
+    }
 }

@@ -21,6 +21,9 @@ import java.time.LocalDateTime
  * rejects if it's no longer PENDING, so two approvers racing on the same request can't both
  * succeed (the second sees a terminal state).
  *
+ * Self-approval guard: [approve] refuses when the current user is the request's own requester
+ * (both identities must be known for the check to apply).
+ *
  * @author K
  * @author AI: Claude
  * @since 1.0.0
@@ -76,12 +79,21 @@ open class AuthRoleGrantRequestService(
     @Transactional
     override fun approve(id: String, comment: String?): Boolean {
         val request = loadPendingOrThrow(id)
+
+        // Separation of duties on the workflow itself: a requester must not approve their own
+        // request. When either identity is unknown (e.g. non-web/batch contexts) the guard cannot
+        // decide and is skipped — the state-machine checks above still apply.
+        val approverId = CurrentUserKit.currentUserIdOrNull()
+        require(approverId == null || request.requesterId == null || approverId != request.requesterId) {
+            "Grant request $id cannot be approved by its own requester ($approverId)."
+        }
+
         // Perform the actual bind first; if it throws (e.g. SoD violation) the whole transaction
         // rolls back and the request stays PENDING — the approver sees the error.
         authRoleUserService.batchBind(request.roleId, listOf(request.userId))
 
         request.status = GrantRequestStatus.APPROVED.name
-        request.approverId = CurrentUserKit.currentUserIdOrNull()
+        request.approverId = approverId
         request.decisionComment = comment
         request.decisionTime = LocalDateTime.now()
         val success = dao.update(request)

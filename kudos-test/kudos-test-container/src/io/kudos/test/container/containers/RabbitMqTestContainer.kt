@@ -26,8 +26,8 @@ object RabbitMqTestContainer {
 
     private val container = GenericContainer(IMAGE_NAME).apply {
         withExposedPorts(CONTAINER_PORT)
-        bindingPort(Pair(PORT, CONTAINER_PORT))
-        .withLabel(TestContainerKit.LABEL_KEY, LABEL)
+        bindingPort(PORT to CONTAINER_PORT)
+        withLabel(TestContainerKit.LABEL_KEY, LABEL)
     }
 
 

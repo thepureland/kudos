@@ -166,13 +166,26 @@ class EmailHandler {
     /**
      * Validate parameters.
      *
+     * Besides the non-empty checks, values that end up in MIME headers (subject / from / receivers)
+     * are rejected when they contain CR or LF — otherwise a caller-controlled value like
+     * `"subject\r\nBcc: attacker@evil.com"` would be written verbatim into the header block
+     * (SMTP header injection).
+     *
      * @param mail
      */
     private fun checkParams(mail: EmailRequest): Boolean {
         val valid = !mail.senderAccount.isNullOrBlank() && !mail.senderPassword.isNullOrBlank() &&
             !mail.serverHost.isNullOrBlank() && mail.receivers.isNotEmpty()
-        if (!valid) log.error("One of sender email account, sender email password, sender mail server address, or recipient email account is empty!")
-        return valid
+        if (!valid) {
+            log.error("One of sender email account, sender email password, sender mail server address, or recipient email account is empty!")
+            return false
+        }
+        val headerValues = sequenceOf(mail.subject, mail.fromMailAddress) + mail.receivers.asSequence()
+        if (headerValues.filterNotNull().any { '\r' in it || '\n' in it }) {
+            log.error("Email subject / from address / receiver contains CR or LF, refusing to send (SMTP header injection risk)")
+            return false
+        }
+        return true
     }
 
     private fun putAddressToSet(set: MutableSet<String>, addresses: Array<Address>) {

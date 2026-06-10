@@ -76,7 +76,7 @@ fun updateUser(...) { ... }
 ```kotlin
 class WebLogAuditFilter : OncePerRequestFilter() {
     override fun doFilterInternal(req, res, chain) {
-        val wrapper = ContentCachingRequestWrapper(req, 0)
+        val wrapper = ContentCachingRequestWrapper(req)
         chain.doFilter(wrapper, res)
     }
 }
@@ -85,6 +85,10 @@ class WebLogAuditFilter : OncePerRequestFilter() {
 把请求包成 `ContentCachingRequestWrapper`，让 `WebLogAuditAspect.after` 能从 `getRequestData`
 回放出 body。**使用 Spring Security 时必须把本 filter 注册到 security filter chain 内**——
 否则会被 security 的请求包装顶替掉。
+
+> 历史 bug：旧实现写的是 `ContentCachingRequestWrapper(req, 0)`，但双参构造器的 int 是
+> **contentCacheLimit（最多缓存多少字节）**而不是初始缓冲大小——传 0 等于"一个字节都不缓存"，
+> `getRequestData` 永远回放出空 body。已修正为单参构造器（完整缓存、按需扩容）。
 
 ### `OperationTypeEnum.code` 必须是数字字符串
 

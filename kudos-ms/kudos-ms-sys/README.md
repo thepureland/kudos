@@ -145,3 +145,91 @@
   缓存版本失效靠 `DictKey.FEIGN_CACHE_PREFIX` 等 keyVersion，无法精确到单条 dict
 - ❗ **`SysConsts.DEFAULT_SUB_SYSTEM_CODE` 硬编码** — 业务定制子系统码时需全工程 grep 替换；
   没有配置式接入点
+
+## 改进建议（自动分析 2026-06-11）
+
+> 以下为对 7 个子模块的深度审查中**未直接修改**的发现，按分析维度归类；每条注明文件路径与理由。
+> 与上方"已知限制"重复的条目（api-public 空壳、零鉴权、CacheConfigProvider 静默、dict 无版本等）不再重复列出。
+
+### 1. Kotlin 写法
+
+- `kudos-ms-sys-core/src/io/kudos/ms/sys/core/accessrule/service/impl/SysAccessRuleIpService.kt`（51-52 行）：
+  `sysAccessRuleHashCache` 用 `@Resource` 字段注入且类型写成内联全限定名，与同类其余依赖的构造器注入风格不一致；
+  建议改为构造器参数并正常 import（涉及 Spring 装配时序，未直接改）。
+- `kudos-ms-sys-core/src/io/kudos/ms/sys/core/dict/cache/SysDictItemHashCache.kt`（`getDictItemsByIds`）：
+  `associateBy + mapNotNull + toMap` 三段链可用 `buildMap` 一次完成；本次仅移除了无副作用的 `.map { it }`。
+
+### 2. 功能缺陷 / 值得补充
+
+- ✅ 已修复（2026-06-11）`kudos-ms-sys-core/src/io/kudos/ms/sys/core/accessrule/service/impl/SysAccessRuleIpService.kt`（`checkIpAccess`）：
+  原判定**不区分黑白名单**。方案：`SysAccessRuleIpCacheEntry` 新增 `accessRuleTypeDictCode`（缓存映射同步携带），
+  判定抽成纯函数 `decideIpAccess`：命中黑名单=拒绝、存在白名单规则时仅白名单命中=放行、无有效规则=默认放行；
+  配套纯逻辑单测 `SysAccessRuleIpAccessDecisionTest`。注意：旧版序列化的缓存条目无类型字段（视为不参与黑白分流，
+  绝不误杀），升级后建议对 `SYS_ACCESS_RULE_IPS_BY_SYSTEM_CODE_AND_TENANT_ID` 执行一次 reloadAll 以携带新字段。
+  剩余：`WHITELIST_BLACKLIST`（dict code 4）类型的条目级黑白标记数据模型上仍无法表达，目前整体按白名单保守处理。
+- `kudos-ms-sys-core/src/io/kudos/ms/sys/core/dict/service/impl/SysDictItemService.kt`（`recursionFindAllParentId`）与
+  `kudos-ms-sys-core/src/io/kudos/ms/sys/core/resource/service/impl/SysResourceService.kt`（`collectParentIds`）：
+  父链递归/循环**无环保护**，脏数据形成 parentId 环时会栈溢出或死循环；建议加已访问集合或深度上限。
+- 字典 / 参数仅按 `atomicServiceCode` 隔离，**没有 tenantId 维度**；多租户定制字典/参数（覆盖平台默认值）目前无法表达，
+  与本服务自身承载的 tenant 模块能力不对称。
+
+### 3. 安全性
+
+- ✅ 已修复（2026-06-11）`kudos-ms-sys-common/src/io/kudos/ms/sys/common/datasource/vo/response/SysDataSourceRow.kt` / `SysDataSourceDetail.kt` / `SysDataSourceEdit.kt`：
+  原响应 VO 直接回显 `password`。方案：`SysDataSourceAdminController` 在出口统一脱敏（pagingSearch / getDetail / getEdit /
+  listByTenantId / listBySubSystemCode 非空密码替换为固定掩码 `SysDataSourceConsts.PASSWORD_MASK`），
+  编辑链路同步处理 —— `SysDataSourceService.update` 收到空/掩码密码时回填库中原密文（即"不修改密码"，改密走 `resetPassword`）；
+  单测 `SysDataSourcePasswordMaskingTest`（api-admin）+ `SysDataSourcePasswordPolicyTest`（core）。
+  剩余：内部 RPC（`ISysDataSourceApi` 缓存条目）仍携带密文密码，属建连必需，依赖 internal 路径隔离。
+- ✅ 已修复（2026-06-11）`kudos-ms-sys-api-admin/src/io/kudos/ms/sys/api/admin/controller/cache/SysCacheAdminController.kt`（`/management/getValueJson`）：
+  原可按 key 导出**任意缓存值的 JSON**。方案：`SysCacheService.getValueJson` 内置敏感缓存名黑名单
+  （含 `SYS_DATA_SOURCE__HASH`），命中时抛 `CACHE_VALUE_EXPORT_FORBIDDEN` 拒绝导出；
+  单测 `SysCacheSensitiveValueGuardTest`。新缓存若承载敏感数据需同步加入 `SENSITIVE_VALUE_CACHE_NAMES`。
+- `kudos-ms-sys-api-admin/src/io/kudos/ms/sys/api/admin/controller/datasource/SysDataSourceAdminController.kt`（`testConnection`）：
+  接受任意 JDBC url 即时建连，存在内网探测（SSRF 类）与恶意驱动参数面；建议限制驱动/host 白名单。
+- 各 `*AdminController` 继承的 `batchDelete`：ids 集合**无数量上限**，一次请求可携带数万 id；建议统一加 size 上限。
+
+### 4. 测试覆盖
+
+- `kudos-ms-sys-api-admin/test-src` 仅 1 个启动冒烟测试，15 个 Controller 的参数绑定 / 必填性 / 返回结构无 MockMvc 回归。
+- `kudos-ms-sys-api-internal`、`kudos-ms-sys-client`（19 个 fallback 的安全返回值）、`kudos-ms-sys-common`
+  （`IIpStringToBigDecimalSupport` / `IIpBigDecimalToStringSupport` 的 IPv4/IPv6 转换边界）均无任何测试源集。
+- `kudos-ms-sys-core` 覆盖良好（60 个测试类），但 `VSysDictItemService` 无专门测试类。
+
+### 5. 可扩展性
+
+- `kudos-ms-sys-api-admin/src/io/kudos/ms/sys/api/admin/controller/auditLog/SysAuditLogAdminController.kt`：
+  `@Resource(name = "rdbKtormAuditLogReadOnlyService")` 魔法 bean 名硬编码，切换审计后端（ClickHouse/Mongo）需改代码；建议配置化 bean 名或 `@Qualifier` 常量。
+- `kudos-ms-sys-api-admin/.../auditLog/AuditLogPagingRequest.kt`：UI 日期格式 `"yyyy-MM-dd HH:mm:ss"` 硬编码于 companion；前端改版需改代码。
+- `checkIpAccess` 的黑白名单判定策略不可插拔，建议抽 SPI（2026-06-11 已把判定收敛为纯函数 `decideIpAccess`，语义缺陷已修复，SPI 化仍待做）。
+
+### 6. 可观测性
+
+- `kudos-ms-sys-core/src/io/kudos/ms/sys/core/accessrule/cache/AccessRuleIpsBySubSysAndTenantIdCache.kt`（`getAccessRuleIps`）：
+  "数据库无该维度规则"打 `warn`，但"未配置规则"是常态场景，会持续刷 warn 日志；建议降为 `debug`。
+- 各 service 的批量变更（如 `SysAccessRuleIpService.deleteByRuleId`）只有 `debug` 日志、无操作者上下文；
+  建议高危写操作接入 `kudos-ability-log-audit` 审计切面。
+
+### 7. 可维护性
+
+- `kudos-ms-sys-core/src/io/kudos/ms/sys/core/accessrule/dao/SysAccessRuleIpDao.kt`：
+  52 行遗留裸 `//TODO`（排序列解析的双表 fallback 逻辑待收敛）；184-197 行整段注释掉的 `mapRowToRecord` 死代码应删除。
+- `kudos-ms-sys-core/src/io/kudos/ms/sys/core/i18n/service/impl/SysI18NService.kt`：
+  类名 `SysI18NService`（大写 N）与 `ISysI18nService` / `SysI18nHashCache`（小写 n）大小写不一致，IDE 检索易漏；属公开类名，未直接改。
+- 13 个 service 的 "insert/update/delete + 发事件" 样板仍各自重复（`completeCrud*` 只统一了日志部分），可上提为带事件钩子的模板基类。
+
+### 8. 对外接口（API contract）
+
+- `kudos-ms-sys-core/.../dict/service/impl/SysDictService.kt`（`dictCacheKey`）+ `common/.../dict/api/ISysDictApi.kt`：
+  `batchGetActiveDictItems(Map)` 返回 Map 的 key 是**翻转后的** `(atomicServiceCode, dictType)`，与入参 Pair `(dictType, atomicServiceCode)` 顺序相反 ——
+  调用方用原入参 Pair 查返回 Map 必然 miss，是 contract 级认知陷阱（HTTP 适配端点的 key 同样是 `"asCode|dictType"`，其 KDoc 本次已修正）。
+  建议下一个 breaking 版本统一为 key = 入参 Pair。
+- `kudos-ms-sys-api-admin/.../cache/SysCacheAdminController.kt`：`/management/reload`、`/management/reloadAll` 是**有副作用**的操作却映射为 GET，
+  违背 HTTP 语义（网关/审计通常对 GET 放宽）；建议改 POST（涉及前端联动，未直接改）。
+- admin / internal / public 三层划分本身清晰合理；internal 路径由 `common` 接口注解单点定义的"三身一体"机制值得保持。
+
+### 9. 文档
+
+- `kudos-ms-sys-sql/resources/sql/sys/h2/V1.0.0.24__seed_sys_locale_cache.sql`、`V1.0.0.25__seed_sys_out_line_cache.sql`：
+  种子脚本无头部注释说明"该行 `sys_cache` 配置与哪个 `*Cache` Handler（`CACHE_NAME` 常量）对应、删除会导致缓存静默失效"；建议补 2-3 行注释。
+- 控制器层个别 KDoc 与实现不符（`SysDictAdminController.getDict` 返回类型、dict 批量 HTTP 适配端点的 key 顺序）—— 本次已直接修正。

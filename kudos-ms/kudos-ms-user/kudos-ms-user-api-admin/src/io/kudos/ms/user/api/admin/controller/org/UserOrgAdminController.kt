@@ -1,6 +1,7 @@
 package io.kudos.ms.user.api.admin.controller.org
 
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
+import io.kudos.ms.user.common.account.support.eraseCredentials
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.common.org.vo.request.UserOrgFormCreate
@@ -50,15 +51,15 @@ class UserOrgAdminController :
         @RequestParam(required = false) parentId: String?,
     ): List<UserOrgTreeRow> = service.getOrgTree(tenantId, parentId)
 
-    /** Get all users by organization id (including admins). */
+    /** Get all users by organization id (including admins). Credential fields are erased before returning. */
     @GetMapping("/getOrgUsers")
     fun getOrgUsers(@RequestParam orgId: String): List<UserAccountCacheEntry> =
-        service.getOrgUsers(orgId)
+        service.getOrgUsers(orgId).map { it.eraseCredentials() }
 
-    /** Get admin users by organization id. */
+    /** Get admin users by organization id. Credential fields are erased before returning. */
     @GetMapping("/getOrgAdmins")
     fun getOrgAdmins(@RequestParam orgId: String): List<UserAccountCacheEntry> =
-        service.getOrgAdmins(orgId)
+        service.getOrgAdmins(orgId).map { it.eraseCredentials() }
 
     /** Get direct child organizations by organization id. */
     @GetMapping("/getChildOrgs")

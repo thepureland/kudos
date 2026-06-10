@@ -8,7 +8,7 @@ Msg 服务 **对内 Provider 进程**的启动入口、自动配置与 `/api/int
 - `MsgApiProviderApplication` —— Spring Boot main，挂 `@EnableKudos`
 - `MsgApiProviderAutoConfiguration` —— `@ComponentScan("io.kudos.ms.msg.api.internal")` +
   `IComponentInitializer.getComponentName() = "kudos-ms-msg-api-internal"`
-- 4 个 thin controller，每个 `implements IMsg*Api`（来自 common），方法体单行
+- 5 个 thin controller，每个 `implements IMsg*Api`（来自 common），方法体单行
   转发到 core 的 `MsgXxxApi` 实现
 
 ## 控制器清单
@@ -19,9 +19,7 @@ Msg 服务 **对内 Provider 进程**的启动入口、自动配置与 `/api/int
 | `MsgTemplateInternalController` | `IMsgTemplateApi` | `MsgTemplateApi` |
 | `MsgReceiveInternalController` | `IMsgReceiveApi` | `MsgReceiveApi` |
 | `MsgInstanceInternalController` | `IMsgInstanceApi` | `MsgInstanceApi` |
-
-**没有 `IMsgReceiverGroupApi` 的控制器**——因为 common 里这个接口是空的（见 msg-common
-README "已知限制"）。
+| `MsgReceiverGroupInternalController` | `IMsgReceiverGroupApi` | `MsgReceiverGroupApi` |
 
 实现模式：
 

@@ -127,11 +127,22 @@ class PassportPublicController(
      *
      * Usually paired with [io.kudos.ms.user.common.account.vo.response.AuthKeySetup.otpauthUrl]:
      * the frontend obtains the otpauth URL, then GETs this endpoint and displays the response as an `<img>`.
+     *
+     * [size] is clamped to [[MIN_QR_SIZE], [MAX_QR_SIZE]]: this is an unauthenticated endpoint, and an
+     * unbounded side length would let a single request allocate a huge BufferedImage (memory-exhaustion DoS).
      */
     @GetMapping("/qrCode", produces = [MediaType.IMAGE_PNG_VALUE])
     fun qrCode(
         @RequestParam text: String,
         @RequestParam(required = false, defaultValue = "200") size: Int,
-    ): ByteArray = BarcodeKit.qrcodePng(text, size = size)
+    ): ByteArray = BarcodeKit.qrcodePng(text, size = size.coerceIn(MIN_QR_SIZE, MAX_QR_SIZE))
+
+    companion object {
+        /** Minimum QR code side length in pixels (smaller is unscannable). */
+        private const val MIN_QR_SIZE = 64
+
+        /** Maximum QR code side length in pixels (caps per-request image memory on this public endpoint). */
+        private const val MAX_QR_SIZE = 1024
+    }
 
 }

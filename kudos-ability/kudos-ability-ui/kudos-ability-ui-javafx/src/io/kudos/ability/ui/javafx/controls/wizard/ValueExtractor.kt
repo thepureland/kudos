@@ -34,8 +34,8 @@ import javafx.util.Callback
  * extract values through a single interface without knowing the concrete control type.
  *
  * Built-in controls: CheckBox/ChoiceBox/ComboBox/DatePicker/PasswordField/RadioButton/Slider/TextArea/TextField/
- * ListView/TreeView/TableView/TreeTableView. The business side calls [addValueExtractor] to register
- * additional control types as needed.
+ * ListView/TreeView/TableView/TreeTableView. Note: [addValueExtractor] is currently private, so the
+ * set of supported control types is fixed at compile time; unregistered types yield null from [getValue].
  *
  * @author Oracle (original)
  * @author K
@@ -66,23 +66,14 @@ object ValueExtractor {
     /**
      * Attempts to read the business value from the given control.
      * Performs an exact match on `n.javaClass` via [valueExtractors]; returns null for unregistered
-     * control types (the business side should register support via [addValueExtractor]).
+     * control types.
      *
      * @param n control to read the value from
      * @return current value of the control; null for an unregistered type
-     * @throws IllegalArgumentException when the entry is registered in the map but the callback was
-     *  unexpectedly cleared (should never happen)
      * @author K
      * @since 1.0.0
      */
-    fun getValue(n: Node): Any? {
-        var value: Any? = null
-        if (valueExtractors.containsKey(n.javaClass)) {
-            val callback = requireNotNull(valueExtractors[n.javaClass]) { "No extractor for ${n.javaClass}" }
-            value = callback.call(n)
-        }
-        return value
-    }
+    fun getValue(n: Node): Any? = valueExtractors[n.javaClass]?.call(n)
 
     init {
         addValueExtractor(CheckBox::class.java) { cb: CheckBox -> cb.isSelected }

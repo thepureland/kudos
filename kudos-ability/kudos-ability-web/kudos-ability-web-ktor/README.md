@@ -161,3 +161,30 @@ dependencies {
 ```
 
 四个引擎仅 testImplementation，生产 build 需自行选一个 starter 加到 implementation/api。
+
+## 改进建议（自动分析 2026-06-11）
+
+**健壮性**
+- `init/KtorAutoConfiguration.kt` 的 `started.join()` 无超时：若引擎异步启动失败且
+  `ApplicationStarted` 事件未发布，Spring 启动线程会永久阻塞。建议改为
+  `started.get(timeout, SECONDS)`，超时/失败时抛出带引擎名与端口的明确异常。
+
+**可扩展性 / 硬编码**
+- `init/KtorAutoConfiguration.kt` 中 engine.name → 工厂 FQCN 的映射是 when 分支里的魔法字符串；
+  建议枚举化（如 `KtorEngineEnum(name, factoryFqcn)`），与 springmvc 模块的 `ServletServerEnum`
+  风格对齐，同时可在配置绑定阶段提前校验非法值。
+- `init/KtorPlugins.kt` 的 WebSockets 参数全部硬编码（`pingPeriod`/`timeout` 15s、
+  `maxFrameSize = Long.MAX_VALUE`、`masking = false`）；`maxFrameSize` 不设上限存在内存放大
+  风险（恶意客户端可发送超大帧）。建议全部挂到 `KtorProperties.plugins.webSocket` 子节点。
+- `plugins/KudosContextPlugin.kt` 基于旧式 `BaseApplicationPlugin` API；Ktor 3 推荐
+  `createApplicationPlugin`，迁移后代码更短且处于官方维护路径。
+
+**可维护性**
+- `init/KtorPlugins.kt` 中 StatusPages 的 `IllegalStateException` 分支与 `Throwable` 兜底
+  行为完全相同（log error + 500），可合并为单一兜底分支。
+
+**资源文件污染**
+- `resources/application.yaml` 与 `resources/logback.xml` 会被打进模块 jar 的 classpath 根：
+  前者可能与业务工程自己的 Ktor `application.yaml` 冲突，其中 `maxChunkSize: 42` 疑为 Ktor
+  文档示例残留值（42 字节的 chunk 上限明显异常）；后者作为库 jar 携带 logback 根配置会
+  干扰消费方日志装配。建议移入 test-resources 或重命名为模块专属文件名。

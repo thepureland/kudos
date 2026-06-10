@@ -100,7 +100,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
     )
     open fun getDictItemsByIds(ids: Set<String>): Map<String, SysDictItemCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
-        val list = vSysDictItemDao.getByIdsAs<SysDictItemCacheEntry>(ids).map { it }
+        val list = vSysDictItemDao.getByIdsAs<SysDictItemCacheEntry>(ids)
         val byId = list.associateBy { it.id.trim() }
         return ids.mapNotNull { id ->
             val key = id.trim()
@@ -157,7 +157,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
         atomicServiceCode: String,
         dictType: String
     ): List<SysDictItemCacheEntry> {
-        return vSysDictItemDao.searchByAtomicServiceCodeAndDictType(atomicServiceCode, dictType).map { it }
+        return vSysDictItemDao.searchByAtomicServiceCodeAndDictType(atomicServiceCode, dictType)
     }
 
     // ---------- 4. By parentId ----------
@@ -177,7 +177,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
     )
     open fun getDictItems(parentId: String): List<SysDictItemCacheEntry> {
         require(parentId.isNotBlank()) { "parentId must not be blank when fetching child dictionary items" }
-        return vSysDictItemDao.searchByParentId(parentId).map { it }
+        return vSysDictItemDao.searchByParentId(parentId)
     }
 
     // ---------- Full refresh ----------
@@ -193,7 +193,7 @@ open class SysDictItemHashCache : AbstractHashCacheHandler<SysDictItemCacheEntry
             return
         }
         val cache = hashCache()
-        val list = vSysDictItemDao.searchAs<SysDictItemCacheEntry>().map { it }
+        val list = vSysDictItemDao.searchAs<SysDictItemCacheEntry>()
         log.debug("Loaded ${list.size} dictionary items from view v_sys_dict_item; refreshing Hash cache")
         cache.refreshAll(CACHE_NAME, list, FILTERABLE_PROPERTIES, emptySet())
         log.debug("Dictionary item Hash cache refresh completed")

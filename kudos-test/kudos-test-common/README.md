@@ -76,3 +76,21 @@ open class TestApplication
 - ❗ `SpringKitTestContextListener` 通过 `spring.factories` 注册——Spring Boot 3.x 在某些
   上下文里已迁移到 `META-INF/spring/...imports` 文件。当前形式仍可用，但未来升级
   Spring Test 框架时可能需要迁移。
+
+## 改进建议（自动分析 2026-06-11）
+
+### 测试覆盖
+- `test-src/io/kudos/test/common/init/EnableKudosTestTest.kt` 是空壳类（无任何 @Test/断言）。
+  建议补一个最小测试：`@EnableKudosTest` 装上下文 + 断言注入的 `ApplicationContext` 与
+  `SpringKit.applicationContext` 同一实例——这正是 `SpringKitTestContextListener` 关键修复的
+  回归保护，目前完全没有覆盖。
+
+### 可维护性 / 可观测性
+- `src/io/kudos/test/common/init/SpringKitTestContextListener.kt`：未覆写 `getOrder()`，与业务侧
+  其它 `TestExecutionListener` 共存时执行顺序未定义。建议显式声明 order（晚于
+  `DependencyInjectionTestExecutionListener`），并在重新指向 context 时打一条 DEBUG 日志，便于
+  排查"SpringKit 指向哪个上下文"类问题。
+
+### 文档
+- `init/TestApplication` 的 KDoc 只有一句话，未说明"为什么故意不加 @SpringBootApplication"
+  （该设计理由目前只在本 README 里）。建议把理由下沉到 KDoc，避免后人"顺手补注解"。

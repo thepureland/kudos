@@ -27,6 +27,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtDecoder
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder
 import java.security.KeyPair
 import java.security.KeyStore
+import java.security.PrivateKey
 import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 
@@ -93,11 +94,8 @@ open class SecurityJwtAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "kudos.ability.security.jwt.key", name = ["key-store"])
     open fun jwtDecoder(jwkSource: JWKSource<SecurityContext>): JwtDecoder {
-        val algorithms = mutableSetOf<JWSAlgorithm>().apply {
-            addAll(JWSAlgorithm.Family.RSA)
-            addAll(JWSAlgorithm.Family.EC)
-            addAll(JWSAlgorithm.Family.HMAC_SHA)
-        }
+        val algorithms: Set<JWSAlgorithm> =
+            JWSAlgorithm.Family.RSA + JWSAlgorithm.Family.EC + JWSAlgorithm.Family.HMAC_SHA
         val jwtProcessor = DefaultJWTProcessor<SecurityContext>().apply {
             jwsKeySelector = JWSVerificationKeySelector(algorithms, jwkSource)
             // NimbusJwtDecoder runs its own claim-set verification; suppress the default Nimbus
@@ -122,7 +120,7 @@ open class SecurityJwtAutoConfiguration : IComponentInitializer {
             val keyStore = KeyStore.getInstance("PKCS12").apply {
                 resource.inputStream.use { load(it, pin) }
             }
-            val privateKey = keyStore.getKey(props.alias, pin) as java.security.PrivateKey
+            val privateKey = keyStore.getKey(props.alias, pin) as PrivateKey
             val certificate = keyStore.getCertificate(props.alias)
             KeyPair(certificate.publicKey, privateKey)
         } catch (e: Exception) {

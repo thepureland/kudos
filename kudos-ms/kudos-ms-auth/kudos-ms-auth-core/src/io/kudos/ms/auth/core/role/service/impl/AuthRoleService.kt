@@ -10,6 +10,8 @@ import io.kudos.ms.auth.common.role.vo.response.BatchBindResultVo
 import io.kudos.ms.auth.common.role.vo.response.EffectivePermissionsVo
 import io.kudos.ms.auth.common.role.vo.response.RoleDeleteImpactVo
 import io.kudos.ms.auth.core.group.cache.AuthGroupHashCache
+import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupRoleService
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupUserService
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByRoleIdCache
@@ -18,11 +20,16 @@ import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.datascope.dao.AuthRoleOrgDao
 import io.kudos.ms.auth.core.role.event.AuthRoleBatchDeleted
 import io.kudos.ms.auth.core.role.event.AuthRoleDeleted
 import io.kudos.ms.auth.core.role.event.AuthRoleInserted
+import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
 import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
+import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
+import io.kudos.ms.auth.core.role.exclusion.dao.AuthRoleExclusionDao
 import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleResourceService
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleService
@@ -86,6 +93,22 @@ open class AuthRoleService(
 
     @Resource
     private lateinit var authRoleUserDao: AuthRoleUserDao
+
+    // -- Below are injected for the delete cascade (deleteById, batchDelete): a removed role must
+    //    take its relation rows (user grants, resource grants, group bindings, custom data-scope
+    //    orgs, SoD pairs) with it, otherwise the grants keep resolving from the orphan rows.
+
+    @Resource
+    private lateinit var authRoleResourceDao: AuthRoleResourceDao
+
+    @Resource
+    private lateinit var authGroupRoleDao: AuthGroupRoleDao
+
+    @Resource
+    private lateinit var authRoleOrgDao: AuthRoleOrgDao
+
+    @Resource
+    private lateinit var authRoleExclusionDao: AuthRoleExclusionDao
 
     @Resource
     private lateinit var authRoleUserService: IAuthRoleUserService
@@ -198,10 +221,15 @@ open class AuthRoleService(
             log.warn("Role with id ${id} no longer exists when attempting to delete!")
             return false
         }
+        // Snapshot the affected users / resources / groups BEFORE the relation rows are removed —
+        // the cache-invalidation events need them, and they are unqueryable afterwards.
+        val relations = snapshotRoleRelations(id)
         val success = super.deleteById(id)
         if (success) {
+            cascadeDeleteRoleRelations(id)
             log.debug("Deleted role with id ${id}.")
             eventPublisher.publishEvent(AuthRoleDeleted(id, role.tenantId, role.code))
+            publishRelationCleanupEvents(id, relations)
         } else {
             log.error("Failed to delete role with id ${id}!")
         }
@@ -211,15 +239,77 @@ open class AuthRoleService(
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
         // Snapshot tenantId/code first; after AFTER_COMMIT the rows are deleted and downstream (tenantId, code) caches
-        // can no longer query back.
+        // can no longer query back. Ditto for the relation snapshots feeding the cleanup events.
         val snapshots = if (ids.isEmpty()) emptyList()
             else dao.getByIds(ids).map { AuthRoleBatchDeleted.Item(it.id, it.tenantId, it.code) }
+        val relationSnapshots = snapshots.associate { it.id to snapshotRoleRelations(it.id) }
         val count = super.batchDelete(ids)
+        snapshots.forEach { cascadeDeleteRoleRelations(it.id) }
         log.debug("Batch delete roles: expected to delete ${ids.size} entries, actually deleted ${count}.")
         if (snapshots.isNotEmpty()) {
             eventPublisher.publishEvent(AuthRoleBatchDeleted(snapshots))
+            relationSnapshots.forEach { (roleId, relations) -> publishRelationCleanupEvents(roleId, relations) }
         }
         return count
+    }
+
+    // -----------------------------------------------------------------------
+    // Delete cascade — reclaim every grant the role carried.
+    // -----------------------------------------------------------------------
+
+    /**
+     * Pre-delete snapshot of everything a role's removal invalidates: the users directly granted
+     * the role (all rows, including out-of-window temporal grants), the resources it granted, and
+     * the groups inheriting it. Queried before the relation rows are deleted because the
+     * AFTER_COMMIT cache listeners can no longer derive these sets from the DB.
+     */
+    private data class RoleRelationSnapshot(
+        val userIds: List<String>,
+        val resourceIds: Set<String>,
+        val groupIds: Set<String>,
+    )
+
+    private fun snapshotRoleRelations(roleId: String): RoleRelationSnapshot = RoleRelationSnapshot(
+        userIds = authRoleUserDao.searchUserIdsByRoleId(roleId).distinct(),
+        resourceIds = authRoleResourceDao.searchResourceIdsByRoleIds(listOf(roleId)),
+        groupIds = authGroupRoleDao.searchGroupIdsByRoleId(roleId),
+    )
+
+    /**
+     * Deletes (in the surrounding transaction) every relation row pointing at the role:
+     * user grants, resource grants, group bindings, custom data-scope orgs and SoD exclusion
+     * pairs. The DDL defines no FK cascade, so without this the orphan `auth_role_resource` and
+     * `auth_role_user` rows would keep resolving — a deleted role's permissions would survive it.
+     */
+    private fun cascadeDeleteRoleRelations(roleId: String) {
+        val users = authRoleUserDao.deleteByRoleId(roleId)
+        val resources = authRoleResourceDao.deleteByRoleId(roleId)
+        val groups = authGroupRoleDao.deleteByRoleId(roleId)
+        val orgs = authRoleOrgDao.deleteByRoleId(roleId)
+        val exclusions = authRoleExclusionDao.deleteByRoleId(roleId)
+        log.debug(
+            "Cascade-deleted relations of role ${roleId}: ${users} user grants, ${resources} resource grants, " +
+                "${groups} group bindings, ${orgs} data-scope orgs, ${exclusions} exclusion pairs."
+        )
+    }
+
+    /**
+     * Publishes the same relation-changed events a manual unbind of each relation would have
+     * produced, so the per-user / per-role permission caches (RoleIdsByUserIdCache,
+     * ResourceIdsByUserIdCache, UserIdsByRoleIdCache, ResourceIdsByRoleIdCache, ...) are
+     * invalidated for everyone who held the deleted role — directly or via a group.
+     */
+    private fun publishRelationCleanupEvents(roleId: String, relations: RoleRelationSnapshot) {
+        if (relations.userIds.isNotEmpty()) {
+            eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, relations.userIds))
+        }
+        if (relations.resourceIds.isNotEmpty()) {
+            eventPublisher.publishEvent(AuthRoleResourceRelationsChanged(roleId, relations.resourceIds.toList()))
+        }
+        // Listeners expand groupId -> userIds themselves (auth_group_user rows are untouched).
+        relations.groupIds.forEach { groupId ->
+            eventPublisher.publishEvent(AuthGroupRoleRelationsChanged(groupId, listOf(roleId)))
+        }
     }
 
     @Transactional(readOnly = true)

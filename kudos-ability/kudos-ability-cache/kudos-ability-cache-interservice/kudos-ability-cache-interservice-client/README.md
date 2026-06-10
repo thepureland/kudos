@@ -152,3 +152,14 @@ testImplementation(project(":kudos-test:kudos-test-container"))
 - ✅ `ClientCacheHelper.loadFromLocalCache` 已改为 raw `Cache.get` + 类型检查；缓存实现返回
   非 `ClientCacheItem` 时 WARN 并 evict 本地条目，按 miss 处理，避免泛型扩展函数直接
   `ClassCastException`
+
+## 改进建议（自动分析 2026-06-11）
+
+- **缓存键哈希用错算法**：`feign/FeignCacheRequestInterceptor.kt` 的 `genCacheKey` 使用
+  `Md5Crypt.apr1Crypt`（Apache APR1 口令哈希，内部迭代 1000 次 MD5）——这是为"抗暴力破解口令"设计的慢哈希，
+  用在每次 Feign 调用的热路径上纯属 CPU 浪费；另外 key 组装用 `joinToString()` 隐式产生 ", " 分隔符。
+  建议换成一次性 MD5/SHA-256 摘要（如 `DigestKit`）。更换会让既有本地协商缓存全部 miss 一次，属可接受的
+  冷启动成本。
+- **304 命中返回共享可变引用**：`FeignCacheResponseInterceptor` 在 304 时直接返回本地缓存对象本体
+  （端到端测试 `same()` 验证的就是 `===`）。若业务侧修改返回的 DTO，会污染本地缓存供后续请求读到。
+  建议在 README/KDoc 中明确"返回对象视为只读"，或提供可选的防御性拷贝。

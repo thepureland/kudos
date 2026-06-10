@@ -1,6 +1,5 @@
 package io.kudos.ability.web.guest.filter
 
-import io.kudos.ability.web.guest.provider.GuestAccess
 import io.kudos.ability.web.guest.provider.IGuestAccessService
 import io.kudos.ability.web.guest.provider.IGuestAccessStore
 import io.kudos.base.logger.LogFactory
@@ -56,10 +55,13 @@ class GuestAccessFilter(
 
     private fun doGuestCheck(request: HttpServletRequest, response: HttpServletResponse) {
         try {
-            val guest = service.fetchGuestToken(request)
-            if (isReturningVisitor(guest)) {
-                service.hash(request, guest!!)
-                store.store(guest)
+            // A fetched GuestAccess with a blank/null token is treated the same as "no cookie"
+            // — i.e. the first-visit branch — so a tampered-but-decodable cookie can't sneak
+            // past as a returning visitor.
+            val returningVisitor = service.fetchGuestToken(request)?.takeUnless { it.token.isNullOrBlank() }
+            if (returningVisitor != null) {
+                service.hash(request, returningVisitor)
+                store.store(returningVisitor)
             } else {
                 service.genToken(request, response)
             }
@@ -70,7 +72,4 @@ class GuestAccessFilter(
             log.error(e, "Guest access filter swallowed an unexpected error")
         }
     }
-
-    private fun isReturningVisitor(guest: GuestAccess?): Boolean =
-        guest != null && !guest.token.isNullOrBlank()
 }

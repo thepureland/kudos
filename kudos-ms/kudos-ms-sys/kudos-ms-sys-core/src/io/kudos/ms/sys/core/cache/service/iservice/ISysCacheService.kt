@@ -80,6 +80,10 @@ interface ISysCacheService : IBaseCrudService<String, SysCache> {
     /**
      * Get the JSON representation of the value of the given key under the given cache configuration (by id).
      *
+     * Caches whose values carry secrets (e.g. the data source cache, which embeds encrypted DB
+     * passwords) are on a built-in sensitive-name blacklist; exporting them throws
+     * `ServiceException(SysCacheErrorCodeEnum.CACHE_VALUE_EXPORT_FORBIDDEN)`.
+     *
      * @param id cache configuration primary key, non-blank
      * @param key cache key
      * @return JSON string of the value; empty string when value is null or on error

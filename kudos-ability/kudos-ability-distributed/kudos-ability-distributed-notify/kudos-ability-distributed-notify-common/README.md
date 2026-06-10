@@ -44,3 +44,15 @@ kudos:
 ```kotlin
 api(project(":kudos-context"))
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+- 【功能】`model/NotifyMessageVo.kt`：消息没有 messageId / 发送时间戳 / 来源节点字段——
+  listener 被要求"自行幂等"（at-least-once），但缺少可作为幂等键的字段支撑；排障时也无法
+  追溯消息来源与延迟。建议增加可选的 `messageId`（默认 UUID）与 `sendTime` 字段（向后兼容）。
+- 【功能】`support/NotifyListenerItem.kt`：每个 `(namespace, notifyType)` 只支持单个 listener，
+  `put` 重复注册时静默覆盖；若两个 bean 声明相同 notifyType，后装配者悄悄"赢"，难以排查。
+  建议覆盖时打 WARN 日志，或支持同 type 多 listener 多播。
+- 【对外接口】`api/INotifyProducer.kt`：`BEAN_NAME = "notifyMqProducer"` 常量定义在 common 层
+  却带有 "Mq" 实现色彩；若未来出现 redis pub/sub 等其他实现，命名会产生误导。仅文档层面注意，
+  不建议现在改名（破坏兼容）。

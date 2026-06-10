@@ -25,7 +25,13 @@ class WebLogAuditFilter : OncePerRequestFilter() {
 
     /**
      * Wraps the original request as a [ContentCachingRequestWrapper] then delegates to the next filter.
-     * A cache size of 0 means grow on demand, avoiding allocating a large buffer at init time.
+     *
+     * The constructor's `int` parameter is a **contentCacheLimit** (maximum bytes cached per request),
+     * *not* an initial buffer size — the historical `ContentCachingRequestWrapper(request, 0)` call
+     * meant "cache at most 0 bytes", so the body replay in `AuditLogTool.getRequestData` always saw
+     * an empty body and web audits silently lost their request payloads. Now caches up to
+     * [CONTENT_CACHE_LIMIT_BYTES]; the buffer itself still grows on demand, so small requests do not
+     * pre-allocate the full limit.
      *
      * @param request the original request
      * @param response the response
@@ -39,13 +45,20 @@ class WebLogAuditFilter : OncePerRequestFilter() {
         filterChain: FilterChain
     ) {
         // When using spring-security, the request gets rewritten
-        val wrapper = ContentCachingRequestWrapper(request, 0)
+        val wrapper = ContentCachingRequestWrapper(request, CONTENT_CACHE_LIMIT_BYTES)
         filterChain.doFilter(wrapper, response)
     }
 
     companion object {
         /** Spring bean name, for referencing by name in a SecurityFilterChain */
         const val BEAN_NAME: String = "webLogAuditFilter"
+
+        /**
+         * Max request-body bytes cached for audit replay. Large enough for any realistic audited
+         * payload, while bounding the per-request memory cost of caching (an unbounded cache would
+         * let one oversized upload balloon the heap).
+         */
+        const val CONTENT_CACHE_LIMIT_BYTES: Int = 10 * 1024 * 1024
     }
 
 }

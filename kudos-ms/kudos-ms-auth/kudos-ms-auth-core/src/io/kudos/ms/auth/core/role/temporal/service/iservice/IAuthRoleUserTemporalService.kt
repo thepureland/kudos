@@ -28,11 +28,20 @@ interface IAuthRoleUserTemporalService {
     fun getGrantsByRoleId(roleId: String, now: java.time.LocalDateTime = java.time.LocalDateTime.now()): List<RoleTemporalGrantRow>
 
     /**
-     * Grant [roleId] to [userId] with an optional validity window (replace semantics — any existing
-     * grant for the same pair is superseded). NULL [startTime] ⇒ effective immediately; NULL
-     * [endTime] ⇒ never expires. Publishes a relations-changed event so caches recompute.
+     * Grant [roleId] to [userId] with an optional validity window. NULL [startTime] ⇒ effective
+     * immediately; NULL [endTime] ⇒ never expires. Publishes a relations-changed event so caches
+     * recompute.
      *
-     * @throws IllegalArgumentException if both bounds are set and [startTime] is after [endTime]
+     * Guards (same defences as the permanent bind path):
+     *  - the role must exist;
+     *  - the grant must not violate any SoD mutual-exclusion rule of the role's tenant;
+     *  - an existing PERMANENT grant (both bounds NULL) is never silently replaced — unbind it
+     *    explicitly first. An existing TEMPORAL grant for the same pair IS superseded (replace
+     *    semantics: the supplied window is authoritative).
+     *
+     * @throws IllegalArgumentException if both bounds are set and [startTime] is after [endTime],
+     *   if the role does not exist, if the grant would violate an SoD exclusion, or if the user
+     *   already holds the role permanently
      * @return the new grant's id
      */
     fun bindTemporal(roleId: String, userId: String, startTime: LocalDateTime?, endTime: LocalDateTime?): String

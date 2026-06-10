@@ -81,12 +81,20 @@ class YamlPropertySourceFactory : PropertySourceFactory {
 
 
     companion object {
-        private val SOURCE_MAP: MutableMap<String?, String?> = mutableMapOf()
+        /**
+         * Synchronized map (not [java.util.concurrent.ConcurrentHashMap], which rejects the null keys that
+         * a nameless property source can produce). Writes normally happen only during startup, but dynamic
+         * property-source reload extensions may write at runtime, so cheap synchronization is safer than a
+         * bare [HashMap].
+         */
+        private val SOURCE_MAP: MutableMap<String?, String?> =
+            Collections.synchronizedMap(LinkedHashMap<String?, String?>())
 
         /** Return a read-only view to prevent external tampering with the internal map. */
         fun getSourceMap(): Map<String?, String?> = Collections.unmodifiableMap(SOURCE_MAP)
 
-        fun allSourcePath(): List<String?> = SOURCE_MAP.keys.toList()
+        /** Iteration over a synchronized map must itself be synchronized (per the [Collections.synchronizedMap] contract). */
+        fun allSourcePath(): List<String?> = synchronized(SOURCE_MAP) { SOURCE_MAP.keys.toList() }
     }
 
 }

@@ -17,8 +17,7 @@ import org.ktorm.entity.update
 import org.ktorm.schema.Column
 import org.ktorm.schema.ColumnDeclaring
 import org.ktorm.schema.Table
-import java.time.LocalDateTime
-import kotlin.reflect.full.superclasses
+import kotlin.reflect.full.isSubclassOf
 
 /**
  * Base data access object that encapsulates common operations for a database table.
@@ -513,10 +512,14 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * Only auto-fills when the table entity actually implements [IAuditable] — extra columns on a
      * non-auditable table would error.
      *
+     * Uses [isSubclassOf] (not `superclasses.contains`) so indirect implementers — e.g. entities
+     * extending `IManagedDbEntity`, which inherits [IAuditable] transitively — are detected too,
+     * keeping the map path consistent with the entity path's `e is IAuditable` check.
+     *
      * @param properties Map(property name, property value)
      */
     private fun setDefault(properties: MutableMap<String, Any?>) {
-        if (entityClass().superclasses.contains(IAuditable::class)) {
+        if (entityClass().isSubclassOf(IAuditable::class)) {
             AuditDefaults.fillForUpdate(properties)
         }
     }
@@ -535,7 +538,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
 
     /** Map variant of [setInsertDefault] — for the plain-bean insert path that carries values as a map. */
     private fun setInsertDefault(properties: MutableMap<String, Any?>) {
-        if (entityClass().superclasses.contains(IAuditable::class)) {
+        if (entityClass().isSubclassOf(IAuditable::class)) {
             AuditDefaults.fillForInsert(properties)
         }
     }

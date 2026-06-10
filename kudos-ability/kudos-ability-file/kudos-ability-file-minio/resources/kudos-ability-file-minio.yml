@@ -3,8 +3,11 @@ kudos:
     file:
       minio:
         endpoint: http://127.0.0.1:9000
-        accessKey: admin
-        secretKey: 12345678
+        # Credentials MUST be provided by the application (e.g. via application.yml or
+        # environment variables). No defaults ship with this jar - startup fails fast
+        # when they are missing. Example:
+        # access-key: ${MINIO_ACCESS_KEY}
+        # secret-key: ${MINIO_SECRET_KEY}
         public-endpoint: http://127.0.0.1:9000
         sts:
           access-token:

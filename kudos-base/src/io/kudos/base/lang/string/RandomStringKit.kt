@@ -1,10 +1,8 @@
 package io.kudos.base.lang.string
 
-import io.kudos.base.lang.string.RandomStringKit.random
 import org.apache.commons.lang3.RandomStringUtils
 import java.security.SecureRandom
 import java.util.Random
-import kotlin.math.abs
 import kotlin.uuid.Uuid
 
 /**
@@ -36,13 +34,16 @@ object RandomStringKit {
     fun uuidWithoutDelimiter(): String = Uuid.random().toHexString()
 
     /**
-     * Randomly generates a Long via SecureRandom.
+     * Randomly generates a non-negative Long via SecureRandom.
      *
-     * @return random Long
+     * The sign bit is cleared with `and Long.MAX_VALUE` instead of `abs()`, because
+     * `abs(Long.MIN_VALUE)` overflows and stays negative.
+     *
+     * @return random non-negative Long as a string
      * @author K
      * @since 1.0.0
      */
-    fun randomLong(): String = abs(random.nextLong()).toString()
+    fun randomLong(): String = (random.nextLong() and Long.MAX_VALUE).toString()
 
     /**
      * Randomly generates bytes via SecureRandom, encoded in Base62.

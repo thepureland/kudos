@@ -145,3 +145,66 @@ api(libs.xqlee.pngquant.png)
 
 testImplementation(project(":kudos-test:kudos-test-common"))
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+本次已直接修复（详见代码内注释）：
+
+- ✅ `compress/compressor/JpgCompressor.kt`：修复两个真实 bug——(a) 默认 `CompressionConfig`
+  （width=0/height=0）会把 `size(0, 0)` 传给 Thumbnailator 直接抛 `IllegalArgumentException`，
+  即"只要开压缩、不配宽高，JPEG 压缩必崩"；(b) `config.quality` 实际从未生效
+  （`Thumbnails.outputQuality` 对 `asBufferedImage()` 是 no-op，随后 ImageIO 编码用的是
+  writer 默认 0.75）——现已把 quality 设置到真正执行编码的 `ImageWriteParam` 上。同时将
+  误用的 `WebPWriteParam.MODE_EXPLICIT` 改为 `ImageWriteParam.MODE_EXPLICIT`（同值，去除
+  JPEG 路径对 webp 库的伪依赖）；`ImageIO.read` 返回 null（非图片流）时显式报错而非 NPE。
+- ✅ 新增 `test-src/.../compress/compressor/JpgCompressorTest.kt`（4 case）锁定上述修复。
+
+待办（按维度分类，未直接修改的原因均为涉及公开 API / 行为变化，需人工决策）：
+
+### 1. Kotlin 写法 / 可维护性
+
+- `entity/DeleteFileModel.kt` 与 `entity/DownloadFileModel.kt` 的 `from(fullPath)` 完全重复
+  （逐行相同的解析逻辑），建议抽一个 internal 的 `parseBucketAndPath(fullPath): Pair<String, String>`
+  共用，避免日后只改一处的漂移。
+- `entity/UploadFileModel.kt`：泛型上界 `S : InputStreamSource?` 可空、属性又声明为 `S?`，
+  双重可空叠加令调用方困惑（`DownloadFileModel` 的上界就是非空的）。建议统一收紧为
+  `S : InputStreamSource`（公开 API 变更）。
+
+### 2. 公共 API
+
+- `enums/UploadContentTypeEnum.kt`：枚举构造参数是 `var`——全局可变枚举状态，任何代码都能
+  改写 `PNG.contentType` 影响整个进程。建议改 `val`（会移除公开 setter，属 API 变更，故未直接改）。
+- `code/FileErrorCode.kt` 的 `getMessage(vararg params)` 没有任何错误码带占位符，疑似死代码。
+
+### 3. 功能缺陷
+
+- `enums/UploadContentTypeEnum.kt`：DOCX 的 MIME 用了 `application/msword`（标准应为
+  `application/vnd.openxmlformats-officedocument.wordprocessingml.document`），XLS/XLSX 用了
+  非标准的 `application/x-xls`（标准为 `application/vnd.ms-excel` /
+  `...spreadsheetml.sheet`）。修正会改变上传对象的 Content-Type（影响浏览器下载行为），需评估后再改。
+- 缺少"预签名 URL / 分片上传 / 断点续传"的 SPI 抽象。建议在本模块加可选接口
+  （如 `IPresignService`：`presignGet/presignPut(bucket, key, ttl)`），由 file-minio 用
+  `getPresignedObjectUrl` 实现，本地后端可不实现。
+- 缺少 `exists(bucket, path)` / `list(bucket, prefix)` 这类常用查询 SPI，业务侧目前只能
+  靠"下载失败"间接判断文件是否存在。
+
+### 4. 安全
+
+- 文件类型校验只凭后缀（`UploadContentTypeEnum.enumOf` / `CompressUtil.isPic`），无 magic-bytes
+  嗅探；伪装成 `.jpg` 的 HTML/SVG 配合 `pathPrefix` 直出 URL 可形成存储型 XSS。建议在
+  `AbstractUploadService.fileUpload` 增加可插拔的内容校验钩子（默认关闭，保持兼容）。
+- 上传无大小上限钩子（README 已述）；`IDownLoadService.download` 整文件读内存也无大小保护，
+  与上传侧同属 DoS 面。
+
+### 5. 可观测性
+
+- `AbstractUploadService.fileUpload` / `AbstractDownLoadService.download(Stream)` 是统一埋点的
+  最佳位置（模板方法已收口），目前无耗时、文件大小、成功/失败计数。建议接 Micrometer
+  `Timer/Counter` 或至少 debug 级"耗时+字节数"日志。
+
+### 6. 测试缺口
+
+- `PngCompressor` / `WebPCompressor` / `CompressionPipeline` 无任何单测（本次 JpgCompressor
+  已补；PNG 走 com.xqlee 第三方库、WebP 依赖 native 解码器，建议补带真实小图的用例）。
+- `CompressionResult.writeTo()` 的"失败仅打日志不抛"路径无测试锁定。
+- `DownloadFileModel.from` 无测试（只有 `DeleteFileModelTest` 锁了删除侧的同构逻辑）。

@@ -49,7 +49,7 @@ class DefaultKeysGenerator : IKeysGenerator {
     override fun getDelimiter(): String = Consts.CACHE_KEY_DEFAULT_DELIMITER
 
     override fun getParamIndexes(function: KFunction<*>?, vararg params: Any): List<Int> {
-        var ignoreParamIndexes =
+        val ignoreParamIndexes =
             if (function == null) {
                 intArrayOf()
             } else {

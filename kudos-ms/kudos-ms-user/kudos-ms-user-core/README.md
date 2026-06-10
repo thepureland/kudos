@@ -121,3 +121,31 @@ login(req) ──► getUserByTenantIdAndUsername
 - `kudos-ability-cache-common` / `kudos-ability-cache-local-caffeine` / `kudos-ability-cache-remote-redis`（多层缓存）
 - `kudos-ms-sys-core`（**同进程**依赖，非 Feign client；详见上文跨服务依赖小节）
 - `kudos-base`（GoogleAuthenticator / PasswordKit / BCrypt）
+
+## 改进建议（自动分析 2026-06-11）
+
+- ✅ 已修复（2026-06-11）**登录失败无锁定阈值**（`passport/service/impl/PassportService.kt`）：
+  实现"N 次失败→冻结窗口"简化版锁定——失败累计达阈值
+  `kudos.ms.user.passport.login-lock.max-error-times`（默认 5，≤0 关闭）后，复用账号冻结机制以专用冻结类型
+  `autoLoginLock` 自动冻结 `kudos.ms.user.passport.login-lock.lock-minutes`（默认 30，≤0 表示锁定至人工解冻）分钟，
+  窗口内一律返回 `LOCKED`（含正确密码），窗口到期由 `AutoUnfreezeScheduler` 自动清理；登录成功重置计数；
+  已有的人工冻结（manual / admin / scheduled）不会被自动锁覆盖。
+  **剩余工作**：`user_account_protection` 保护策略表（按用户/租户差异化阈值）的接入仍为待办，当前为全局配置项。
+- ❗ **登录审计未落库**（`passport/service/impl/PassportService.kt`）：login 成功 / 失败、logout 均不写 `user_log_login`，
+  `UserLogLoginService` 成了无人投喂的只读统计层。建议在 login 各分支异步落一条审计记录（含 IP / 结果状态）。
+- ❗ **admin 创建账号不哈希密码**（`account/service/impl/UserAccountService.kt#insert`）：`insert` 直接落库，
+  `UserAccountFormCreate.loginPassword` 由调用方决定是否已哈希——一旦前端误传明文即明文入库。建议在 insert/update
+  路径对密码字段统一做"已是 BCrypt 格式则跳过、否则 hash"的防御性处理。
+- ❗ **remember-me token 明文存储**（`login/model/po/UserLoginRememberMe.kt` + `RememberMeByTenantIdAndUsernameCache`）：
+  长效 token 明文存 DB 并整表加载进缓存，DB / Redis 泄露即可重放登录。建议参照 Spring Security 持久化 token 的
+  series + hashed-token 方案。
+- **`UserLogLoginService` 内存截断**（`login/service/impl/UserLogLoginService.kt`）：`getLoginsByUserId/getRecentLogins`
+  先全量 `search` 再内存 `sortedByDescending().take(limit)`，登录日志表大后单次查询会拖垮内存；且 `limit` 无上限校验。
+  应下推 ORDER BY + LIMIT 到 DAO 层。
+- **`UserOrgService.getOrgsByTenantId` 冗余缓存往返**（`org/service/impl/UserOrgService.kt`）：
+  `userOrgHashCache.getOrgsByTenantId` 已返回完整 `UserOrgCacheEntry` 列表，随后又按 id 走 `getOrgsByIds`
+  再查一轮缓存——可直接返回第一次结果。
+- **代码组织小项**（`account/service/impl/UserAccountService.kt`）：companion object 位于类中部、其后仍有实例方法；
+  构造器注入与 `@Resource` 字段注入混用——建议统一为构造器注入并把 companion 移至类尾。
+- **可扩展性**：OTP 实现硬绑定 `GoogleAuthenticator`（PassportService / UserAccountService 直接 new），
+  密码策略（强度校验、历史密码）无 SPI 扩展点；若需支持短信 OTP / WebAuthn 需先抽象 `IOtpVerifier` 接口。
