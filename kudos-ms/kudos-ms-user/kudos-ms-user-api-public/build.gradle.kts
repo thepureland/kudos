@@ -5,4 +5,6 @@ dependencies {
 
 
     testImplementation(project(":kudos-test:kudos-test-container"))
+    testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.spring.boot.starter.test)
 }
