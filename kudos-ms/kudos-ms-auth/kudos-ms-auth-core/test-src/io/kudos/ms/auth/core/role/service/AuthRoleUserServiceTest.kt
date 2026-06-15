@@ -5,6 +5,8 @@ import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -78,7 +80,7 @@ class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
     fun unbind() {
         val roleId = "7817d37f-0000-0000-0000-000000000043"
         val userId = "7817d37f-0000-0000-0000-000000000041"
-        
+
         // Verify the relation exists
         assertTrue(authRoleUserService.exists(roleId, userId))
 
@@ -90,5 +92,47 @@ class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
 
         // Rebind so subsequent tests can run
         authRoleUserService.batchBind(roleId, listOf(userId))
+    }
+
+    @Test
+    fun batchBind_emptyUserIds_returnsZero() {
+        assertEquals(0, authRoleUserService.batchBind("7817d37f-0000-0000-0000-000000000044", emptyList()))
+    }
+
+    @Test
+    fun batchBind_nonExistentRole_rejected() {
+        // Binding to a non-existent role must throw rather than silently insert orphan rows.
+        val ex = assertFailsWith<IllegalArgumentException> {
+            authRoleUserService.batchBind("no-such-role-id", listOf("7817d37f-0000-0000-0000-000000000040"))
+        }
+        assertTrue(ex.message?.contains("Role not found") == true, "message should name the missing role: ${ex.message}")
+    }
+
+    @Test
+    fun batchBind_allAlreadyBound_returnsZero() {
+        // role 043 already binds users 040 & 041; rebinding them adds nothing.
+        val roleId = "7817d37f-0000-0000-0000-000000000043"
+        val already = listOf("7817d37f-0000-0000-0000-000000000040", "7817d37f-0000-0000-0000-000000000041")
+        assertEquals(0, authRoleUserService.batchBind(roleId, already))
+    }
+
+    @Test
+    fun unbind_nonExistentRelation_returnsFalse() {
+        assertFalse(authRoleUserService.unbind("7817d37f-0000-0000-0000-000000000043", "no-such-user"))
+    }
+
+    @Test
+    fun batchBind_sodViolation_candidateIsRoleBSide_rejected() {
+        // SoD pair a1 < a2 (canonical roleAId=a1, roleBId=a2); user b1 permanently holds the smaller
+        // side a1. Binding the LARGER side a2 — i.e. the candidate equals the pair's roleBId — must be
+        // rejected. Regression guard: a Criteria-aliasing bug in AuthRoleExclusionDao.searchByRoleId-
+        // AndTenant once dropped every pair whose roleBId == candidate, silently bypassing this check.
+        val roleB = "7817d37f-0000-0000-0000-0000000000a2"
+        val userB = "7817d37f-0000-0000-0000-0000000000b1"
+        val ex = assertFailsWith<IllegalArgumentException> {
+            authRoleUserService.batchBind(roleB, listOf(userB))
+        }
+        assertTrue(ex.message?.contains("SoD") == true, "expected an SoD rejection, was: ${ex.message}")
+        assertFalse(authRoleUserService.getUserIdsByRoleId(roleB).contains(userB))
     }
 }

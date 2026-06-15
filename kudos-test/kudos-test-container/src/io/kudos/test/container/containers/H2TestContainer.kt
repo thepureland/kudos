@@ -8,6 +8,7 @@ import io.kudos.test.container.support.TestContainerCrossProcessLock
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.testcontainers.containers.GenericContainer
 import org.testcontainers.containers.wait.strategy.Wait
+import java.util.UUID
 
 /**
  * h2 test container.
@@ -30,7 +31,15 @@ object H2TestContainer {
             ?: System.getenv("KUDOS_TEST_H2_IMAGE")
             ?: "oscarfonts/h2:alpine"
 
-    const val DATABASE = "test"
+    /**
+     * Per-JVM-unique in-memory database name. Gradle forks a separate test JVM per module and every
+     * JVM shares this single H2 container, so a fixed name (`test`) made all concurrent test JVMs
+     * read/write the SAME `mem:test` DB and cross-contaminate each other's fixtures. Computing the
+     * name once per JVM gives each test run its own isolated DB on the shared container. Do NOT move
+     * this into a YAML `${random.uuid}` — Spring re-resolves that on every property access, so the
+     * fixture loader and the DAOs would land in different empty DBs.
+     */
+    val DATABASE: String = "test_" + UUID.randomUUID().toString().replace("-", "")
 
     const val PORT = 1521
 
@@ -80,7 +89,7 @@ object H2TestContainer {
      * @author K
      * @since 1.0.0
      */
-    private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
+    internal fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
         val host = runningContainer.ports.first().ip
         val port = runningContainer.ports.first().publicPort
 

@@ -48,9 +48,12 @@ open class AuthRoleExclusionDao : BaseCrudDao<String, AuthRoleExclusion, AuthRol
      * Used by the admin UI's "show constraints for this role" view.
      */
     open fun searchByRoleIdAndTenant(roleId: String, tenantId: String): List<AuthRoleExclusion> {
-        val byCriteria = Criteria(AuthRoleExclusion::tenantId eq tenantId)
-        val byA = search(byCriteria.addAnd(AuthRoleExclusion::roleAId eq roleId))
-        val byB = search(byCriteria.addAnd(AuthRoleExclusion::roleBId eq roleId))
+        // Each query needs its OWN Criteria: addAnd mutates and returns the SAME instance, so reusing
+        // one would carry the roleAId condition into the byB query (tenant AND roleAId=roleId AND
+        // roleBId=roleId — impossible), silently dropping every pair whose roleBId == roleId. That
+        // bypassed the SoD check whenever the candidate role was the canonically-larger side.
+        val byA = search(Criteria.and(AuthRoleExclusion::tenantId eq tenantId, AuthRoleExclusion::roleAId eq roleId))
+        val byB = search(Criteria.and(AuthRoleExclusion::tenantId eq tenantId, AuthRoleExclusion::roleBId eq roleId))
         val seen = HashSet<String>()
         return (byA + byB).filter { seen.add(it.id) }
     }

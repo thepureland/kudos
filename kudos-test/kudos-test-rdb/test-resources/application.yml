@@ -1,7 +1,7 @@
 spring:
   datasource:
     dynamic:
-      primary: tcp-ds1
+      primary: h2
       hikari:
         connection-timeout: 30000
         validation-timeout: 5000
@@ -21,11 +21,16 @@ spring:
           hikari:
             is-auto-commit: false
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2/ds-master;DATABASE_TO_LOWER=TRUE;
+          # Per-JVM in-memory DB (not the shared file ~/h2/ds-master): H2 file mode is exclusive
+          # per JVM, so concurrent test JVMs fail to open it and the context fails to load.
+          url: jdbc:h2:mem:ds-master;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa
-        tcp-ds1:
+        h2:
           driver-class-name: org.h2.Driver
+          # The URL is overridden at runtime by H2TestContainer to the shared H2 container with a
+          # per-JVM-unique DB name (mem:test_<uuid>) so concurrent module test JVMs don't share one
+          # `mem:test` and cross-contaminate fixtures. This inline value is only a fallback.
           url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa
