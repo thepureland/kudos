@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: inter-service-test
+  cloud:
+    # The Spring Cloud release train does not yet declare compatibility with Spring Boot 4.1.x;
+    # the verifier would otherwise abort context startup in tests.
+    compatibility-verifier:
+      enabled: false
 
 
 #logging:

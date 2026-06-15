@@ -210,7 +210,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
      * @param batchData The batch message list pulled from MQ
      */
     @Suppress("UNCHECKED_CAST")
-    private fun toProcessBizData(batchData: MutableList<MessageExt?>) {
+    internal fun toProcessBizData(batchData: MutableList<MessageExt?>) {
         if (batchData.isEmpty()) {
             return
         }

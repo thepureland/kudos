@@ -159,6 +159,24 @@ internal class FeignContextWebFilterSignatureTest {
         assertEquals("tenant-legacy", KudosContextHolder.get().tenantId)
     }
 
+    @Test
+    fun rejectedRequest_withNonHttpResponse_doesNotContinueChain() {
+        // ServletResponse that is not an HttpServletResponse: rejection must still stop the chain,
+        // it just cannot write the 401 status.
+        val filter = filterWithVerifier()
+        val request = MockHttpServletRequest("POST", REQUEST_URI).apply {
+            addHeader(Consts.RequestHeader.FEIGN_REQUEST, "true")
+            addHeader(Consts.RequestHeader.TENANT_ID, "tenant-a")
+        }
+        val response = jakarta.servlet.ServletResponseWrapper(MockHttpServletResponse())
+        val chain = MockFilterChain()
+
+        filter.doFilter(request, response, chain)
+
+        assertNull(chain.request, "filter chain must not continue for a rejected request")
+        assertNull(KudosContextHolder.get().tenantId)
+    }
+
     private fun filterWithVerifier(): FeignContextWebFilter {
         val verifier = FeignContextSignatureVerifier(
             secret = SECRET,

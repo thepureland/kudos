@@ -16,6 +16,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * AWS SMS send test case; uses WireMock to mock the AWS SMS service.
@@ -54,7 +55,7 @@ class AwsSmsTest {
             latch.countDown()
         }
 
-        latch.await(10, TimeUnit.SECONDS)
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "callback was not invoked in time")
         assertEquals(200, statusCode)
         assertEquals("OK", statusText)
     }
@@ -81,7 +82,7 @@ class AwsSmsTest {
             latch.countDown()
         }
 
-        latch.await(10, TimeUnit.SECONDS)
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "callback was not invoked in time")
         // Here we use 429 to simulate business rate limiting.
         assertEquals(429, statusCode)
         assertEquals("Too Many Requests", statusText)

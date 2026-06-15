@@ -5,12 +5,14 @@ import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.crypto.MACSigner
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
+import io.kudos.ability.security.jwt.init.properties.SecurityKeyProperties
 import io.kudos.ability.security.jwt.support.JwtParametersTool
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
+import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import java.io.File
@@ -28,6 +30,7 @@ import javax.security.auth.x500.X500Principal
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -219,6 +222,76 @@ internal class SecurityJwtAutoConfigurationTest {
                     decoder.decode(forged)
                 }
             }
+    }
+
+    @Test
+    fun loadKeyPair_nullKeyStorePath_throwsIllegalArgumentWithGuidance() {
+        // Unreachable through the Spring path (ConditionalOnProperty guarantees the property is
+        // present before the bean method runs), but loadKeyPair is the single place the contract
+        // lives — lock in the precondition message for direct callers / future refactors.
+        val config = SecurityJwtAutoConfiguration()
+        val ex = assertFailsWith<IllegalArgumentException> {
+            config.loadKeyPair(SecurityKeyProperties(), DefaultResourceLoader())
+        }
+        assertTrue(
+            ex.message!!.contains("kudos.ability.security.jwt.key.key-store must be set"),
+            "precondition message must name the missing property; got: ${ex.message}",
+        )
+    }
+
+    @Test
+    fun loadKeyPair_missingKeystoreFile_throwsIllegalStateWrappingCause() {
+        val config = SecurityJwtAutoConfiguration()
+        val props = SecurityKeyProperties().apply {
+            keyStore = "file:${File(Files.createTempDirectory("kudos-jwt-missing").toFile(), "no-such.p12").absolutePath}"
+            storePass = KEYSTORE_PASSWORD
+            alias = KEYSTORE_ALIAS
+        }
+        val ex = assertFailsWith<IllegalStateException> {
+            config.loadKeyPair(props, DefaultResourceLoader())
+        }
+        assertTrue(
+            ex.message!!.startsWith("Failed to load JWT keystore"),
+            "failure must be wrapped in the keystore-specific IllegalStateException; got: ${ex.message}",
+        )
+        assertNotNull(ex.cause, "original exception must be preserved as cause for diagnosis")
+    }
+
+    @Test
+    fun loadKeyPair_wrongStorePassword_throwsIllegalState() {
+        val keystoreFile = writeKeystore()
+        val config = SecurityJwtAutoConfiguration()
+        val props = SecurityKeyProperties().apply {
+            keyStore = "file:${keystoreFile.absolutePath}"
+            storePass = "definitely-not-the-password"
+            alias = KEYSTORE_ALIAS
+        }
+        val ex = assertFailsWith<IllegalStateException> {
+            config.loadKeyPair(props, DefaultResourceLoader())
+        }
+        assertTrue(ex.message!!.startsWith("Failed to load JWT keystore"))
+    }
+
+    @Test
+    fun loadKeyPair_validKeystore_returnsMatchingRsaKeyPair() {
+        // Direct happy-path check: public key from the certificate must match the private key's
+        // modulus (i.e. loadKeyPair really pairs the cert with ITS private key, not just any).
+        val keystoreFile = writeKeystore()
+        val config = SecurityJwtAutoConfiguration()
+        val props = SecurityKeyProperties().apply {
+            keyStore = "file:${keystoreFile.absolutePath}"
+            storePass = KEYSTORE_PASSWORD
+            alias = KEYSTORE_ALIAS
+        }
+        val keyPair = config.loadKeyPair(props, DefaultResourceLoader())
+        val publicModulus = (keyPair.public as java.security.interfaces.RSAPublicKey).modulus
+        val privateModulus = (keyPair.private as java.security.interfaces.RSAPrivateKey).modulus
+        assertEquals(publicModulus, privateModulus, "certificate and private key must belong to the same RSA key pair")
+    }
+
+    @Test
+    fun getComponentName_returnsModuleArtifactName() {
+        assertEquals("kudos-ability-security-jwt", SecurityJwtAutoConfiguration().getComponentName())
     }
 
     private fun writeKeystore(): File {

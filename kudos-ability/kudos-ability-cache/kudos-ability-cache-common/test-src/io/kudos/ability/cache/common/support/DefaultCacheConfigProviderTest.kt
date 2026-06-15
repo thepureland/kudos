@@ -175,6 +175,53 @@ internal class DefaultCacheConfigProviderTest {
         )
     }
 
+    @Test
+    fun stringCacheItem_blankKeyFailsFast() {
+        // "=value" -> split yields blank key -> require(pair[0].isNotBlank()) fails.
+        val ex = assertFails { newProvider("name=USER&strategy=REMOTE&=900") }
+        assertTrue(
+            ex.message?.contains("parameter format is invalid") == true,
+            "blank key should fail with the format error; actual: ${ex.message}"
+        )
+    }
+
+    @Test
+    fun structuredCacheItemConfigs_normalizesNullDefaults() {
+        // active=null and writeOnBoot=null on a structured config -> normalizeDefaults sets active=true, writeOnBoot=false.
+        val props = CacheItemsProperties().apply {
+            cacheItemConfigs = mutableListOf(
+                CacheConfig().apply {
+                    name = "NULLS"
+                    strategy = "REMOTE"
+                    active = null
+                    writeOnBoot = null
+                }
+            )
+        }
+        val provider = DefaultCacheConfigProvider(props)
+        val cfg = provider.getCacheConfig("NULLS")!!
+        assertEquals(true, cfg.isActive, "null active normalized to true")
+        assertEquals(false, cfg.isWriteOnBoot, "null writeOnBoot normalized to false")
+    }
+
+    @Test
+    fun structuredCacheItemConfigs_missingName_failsFast() {
+        // name null/blank on a structured config -> error("cache item is missing name...").
+        val props = CacheItemsProperties().apply {
+            cacheItemConfigs = mutableListOf(
+                CacheConfig().apply {
+                    name = "   "
+                    strategy = "REMOTE"
+                }
+            )
+        }
+        val ex = assertFails { DefaultCacheConfigProvider(props) }
+        assertTrue(
+            ex.message?.contains("cache item is missing name") == true,
+            "missing name should fail fast; actual: ${ex.message}"
+        )
+    }
+
     private fun newProvider(vararg items: String): DefaultCacheConfigProvider {
         val props = CacheItemsProperties().apply { cacheItems = items.toMutableList() }
         return DefaultCacheConfigProvider(props)

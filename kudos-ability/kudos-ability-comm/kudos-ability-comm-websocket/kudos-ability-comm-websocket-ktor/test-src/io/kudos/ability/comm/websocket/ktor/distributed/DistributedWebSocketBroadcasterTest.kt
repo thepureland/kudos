@@ -1,10 +1,12 @@
 package io.kudos.ability.comm.websocket.ktor.distributed
 
 import io.kudos.ability.comm.websocket.ktor.broadcast.WebSocketBroadcaster
+import io.kudos.ability.comm.websocket.ktor.distributed.WebSocketBroadcastEnvelope.TargetType
 import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketRegistry
 import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSessionRef
 import io.ktor.websocket.CloseReason
 import kotlinx.coroutines.runBlocking
+import org.mockito.Mockito
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.test.Test
@@ -19,7 +21,10 @@ import kotlin.test.assertTrue
  *  - cross-node delivery reaches sessions on the *other* node (the Redis-bridged behavior the kudos
  *    README marks as "leave to business");
  *  - self-echo filtering does not double-deliver on the originating node;
- *  - exceptions from `local` during inbound dispatch do not terminate the channel subscription.
+ *  - exceptions from `local` during inbound dispatch do not terminate the channel subscription;
+ *  - publish failures are swallowed (local delivery survives a dead channel);
+ *  - inbound envelopes with a null targetId for USER / TENANT / SESSION are dropped silently;
+ *  - a local broadcaster that throws during inbound dispatch is caught (the listener stays alive).
  *
  * @author K
  * @author AI: Claude
@@ -116,6 +121,103 @@ internal class DistributedWebSocketBroadcasterTest {
         assertEquals(listOf("first", "second"), sB.received,
             "Subsequent broadcasts must still reach the healthy remote session after a sibling session threw.")
         assertEquals(2, sBcrashing.attempts, "The crashing session is still attempted on every delivery (not blacklisted).")
+    }
+
+    @Test
+    fun unicast_localSession_returnsTrue() = runBlocking {
+        val cluster = newCluster()
+        val sA = RecordingSession("s-A").also(cluster.regA::register)
+
+        assertTrue(cluster.distA.unicast("s-A", "to-self"), "Local registry holds s-A → unicast returns true")
+        assertEquals(listOf("to-self"), sA.received)
+    }
+
+    @Test
+    fun publishFailure_isSwallowed_andLocalDeliveryStillHappens() = runBlocking {
+        val registry = KudosWebSocketRegistry()
+        val session = RecordingSession("s-1", userId = "u-1", tenantId = "t-1").also(registry::register)
+        val dist = DistributedWebSocketBroadcaster(WebSocketBroadcaster(registry), CrashingChannel(), nodeId = "node-X")
+
+        // Every broadcast variant must survive a channel whose publish always throws.
+        assertEquals(1, dist.broadcast("a"))
+        assertEquals(1, dist.broadcastToUser("u-1", "b"))
+        assertEquals(1, dist.broadcastToTenant("t-1", "c"))
+        assertTrue(dist.unicast("s-1", "d"))
+
+        assertEquals(listOf("a", "b", "c", "d"), session.received,
+            "Local sessions keep receiving even when the distributed channel is down")
+    }
+
+    @Test
+    fun inbound_nullTargetId_forTargetedTypes_isDroppedSilently() = runBlocking {
+        val channel = CapturingChannel()
+        val registry = KudosWebSocketRegistry()
+        val session = RecordingSession("s-1", userId = "u-1", tenantId = "t-1").also(registry::register)
+        DistributedWebSocketBroadcaster(WebSocketBroadcaster(registry), channel, nodeId = "node-local")
+        val handler = channel.handler ?: error("broadcaster must subscribe on construction")
+
+        // Foreign-node envelopes whose targetId is null: USER / TENANT / SESSION must all be no-ops.
+        handler(WebSocketBroadcastEnvelope("node-remote", TargetType.USER, targetId = null, text = "x"))
+        handler(WebSocketBroadcastEnvelope("node-remote", TargetType.TENANT, targetId = null, text = "x"))
+        handler(WebSocketBroadcastEnvelope("node-remote", TargetType.SESSION, targetId = null, text = "x"))
+        assertTrue(session.received.isEmpty(), "null targetId must not fan out to anyone")
+
+        // Sanity check the same wiring delivers when targetId is present.
+        handler(WebSocketBroadcastEnvelope("node-remote", TargetType.USER, targetId = "u-1", text = "y"))
+        assertEquals(listOf("y"), session.received)
+    }
+
+    @Test
+    fun inbound_localBroadcasterThrowing_isCaught_andListenerSurvives() = runBlocking {
+        val channel = CapturingChannel()
+        // Final-class mock whose every method throws — simulates a local broadcaster blowing up mid-dispatch.
+        val throwingLocal = Mockito.mock(WebSocketBroadcaster::class.java) {
+            throw IllegalStateException("local fan-out failed")
+        }
+        DistributedWebSocketBroadcaster(throwingLocal, channel, nodeId = "node-local")
+        val handler = channel.handler ?: error("broadcaster must subscribe on construction")
+
+        // None of the four inbound target types may propagate the local broadcaster's exception.
+        handler(WebSocketBroadcastEnvelope("node-remote", TargetType.ALL, targetId = null, text = "x"))
+        handler(WebSocketBroadcastEnvelope("node-remote", TargetType.USER, targetId = "u", text = "x"))
+        handler(WebSocketBroadcastEnvelope("node-remote", TargetType.TENANT, targetId = "t", text = "x"))
+        handler(WebSocketBroadcastEnvelope("node-remote", TargetType.SESSION, targetId = "s", text = "x"))
+        // Reaching this line means every exception was contained inside onInbound.
+    }
+
+    @Test
+    fun envelope_carriesNodeIdTargetAndText() = runBlocking {
+        val channel = CapturingChannel()
+        val dist = DistributedWebSocketBroadcaster(WebSocketBroadcaster(KudosWebSocketRegistry()), channel, nodeId = "node-42")
+
+        dist.broadcast("all-text")
+        dist.broadcastToUser("u-9", "user-text")
+        dist.broadcastToTenant("t-9", "tenant-text")
+        dist.unicast("s-9", "session-text")
+
+        assertEquals(
+            listOf(
+                WebSocketBroadcastEnvelope("node-42", TargetType.ALL, null, "all-text"),
+                WebSocketBroadcastEnvelope("node-42", TargetType.USER, "u-9", "user-text"),
+                WebSocketBroadcastEnvelope("node-42", TargetType.TENANT, "t-9", "tenant-text"),
+                WebSocketBroadcastEnvelope("node-42", TargetType.SESSION, "s-9", "session-text"),
+            ),
+            channel.published,
+        )
+    }
+
+    /** Records the subscribed handler and every published envelope without delivering anything. */
+    private class CapturingChannel : IWebSocketBroadcastChannel {
+        var handler: (suspend (WebSocketBroadcastEnvelope) -> Unit)? = null
+        val published: MutableList<WebSocketBroadcastEnvelope> = CopyOnWriteArrayList()
+        override suspend fun publish(envelope: WebSocketBroadcastEnvelope) { published += envelope }
+        override fun subscribe(handler: suspend (WebSocketBroadcastEnvelope) -> Unit) { this.handler = handler }
+    }
+
+    /** publish always throws; subscribe is accepted — models a down transport. */
+    private class CrashingChannel : IWebSocketBroadcastChannel {
+        override suspend fun publish(envelope: WebSocketBroadcastEnvelope): Unit = error("transport down")
+        override fun subscribe(handler: suspend (WebSocketBroadcastEnvelope) -> Unit) {}
     }
 
     private data class Cluster(

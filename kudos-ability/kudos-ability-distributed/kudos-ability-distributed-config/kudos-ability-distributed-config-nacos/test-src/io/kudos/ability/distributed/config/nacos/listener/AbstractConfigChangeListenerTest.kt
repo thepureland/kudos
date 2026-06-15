@@ -58,4 +58,15 @@ internal class AbstractConfigChangeListenerTest {
 
         assertEquals(listOf("before", "after:IllegalStateException"), calls)
     }
+
+    @Test
+    fun receiveConfigInfo_defaultHooksAreNoOps() {
+        // A listener overriding nothing must run through the default (no-op) hook bodies
+        // without throwing — for both a normal payload and a null payload.
+        val listener = object : AbstractConfigChangeListener() {}
+
+        listener.receiveConfigInfo("anything")
+        listener.receiveConfigInfo(null)
+        listener.receiveConfigInfo("")
+    }
 }

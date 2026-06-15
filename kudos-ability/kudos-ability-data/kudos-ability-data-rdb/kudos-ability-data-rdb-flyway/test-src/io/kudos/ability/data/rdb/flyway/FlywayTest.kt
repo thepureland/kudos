@@ -57,13 +57,34 @@ class FlywayTest {
     }
 
     /**
+     * Happy path for the single-module entry point: module1 is configured under ds1, so
+     * [FlywayMultiDataSourceMigrator.migrateByModule] resolves the data source from
+     * datasource-config and migrates just that module (idempotent if migrate() already ran).
+     */
+    @Test
+    fun migrateByModuleSingleArgHappyPath() {
+        migrator.migrateByModule("module1")
+        val datasource = requireNotNull(dsContextProcessor.getDataSource("ds1")) { "Data source ds1 does not exist" }
+        datasource.connection.use { connection ->
+            connection.createStatement().use { statement ->
+                statement.executeQuery("select count(*) from test_table_flyway").use { rs ->
+                    assertTrue(rs.next())
+                    assertEquals(2, rs.getInt(1))
+                }
+            }
+        }
+    }
+
+    /**
      * Error path for the single-module entry point: moduleX is configured under a non-existent
      * data source (`no_exists`); calling [FlywayMultiDataSourceMigrator.migrateByModule] must
      * resolve the ds, find it missing in the dynamic routing table, and throw.
      */
     @Test
     fun migrateByModuleMissingDataSource() {
-        assertFailsWith<RuntimeException> { migrator.migrateByModule("moduleX") }
+        val e = assertFailsWith<IllegalStateException> { migrator.migrateByModule("moduleX") }
+        assertTrue(e.message!!.contains("[no_exists]"), "message should name the missing data source: ${e.message}")
+        assertTrue(e.message!!.contains("[moduleX]"), "message should name the module: ${e.message}")
     }
 
     /**
@@ -72,7 +93,11 @@ class FlywayTest {
      */
     @Test
     fun migrateByModuleUnknownModule() {
-        assertFailsWith<RuntimeException> { migrator.migrateByModule("never_configured_module") }
+        val e = assertFailsWith<IllegalStateException> { migrator.migrateByModule("never_configured_module") }
+        assertTrue(
+            e.message!!.contains("never_configured_module") && e.message!!.contains("no data source configured"),
+            "message should name the module and state the cause: ${e.message}"
+        )
     }
 
     /**

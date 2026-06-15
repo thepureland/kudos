@@ -107,6 +107,22 @@ class WebLogAuditAspectTest @Autowired constructor(
         assertNull(LogAuditContext.getOrNull())
     }
 
+    @Test
+    fun nonHttpContext_skipsAuditEntirely() {
+        // No request bound (e.g. an internal scheduled task calling the controller bean directly):
+        // before() and doSubmit() both bail out on currentRequest() == null
+        RequestContextHolder.resetRequestAttributes()
+        controller.list()
+        assertEquals(0, recorder.captured.size, "non-HTTP call paths must not produce web audits")
+        assertNull(LogAuditContext.getOrNull(), "non-HTTP path must not pollute the context")
+    }
+
+    @Test
+    fun pointCutMethod_isInvokableMarker() {
+        // The @Pointcut method body is an empty marker required by AspectJ; invoking it must be a no-op
+        WebLogAuditAspect().pointCut()
+    }
+
     private fun bindRequest(request: MockHttpServletRequest) {
         val attrs = ServletRequestAttributes(request) as RequestAttributes
         RequestContextHolder.setRequestAttributes(attrs)

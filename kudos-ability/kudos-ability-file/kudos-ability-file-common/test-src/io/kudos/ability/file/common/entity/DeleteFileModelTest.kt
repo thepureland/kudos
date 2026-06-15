@@ -1,8 +1,11 @@
 package io.kudos.ability.file.common.entity
 
+import io.kudos.ability.file.common.auth.AccessKeyServerParam
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 
 /**
  * Regression tests for [DeleteFileModel.from].
@@ -43,6 +46,22 @@ internal class DeleteFileModelTest {
     fun from_blank_rejected() {
         assertFailsWith<IllegalArgumentException> { DeleteFileModel.from("") }
         assertFailsWith<IllegalArgumentException> { DeleteFileModel.from("   ") }
+    }
+
+    @Test
+    fun properties_defaultNullAndRoundTrip() {
+        val m = DeleteFileModel()
+        assertNull(m.bucketName)
+        assertNull(m.filePath)
+        assertNull(m.authServerParam)
+
+        val auth = AccessKeyServerParam("ak", "sk")
+        m.bucketName = "b"
+        m.filePath = "/x.txt"
+        m.authServerParam = auth
+        assertEquals("b", m.bucketName)
+        assertEquals("/x.txt", m.filePath)
+        assertSame(auth, m.authServerParam)
     }
 
     @Test

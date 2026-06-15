@@ -77,6 +77,45 @@ internal class JwtParametersToolTest {
     }
 
     @Test
+    fun createDefaultWithMap_skipsNullValuedEntries() {
+        // JwtClaimsSet.Builder.claim rejects null values since Spring Security 7.1 — the tool
+        // must silently skip null entries instead of crashing, and a null for an already
+        // defaulted claim must NOT erase the default.
+        val tool = JwtParametersTool(fullProps())
+        val params = tool.createDefault(mapOf("nullable" to null, "iss" to null, "kept" to "v"))
+        val claims = params.claims.claims
+        assertNull(claims["nullable"], "null-valued custom claim must be skipped")
+        assertEquals("v", claims["kept"])
+        assertEquals("test-iss", claims[JwtClaimNames.ISS]?.toString(), "null custom value must not clobber the default")
+    }
+
+    @Test
+    fun createDefaultWithSubjectAndMap_skipsNullValuedEntries() {
+        val tool = JwtParametersTool(fullProps())
+        val params = tool.createDefault("sub-x", mapOf("dropme" to null, "scope" to "read"))
+        val claims = params.claims.claims
+        assertEquals("sub-x", claims[JwtClaimNames.SUB])
+        assertNull(claims["dropme"])
+        assertEquals("read", claims["scope"])
+    }
+
+    @Test
+    fun createDefaultWithSubjectAndMap_rejectsBlankSubject() {
+        val tool = JwtParametersTool(fullProps())
+        assertFails { tool.createDefault("", mapOf("scope" to "read")) }
+        assertFails { tool.createDefault("   ", emptyMap()) }
+    }
+
+    @Test
+    fun createDefault_noArg_emptyProps_buildsWithoutCrash() {
+        // The no-arg overload with zero config: only jti resolves (to empty string, which the
+        // builder omits) — result must still be a buildable parameter set.
+        val params = JwtParametersTool(SecurityJwtClaimProperties()).createDefault()
+        assertNull(params.claims.claims[JwtClaimNames.SUB])
+        assertNull(params.claims.claims[JwtClaimNames.EXP])
+    }
+
+    @Test
     fun emptyProps_produceMinimalClaimsButNoCrash() {
         // Zero-config JwtParametersTool must still produce a usable JwtEncoderParameters — apps
         // that supply per-call data should not be forced to set yml defaults first.

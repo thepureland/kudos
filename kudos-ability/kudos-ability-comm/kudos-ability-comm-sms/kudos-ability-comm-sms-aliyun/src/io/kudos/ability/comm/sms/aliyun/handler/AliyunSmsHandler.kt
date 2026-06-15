@@ -183,7 +183,7 @@ class AliyunSmsHandler {
      * @param accessKeySecret Aliyun AccessKey Secret
      * @return a configured AsyncClient instance
      */
-    private fun buildClient(
+    internal fun buildClient(
         region: String?,
         accessKeyId: String?,
         accessKeySecret: String?

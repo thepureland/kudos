@@ -43,4 +43,16 @@ internal class CompressUtilTest {
         assertFalse(CompressUtil.isPic("archive.zip"))
         assertFalse(CompressUtil.isPic("noextension"))
     }
+
+    @Test
+    fun mimeTypeProbesByFileName() {
+        // Files.probeContentType resolves by extension only; the file does not need to exist.
+        assertEquals("image/png", CompressUtil.mimeType("photo.png"))
+        assertEquals("image/jpeg", CompressUtil.mimeType("photo.jpg"))
+    }
+
+    @Test
+    fun mimeTypeReturnsNullForUnknownExtension() {
+        assertNull(CompressUtil.mimeType("data.kudos-nonexistent-ext"))
+    }
 }

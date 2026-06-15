@@ -128,6 +128,73 @@ internal class AuditDefaultsTest {
         assertEquals("u-7", map[IAuditable::updateUserId.name])
     }
 
+    //region default-argument variants (now = LocalDateTime.now(), userId = currentUserId())
+
+    @Test
+    fun fillForInsert_defaultArguments_useWallClockAndContextUser() {
+        // No KudosContext is bound in a plain unit test, so currentUserId() must resolve to null
+        // and `now` must come from the wall clock (asserted as a sane range, not an exact instant).
+        val before = LocalDateTime.now()
+        val subject = Subject()
+
+        AuditDefaults.fillForInsert(subject)
+
+        val after = LocalDateTime.now()
+        val createTime = subject.createTime
+        assertEquals(true, createTime != null && !createTime.isBefore(before) && !createTime.isAfter(after),
+            "createTime must default to LocalDateTime.now()")
+        assertEquals(subject.createTime, subject.updateTime, "insert fills both timestamps with the same default now")
+        assertNull(subject.createUserId, "no request context bound -> currentUserId() must yield null")
+        assertNull(subject.updateUserId)
+    }
+
+    @Test
+    fun fillForUpdate_defaultArguments_useWallClockAndContextUser() {
+        val before = LocalDateTime.now()
+        val subject = Subject()
+
+        AuditDefaults.fillForUpdate(subject)
+
+        val after = LocalDateTime.now()
+        val updateTime = subject.updateTime
+        assertEquals(true, updateTime != null && !updateTime.isBefore(before) && !updateTime.isAfter(after))
+        assertNull(subject.updateUserId)
+        assertNull(subject.createTime, "create fields must stay untouched on update")
+    }
+
+    @Test
+    fun fillForInsert_mapVariant_defaultArguments() {
+        val before = LocalDateTime.now()
+        val map = mutableMapOf<String, Any?>()
+
+        AuditDefaults.fillForInsert(map)
+
+        val after = LocalDateTime.now()
+        val createTime = map[IAuditable::createTime.name] as LocalDateTime
+        assertEquals(true, !createTime.isBefore(before) && !createTime.isAfter(after))
+        assertEquals(map[IAuditable::createTime.name], map[IAuditable::updateTime.name])
+        assertEquals(true, map.containsKey(IAuditable::createUserId.name), "userId key must be added even when null")
+        assertNull(map[IAuditable::createUserId.name])
+        assertNull(map[IAuditable::updateUserId.name])
+    }
+
+    @Test
+    fun fillForUpdate_mapVariant_defaultArguments() {
+        val before = LocalDateTime.now()
+        val map = mutableMapOf<String, Any?>()
+
+        AuditDefaults.fillForUpdate(map)
+
+        val after = LocalDateTime.now()
+        val updateTime = map[IAuditable::updateTime.name] as LocalDateTime
+        assertEquals(true, !updateTime.isBefore(before) && !updateTime.isAfter(after))
+        assertEquals(true, map.containsKey(IAuditable::updateUserId.name))
+        assertNull(map[IAuditable::updateUserId.name])
+        assertEquals(false, map.containsKey(IAuditable::createTime.name))
+    }
+
+    //endregion default-argument variants
+
     /** Minimal IAuditable fixture; nullable defaults so individual tests can pre-set selected fields. */
     private class Subject(
         override var createTime: LocalDateTime? = null,

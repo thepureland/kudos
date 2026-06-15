@@ -114,6 +114,76 @@ class GlobalResponseBodyHandlerTest {
             .andExpect(jsonPath("$.success").doesNotExist())
     }
 
+    // region direct-call branch tests
+
+    private fun callBeforeBodyWrite(handler: GlobalResponseBodyHandler, body: Any?): Any? {
+        val method = WrappedController::class.java.getDeclaredMethod("objectResponse")
+        return handler.beforeBodyWrite(
+            body,
+            org.springframework.core.MethodParameter(method, -1),
+            MediaType.APPLICATION_JSON,
+            org.springframework.http.converter.json.JacksonJsonHttpMessageConverter::class.java,
+            org.springframework.http.server.ServletServerHttpRequest(org.springframework.mock.web.MockHttpServletRequest()),
+            org.springframework.http.server.ServletServerHttpResponse(org.springframework.mock.web.MockHttpServletResponse())
+        )
+    }
+
+    @Test
+    fun failureResponse_getsTraceIdBackfilled() {
+        val context = KudosContext()
+        context.traceKey = "trace-fail"
+        KudosContextHolder.set(context)
+        try {
+            val body = ApiResponse.fail<Any?>("400", "oops", null)
+            val result = callBeforeBodyWrite(GlobalResponseBodyHandler(objectMapper), body) as ApiResponse.Failure
+            kotlin.test.assertEquals("trace-fail", result.traceId)
+            kotlin.test.assertEquals("oops", result.message)
+        } finally {
+            KudosContextHolder.clear()
+        }
+    }
+
+    @Test
+    fun traceIdAlreadyMatching_returnsSameInstance() {
+        val context = KudosContext()
+        context.traceKey = "trace-same"
+        KudosContextHolder.set(context)
+        try {
+            val body = ApiResponse.Success<Any?>(
+                code = CommonErrorCodeEnum.SUCCESS.code,
+                message = "hi",
+                data = null,
+                traceId = "trace-same"
+            )
+            val result = callBeforeBodyWrite(GlobalResponseBodyHandler(objectMapper), body)
+            kotlin.test.assertSame(body, result)
+        } finally {
+            KudosContextHolder.clear()
+        }
+    }
+
+    @Test
+    fun successWithNonSuccessCode_keepsPlaceholderMessage() {
+        // code != SUCCESS.code -> the placeholder cleanup must not touch the message
+        val body = ApiResponse.Success<Any?>(
+            code = "201",
+            message = CommonErrorCodeEnum.SUCCESS.displayText,
+            data = null
+        )
+        val result = callBeforeBodyWrite(GlobalResponseBodyHandler(objectMapper), body) as ApiResponse.Success<*>
+        kotlin.test.assertEquals(CommonErrorCodeEnum.SUCCESS.displayText, result.message)
+    }
+
+    @Test
+    fun nullBody_wrapsIntoSuccessWithNullData() {
+        val result = callBeforeBodyWrite(GlobalResponseBodyHandler(objectMapper), null) as ApiResponse.Success<*>
+        kotlin.test.assertTrue(result.success)
+        kotlin.test.assertEquals(CommonErrorCodeEnum.SUCCESS.code, result.code)
+        kotlin.test.assertEquals(null, result.data)
+    }
+
+    // endregion
+
     @RestController
     @RequestMapping("/test/response")
     private class WrappedController {

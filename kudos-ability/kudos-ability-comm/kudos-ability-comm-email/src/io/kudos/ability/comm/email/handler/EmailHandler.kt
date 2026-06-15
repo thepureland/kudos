@@ -49,7 +49,7 @@ class EmailHandler {
         Thread.ofVirtual().start { doSend(emailRequest, callback) }
     }
 
-    private fun doSend(emailRequest: EmailRequest, callback: (EmailCallBackParam) -> Unit) {
+    internal fun doSend(emailRequest: EmailRequest, callback: (EmailCallBackParam) -> Unit) {
         val emailCallBackParam = EmailCallBackParam()
         try {
             // Validate parameters
@@ -173,7 +173,7 @@ class EmailHandler {
      *
      * @param mail
      */
-    private fun checkParams(mail: EmailRequest): Boolean {
+    internal fun checkParams(mail: EmailRequest): Boolean {
         val valid = !mail.senderAccount.isNullOrBlank() && !mail.senderPassword.isNullOrBlank() &&
             !mail.serverHost.isNullOrBlank() && mail.receivers.isNotEmpty()
         if (!valid) {
@@ -188,7 +188,7 @@ class EmailHandler {
         return true
     }
 
-    private fun putAddressToSet(set: MutableSet<String>, addresses: Array<Address>) {
+    internal fun putAddressToSet(set: MutableSet<String>, addresses: Array<Address>) {
         addresses.mapTo(set) { (it as InternetAddress).address }
     }
 

@@ -102,6 +102,58 @@ internal class NacosConfigDataFinderTest {
         assertEquals("plain:cipher", source?.getProperty("password"))
     }
 
+    @Test
+    fun findConfigData_decryptorPresent_leavesUnsupportedAndNonStringValuesUntouched() {
+        register(
+            dataId = "mixed.yaml",
+            group = "DEFAULT_GROUP",
+            payload = mapOf(
+                "plainString" to "no-cipher-here",   // String but supports() == false -> kept as-is
+                "intValue" to 42,                     // non-String -> must bypass decryptors entirely
+                "boolValue" to true,
+                "encrypted" to "ENC(x)",              // sanity: the supported one is still decrypted
+            ),
+        )
+        val finder = NacosConfigDataFinder(listOf(ThrowOnDecryptUnsupported()))
+
+        val source = finder.findConfigData("mixed.yaml")
+
+        assertNotNull(source)
+        assertEquals("no-cipher-here", source.getProperty("plainString"))
+        assertEquals(42, source.getProperty("intValue"))
+        assertEquals(true, source.getProperty("boolValue"))
+        assertEquals("plain:x", source.getProperty("encrypted"))
+    }
+
+    @Test
+    fun findConfigData_firstSupportingDecryptorWins() {
+        register(dataId = "order.yaml", group = "DEFAULT_GROUP", payload = mapOf("k" to "ENC(v)"))
+        val first = TestDecryptor()
+        val second = object : NacosConfigValueDecryptor {
+            override fun supports(value: String) = true
+            override fun decrypt(value: String) = "second:$value"
+        }
+
+        val source = NacosConfigDataFinder(listOf(first, second)).findConfigData("order.yaml")
+
+        assertEquals("plain:v", source?.getProperty("k"), "firstOrNull semantics: the first supporting decryptor wins")
+    }
+
+    @Test
+    fun findConfigData_emptyDecryptorList_returnsSourceUnchanged() {
+        register(dataId = "raw.yaml", group = "DEFAULT_GROUP", payload = mapOf("password" to "ENC(cipher)"))
+
+        val source = NacosConfigDataFinder(emptyList()).findConfigData("raw.yaml")
+
+        assertEquals("ENC(cipher)", source?.getProperty("password"), "no decryptors -> value must stay encrypted")
+    }
+
+    @Test
+    fun findConfigData_emptyDataId_returnsNull() {
+        register(dataId = "app.yaml", group = "DEFAULT_GROUP", payload = mapOf("k" to "v"))
+        assertNull(finder.findConfigData(""))
+    }
+
     /**
      * Test decryptor that converts `ENC(...)` strings into a plain-text marker.
      *
@@ -113,6 +165,22 @@ internal class NacosConfigDataFinderTest {
         override fun supports(value: String): Boolean = value.startsWith("ENC(") && value.endsWith(")")
 
         override fun decrypt(value: String): String = "plain:" + value.removePrefix("ENC(").removeSuffix(")")
+    }
+
+    /**
+     * Test decryptor that fails the test if `decrypt` is called for a value it does not support —
+     * guards the `supports()` gate in `decryptIfNecessary`.
+     *
+     * @author K
+     * @since 1.0.0
+     */
+    private class ThrowOnDecryptUnsupported : NacosConfigValueDecryptor {
+        override fun supports(value: String): Boolean = value.startsWith("ENC(") && value.endsWith(")")
+
+        override fun decrypt(value: String): String {
+            check(supports(value)) { "decrypt must never be called for unsupported value: $value" }
+            return "plain:" + value.removePrefix("ENC(").removeSuffix(")")
+        }
     }
 
     /**

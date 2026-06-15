@@ -13,6 +13,10 @@ import kotlin.test.assertTrue
  *
  * Uses [StubSessionRef] instead of a real [KudosWebSocketSession] — the registry only reads metadata fields,
  * so the stub avoids the Ktor dependency.
+ *
+ * @author K
+ * @author AI: Claude
+ * @since 1.0.0
  */
 internal class KudosWebSocketRegistryTest {
 

@@ -110,7 +110,7 @@ open class SecurityJwtAutoConfiguration : IComponentInitializer {
     open fun jwtParametersTool(claimProperties: SecurityJwtClaimProperties): JwtParametersTool =
         JwtParametersTool(claimProperties)
 
-    private fun loadKeyPair(props: SecurityKeyProperties, resourceLoader: ResourceLoader): KeyPair {
+    internal fun loadKeyPair(props: SecurityKeyProperties, resourceLoader: ResourceLoader): KeyPair {
         val keyStorePath = requireNotNull(props.keyStore) {
             "kudos.ability.security.jwt.key.key-store must be set when JWT auto-config is active"
         }

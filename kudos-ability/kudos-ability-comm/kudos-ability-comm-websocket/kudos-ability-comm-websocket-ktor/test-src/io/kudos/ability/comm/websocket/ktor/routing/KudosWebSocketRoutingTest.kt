@@ -10,14 +10,19 @@ import io.ktor.server.application.install
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import io.ktor.server.websocket.WebSockets
+import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
+import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import java.util.Collections
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -33,6 +38,10 @@ import kotlin.test.assertTrue
  *  - **Server-initiated send**: handler calls `session.sendText` → client incoming receives it.
  *  - **sessionFactory carries business metadata**: userId / tenantId are propagated to the registry.
  *  - **Graceful close**: the registry count returns to zero after the connection is closed.
+ *
+ * @author K
+ * @author AI: Claude
+ * @since 1.0.0
  */
 internal class KudosWebSocketRoutingTest {
 
@@ -150,7 +159,118 @@ internal class KudosWebSocketRoutingTest {
             snapshot.first { it.startsWith("disconnect:") })
     }
 
+    @Test
+    fun binaryRoundtrip_clientSendsBytesAndReceivesThemBack() = testApplication {
+        val registry = KudosWebSocketRegistry()
+        val receivedOnServer = Channel<ByteArray>(capacity = 1)
+        val handler = object : IKudosWebSocketHandler {
+            override suspend fun onBinary(session: KudosWebSocketSession, bytes: ByteArray) {
+                receivedOnServer.send(bytes)
+                session.sendBinary(bytes.reversedArray())
+            }
+        }
 
+        application {
+            install(WebSockets)
+            routing { kudosWebSocket("/ws", registry, handler) }
+        }
+
+        val payload = byteArrayOf(1, 2, 3, -4, 5)
+        val client = createClient { install(ClientWebSockets) { contentConverter = null } }
+        client.webSocket("/ws") {
+            send(Frame.Binary(true, payload))
+            val response = incoming.receive() as Frame.Binary
+            assertContentEquals(byteArrayOf(5, -4, 3, 2, 1), response.data)
+        }
+
+        assertContentEquals(payload, receivedOnServer.tryReceive().getOrNull())
+        waitFor { registry.size == 0 }
+        assertEquals(0, registry.size)
+    }
+
+    @Test
+    fun handlerException_isCaught_propagatedToOnDisconnectCause_andSessionUnregistered() = testApplication {
+        val registry = KudosWebSocketRegistry()
+        val disconnectCause = AtomicReference<Throwable?>()
+        val disconnected = Channel<Unit>(capacity = 1)
+        val handler = object : IKudosWebSocketHandler {
+            override suspend fun onText(session: KudosWebSocketSession, text: String) {
+                throw IllegalStateException("business handler blew up on: $text")
+            }
+            override suspend fun onDisconnect(session: KudosWebSocketSession, cause: Throwable?) {
+                disconnectCause.set(cause)
+                disconnected.send(Unit)
+            }
+        }
+
+        application {
+            install(WebSockets)
+            routing { kudosWebSocket("/ws", registry, handler) }
+        }
+
+        val client = createClient { install(ClientWebSockets) { contentConverter = null } }
+        client.webSocket("/ws") {
+            send(Frame.Text("boom"))
+            // The server route lambda dies with the handler exception; wait for the connection to drop.
+            try { incoming.receive() } catch (_: Throwable) { /* expected close */ }
+        }
+
+        disconnected.receive()
+        val cause = disconnectCause.get()
+        assertNotNull(cause, "An abnormal disconnect must carry the original handler exception")
+        assertEquals("business handler blew up on: boom", cause.message)
+        waitFor { registry.size == 0 }
+        assertEquals(0, registry.size, "The session must be unregistered even after a handler exception")
+    }
+
+    @Test
+    fun onDisconnectThrowing_doesNotPreventUnregister() = testApplication {
+        val registry = KudosWebSocketRegistry()
+        val handler = object : IKudosWebSocketHandler {
+            override suspend fun onDisconnect(session: KudosWebSocketSession, cause: Throwable?) {
+                error("cleanup failed")
+            }
+        }
+
+        application {
+            install(WebSockets)
+            routing { kudosWebSocket("/ws", registry, handler) }
+        }
+
+        val client = createClient { install(ClientWebSockets) { contentConverter = null } }
+        client.webSocket("/ws") { /* connect, then close immediately */ }
+
+        waitFor { registry.size == 0 }
+        assertEquals(0, registry.size, "unregister runs even when onDisconnect throws (runCatching guard)")
+    }
+
+    @Test
+    fun explicitClientCloseFrame_endsLoopWithNullCause() = testApplication {
+        val registry = KudosWebSocketRegistry()
+        val disconnectCause = AtomicReference<Throwable?>(RuntimeException("sentinel: not yet called"))
+        val disconnected = Channel<Unit>(capacity = 1)
+        val handler = object : IKudosWebSocketHandler {
+            override suspend fun onDisconnect(session: KudosWebSocketSession, cause: Throwable?) {
+                disconnectCause.set(cause)
+                disconnected.send(Unit)
+            }
+        }
+
+        application {
+            install(WebSockets)
+            routing { kudosWebSocket("/ws", registry, handler) }
+        }
+
+        val client = createClient { install(ClientWebSockets) { contentConverter = null } }
+        client.webSocket("/ws") {
+            close(CloseReason(CloseReason.Codes.NORMAL, "bye"))
+        }
+
+        disconnected.receive()
+        assertEquals(null, disconnectCause.get(), "A client-initiated close is a normal disconnect (cause = null)")
+        waitFor { registry.size == 0 }
+        assertEquals(0, registry.size)
+    }
 
     /** Simple polling wait — the unregister in the server's finally block happens asynchronously (coroutine yield). */
     private suspend fun waitFor(timeoutMs: Long = 2000, condition: () -> Boolean) {

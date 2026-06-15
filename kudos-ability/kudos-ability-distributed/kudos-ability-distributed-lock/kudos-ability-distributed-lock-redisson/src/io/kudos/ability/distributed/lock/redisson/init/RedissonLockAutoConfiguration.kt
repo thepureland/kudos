@@ -65,7 +65,7 @@ open class RedissonLockAutoConfiguration : IComponentInitializer {
      * @param properties connection properties
      * @param config     Config
      */
-    private fun initRedissonConfig(config: Config, properties: RedissonProperties) {
+    internal fun initRedissonConfig(config: Config, properties: RedissonProperties) {
         // In Redisson 4.0+ the password should be set on the Config object, not on BaseConfig.
         properties.baseConfig?.let {
             if (!it.password.isNullOrBlank()) {

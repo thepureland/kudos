@@ -27,6 +27,9 @@ spring:
           username: pg
           password: postgres
   cloud:
+    # 見 application-main.yml 同名 key 註釋：Spring Boot 4.1 + 當前 Spring Cloud 組合需關閉兼容性校驗
+    compatibility-verifier:
+      enabled: false
     nacos:
       config:
         server-addr: 127.0.0.1:38848

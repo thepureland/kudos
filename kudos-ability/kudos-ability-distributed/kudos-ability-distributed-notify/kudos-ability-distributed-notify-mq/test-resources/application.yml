@@ -1,4 +1,21 @@
 spring:
+  main:
+    # Workaround for Spring Boot 4.1: io.kudos.context.init.ValidatorAutoConfiguration#defaultValidator
+    # clashes with org.springframework.boot.validation.autoconfigure.ValidationAutoConfiguration#defaultValidator.
+    # Same precedent as kudos-ability-distributed-stream-rocketmq test resources.
+    # Remove once kudos-context backs off (e.g. @ConditionalOnMissingBean) on the boot-provided bean.
+    allow-bean-definition-overriding: true
+    # Workaround for a suspected main-code bug: NotifyMqAutoConfiguration field-injects
+    # NotifyCommonProperties, but that bean is produced by an inherited @Bean method of the very
+    # same configuration class, forming a config-bean <-> properties-bean cycle that fails with
+    # BeanCurrentlyInCreationException under the Boot default allow-circular-references=false.
+    # Proper fix: replace the @Autowired field with ObjectProvider/method-parameter injection.
+    allow-circular-references: true
+  cloud:
+    # Workaround for Spring Boot 4.1: the current Spring Cloud release train does not yet list
+    # Boot 4.1 as compatible and CompositeCompatibilityVerifier fails the context.
+    compatibility-verifier:
+      enabled: false
   datasource:
     dynamic:
       primary: ds-master

@@ -5,6 +5,7 @@ import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.containers.PostgresTestContainer
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 /**
  * Test cases for RdbKit.
@@ -20,7 +21,16 @@ internal class RdbKitTest {
 
     @Test
     fun getDataSource() {
-        RdbKit.getDataSource()
+        assertNotNull(RdbKit.getDataSource(), "context data source must be resolvable in test env")
+    }
+
+    /**
+     * Calls testConnection() without arguments so the default-parameter path
+     * (conn = null -> borrow a connection from the current context data source) is exercised.
+     */
+    @Test
+    fun testConnectionWithDefaultParam() {
+        assert(RdbKit.testConnection())
     }
 
 //    @Test

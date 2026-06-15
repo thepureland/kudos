@@ -1,9 +1,22 @@
 package io.kudos.ability.web.springmvc.handler
 
+import io.kudos.base.enums.impl.CommonErrorCodeEnum
+import io.kudos.base.model.response.ApiResponse
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.beans.TypeMismatchException
+import org.springframework.core.MethodParameter
+import org.springframework.http.HttpStatus
+import org.springframework.mock.web.MockHttpServletRequest
+import org.springframework.validation.BeanPropertyBindingResult
+import org.springframework.validation.BindException
+import org.springframework.validation.FieldError
+import org.springframework.validation.ObjectError
+import org.springframework.web.bind.MethodArgumentNotValidException
+import org.springframework.web.context.request.ServletWebRequest
+import kotlin.test.assertEquals
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -84,6 +97,75 @@ class BadRequestExceptionHandlerTest {
             .andExpect(jsonPath("$.code").value("400"))
             .andExpect(jsonPath("$.message").value("Invalid parameter type: age"))
     }
+
+    // region direct-call branch tests
+
+    @Test
+    fun handleBindException_fieldAndGlobalErrors_nullDefaultMessageFallsBack() {
+        val handler = BadRequestExceptionHandler()
+        val bindingResult = BeanPropertyBindingResult(TestRequest(), "form")
+        bindingResult.addError(FieldError("form", "name", "bad-value", false, null, null, null))
+        bindingResult.addError(ObjectError("form", null, null, null))
+
+        val response = handler.handleBindException(BindException(bindingResult))
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        val body = response.body as ApiResponse.Failure
+        assertEquals(CommonErrorCodeEnum.VALIDATION_ERROR.code, body.code)
+        // null defaultMessage falls back to the VALIDATION_ERROR display text
+        assertEquals(CommonErrorCodeEnum.VALIDATION_ERROR.displayText, body.message)
+        val errors = body.errors!!
+        assertEquals(2, errors.size)
+        // field errors come first, carrying the rejected value; global errors follow without one
+        assertEquals("name", errors[0].field)
+        assertEquals("bad-value", errors[0].rejectedValue)
+        assertEquals("form", errors[1].target)
+        assertEquals(CommonErrorCodeEnum.VALIDATION_ERROR.displayText, errors[1].message)
+    }
+
+    @Test
+    fun handleBindException_noErrors_usesDefaultValidationMessage() {
+        val handler = BadRequestExceptionHandler()
+        val bindingResult = BeanPropertyBindingResult(TestRequest(), "form")
+
+        val response = handler.handleBindException(BindException(bindingResult))
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        val body = response.body as ApiResponse.Failure
+        assertEquals(CommonErrorCodeEnum.VALIDATION_ERROR.displayText, body.message)
+        assertEquals(0, body.errors!!.size)
+    }
+
+    @Test
+    fun handleMethodArgumentNotValid_noErrors_usesDefaultValidationMessage() {
+        val handler = BadRequestExceptionHandler()
+        val method = TestController::class.java.getDeclaredMethod("body", TestRequest::class.java)
+        val ex = MethodArgumentNotValidException(
+            MethodParameter(method, 0),
+            BeanPropertyBindingResult(TestRequest(), "form")
+        )
+
+        // Dispatch through the public entry point (the override itself is protected).
+        val response = handler.handleException(ex, ServletWebRequest(MockHttpServletRequest()))!!
+
+        val body = response.body as ApiResponse.Failure
+        assertEquals(CommonErrorCodeEnum.VALIDATION_ERROR.code, body.code)
+        assertEquals(CommonErrorCodeEnum.VALIDATION_ERROR.displayText, body.message)
+    }
+
+    @Test
+    fun handleTypeMismatch_plainTypeMismatch_usesBadRequestDisplayText() {
+        val handler = BadRequestExceptionHandler()
+        val ex = TypeMismatchException("abc", Int::class.java)
+
+        val response = handler.handleException(ex, ServletWebRequest(MockHttpServletRequest()))!!
+
+        val body = response.body as ApiResponse.Failure
+        assertEquals(CommonErrorCodeEnum.BAD_REQUEST.code, body.code)
+        assertEquals(CommonErrorCodeEnum.BAD_REQUEST.displayText, body.message)
+    }
+
+    // endregion
 
     private class TestRequest {
 

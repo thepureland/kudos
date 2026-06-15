@@ -9,6 +9,7 @@ import java.lang.reflect.Proxy
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 /**
@@ -75,11 +76,104 @@ internal class DataSourceChangeAspectTest {
         assertEquals(false, DbContext.getOrNull()?.readonly)
     }
 
+    @Test
+    fun dsChangeAspect_blankValueOnlySetsReadonlyFlag() {
+        DbContext.set(DbParam().apply { forcedDs = "outer" })
+
+        DsChangeAspect().around(joinPoint(method("dsChangedBlank"), proceed = {
+            assertEquals("outer", DbContext.getOrNull()?.forcedDs, "blank value means: keep the outer forcedDs")
+            assertEquals(true, DbContext.getOrNull()?.readonly, "but the readonly flag is applied")
+            "ok"
+        }))
+
+        assertEquals("outer", DbContext.getOrNull()?.forcedDs)
+        assertEquals(false, DbContext.getOrNull()?.readonly)
+    }
+
+    @Test
+    fun dsChangeAspect_restoresContextWhenBusinessMethodThrows() {
+        DbContext.set(DbParam().apply { forcedDs = "outer" })
+
+        assertFailsWith<IllegalStateException> {
+            DsChangeAspect().around(joinPoint(method("dsChanged"), proceed = { error("boom") }))
+        }
+
+        assertEquals("outer", DbContext.getOrNull()?.forcedDs, "finally must restore the snapshot on exception")
+        assertEquals(false, DbContext.getOrNull()?.readonly)
+    }
+
+    @Test
+    fun tenantDsChangeAspect_clearsContextWhenNoOuterDbParamExists() {
+        val result = TenantDsChangeAspect().around(joinPoint(method("tenantDsChanged"), proceed = {
+            assertEquals("_context::billing", DbContext.getOrNull()?.forcedDs)
+            "ok"
+        }))
+
+        assertEquals("ok", result)
+        assertNull(DbContext.getOrNull())
+    }
+
+    @Test
+    fun tenantDsChangeAspect_blankValueLeavesContextUntouched() {
+        DbContext.set(DbParam().apply { forcedDs = "outer"; readonly = true })
+
+        TenantDsChangeAspect().around(joinPoint(method("tenantDsChangedBlank"), proceed = {
+            assertEquals("outer", DbContext.getOrNull()?.forcedDs, "blank service code -> no switch at all")
+            assertEquals(true, DbContext.getOrNull()?.readonly)
+            "ok"
+        }))
+
+        assertEquals("outer", DbContext.getOrNull()?.forcedDs)
+        assertEquals(true, DbContext.getOrNull()?.readonly)
+    }
+
+    @Test
+    fun tenantDsChangeAspect_contextPrefixedValueForwardedAsIs() {
+        TenantDsChangeAspect().around(joinPoint(method("tenantDsChangedPrefixed"), proceed = {
+            assertEquals(
+                "_context::already", DbContext.getOrNull()?.forcedDs,
+                "an already-prefixed value must not be wrapped again"
+            )
+            "ok"
+        }))
+
+        assertNull(DbContext.getOrNull())
+    }
+
+    @Test
+    fun tenantDsChangeAspect_restoresContextWhenBusinessMethodThrows() {
+        DbContext.set(DbParam().apply { forcedDs = "outer" })
+
+        assertFailsWith<IllegalStateException> {
+            TenantDsChangeAspect().around(joinPoint(method("tenantDsChanged"), proceed = { error("boom") }))
+        }
+
+        assertEquals("outer", DbContext.getOrNull()?.forcedDs)
+    }
+
+    @Test
+    fun pointcutPlaceholders_areInvokable() {
+        // the @Pointcut methods have empty bodies; invoke them reflectively for completeness
+        DsChangeAspect::class.java.getDeclaredMethod("cut").also { it.isAccessible = true }
+            .invoke(DsChangeAspect())
+        TenantDsChangeAspect::class.java.getDeclaredMethod("cut").also { it.isAccessible = true }
+            .invoke(TenantDsChangeAspect())
+    }
+
     @DsChange("inner", readonly = true)
     private fun dsChanged() = Unit
 
+    @DsChange(readonly = true)
+    private fun dsChangedBlank() = Unit
+
     @TenantDsChange("billing", readonly = true)
     private fun tenantDsChanged() = Unit
+
+    @TenantDsChange
+    private fun tenantDsChangedBlank() = Unit
+
+    @TenantDsChange("_context::already")
+    private fun tenantDsChangedPrefixed() = Unit
 
     private fun method(name: String): Method = this::class.java.getDeclaredMethod(name)
 

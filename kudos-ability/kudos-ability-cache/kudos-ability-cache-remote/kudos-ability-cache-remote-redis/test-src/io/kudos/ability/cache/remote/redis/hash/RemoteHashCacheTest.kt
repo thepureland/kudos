@@ -160,6 +160,42 @@ internal class RemoteHashCacheTest {
     }
 
     @Test
+    fun existsById() {
+        val cache = HashCacheKit.getHashCache(cacheName)
+        cache.save(cacheName, TestRow(id = "e1", name = "Exists"))
+        assertTrue(cache.existsById(cacheName, "e1"))
+        assertFalse(cache.existsById(cacheName, "absent"))
+    }
+
+    @Test
+    fun deleteByIds() {
+        val cache = HashCacheKit.getHashCache(cacheName)
+        cache.saveBatch(cacheName, listOf(TestRow(id = "d1"), TestRow(id = "d2"), TestRow(id = "d3")))
+        cache.deleteByIds(cacheName, listOf("d1", "d3"), TestRow::class)
+        assertNull(cache.getById(cacheName, "d1", TestRow::class))
+        assertNotNull(cache.getById(cacheName, "d2", TestRow::class))
+        assertNull(cache.getById(cacheName, "d3", TestRow::class))
+    }
+
+    @Test
+    fun deleteByIds_emptyIds_isNoOp() {
+        val cache = HashCacheKit.getHashCache(cacheName)
+        cache.save(cacheName, TestRow(id = "d9", name = "Keep"))
+        cache.deleteByIds(cacheName, emptyList<String>(), TestRow::class)
+        assertNotNull(cache.getById(cacheName, "d9", TestRow::class))
+    }
+
+    @Test
+    fun clearRemovesAllEntries() {
+        val cache = HashCacheKit.getHashCache(cacheName)
+        cache.save(cacheName, TestRow(id = "c1", name = "C1"))
+        cache.save(cacheName, TestRow(id = "c2", name = "C2"))
+        cache.clear(cacheName)
+        assertTrue(cache.listAll(cacheName, TestRow::class).isEmpty())
+        assertNull(cache.getById(cacheName, "c1", TestRow::class))
+    }
+
+    @Test
     fun refreshAll() {
         val cache = HashCacheKit.getHashCache(cacheName)
         cache.save(cacheName, TestRow(id = "old", name = "Old"))

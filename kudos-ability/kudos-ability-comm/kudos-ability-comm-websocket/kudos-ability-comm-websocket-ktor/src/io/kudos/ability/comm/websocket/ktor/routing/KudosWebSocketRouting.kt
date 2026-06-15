@@ -12,6 +12,7 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
 import io.ktor.websocket.readText
+import kotlinx.coroutines.channels.ReceiveChannel
 
 /** Private logger-category anchor: this file only contains top-level functions, so a dedicated object keeps log events attributed to the routing component instead of an unrelated class. */
 private object KudosWebSocketRouting
@@ -63,14 +64,7 @@ fun Route.kudosWebSocket(
         var cause: Throwable? = null
         try {
             handler.onConnect(session)
-            for (frame in incoming) {
-                when (frame) {
-                    is Frame.Text -> handler.onText(session, frame.readText())
-                    is Frame.Binary -> handler.onBinary(session, frame.readBytes())
-                    is Frame.Close -> break
-                    else -> {} // Ping / Pong is handled automatically by the Ktor WebSockets plugin; the business side does not need to see it.
-                }
-            }
+            dispatchFrames(incoming, session, handler)
         } catch (t: Throwable) {
             cause = t
             log.warn("WebSocket handling exception sessionId={0} path={1} cause={2}",
@@ -80,6 +74,31 @@ fun Route.kudosWebSocket(
                 .onFailure { log.warn("onDisconnect threw an exception sessionId={0} cause={1}", session.sessionId, it.message) }
             registry.unregister(session.sessionId)
             runCatching { close(CloseReason(CloseReason.Codes.NORMAL, "")) }
+        }
+    }
+}
+
+/**
+ * Frame-dispatch loop body of [kudosWebSocket]: text / binary frames go to the handler, a Close
+ * frame ends the loop, everything else (Ping / Pong) is ignored — the Ktor WebSockets plugin
+ * already answers pings automatically, so the business side does not need to see them.
+ *
+ * Extracted as `internal` (rather than kept inline) purely for testability: Ktor's
+ * `DefaultWebSocketSession` consumes Close / Ping / Pong before they ever reach [incoming],
+ * which makes these defensive branches unreachable through a real engine round-trip; unit
+ * tests drive them directly with a plain channel.
+ */
+internal suspend fun dispatchFrames(
+    incoming: ReceiveChannel<Frame>,
+    session: KudosWebSocketSession,
+    handler: IKudosWebSocketHandler,
+) {
+    for (frame in incoming) {
+        when (frame) {
+            is Frame.Text -> handler.onText(session, frame.readText())
+            is Frame.Binary -> handler.onBinary(session, frame.readBytes())
+            is Frame.Close -> break
+            else -> {} // Ping / Pong is handled automatically by the Ktor WebSockets plugin; the business side does not need to see it.
         }
     }
 }

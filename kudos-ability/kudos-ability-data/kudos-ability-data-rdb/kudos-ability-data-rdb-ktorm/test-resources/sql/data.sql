@@ -16,3 +16,7 @@ INSERT INTO "test_built_in_ktorm" ("id", "name", "built_in") VALUES
 (902, 'built_in_row', 't'),
 (903, 'custom_del_b', 'f');
 
+-- update_time / update_user_id deliberately NULL so that the audit auto-fill tests can verify they get populated
+INSERT INTO "test_managed_ktorm" ("id", "name", "create_time", "active", "built_in") VALUES
+('m-1', 'managed_row_1', '2026-01-01 00:00:00', 't', 'f');
+

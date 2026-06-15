@@ -73,8 +73,10 @@ abstract class AbstractFeignFallbackSupport(private val componentName: String) {
      * `FeignException.status()` returns 0 when the remote does not respond (connection refused /
      * timeout / DNS failure) and the HTTP status code otherwise. Non-`FeignException` causes
      * (e.g. LoadBalancer rejection, custom decoder throws) are logged by exception class name.
+     *
+     * Internal (instead of private) so the pure categorization logic can be unit-tested directly.
      */
-    private fun describeStatus(cause: Throwable?): String = when {
+    internal fun describeStatus(cause: Throwable?): String = when {
         cause == null -> "unknown"
         cause is FeignException -> when (val s = cause.status()) {
             0 -> "unreachable"

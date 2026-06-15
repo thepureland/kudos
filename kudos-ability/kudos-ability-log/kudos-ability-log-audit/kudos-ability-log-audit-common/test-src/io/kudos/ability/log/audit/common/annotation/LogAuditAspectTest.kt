@@ -107,6 +107,20 @@ class LogAuditAspectTest @Autowired constructor(
         assertEquals(1, recorder.captured.size, "Out-of-bounds modelArgIndex should silently fall back to args[0]")
     }
 
+    @Test
+    fun noArgMethod_isSkippedEntirely() {
+        // before() returns early when the method has no arguments — nothing to audit, no submit, no context residue
+        service.noArgs()
+        assertEquals(0, recorder.captured.size, "a no-arg audited method must not submit anything")
+        assertNull(LogAuditContext.getOrNull(), "no-arg path must not leave a LogVo in the context")
+    }
+
+    @Test
+    fun pointCutMethod_isInvokableMarker() {
+        // The @Pointcut method body is an empty marker required by AspectJ; invoking it must be a no-op
+        LogAuditAspect().pointCut()
+    }
+
     @TestConfiguration
     open class TestBeans {
         @Bean
@@ -155,6 +169,11 @@ open class AuditedService {
     )
     open fun updateBadIndex(model: Model) {
         // Out of bounds — the aspect should fall back to args[0] and not throw
+    }
+
+    @Audit(opType = OperationTypeEnum.QUERY, moduleCode = "USER", desc = "no args")
+    open fun noArgs() {
+        // No parameters — the aspect must skip auditing entirely
     }
 }
 
