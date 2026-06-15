@@ -68,4 +68,107 @@ internal class OrderPropertiesTest {
         assertTrue(p.stringPropertyNames().isEmpty())
         assertFalse(p.keys().hasMoreElements())
     }
+
+    // ============================================================
+    // putIfAbsent / remove(key, value): the Hashtable bypass overrides
+    // ============================================================
+
+    @Test
+    fun putIfAbsentAddsNewKeyToOrderedViews() {
+        val p = sample()
+        assertNull(p.putIfAbsent("kiwi", "4"), "no previous value -> null")
+        assertEquals(listOf("zebra", "apple", "mango", "kiwi"), p.stringPropertyNames().toList())
+        assertEquals("4", p.getProperty("kiwi"))
+    }
+
+    @Test
+    fun putIfAbsentKeepsExistingValueAndOrdering() {
+        val p = sample()
+        assertEquals("2", p.putIfAbsent("apple", "999"), "the existing value must be returned")
+        assertEquals("2", p.getProperty("apple"), "the existing value must be kept")
+        assertEquals(listOf("zebra", "apple", "mango"), p.stringPropertyNames().toList(), "no duplicate ordering entry")
+    }
+
+    @Test
+    fun twoArgRemoveDropsKeyOnlyOnValueMatch() {
+        val p = sample()
+        assertFalse(p.remove("apple", "wrong-value"), "non-matching value -> no removal")
+        assertEquals(listOf("zebra", "apple", "mango"), p.stringPropertyNames().toList())
+
+        assertTrue(p.remove("apple", "2"), "matching value -> removed")
+        assertEquals(listOf("zebra", "mango"), p.stringPropertyNames().toList())
+        assertNull(p.getProperty("apple"))
+    }
+
+    @Test
+    fun putReturnsPreviousValueAndRemoveReturnsRemovedValue() {
+        val p = sample()
+        assertEquals("1", p.put("zebra", "10"))
+        assertNull(p.put("new", "n"))
+        assertEquals("10", p.remove("zebra"))
+        assertNull(p.remove("not-there"))
+    }
+
+    // ============================================================
+    // propertyNames / keys property (keySet)
+    // ============================================================
+
+    @Test
+    fun propertyNamesEnumerationPreservesInsertionOrder() {
+        val names = sample().propertyNames().toList()
+        assertEquals(listOf("zebra", "apple", "mango"), names)
+    }
+
+    @Test
+    fun keysPropertyReflectsLiveStateInInsertionOrder() {
+        val p = sample()
+        assertEquals(listOf<Any>("zebra", "apple", "mango"), p.keys.toList(), "keySet must not be an empty construction-time snapshot")
+        p.setProperty("delta", "4")
+        assertEquals(listOf<Any>("zebra", "apple", "mango", "delta"), p.keys.toList(), "keySet must see later insertions")
+    }
+
+    // ============================================================
+    // defaults (the secondary constructor)
+    // ============================================================
+
+    private fun withDefaults(): OrderProperties {
+        val defaults = OrderProperties().apply {
+            setProperty("fallback", "df")
+            setProperty("apple", "default-apple") // overridden by the main properties
+        }
+        return OrderProperties(defaults).apply {
+            setProperty("zebra", "1")
+            setProperty("apple", "2")
+        }
+    }
+
+    @Test
+    fun getPropertyFallsThroughToDefaults() {
+        val p = withDefaults()
+        assertEquals("df", p.getProperty("fallback"), "unset keys must fall through to defaults")
+        assertEquals("2", p.getProperty("apple"), "own values must shadow defaults")
+    }
+
+    @Test
+    fun stringPropertyNamesIncludeDefaults() {
+        val names = withDefaults().stringPropertyNames().toList()
+        assertEquals(listOf("zebra", "apple", "fallback"), names, "own keys first, then non-shadowed default keys")
+    }
+
+    @Test
+    fun entriesIncludeNonShadowedDefaultsOnly() {
+        val entries = withDefaults().entries.associate { it.key to it.value }
+        assertEquals("1", entries["zebra"])
+        assertEquals("2", entries["apple"], "the shadowing value must win over the default")
+        assertEquals("df", entries["fallback"], "non-shadowed defaults must be included")
+        assertEquals(3, entries.size)
+    }
+
+    @Test
+    fun nullDefaultsConstructorBehavesLikeEmpty() {
+        val p = OrderProperties(null)
+        p.setProperty("only", "1")
+        assertEquals(listOf("only"), p.stringPropertyNames().toList())
+        assertEquals(listOf("only" to "1"), p.entries.map { it.key to it.value })
+    }
 }

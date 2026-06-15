@@ -164,6 +164,20 @@ internal class FailedDataRetryScannerTest {
     }
 
     @Test
+    fun retryLogsAndSwallowsIoExceptionWhenBusinessPathIsNotADirectory() {
+        // Occupy the business path with a regular FILE: Files.list throws NotDirectoryException (an
+        // IOException) which the scanner must log and swallow, never propagate.
+        val handler = StubHandler("bizNotADir") { true }
+        val blocking = tempRoot.resolve("bizNotADir")
+        Files.write(blocking, "i am a file".toByteArray())
+
+        scanner.retry(handler) // must not throw
+
+        assertEquals(0, handler.processInvocations)
+        assertTrue(Files.exists(blocking), "the offending file must be left alone")
+    }
+
+    @Test
     fun retryReturnsImmediatelyWhenDirectoryDoesNotExist() {
         val handler = StubHandler("bizMissing") { true }
         // Do not create the bizMissing directory
