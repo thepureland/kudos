@@ -93,8 +93,21 @@ internal class JarFileClassPathLocationScannerTest {
     fun testFindResourceNamesExcludesOtherLocations() {
         val locationUrl = jarUrl("test/")
         val resourceNames = scanner.findResourceNames("test/", locationUrl)
-        
+
         // Should not include any files under the other/ directory
         assertTrue(resourceNames.none { it.startsWith("other/") })
+    }
+
+    /**
+     * A jar URL whose entry does not exist makes JarURLConnection.connect() fail, driving the manual
+     * URL-file fallback parsing path (substring before "!/", strip "file:" prefix, open the JarFile directly).
+     */
+    @Test
+    fun testFindResourceNames_nonExistentEntry_fallbackParsing() {
+        val locationUrl = jarUrl("does-not-exist/")
+        val resourceNames = scanner.findResourceNames("does-not-exist/", locationUrl)
+        // The jar opens fine via fallback; no entry matches the bogus location.
+        assertNotNull(resourceNames)
+        assertTrue(resourceNames.isEmpty())
     }
 }

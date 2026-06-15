@@ -1,12 +1,17 @@
 package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.Series
+import io.kudos.base.bean.validation.constraint.validator.SeriesValidator
 import io.kudos.base.bean.validation.kit.ValidationKit
 import io.kudos.base.bean.validation.support.SeriesTypeEnum
+import jakarta.validation.ConstraintValidatorContext
+import java.lang.reflect.Proxy
 import java.math.BigDecimal
 import java.math.BigInteger
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * Test cases for series validation.
@@ -378,6 +383,80 @@ internal class SeriesTest {
         // Int, all equal -> fail (series size does not match)
         assertFalse(ValidationKit.validateValue(TestSeriesBean::class, "intEq", arrayOf(1, 1, 1, 1, 1)).isEmpty())
     }
+
+    /**
+     * Negative step / size must be rejected at initialize time.
+     */
+    @Test
+    fun initializeRejectsNegativeStepOrSize() {
+        val e1 = assertFailsWith<IllegalStateException> {
+            SeriesValidator().initialize(Series(step = -1.0))
+        }
+        assertTrue((e1.message ?: "").contains("step"))
+
+        val e2 = assertFailsWith<IllegalStateException> {
+            SeriesValidator().initialize(Series(size = -1))
+        }
+        assertTrue((e2.message ?: "").contains("size"))
+    }
+
+    /**
+     * Null values and series with fewer than two elements pass directly;
+     * a List value goes through the List branch of the type dispatch.
+     */
+    @Test
+    fun nullAndShortInputsPass() {
+        val validator = SeriesValidator()
+        validator.initialize(Series(type = SeriesTypeEnum.INC_DIFF))
+        val context = dummyContext()
+
+        assertTrue(validator.isValid(null, context))
+        assertTrue(validator.isValid(arrayOf(1), context))
+        assertTrue(validator.isValid(emptyList<Int>(), context))
+        assertTrue(validator.isValid(listOf(7), context))
+    }
+
+    /**
+     * List values are validated like arrays (the List branch of the type dispatch).
+     */
+    @Test
+    fun listValuesAreValidated() {
+        val validator = SeriesValidator()
+        validator.initialize(Series(type = SeriesTypeEnum.INC_DIFF))
+        val context = dummyContext()
+
+        assertTrue(validator.isValid(listOf(1, 2, 3), context))
+        assertFalse(validator.isValid(listOf(3, 2, 1), context))
+    }
+
+    /**
+     * DESC_DIFF_INC_DIFF: the minimum sitting at the last index means there is no
+     * increasing tail, so validation must fail.
+     */
+    @Test
+    fun descDiffIncDiffFailsWhenMinIsLastElement() {
+        val validator = SeriesValidator()
+        validator.initialize(Series(type = SeriesTypeEnum.DESC_DIFF_INC_DIFF))
+        assertFalse(validator.isValid(listOf(3, 2, 1), dummyContext()))
+    }
+
+    /**
+     * DESC_EQ_INC_EQ: the minimum at the first or last position means the series
+     * is not "decreasing then increasing", so validation must fail.
+     */
+    @Test
+    fun descEqIncEqFailsWhenMinIsAtEitherEnd() {
+        val validator = SeriesValidator()
+        validator.initialize(Series(type = SeriesTypeEnum.DESC_EQ_INC_EQ))
+        assertFalse(validator.isValid(listOf(1, 2, 3), dummyContext())) // min at first position
+        assertFalse(validator.isValid(listOf(3, 2, 1), dummyContext())) // min at last position
+    }
+
+    private fun dummyContext(): ConstraintValidatorContext =
+        Proxy.newProxyInstance(
+            ConstraintValidatorContext::class.java.classLoader,
+            arrayOf(ConstraintValidatorContext::class.java)
+        ) { _, _, _ -> null } as ConstraintValidatorContext
 
     @Test
     fun validateInvalidRuntimeInputShouldFailNotThrow() {

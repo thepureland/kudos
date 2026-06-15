@@ -6,6 +6,7 @@ import io.kudos.base.bean.validation.kit.ValidationKit
 import io.kudos.base.bean.validation.support.IBeanValidator
 import kotlin.test.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
@@ -45,12 +46,11 @@ internal class RemoteTest {
     @Test
     fun testInitialize() {
         val validator = RemoteValidator()
-        val annotation = TestRemoteBean::class.java.getDeclaredField("value")
+        // The constraint is declared on the getter (@get:), so read it from the method
+        val annotation = TestRemoteBean::class.java.getMethod("getValue")
             .getAnnotation(Remote::class.java)
-        if (annotation != null) {
-            validator.initialize(annotation)
-            // Initialization should succeed
-        }
+        assertNotNull(annotation)
+        validator.initialize(annotation)
     }
 
     data class TestRemoteBean(

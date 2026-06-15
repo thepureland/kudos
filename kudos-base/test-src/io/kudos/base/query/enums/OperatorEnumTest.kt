@@ -363,4 +363,83 @@ internal class OperatorEnumTest {
             assertTrue(it.isFailure, "Unknown code should throw an exception")
         }
     }
+
+    // ============================================================
+    // Metadata getters
+    // ============================================================
+
+    @Test fun metadataFlagsAndText() {
+        assertEquals("=", OperatorEnum.EQ.code)
+        assertEquals("Equal to", OperatorEnum.EQ.displayText)
+        assertTrue(OperatorEnum.IEQ.stringOnly)
+        assertFalse(OperatorEnum.EQ.stringOnly)
+        assertTrue(OperatorEnum.IS_NULL.acceptNull)
+        assertFalse(OperatorEnum.EQ.acceptNull)
+    }
+
+    // ============================================================
+    // Reflective compareTo path: a custom Comparable type (not Number/String/Char/Boolean)
+    // forces compareComparableValues -> getCompareToMethod reflection branch.
+    // ============================================================
+
+    private class Money(val cents: Int) : Comparable<Money> {
+        override fun compareTo(other: Money): Int = cents.compareTo(other.cents)
+    }
+
+    @Test fun gtViaReflectiveCompareToOnCustomComparable() {
+        assertTrue(OperatorEnum.GT.compare(Money(200), Money(100)))
+        assertFalse(OperatorEnum.GT.compare(Money(100), Money(200)))
+        // second call hits the cache branch in getCompareToMethod
+        assertTrue(OperatorEnum.GE.compare(Money(150), Money(150)))
+    }
+
+    @Test fun ltReflectiveCompareToReturnsNullForIncompatibleTypes() {
+        // left has compareTo(Money) but right is a String -> no matching method -> null -> false
+        assertFalse(OperatorEnum.LT.compare(Money(1), "x"))
+    }
+
+    // ============================================================
+    // compareComparableValues dedicated type paths: Char / Boolean / each Number subtype
+    // ============================================================
+
+    @Test fun gtCharComparison() {
+        assertTrue(OperatorEnum.GT.compare('b', 'a'))
+        assertFalse(OperatorEnum.GT.compare('a', 'b'))
+    }
+
+    @Test fun gtBooleanComparison() {
+        // Boolean compareTo: true > false
+        assertTrue(OperatorEnum.GT.compare(true, false))
+        assertFalse(OperatorEnum.GT.compare(false, true))
+        assertTrue(OperatorEnum.GE.compare(true, true))
+    }
+
+    @Test fun gtSameTypeNumberPaths() {
+        // each same-type branch of compareNumbers
+        assertTrue(OperatorEnum.GT.compare(2L, 1L))       // Long
+        assertTrue(OperatorEnum.GT.compare(2.0, 1.0))     // Double
+        assertTrue(OperatorEnum.GT.compare(2.0f, 1.0f))   // Float
+        assertTrue(OperatorEnum.GT.compare(2.toShort(), 1.toShort())) // Short
+        assertTrue(OperatorEnum.GT.compare(2.toByte(), 1.toByte()))   // Byte
+        assertTrue(OperatorEnum.GT.compare(2, 1))         // Int
+    }
+
+    // ============================================================
+    // NE on equal strings (String-specific branch) and unequal non-strings
+    // ============================================================
+
+    @Test fun neStringBranchEqual() {
+        assertFalse(OperatorEnum.NE.compare("same", "same"))
+        assertTrue(OperatorEnum.NE.compare("a", "b"))
+    }
+
+    // ============================================================
+    // String-match operators on non-string operands -> false branches
+    // ============================================================
+
+    @Test fun likeFamilyNonStringFalse() {
+        assertFalse(OperatorEnum.LIKE_E.compare(1, "x"))
+        assertFalse(OperatorEnum.ILIKE_S.compare(1, "x"))
+        assertFalse(OperatorEnum.ILIKE_E.compare(1, "x"))
+    }
 }

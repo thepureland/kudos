@@ -1,13 +1,17 @@
 package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.Compare
+import io.kudos.base.bean.validation.constraint.validator.CompareValidator
 import io.kudos.base.bean.validation.kit.ValidationKit
 import io.kudos.base.bean.validation.support.Depends
 import io.kudos.base.support.logic.LogicOperatorEnum
+import jakarta.validation.ConstraintValidatorContext
 import jakarta.validation.ValidationException
+import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertTrue
 
 /**
  * Test cases for the Compare constraint validator.
@@ -68,6 +72,49 @@ internal class CompareTest {
         // Not an array type
         val bean5 = CompareValuesTestBean2(intArrayOf(1, 2), intArrayOf(1, 2))
         assertFailsWith<ValidationException> { ValidationKit.validateBean(bean5) }
+    }
+
+    /**
+     * Tests null handling: both null passes, exactly one null fails.
+     */
+    @Test
+    fun validateNullCombinations() {
+        // Both properties null: passes
+        assert(ValidationKit.validateBean(CompareValuesTestBean(null, null)).isEmpty())
+
+        // Only the validated property is null: fails
+        val bean1 = CompareValuesTestBean(arrayOf("1"), null)
+        assertEquals("the two password groups differ", ValidationKit.validateBean(bean1).first().message)
+
+        // Only the other property is null: fails
+        val bean2 = CompareValuesTestBean(null, arrayOf("1"))
+        assertEquals("the two password groups differ", ValidationKit.validateBean(bean2).first().message)
+    }
+
+    /**
+     * Tests that arrays of the same runtime type whose elements do not implement
+     * Comparable are rejected with an exception.
+     */
+    @Test
+    fun validateNonComparableArrayElements() {
+        val bean = CompareAnyArrayTestBean(arrayOf(Any()), arrayOf(Any()))
+        assertFailsWith<ValidationException> { ValidationKit.validateBean(bean) }
+    }
+
+    /**
+     * Tests that calling the validator without a bean in the ValidationContext fails loudly.
+     */
+    @Test
+    fun isValidWithoutBeanInContextThrows() {
+        val validator = CompareValidator()
+        validator.initialize(Compare(anotherProperty = "x", message = "m"))
+        val context = Proxy.newProxyInstance(
+            ConstraintValidatorContext::class.java.classLoader,
+            arrayOf(ConstraintValidatorContext::class.java)
+        ) { _, _, _ -> null } as ConstraintValidatorContext
+
+        val e = assertFailsWith<IllegalArgumentException> { validator.isValid("v", context) }
+        assertTrue((e.message ?: "").contains("ValidationContext"))
     }
 
     /**
@@ -149,6 +196,21 @@ internal class CompareTest {
             message = "the two password groups differ"
         )
         val confirmPasswords: Array<Array<String>>? = null
+    ) {
+        override fun equals(other: Any?): Boolean = true
+        override fun hashCode(): Int = 0
+    }
+
+
+    internal data class CompareAnyArrayTestBean(
+        val others: Array<Any>? = null,
+
+        @get:Compare(
+            anotherProperty = "others",
+            logic = LogicOperatorEnum.EQ,
+            message = "the two object groups differ"
+        )
+        val objects: Array<Any>? = null
     ) {
         override fun equals(other: Any?): Boolean = true
         override fun hashCode(): Int = 0

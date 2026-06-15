@@ -3,11 +3,24 @@ package io.kudos.base.bean.validation.constraint
 import io.kudos.base.bean.validation.constraint.annotations.DictItemCode
 import io.kudos.base.bean.validation.constraint.validator.DictItemCodeValidator
 import io.kudos.base.bean.validation.kit.ValidationKit
+import jakarta.validation.ConstraintValidatorContext
+import java.lang.reflect.Proxy
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
  * Test cases for DictItemCode.
+ *
+ * The dictionary codes are provided deterministically by [TestDictItemCodeFinder],
+ * registered through the ServiceLoader SPI in test-resources/META-INF/services.
+ *
+ * Coverage:
+ * - null / empty / blank values pass directly.
+ * - A code present in the dictionary passes; an absent code fails with the constraint message.
+ * - initialize accepts the annotation read from the property getter.
  *
  * @author AI: cursor
  * @author K
@@ -41,29 +54,54 @@ internal class DictItemCodeTest {
 
     @Test
     fun testIsValidWithValidCode() {
-        // Note: this test depends on the IDictCodeFinder implementation.
-        // If no DictCodeFinder is found, dictMap will be empty and validation will fail.
+        // TestDictItemCodeFinder returns VALID_CODE for module "test" / dictType "test"
         val bean = TestDictCodeBean("VALID_CODE")
         val violations = ValidationKit.validateBean(bean)
-        // The actual result depends on whether ServiceLoader can find an IDictCodeFinder implementation
+        assertTrue(violations.isEmpty())
     }
 
     @Test
     fun testIsValidWithInvalidCode() {
         val bean = TestDictCodeBean("INVALID_CODE")
         val violations = ValidationKit.validateBean(bean)
-        // If no DictCodeFinder is found or the code is not in the dictionary, validation should fail
+        assertFalse(violations.isEmpty())
+        assertEquals("invalid dictionary code", violations.first().message)
+    }
+
+    /**
+     * When no IDictItemCodeFinder SPI implementation is visible on the context
+     * classloader, the valid code set is empty and any non-blank value fails.
+     */
+    @Test
+    fun testIsValidWithoutAnyFinder() {
+        val validator = DictItemCodeValidator()
+        val annotation = TestDictCodeBean::class.java.getMethod("getCode")
+            .getAnnotation(DictItemCode::class.java)
+        assertNotNull(annotation)
+        validator.initialize(annotation)
+        val context = Proxy.newProxyInstance(
+            ConstraintValidatorContext::class.java.classLoader,
+            arrayOf(ConstraintValidatorContext::class.java)
+        ) { _, _, _ -> null } as ConstraintValidatorContext
+
+        val original = Thread.currentThread().contextClassLoader
+        try {
+            // The platform classloader cannot see the test SPI registration
+            Thread.currentThread().contextClassLoader = ClassLoader.getPlatformClassLoader()
+            assertFalse(validator.isValid("VALID_CODE", context))
+        } finally {
+            Thread.currentThread().contextClassLoader = original
+        }
     }
 
     @Test
     fun testInitialize() {
         val validator = DictItemCodeValidator()
-        val annotation = TestDictCodeBean::class.java.getDeclaredField("code")
+        // The constraint is declared on the getter (@get:), so read it from the method
+        val annotation = TestDictCodeBean::class.java.getMethod("getCode")
             .getAnnotation(DictItemCode::class.java)
-        if (annotation != null) {
-            validator.initialize(annotation)
-            // Initialization should succeed
-        }
+        assertNotNull(annotation)
+        validator.initialize(annotation)
     }
 
     data class TestDictCodeBean(

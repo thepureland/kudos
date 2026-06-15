@@ -164,7 +164,7 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
          * @author K
          * @since 1.0.0
          */
-        private fun getAnnotationMessage(annotation: Annotation): String {
+        internal fun getAnnotationMessage(annotation: Annotation): String {
             val annotationClass = annotation.annotationClass.java
             val method = annotationMessageMethodCache.getOrPut(annotationClass) {
                 annotationClass.getDeclaredMethod("message").apply { isAccessible = true }
@@ -331,7 +331,7 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
      * @author K
      * @since 1.0.0
      */
-    private fun buildConstraintDescriptorProxy(annotation: Annotation): ConstraintDescriptor<*> {
+    internal fun buildConstraintDescriptorProxy(annotation: Annotation): ConstraintDescriptor<*> {
         val attributeMethods = annotationAttributeMethodsCache.getOrPut(annotation.annotationClass.java) {
             annotation.annotationClass.java.declaredMethods
                 .filter { it.parameterCount == 0 && it.name != "annotationType" }
@@ -378,7 +378,7 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
      * @author K
      * @since 1.0.0
      */
-    private fun defaultReturn(type: Class<*>): Any? = when {
+    internal fun defaultReturn(type: Class<*>): Any? = when {
         type == java.lang.Boolean.TYPE -> false
         type == Integer.TYPE -> 0
         type == java.lang.Long.TYPE -> 0L

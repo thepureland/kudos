@@ -98,6 +98,25 @@ internal class FileSystemResourceTest {
     }
 
     @Test
+    fun testLoadAsString_missingFile_throws() {
+        val resource = FileSystemResource(File(tempDir, "nope.txt").absolutePath)
+        assertFailsWith<Exception> { resource.loadAsString("UTF-8") }
+    }
+
+    @Test
+    fun testLoadAsBytes_missingFile_throws() {
+        val resource = FileSystemResource(File(tempDir, "nope.txt").absolutePath)
+        assertFailsWith<Exception> { resource.loadAsBytes() }
+    }
+
+    @Test
+    fun testLocation_relativePathGetsLeadingSlash() {
+        // A relative path (no leading slash) should get one prepended by the location getter.
+        val resource = FileSystemResource("relative${File.separator}sub.txt")
+        assertTrue(resource.location.startsWith("/"))
+    }
+
+    @Test
     fun testLoadAsStringWithDifferentEncoding() {
         val utf8File = File(tempDir, "utf8.txt")
         utf8File.writeText("测试内容", Charsets.UTF_8)

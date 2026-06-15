@@ -94,4 +94,27 @@ internal class CriterionByDslTest {
         assertEquals(OperatorEnum.NOT_BETWEEN, notBetweenCriterion.operator)
         assertEquals(1..10, notBetweenCriterion.value)
     }
+
+    @Test
+    fun testPropertyToPropertyBothOverloads() {
+        // Each *_P operator has two overloads: KProperty1 and raw String. Cover both so the value resolves
+        // either from the referenced property's name or the literal string.
+        assertEquals("tag", (TestEntity::name eqP TestEntity::tag).value)
+        assertEquals("tag", (TestEntity::name eqP "tag").value)
+
+        assertEquals("tag", (TestEntity::name neP TestEntity::tag).value)
+        assertEquals("category", (TestEntity::name neP "category").value)
+
+        assertEquals("rank", (TestEntity::level geP TestEntity::rank).value)
+        assertEquals("rank", (TestEntity::level geP "rank").value)
+
+        assertEquals("rank", (TestEntity::level leP TestEntity::rank).value)
+        assertEquals("rank", (TestEntity::level leP "rank").value)
+
+        assertEquals("rank", (TestEntity::level gtP TestEntity::rank).value)
+        assertEquals("rank", (TestEntity::level gtP "rank").value)
+
+        assertEquals("rank", (TestEntity::level ltP TestEntity::rank).value)
+        assertEquals("rank", (TestEntity::level ltP "rank").value)
+    }
 }

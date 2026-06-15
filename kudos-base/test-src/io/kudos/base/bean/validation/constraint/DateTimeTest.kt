@@ -20,6 +20,10 @@ internal class DateTimeTest {
 
         val bean2 = TestDateTimeBean("2020/08/08", "080808", "2020/08/08 08:08:08")
         assertEquals(3, ValidationKit.validateBean(bean2, failFast = false).size)
+
+        // null values pass directly (null handling is delegated to @NotNull etc.)
+        val bean3 = TestDateTimeBean(null, null, null)
+        assert(ValidationKit.validateBean(bean3).isEmpty())
     }
 
     internal data class TestDateTimeBean(

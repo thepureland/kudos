@@ -21,6 +21,10 @@ internal class CnIdCardNoTest {
         val bean2 = TestCnIdCardNoBean("210502841202094", "210502198412020940")
         assert(ValidationKit.validateProperty(bean2, "idCardNo1").isNotEmpty())
         assert(ValidationKit.validateProperty(bean2, "idCardNo2").isNotEmpty())
+
+        // null values pass directly (null handling is delegated to @NotNull etc.)
+        val bean3 = TestCnIdCardNoBean(null, null)
+        assert(ValidationKit.validateBean(bean3).isEmpty())
     }
 
     internal data class TestCnIdCardNoBean(

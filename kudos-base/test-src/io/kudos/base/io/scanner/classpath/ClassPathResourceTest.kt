@@ -1,7 +1,10 @@
 package io.kudos.base.io.scanner.classpath
 
+import java.io.IOException
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -41,16 +44,59 @@ internal class ClassPathResourceTest {
 
     @Test
     fun testExists() {
-        // Test an existing resource (using a resource that actually exists in the project)
-        val resource = ClassPathResource("logback.xml")
-        // If the resource exists, exists should return true.
-        // Note: this test depends on whether the actual resource exists.
+        // logo.png exists at the test resources root.
+        val resource = ClassPathResource("logo.png")
+        assertTrue(resource.exists(), "logo.png should be on the test classpath")
     }
 
     @Test
     fun testExistsNonExistent() {
         val resource = ClassPathResource("non-existent-file-12345.txt")
-        // If the resource does not exist, exists should return false.
+        assertFalse(resource.exists(), "a missing resource must report exists()=false")
+    }
+
+    @Test
+    fun testLocationOnDisk_existingResource() {
+        val resource = ClassPathResource("logo.png")
+        val onDisk = resource.locationOnDisk
+        assertNotNull(onDisk)
+        assertTrue(onDisk!!.endsWith("logo.png"), "locationOnDisk should point at the file: $onDisk")
+    }
+
+    @Test
+    fun testLocationOnDisk_missingResource_throws() {
+        val resource = ClassPathResource("nope-not-here-98765.txt")
+        assertFailsWith<IOException> { resource.locationOnDisk }
+    }
+
+    @Test
+    fun testLoadAsString_missingResource_throws() {
+        val resource = ClassPathResource("missing-12345.txt")
+        assertFailsWith<IOException> { resource.loadAsString("UTF-8") }
+    }
+
+    @Test
+    fun testLoadAsBytes_missingResource_throws() {
+        val resource = ClassPathResource("missing-12345.txt")
+        assertFailsWith<IOException> { resource.loadAsBytes() }
+    }
+
+    @Test
+    fun testLoadAsBytes_existingResource() {
+        val resource = ClassPathResource("logo.png")
+        val bytes = resource.loadAsBytes()
+        assertTrue(bytes.isNotEmpty())
+    }
+
+    @Test
+    fun testEquals_branches() {
+        val r = ClassPathResource("x.txt")
+        @Suppress("KotlinConstantConditions")
+        assertTrue(r == r) // same instance
+        assertFalse(r.equals(null)) // null
+        assertFalse(r.equals("x.txt")) // different class
+        assertTrue(r == ClassPathResource("x.txt")) // same location
+        assertFalse(r == ClassPathResource("y.txt")) // different location
     }
 
     @Test

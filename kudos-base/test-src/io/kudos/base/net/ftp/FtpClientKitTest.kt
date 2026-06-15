@@ -1,11 +1,17 @@
 package io.kudos.base.net.ftp
 
+import org.apache.commons.net.ftp.FTPClient
+import org.apache.commons.net.ftp.FTPFile
+import org.apache.commons.net.ftp.FTPReply
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.anyString
+import org.mockito.Mockito
 import java.io.File
 import java.nio.file.Files
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * Test cases for FtpClientKit.
@@ -155,5 +161,82 @@ internal class FtpClientKitTest {
         // In a real environment it should match a lowercase test.txt on the server (if present).
         // The code uses ignoreCase = true for the comparison, so it is case-insensitive.
         // Without a real server, we only verify no exception is thrown.
+    }
+
+    /**
+     * Covers the full success path (login ok, working dir switch, matching file found, retrieve + logout)
+     * by mocking the FTPClient construction with Mockito's mockConstruction (no source change required).
+     */
+    @Test
+    fun testDownloadSuccessPath_withMockedFtpClient() {
+        val ftpFile = FTPFile().apply { name = "Report.TXT" }
+        Mockito.mockConstruction(FTPClient::class.java) { mock, _ ->
+            Mockito.`when`(mock.replyCode).thenReturn(FTPReply.COMMAND_OK)
+            Mockito.`when`(mock.listFiles()).thenReturn(arrayOf(ftpFile))
+            Mockito.`when`(mock.retrieveFile(anyString(), Mockito.any())).thenReturn(true)
+            Mockito.`when`(mock.isConnected).thenReturn(true)
+        }.use {
+            // filename "report.txt" matches "Report.TXT" case-insensitively
+            val result = FtpClientKit().download(
+                hostname = "host",
+                port = 21,
+                username = "u",
+                password = "p",
+                pathname = "/data",
+                filename = "report.txt",
+                localPath = tempDir.absolutePath
+            )
+            assertTrue(result, "Success path should return true")
+            // the matching file should have been written locally
+            assertTrue(File(tempDir, "Report.TXT").exists(), "Downloaded file should exist locally")
+        }
+    }
+
+    /**
+     * Covers the early-return branch when the FTP login reply code is not a positive completion.
+     */
+    @Test
+    fun testDownloadLoginNotPositive_returnsFalse() {
+        Mockito.mockConstruction(FTPClient::class.java) { mock, _ ->
+            Mockito.`when`(mock.replyCode).thenReturn(FTPReply.NOT_LOGGED_IN)
+            Mockito.`when`(mock.isConnected).thenReturn(false)
+        }.use {
+            val result = FtpClientKit().download(
+                hostname = "host",
+                port = 21,
+                username = "u",
+                password = "bad",
+                pathname = "/",
+                filename = "x.txt",
+                localPath = tempDir.absolutePath
+            )
+            assertFalse(result, "Non-positive reply code should return false")
+        }
+    }
+
+    /**
+     * Covers the case where listFiles returns files but none matches -> loop body not entered, but logout/flag set.
+     */
+    @Test
+    fun testDownloadNoMatchingFile_stillReturnsTrue() {
+        val ftpFile = FTPFile().apply { name = "other.dat" }
+        Mockito.mockConstruction(FTPClient::class.java) { mock, _ ->
+            Mockito.`when`(mock.replyCode).thenReturn(FTPReply.COMMAND_OK)
+            Mockito.`when`(mock.listFiles()).thenReturn(arrayOf(ftpFile))
+            Mockito.`when`(mock.isConnected).thenReturn(true)
+        }.use {
+            val result = FtpClientKit().download(
+                hostname = "host",
+                port = 21,
+                username = "u",
+                password = "p",
+                pathname = "/",
+                filename = "missing.txt",
+                localPath = tempDir.absolutePath
+            )
+            // logout succeeds and flag=true even though no file matched
+            assertTrue(result)
+            assertFalse(File(tempDir, "other.dat").exists())
+        }
     }
 }

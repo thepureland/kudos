@@ -63,6 +63,26 @@ internal class XmlKitTest {
     }
 
     @Test
+    fun toXml_blankEncoding_skipsEncodingProperty() {
+        // A blank encoding takes the !isNotBlank() branch (JAXB_ENCODING is not set).
+        val xml = XmlKit.toXml(person, "")
+        assert(xml.contains("<zipcode>410000</zipcode>"))
+    }
+
+    @Test
+    fun toXml_collection_customEncoding() {
+        val xml = XmlKit.toXml(listOf(person), "persons", Person::class, "UTF-8")
+        assertEquals(1, xml.countMatches("<person>"))
+    }
+
+    @Test
+    fun fromXml_ignoreNamespace() {
+        val xml = XmlKit.toXml(person)
+        val p = XmlKit.fromXml(xml, Person::class, ignoreNameSpace = true)
+        assertEquals(person.name, p.name)
+    }
+
+    @Test
     fun fromXml() {
         val xml = XmlKit.toXml(person)
         val p = XmlKit.fromXml(xml, Person::class)

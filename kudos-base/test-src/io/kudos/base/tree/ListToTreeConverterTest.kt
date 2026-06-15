@@ -224,6 +224,21 @@ internal class ListToTreeConverterTest {
         assertEquals(1, tree[0]._getChildren()[0]._getChildren().size)
     }
 
+    @Test
+    fun testConvertWithSortOnNonComparableNodesThrows() {
+        // sortByComparable requires elements to implement Comparable; TestTreeNode does not.
+        // Requesting a direction therefore triggers IllegalStateException.
+        val nodes = listOf(
+            TestTreeNode("1", null, "A"),
+            TestTreeNode("2", null, "B")
+        )
+        val ex = runCatching {
+            ListToTreeConverter.convert(nodes, direction = DirectionEnum.DESC)
+        }.exceptionOrNull()
+        assertTrue(ex is IllegalStateException, "expected IllegalStateException, got $ex")
+        assertTrue((ex.message ?: "").contains("Comparable"), "message should mention Comparable: ${ex?.message}")
+    }
+
     private class TestComparableTreeNode(
         id: String,
         parentId: String?,
