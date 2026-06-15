@@ -3,6 +3,10 @@ package io.kudos.ms.sys.core.tenant.cache
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.ms.sys.common.tenant.vo.SysTenantCacheEntry
 import io.kudos.ms.sys.core.tenant.dao.SysTenantDao
+import io.kudos.ms.sys.core.tenant.event.SysTenantBatchDeleted
+import io.kudos.ms.sys.core.tenant.event.SysTenantDeleted
+import io.kudos.ms.sys.core.tenant.event.SysTenantInserted
+import io.kudos.ms.sys.core.tenant.event.SysTenantUpdated
 import io.kudos.ms.sys.core.tenant.model.po.SysTenant
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -142,9 +146,43 @@ class TenantByIdCacheTest : RdbAndRedisCacheTestBase() {
         assertNull(cacheItem)
     }
 
+    /** The two-arg overloads delegate to the single-arg sync methods. */
+    @Test
+    fun syncOnInsertAndUpdate_overloads() {
+        val id = insertNewRecordToDb()
+        cacheHandler.syncOnInsert(Any(), id)
+        assertNotNull(cacheHandler.getTenantById(id))
+
+        sysTenantDao.updateProperties(id, mapOf(SysTenant::name.name to newTenantName))
+        cacheHandler.syncOnUpdate(Any(), id)
+        assertEquals(newTenantName, cacheHandler.getTenantById(id)?.name)
+    }
+
+    /** Event listeners delegate to the corresponding sync methods. */
+    @Test
+    fun eventListeners() {
+        val id = insertNewRecordToDb()
+        cacheHandler.on(SysTenantInserted(id = id))
+        assertNotNull(KeyValueCacheKit.getValue(cacheHandler.cacheName(), id))
+
+        sysTenantDao.updateProperties(id, mapOf(SysTenant::name.name to newTenantName))
+        cacheHandler.on(SysTenantUpdated(id = id))
+        assertEquals(newTenantName, cacheHandler.getTenantById(id)?.name)
+
+        val id2 = insertNewRecordToDb()
+        cacheHandler.on(SysTenantInserted(id = id2))
+        sysTenantDao.deleteById(id)
+        cacheHandler.on(SysTenantDeleted(id = id))
+        assertNull(cacheHandler.getTenantById(id))
+
+        sysTenantDao.deleteById(id2)
+        cacheHandler.on(SysTenantBatchDeleted(ids = listOf(id2)))
+        assertNull(cacheHandler.getTenantById(id2))
+    }
+
     private fun insertNewRecordToDb(): String {
         val sysTenant = SysTenant().apply {
-            name = "test_tenant_${System.currentTimeMillis()}"
+            name = "test_tenant_${System.currentTimeMillis()}_${System.nanoTime()}"
         }
         return sysTenantDao.insert(sysTenant)
     }

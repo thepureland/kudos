@@ -161,6 +161,67 @@ class RememberMeByTenantIdAndUsernameCacheTest : RdbAndRedisCacheTestBase() {
         }
     }
 
+    /**
+     * Carrier whose tenantId/username properties exist but are null, forcing
+     * [RememberMeByTenantIdAndUsernameCache.resolveKeyParts] to fall back to a DB lookup by id.
+     */
+    data class NullKeyCarrier(val tenantId: String? = null, val username: String? = null)
+
+    @Test
+    fun reload_validKey_loadsViaDoReload() {
+        // Exercises the doReload happy path (valid 2-part key -> getSelf().getRememberMe()).
+        val tenantId = "tenant-remember-1"
+        val username = "remember_user1"
+        val key = cacheHandler.getKey(tenantId, username)
+        cacheHandler.reload(key)
+        val cacheItem = cacheHandler.getRememberMe(tenantId, username)
+        assertNotNull(cacheItem)
+        assertEquals("token-1", cacheItem.token)
+    }
+
+    @Test
+    fun syncOnInsert_objectMissingKeyProps_resolvesViaDbFallback() {
+        // The carrier lacks usable tenantId/username, so resolveKeyParts must look them up by id in DB.
+        val id = "8c1a0000-0000-0000-0000-000000000001"
+        val tenantId = "tenant-remember-1"
+        val username = "remember_user1"
+        // Make sure the entry is absent first so the write-in-time reload is observable.
+        KeyValueCacheKit.evict(cacheHandler.cacheName(), cacheHandler.getKey(tenantId, username))
+
+        cacheHandler.syncOnInsert(NullKeyCarrier(), id)
+
+        // The DB-fallback path resolved the key and (when write-in-time) reloaded it; at minimum a
+        // subsequent read returns the DB row, proving the fallback produced the right key segments.
+        val cacheItem = cacheHandler.getRememberMe(tenantId, username)
+        assertNotNull(cacheItem)
+        assertEquals(id, cacheItem.id)
+    }
+
+    @Test
+    fun syncOnInsert_objectMissingKeyPropsAndBlankDbData_noOps() {
+        // DB row exists by id but its username is blank -> resolveKeyParts hits the dirty-data guard
+        // (logs WARN, returns null); sync must be a safe no-op without throwing and must not touch
+        // an unrelated, valid cache entry.
+        val tenantId = "tenant-remember-1"
+        val username = "remember_user1"
+        val before = assertNotNull(cacheHandler.getRememberMe(tenantId, username))
+
+        val blankRowId = "8c1a0000-0000-0000-0000-000000000005"
+        cacheHandler.syncOnInsert(NullKeyCarrier(), blankRowId) // must not throw; guard returns null
+
+        val after = assertNotNull(cacheHandler.getRememberMe(tenantId, username))
+        assertEquals(before.id, after.id)
+    }
+
+    @Test
+    fun syncOnInsert_objectMissingKeyPropsAndUnknownId_noOps() {
+        // resolveKeyParts cannot find the record by id -> logs WARN and returns null; sync is a no-op.
+        val unknownId = "8c1a0000-0000-0000-0000-0000000000ff"
+        // Should not throw, and must not create any spurious cache entry.
+        cacheHandler.syncOnInsert(NullKeyCarrier(), unknownId)
+        assertNull(cacheHandler.getRememberMe("no-such-tenant", "no-such-user"))
+    }
+
     private fun insertNewRecordToDb(
         userId: String,
         tenantId: String,

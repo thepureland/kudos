@@ -11,6 +11,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -201,5 +202,120 @@ class SysResourceServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun deleteById_returnsFalseWhenRowMissing() {
         assertFalse(sysResourceService.deleteById("00000000-0000-0000-0000-000000000001"))
+    }
+
+    /** Recursively collect all descendants (menu + nested) from cache. */
+    @Test
+    fun getChildrenResourcesFromCache_recursive() {
+        sysResourceHashCache.reloadAll(clear = true)
+        // child (1462) is a FUNCTION under parent (1461, MENU); query the whole FUNCTION subtree under the parent
+        val children = sysResourceService.getChildrenResourcesFromCache(
+            seededSubSystemCode,
+            ResourceTypeEnum.FUNCTION,
+            seededParentId
+        )
+        assertTrue(children.any { it.id == seededChildId })
+    }
+
+    /** Detail with parents excluded vs included. */
+    @Test
+    fun getDetailWithOptionalParents_withAndWithoutParents() {
+        sysResourceHashCache.reloadAll(clear = true)
+        val without = sysResourceService.getDetailWithOptionalParents(seededChildId, includeParents = false)
+        assertNotNull(without)
+        assertEquals(seededChildId, without.id)
+
+        val with = sysResourceService.getDetailWithOptionalParents(seededChildId, includeParents = true)
+        assertNotNull(with)
+        assertTrue(with.parentIds.orEmpty().contains(seededParentId))
+    }
+
+    /** Detail returns null for a missing id. */
+    @Test
+    fun getDetailWithOptionalParents_missingId_returnsNull() {
+        assertNull(sysResourceService.getDetailWithOptionalParents("00000000-0000-0000-0000-000000000001", true))
+    }
+
+    /** moveResource updates order and reports success. */
+    @Test
+    fun moveResource_success() {
+        sysResourceHashCache.reloadAll(clear = true)
+        assertTrue(sysResourceService.moveResource(seededChildId, newParentId = seededParentId, newOrderNum = 99))
+        val row = sysResourceService.get(seededChildId)
+        assertNotNull(row)
+        assertEquals(99, row.orderNum)
+    }
+
+    /** loadDirectChildrenForTree level 2/else returns resource rows of the subsystem. */
+    @Test
+    fun loadDirectChildrenForTree_resourceLevel() {
+        val nodes = sysResourceService.loadDirectChildrenForTree(
+            io.kudos.ms.sys.common.resource.vo.request.SysResourceQuery(
+                subSystemCode = seededSubSystemCode,
+                level = 3,
+            )
+        )
+        assertTrue(nodes.any { it.id == seededParentId || it.id == seededChildId })
+    }
+
+    /** insert + update + deleteById full lifecycle, verifying cache sync. */
+    @Test
+    fun insert_update_delete_lifecycle() {
+        sysResourceHashCache.reloadAll(clear = true)
+        val unique = java.util.UUID.randomUUID().toString().take(8)
+        val id = sysResourceService.insert(
+            io.kudos.ms.sys.core.resource.model.po.SysResource().apply {
+                name = "res-lifecycle-$unique"
+                url = "/res-lifecycle-$unique"
+                resourceTypeDictCode = ResourceTypeEnum.MENU.code
+                parentId = null
+                orderNum = 5
+                subSystemCode = seededSubSystemCode
+                active = true
+                builtIn = false
+            }
+        )
+        assertNotNull(id)
+
+        val updated = sysResourceService.update(
+            io.kudos.ms.sys.core.resource.model.po.SysResource().apply {
+                this.id = id
+                name = "res-lifecycle-updated-$unique"
+                resourceTypeDictCode = ResourceTypeEnum.MENU.code
+                subSystemCode = seededSubSystemCode
+            }
+        )
+        assertTrue(updated)
+        assertEquals("res-lifecycle-updated-$unique", sysResourceService.get(id)?.name)
+
+        assertTrue(sysResourceService.deleteById(id))
+        assertNull(sysResourceService.get(id))
+    }
+
+    /** batchDelete removes multiple rows and returns the count. */
+    @Test
+    fun batchDelete_removesRows() {
+        val unique = java.util.UUID.randomUUID().toString().take(8)
+        val id1 = sysResourceService.insert(
+            io.kudos.ms.sys.core.resource.model.po.SysResource().apply {
+                name = "res-bd1-$unique"; url = "/res-bd1-$unique"
+                resourceTypeDictCode = ResourceTypeEnum.MENU.code; subSystemCode = seededSubSystemCode
+                active = true; builtIn = false
+            }
+        )
+        val id2 = sysResourceService.insert(
+            io.kudos.ms.sys.core.resource.model.po.SysResource().apply {
+                name = "res-bd2-$unique"; url = "/res-bd2-$unique"
+                resourceTypeDictCode = ResourceTypeEnum.MENU.code; subSystemCode = seededSubSystemCode
+                active = true; builtIn = false
+            }
+        )
+        assertEquals(2, sysResourceService.batchDelete(listOf(id1, id2)))
+    }
+
+    /** batchDelete with empty/no-match collection returns 0 and publishes nothing. */
+    @Test
+    fun batchDelete_noMatch_returnsZero() {
+        assertEquals(0, sysResourceService.batchDelete(listOf("00000000-0000-0000-0000-0000000000aa")))
     }
 }

@@ -6,8 +6,13 @@ merge into "sys_tenant" ("id", "name", "timezone", "default_language_code", "rem
 
 merge into "sys_system" ("code", "name", "parent_code", "sub_system", "remark", "active", "built_in") values
     ('svc-system-ar-dao-test-1_1456', 'svc-system-accessrule-dao-test-1-name', null, false, 'from SysAccessRuleDaoTest', true, false),
-    ('svc-subsys-ar-dao-test-1_1456', 'svc-subsys-accessrule-dao-test-1-name', 'svc-system-ar-dao-test-1_1456', true, 'from SysAccessRuleDaoTest', true, false);
+    ('svc-subsys-ar-dao-test-1_1456', 'svc-subsys-accessrule-dao-test-1-name', 'svc-system-ar-dao-test-1_1456', true, 'from SysAccessRuleDaoTest', true, false),
+    ('svc-system-ar-dao-test-plat_1456', 'svc-system-accessrule-dao-test-plat-name', null, false, 'from SysAccessRuleDaoTest', true, false);
 
 merge into "sys_access_rule" ("id", "tenant_id", "system_code", "access_rule_type_dict_code", "remark", "active", "built_in") values
     ('40000000-0000-0000-0000-000000001791', '40000000-0000-0000-0000-000000001791', 'svc-system-ar-dao-test-1_1456', 'RULE_TYPE_WHITELIST', 'from SysAccessRuleDaoTest', true, false),
     ('40000000-0000-0000-0000-000000001791', '40000000-0000-0000-0000-000000001791', 'svc-system-ar-dao-test-1_1456', 'RULE_TYPE_BLACKLIST', 'from SysAccessRuleDaoTest', true, false);
+
+-- platform-level access rule (tenant_id IS NULL) for exercising the platform-level (null tenant) query branches
+merge into "sys_access_rule" ("id", "tenant_id", "system_code", "access_rule_type_dict_code", "remark", "active", "built_in") values
+    ('40000000-0000-0000-0000-000000001792', null, 'svc-system-ar-dao-test-plat_1456', 'RULE_TYPE_WHITELIST', 'platform-level from SysAccessRuleDaoTest', true, false);

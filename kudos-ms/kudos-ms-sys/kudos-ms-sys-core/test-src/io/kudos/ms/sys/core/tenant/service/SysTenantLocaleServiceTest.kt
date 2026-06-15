@@ -5,6 +5,7 @@ import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -55,5 +56,25 @@ class SysTenantLocaleServiceTest : RdbAndRedisCacheTestBase() {
         // Rebind
         val bindCount = sysTenantLocaleService.batchBind(tenantId, listOf(localeCode))
         assertTrue(bindCount > 0)
+    }
+
+    /** batchBind with an empty collection short-circuits and inserts nothing. */
+    @Test
+    fun batchBind_emptyReturnsZero() {
+        assertEquals(0, sysTenantLocaleService.batchBind("20000000-0000-0000-0000-000000009132", emptyList()))
+    }
+
+    /** batchBind where every requested locale already exists inserts nothing. */
+    @Test
+    fun batchBind_allExistReturnsZero() {
+        val tenantId = "20000000-0000-0000-0000-000000009132"
+        assertEquals(0, sysTenantLocaleService.batchBind(tenantId, listOf("zh_CN")))
+    }
+
+    /** unbind a non-existent relation returns false (warn branch). */
+    @Test
+    fun unbind_missingReturnsFalse() {
+        val tenantId = "20000000-0000-0000-0000-000000009132"
+        assertFalse(sysTenantLocaleService.unbind(tenantId, "no-such-locale"))
     }
 }

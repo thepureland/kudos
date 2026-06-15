@@ -4,6 +4,10 @@ import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
 import io.kudos.ms.sys.common.i18n.vo.SysI18nCacheEntry
 import io.kudos.ms.sys.core.i18n.dao.SysI18nDao
+import io.kudos.ms.sys.core.i18n.event.SysI18nBatchDeleted
+import io.kudos.ms.sys.core.i18n.event.SysI18nDeleted
+import io.kudos.ms.sys.core.i18n.event.SysI18nInserted
+import io.kudos.ms.sys.core.i18n.event.SysI18nUpdated
 import io.kudos.ms.sys.core.i18n.model.po.SysI18n
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -89,6 +93,55 @@ class SysI18nHashCacheTest : RdbAndRedisCacheTestBase() {
         assertFailsWith<IllegalArgumentException> { cacheHandler.getI18ns(locale, atomicServiceCode, "", namespace) }
     }
 
+    // ---------- by id ----------
+
+    @Test
+    fun getI18nById() {
+        cacheHandler.reloadAll(true)
+        val id = "40000000-0000-0000-0000-000000008910"
+        val entry = cacheHandler.getI18nById(id)
+        assertNotNull(entry)
+        assertEquals(id, entry.id)
+        assertNull(cacheHandler.getI18nById("40000000-0000-0000-0000-0000000000ff"))
+    }
+
+    @Test
+    fun getI18nById_blankRejected() {
+        assertFailsWith<IllegalArgumentException> { cacheHandler.getI18nById("") }
+    }
+
+    @Test
+    fun getI18nsByIds() {
+        cacheHandler.reloadAll(true)
+        val id1 = "40000000-0000-0000-0000-000000008910"
+        val id2 = "40000000-0000-0000-0000-000000008911"
+        val map = cacheHandler.getI18nsByIds(listOf(id1, id2))
+        assertEquals(2, map.size)
+        assertEquals(id1, map[id1]?.id)
+        // empty input short-circuits to an empty map
+        assertTrue(cacheHandler.getI18nsByIds(emptyList()).isEmpty())
+    }
+
+    // ---------- getI18nMap ----------
+
+    @Test
+    fun getI18nMap_withNamespace() {
+        cacheHandler.reloadAll(true)
+        val map = cacheHandler.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode, namespace)
+        assertEquals("value-1", map["1"])
+        assertFalse(map.containsKey("3")) // inactive
+    }
+
+    @Test
+    fun getI18nMap_groupedByNamespace() {
+        cacheHandler.reloadAll(true)
+        // 3-arg overload returns Map<namespace, Map<key, value>>
+        val grouped = cacheHandler.getI18nMap(locale, atomicServiceCode, i18nTypeDictCode)
+        assertTrue(grouped.containsKey("i18n.key"))
+        assertTrue(grouped.containsKey("msg.key"))
+        assertEquals("value-1", grouped["i18n.key"]?.get("1"))
+    }
+
     // ---------- reloadAll ----------
 
     @Test
@@ -159,6 +212,37 @@ class SysI18nHashCacheTest : RdbAndRedisCacheTestBase() {
         cacheHandler.syncOnBatchDelete(listOf(id1, id2))
         val list = cacheHandler.getI18ns("en_US", "as-i18n-test-2_8910", i18nTypeDictCode, namespace)
         assertFalse(list.any { it.id == id1 || it.id == id2 })
+    }
+
+    // ---------- transactional event listeners (delegate to syncOn*) ----------
+
+    @Test
+    fun onEvents_delegateToSync() {
+        cacheHandler.reloadAll(true)
+        val i18n = insertNewRecordToDb(locale, atomicServiceCode, i18nTypeDictCode, namespace, "on-insert", "value-on-insert")
+        // inserted -> syncOnInsert
+        cacheHandler.on(SysI18nInserted(id = i18n.id))
+        assertTrue(cacheHandler.getI18ns(locale, atomicServiceCode, i18nTypeDictCode, namespace).any { it.key == "on-insert" })
+
+        // updated -> syncOnUpdate
+        sysI18nDao.updateProperties(i18n.id, mapOf(SysI18n::value.name to "value-on-updated"))
+        cacheHandler.on(SysI18nUpdated(id = i18n.id))
+        assertEquals(
+            "value-on-updated",
+            cacheHandler.getI18ns(locale, atomicServiceCode, i18nTypeDictCode, namespace).find { it.key == "on-insert" }?.value
+        )
+
+        // deleted -> syncOnDelete
+        sysI18nDao.deleteById(i18n.id)
+        cacheHandler.on(SysI18nDeleted(id = i18n.id))
+        assertFalse(cacheHandler.getI18ns(locale, atomicServiceCode, i18nTypeDictCode, namespace).any { it.id == i18n.id })
+
+        // batch deleted -> syncOnBatchDelete
+        val i18n2 = insertNewRecordToDb(locale, atomicServiceCode, i18nTypeDictCode, namespace, "on-batch", "value-on-batch")
+        cacheHandler.syncOnInsert(i18n2.id)
+        sysI18nDao.deleteById(i18n2.id)
+        cacheHandler.on(SysI18nBatchDeleted(ids = listOf(i18n2.id)))
+        assertFalse(cacheHandler.getI18ns(locale, atomicServiceCode, i18nTypeDictCode, namespace).any { it.id == i18n2.id })
     }
 
     private fun insertNewRecordToDb(

@@ -124,6 +124,29 @@ class SysLocaleServiceTest : RdbAndRedisCacheTestBase() {
         assertNull(sysLocaleService.getLocaleByCode(code))
     }
 
+    /** update(any) modifies an existing locale and publishes the updated event. */
+    @Test
+    fun update_modifiesExistingRow() {
+        val unique = UUID.randomUUID().toString().take(6).lowercase()
+        val code = "uu_$unique"
+        val id = sysLocaleService.insert(
+            SysLocale().apply {
+                this.code = code
+                displayName = "Disp-$unique"
+                englishName = "Eng $unique"
+                sortNo = 700
+                active = true
+                builtIn = false
+            }
+        )
+        val po = SysLocale().apply {
+            this.id = id
+            displayName = "Disp-updated"
+        }
+        assertTrue(sysLocaleService.update(po))
+        assertEquals("Disp-updated", sysLocaleService.get(id)?.displayName)
+    }
+
     @Test
     fun batchDelete_syncCache() {
         localeByCodeCache.reloadAll(clear = true)

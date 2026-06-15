@@ -26,3 +26,17 @@ merge into "user_account" ("id", "username", "tenant_id", "login_password", "sup
 merge into "auth_role_user" ("id", "role_id", "user_id", "create_user_id", "create_user_name") values
     ('249363d1-0000-0000-0000-000000000023', '249363d1-0000-0000-0000-000000000022', '249363d1-0000-0000-0000-000000000016', 'system', '系统'),
     ('249363d1-0000-0000-0000-000000000024', '249363d1-0000-0000-0000-000000000022', '249363d1-0000-0000-0000-000000000017', 'system', '系统');
+
+-- sys_system + sys_resource: 供资源类用例 (getRoleResources / hasResource / getResources / getRoleNamesByResourceIds / getEffectivePermissions)
+merge into "sys_system" ("code", "name", "parent_code", "sub_system", "remark", "active", "built_in") values
+    ('svc-port-role-svc-249363d1', 'svc-por-rol-svc-name-249363d1', null, false, 'from AuthRoleServiceTest', true, false),
+    ('svc-subs-role-svc-249363d1', 'svc-sub-rol-svc-name-249363d1', 'svc-port-role-svc-249363d1', true, 'from AuthRoleServiceTest', true, false);
+
+merge into "sys_resource" ("id", "name", "url", "resource_type_dict_code", "parent_id", "order_num", "icon", "sub_system_code", "remark", "active", "built_in") values
+    ('249363d1-0000-0000-0000-000000000070', 'svc-resource-1-249363d1', '/svc-resource-1-249363d1', 'M', null, 1, null, 'svc-subs-role-svc-249363d1', 'from AuthRoleServiceTest', true, false),
+    ('249363d1-0000-0000-0000-000000000071', 'svc-resource-2-249363d1', '/svc-resource-2-249363d1', 'B', '249363d1-0000-0000-0000-000000000070', 2, null, 'svc-subs-role-svc-249363d1', 'from AuthRoleServiceTest', true, false);
+
+-- auth_role_resource: role 022 grants resource 070 and 071
+merge into "auth_role_resource" ("id", "role_id", "resource_id", "create_user_id", "create_user_name") values
+    ('249363d1-0000-0000-0000-000000000072', '249363d1-0000-0000-0000-000000000022', '249363d1-0000-0000-0000-000000000070', 'system', '系统'),
+    ('249363d1-0000-0000-0000-000000000073', '249363d1-0000-0000-0000-000000000022', '249363d1-0000-0000-0000-000000000071', 'system', '系统');

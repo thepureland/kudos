@@ -10,4 +10,6 @@ merge into "user_login_remember_me" ("id", "user_id", "username", "tenant_id", "
     ('8c1a0000-0000-0000-0000-000000000001', '7c1a0000-0000-0000-0000-000000000001', 'remember_user1', 'tenant-remember-1', 'token-1', CURRENT_TIMESTAMP),
     ('8c1a0000-0000-0000-0000-000000000002', '7c1a0000-0000-0000-0000-000000000002', 'remember_user2', 'tenant-remember-1', 'token-2', CURRENT_TIMESTAMP),
     ('8c1a0000-0000-0000-0000-000000000003', '7c1a0000-0000-0000-0000-000000000003', 'remember_user_delete', 'tenant-remember-1', 'token-del', CURRENT_TIMESTAMP),
-    ('8c1a0000-0000-0000-0000-000000000004', '7c1a0000-0000-0000-0000-000000000004', 'remember_user1', 'tenant-remember-2', 'token-3', CURRENT_TIMESTAMP);
+    ('8c1a0000-0000-0000-0000-000000000004', '7c1a0000-0000-0000-0000-000000000004', 'remember_user1', 'tenant-remember-2', 'token-3', CURRENT_TIMESTAMP),
+    -- dirty row: blank username, used to exercise the resolveKeyParts blank-data guard
+    ('8c1a0000-0000-0000-0000-000000000005', '7c1a0000-0000-0000-0000-000000000004', '', 'tenant-remember-2', 'token-blank', CURRENT_TIMESTAMP);

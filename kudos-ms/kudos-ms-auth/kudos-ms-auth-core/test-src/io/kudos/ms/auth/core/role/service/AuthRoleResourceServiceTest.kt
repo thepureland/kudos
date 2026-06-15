@@ -79,7 +79,7 @@ class AuthRoleResourceServiceTest : RdbAndRedisCacheTestBase() {
     fun unbind() {
         val roleId = "3248fb0d-0000-0000-0000-000000000050"
         val resourceId = "3248fb0d-0000-0000-0000-000000000057"
-        
+
         // Verify the relation exists
         assertTrue(authRoleResourceService.exists(roleId, resourceId))
 
@@ -91,5 +91,30 @@ class AuthRoleResourceServiceTest : RdbAndRedisCacheTestBase() {
 
         // Rebind so subsequent tests can run
         authRoleResourceService.batchBind(roleId, listOf(resourceId))
+    }
+
+    @Test
+    fun batchBind_emptyResourceIds_returnsZero() {
+        assertEquals(0, authRoleResourceService.batchBind("3248fb0d-0000-0000-0000-000000000051", emptyList()))
+    }
+
+    @Test
+    fun batchBind_allAlreadyBound_returnsZero() {
+        // role 050 already grants 056 & 057; rebinding adds nothing.
+        val roleId = "3248fb0d-0000-0000-0000-000000000050"
+        val already = listOf("3248fb0d-0000-0000-0000-000000000056", "3248fb0d-0000-0000-0000-000000000057")
+        assertEquals(0, authRoleResourceService.batchBind(roleId, already))
+    }
+
+    @Test
+    fun unbind_nonExistentRelation_returnsFalse() {
+        assertFalse(authRoleResourceService.unbind("3248fb0d-0000-0000-0000-000000000050", "no-such-resource"))
+    }
+
+    @Test
+    fun exists_trimsResourceId() {
+        // exists() trims its argument, so trailing whitespace still matches.
+        val roleId = "3248fb0d-0000-0000-0000-000000000050"
+        assertTrue(authRoleResourceService.exists(roleId, "3248fb0d-0000-0000-0000-000000000056  "))
     }
 }

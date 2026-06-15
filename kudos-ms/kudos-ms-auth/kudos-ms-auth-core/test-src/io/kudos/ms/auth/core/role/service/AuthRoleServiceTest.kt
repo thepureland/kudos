@@ -1,5 +1,6 @@
 package io.kudos.ms.auth.core.role.service
 
+import io.kudos.ms.auth.common.role.vo.request.AuthRoleFormCreate
 import io.kudos.ms.auth.common.role.vo.request.AuthRoleFormUpdate
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -175,6 +176,187 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
         )
         assertTrue(authRoleService.update(form))
         assertEquals(listOf(rootRoleId), authRoleService.getAncestorRoleIds(leafRoleId))
+    }
+
+    // -----------------------------------------------------------------------
+    // Permission / aggregator reads — role 022 (svc-role-user-test-1) is held by users 016 & 017
+    // and grants resources 070 & 071 (see AuthRoleServiceTest.sql).
+    // -----------------------------------------------------------------------
+
+    private val roleWithUsers = "249363d1-0000-0000-0000-000000000022"
+    private val user016 = "249363d1-0000-0000-0000-000000000016"
+    private val user017 = "249363d1-0000-0000-0000-000000000017"
+    private val resource070 = "249363d1-0000-0000-0000-000000000070"
+    private val resource071 = "249363d1-0000-0000-0000-000000000071"
+    private val roleTenant = "svc-tenant-user-test-1-249363d1"
+    private val roleCode = "svc-role-user-test-1-249363d1"
+
+    @Test
+    fun getRoleUserIds() {
+        val userIds = authRoleService.getRoleUserIds(roleWithUsers)
+        assertTrue(userIds.containsAll(listOf(user016, user017)))
+    }
+
+    @Test
+    fun getRoleResourceIds() {
+        val resIds = authRoleService.getRoleResourceIds(roleWithUsers)
+        assertEquals(setOf(resource070, resource071), resIds)
+    }
+
+    @Test
+    fun getRoleUsers() {
+        val users = authRoleService.getRoleUsers(roleWithUsers)
+        val ids = users.map { it.id }.toSet()
+        assertTrue(ids.contains(user016) && ids.contains(user017))
+        // role with no users -> empty
+        assertTrue(authRoleService.getRoleUsers("249363d1-0000-0000-0000-000000000025").isEmpty())
+    }
+
+    @Test
+    fun getRoleResources() {
+        val resources = authRoleService.getRoleResources(roleWithUsers)
+        assertEquals(setOf(resource070, resource071), resources.map { it.id }.toSet())
+        // role with no resources -> empty
+        assertTrue(authRoleService.getRoleResources("249363d1-0000-0000-0000-000000000025").isEmpty())
+    }
+
+    @Test
+    fun hasResource() {
+        assertTrue(authRoleService.hasResource(roleWithUsers, resource070))
+        assertFalse(authRoleService.hasResource(roleWithUsers, "no-such-resource"))
+    }
+
+    @Test
+    fun getUserRoleIds_and_getUserRoles() {
+        val roleIds = authRoleService.getUserRoleIds(user016)
+        assertTrue(roleIds.contains(roleWithUsers))
+        val roles = authRoleService.getUserRoles(user016)
+        assertTrue(roles.any { it.id == roleWithUsers })
+        // user with no roles -> empty
+        assertTrue(authRoleService.getUserRoles("no-such-user").isEmpty())
+    }
+
+    @Test
+    fun hasRole_and_hasRoleByCode() {
+        assertTrue(authRoleService.hasRole(user016, roleWithUsers))
+        assertFalse(authRoleService.hasRole(user016, "no-such-role"))
+        assertTrue(authRoleService.hasRoleByCode(user016, roleTenant, roleCode))
+        // unknown role code -> false (no NPE)
+        assertFalse(authRoleService.hasRoleByCode(user016, roleTenant, "no-such-code"))
+    }
+
+    @Test
+    fun userResourceReads() {
+        val resIds = authRoleService.getUserResourceIds(user016)
+        assertTrue(resIds.containsAll(setOf(resource070, resource071)))
+        assertTrue(authRoleService.isUserHasResource(user016, resource070))
+        assertFalse(authRoleService.isUserHasResource(user016, "no-such-resource"))
+        val resources = authRoleService.getResources(user016)
+        assertTrue(resources.map { it.id }.containsAll(listOf(resource070, resource071)))
+    }
+
+    @Test
+    fun getEffectivePermissions() {
+        val vo = authRoleService.getEffectivePermissions(user016)
+        assertTrue(vo.directRoles.any { it.id == roleWithUsers }, "direct role must be present")
+        assertTrue(vo.resourcesByRole[roleWithUsers]?.map { it.id }?.toSet() == setOf(resource070, resource071))
+        // user with no grants -> empty VO
+        val empty = authRoleService.getEffectivePermissions("no-such-user")
+        assertTrue(empty.directRoles.isEmpty() && empty.groups.isEmpty())
+    }
+
+    @Test
+    fun getRoleNamesByResourceIds() {
+        val map = authRoleService.getRoleNamesByResourceIds(listOf(resource070))
+        assertTrue(map[resource070]?.contains("svc-rol-use-tes-1-name-249363d1") == true)
+        // empty input -> empty map
+        assertTrue(authRoleService.getRoleNamesByResourceIds(emptyList()).isEmpty())
+    }
+
+    @Test
+    fun getDeleteImpact() {
+        val impact = authRoleService.getDeleteImpact(listOf(roleWithUsers))
+        assertTrue(impact.users >= 2, "role is held by at least users 016 & 017")
+        // empty input -> zero
+        val zero = authRoleService.getDeleteImpact(emptyList())
+        assertEquals(0, zero.users)
+        assertEquals(0, zero.groups)
+    }
+
+    @Test
+    fun batchBindUsers_emptyInputs() {
+        assertEquals(0, authRoleService.batchBindUsers(emptyList(), listOf(user016)).ok)
+        assertEquals(0, authRoleService.batchBindUsers(listOf(roleWithUsers), emptyList()).ok)
+    }
+
+    @Test
+    fun batchBindUsers_bindsNewUsers() {
+        // bind users 016/017 to role 025 (currently empty); both succeed.
+        val targetRole = "249363d1-0000-0000-0000-000000000025"
+        val result = authRoleService.batchBindUsers(listOf(targetRole), listOf(user016, user017))
+        assertEquals(1, result.ok, "one role processed successfully")
+        assertTrue(result.failures.isEmpty())
+        assertTrue(authRoleService.getRoleUserIds(targetRole).containsAll(listOf(user016, user017)))
+    }
+
+    @Test
+    fun insert_rootRole_publishesAndPersists() {
+        val form = AuthRoleFormCreate(
+            code = "svc-role-inserted-new", name = "inserted", tenantId = "svc-tenant-role-test-1-bq0Y0mrl",
+            subsysCode = "ams", remark = "inserted by test",
+        )
+        val id = authRoleService.insert(form)
+        assertTrue(id.isNotBlank())
+        val record = authRoleService.getRoleRecord(id)
+        assertNotNull(record)
+        assertEquals("svc-role-inserted-new", record.code)
+    }
+
+    @Test
+    fun insert_withNonExistentParent_rejected() {
+        val form = AuthRoleFormCreate(
+            code = "svc-role-bad-parent", name = "bad", tenantId = "svc-tenant-role-test-1-bq0Y0mrl",
+            subsysCode = "ams", parentId = "no-such-parent", remark = null,
+        )
+        assertFailsWith<IllegalArgumentException> { authRoleService.insert(form) }
+    }
+
+    @Test
+    fun copyRole_copiesMetadataAndResources() {
+        val newId = authRoleService.copyRole(
+            sourceId = roleWithUsers, code = "svc-role-copy-new", name = "copied", copyResources = true,
+        )
+        assertTrue(newId.isNotBlank())
+        val copy = authRoleService.getRoleRecord(newId)
+        assertNotNull(copy)
+        assertEquals("svc-role-copy-new", copy.code)
+        // resources copied across
+        assertEquals(setOf(resource070, resource071), authRoleService.getRoleResourceIds(newId))
+    }
+
+    @Test
+    fun copyRole_withoutResources() {
+        val newId = authRoleService.copyRole(
+            sourceId = roleWithUsers, code = "svc-role-copy-nores", name = "copied2", copyResources = false,
+        )
+        assertTrue(authRoleService.getRoleResourceIds(newId).isEmpty())
+    }
+
+    @Test
+    fun copyRole_blankCodeOrName_rejected() {
+        assertFailsWith<IllegalArgumentException> {
+            authRoleService.copyRole(roleWithUsers, code = " ", name = "x", copyResources = false)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            authRoleService.copyRole(roleWithUsers, code = "x", name = " ", copyResources = false)
+        }
+    }
+
+    @Test
+    fun copyRole_sourceNotFound_rejected() {
+        assertFailsWith<IllegalArgumentException> {
+            authRoleService.copyRole("no-such-source", code = "c", name = "n", copyResources = false)
+        }
     }
 
 }
