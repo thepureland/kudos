@@ -1,12 +1,12 @@
-package io.kudos.ms.user.api.public.init
+package io.kudos.ms.sys.api.internal.init
 
-import org.mockito.Mockito
 import org.springframework.boot.SpringApplication
 import kotlin.test.Test
 import kotlin.test.assertNotNull
+import org.mockito.Mockito
 
 /**
- * Pure unit test for [UserApiWebApplication] and its [main] entry point.
+ * Pure unit test for [SysApiProviderApplication] and its [main] entry point.
  *
  * The Spring container is never actually started: [SpringApplication.run] is stubbed via a static
  * mock, so the test stays fast, deterministic and free of any DB/container dependency. It only
@@ -16,11 +16,11 @@ import kotlin.test.assertNotNull
  * @author K
  * @since 1.0.0
  */
-internal class UserApiWebApplicationTest {
+internal class SysApiProviderApplicationTest {
 
     @Test
-    fun canBeInstantiated() {
-        assertNotNull(UserApiWebApplication())
+    fun classIsInstantiable() {
+        assertNotNull(SysApiProviderApplication())
     }
 
     @Test
@@ -32,7 +32,7 @@ internal class UserApiWebApplicationTest {
 
             // exact source class + each forwarded program arg are verified verbatim
             mocked.verify {
-                SpringApplication.run(UserApiWebApplication::class.java, "--server.port=0", "extra")
+                SpringApplication.run(SysApiProviderApplication::class.java, "--server.port=0", "extra")
             }
             mocked.verifyNoMoreInteractions()
         }
@@ -44,7 +44,7 @@ internal class UserApiWebApplicationTest {
             main(emptyArray())
 
             mocked.verify {
-                SpringApplication.run(UserApiWebApplication::class.java)
+                SpringApplication.run(SysApiProviderApplication::class.java)
             }
             mocked.verifyNoMoreInteractions()
         }
@@ -53,10 +53,10 @@ internal class UserApiWebApplicationTest {
     @Test
     fun main_forwardsUnicodeArgVerbatim() {
         Mockito.mockStatic(SpringApplication::class.java).use { mocked ->
-            main(arrayOf("--app.name=用户-公共"))
+            main(arrayOf("--app.name=系统-内部"))
 
             mocked.verify {
-                SpringApplication.run(UserApiWebApplication::class.java, "--app.name=用户-公共")
+                SpringApplication.run(SysApiProviderApplication::class.java, "--app.name=系统-内部")
             }
             mocked.verifyNoMoreInteractions()
         }

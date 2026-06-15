@@ -1,8 +1,12 @@
 package io.kudos.ms.sys.api.admin.controller.datasource
 
+import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.security.CryptoKit
 import io.kudos.ms.sys.common.datasource.consts.SysDataSourceConsts
+import io.kudos.ms.sys.common.datasource.vo.request.SysDataSourceQuery
 import io.kudos.ms.sys.common.datasource.vo.request.SysDataSourceTestRequest
+import io.kudos.ms.sys.common.datasource.vo.response.SysDataSourceDetail
+import io.kudos.ms.sys.common.datasource.vo.response.SysDataSourceEdit
 import io.kudos.ms.sys.common.datasource.vo.response.SysDataSourceRow
 import io.kudos.ms.sys.core.datasource.service.iservice.ISysDataSourceService
 import org.mockito.Mockito.mock
@@ -122,5 +126,67 @@ internal class SysDataSourceAdminControllerTest {
         val cipher = controller.encrypt("")
         assertTrue(cipher.startsWith("┼"))
         assertEquals("", CryptoKit.aesDecrypt(cipher))
+    }
+
+    // ----- overridden read endpoints: must delegate to super then mask the password -----
+
+    @Test
+    fun pagingSearchMasksEveryRowPasswordAndKeepsTotalCount() {
+        val query = SysDataSourceQuery(name = "main")
+        val raw = PagingSearchResult(
+            data = listOf(row("1", "┼secret"), row("2", "plain"), row("3", null), row("4", "")),
+            totalCount = 42,
+        )
+        // BaseReadOnlyController.pagingSearch delegates to the non-generic
+        // service.pagingSearch(listSearchPayload) overload.
+        whenCalled(service.pagingSearch(query)).thenReturn(raw)
+
+        val result = controller.pagingSearch(query)
+
+        assertEquals(42, result.totalCount) // totalCount preserved by copy()
+        assertEquals(4, result.data.size)
+        assertEquals(SysDataSourceConsts.PASSWORD_MASK, result.data[0].password)
+        assertEquals(SysDataSourceConsts.PASSWORD_MASK, result.data[1].password)
+        assertEquals(null, result.data[2].password) // null passes through
+        assertEquals("", result.data[3].password)   // blank passes through
+        assertEquals("ds-1", result.data[0].name)    // non-password fields preserved
+        verify(service).pagingSearch(query)
+    }
+
+    @Test
+    fun getDetailMasksPassword() {
+        val detail = SysDataSourceDetail(
+            id = "ds-1",
+            name = "main",
+            url = "jdbc:postgresql://localhost:5432/db",
+            username = "admin",
+            password = "┼AES-ciphertext",
+        )
+        // Stub the generic service.get(id, KClass) overload with raw values (no eq() matcher).
+        whenCalled(service.get("ds-1", SysDataSourceDetail::class)).thenReturn(detail)
+
+        val result = controller.getDetail("ds-1")
+
+        assertEquals(SysDataSourceConsts.PASSWORD_MASK, result.password)
+        assertEquals("main", result.name) // other fields untouched
+        verify(service).get("ds-1", SysDataSourceDetail::class)
+    }
+
+    @Test
+    fun getEditMasksPassword() {
+        val edit = SysDataSourceEdit(
+            id = "ds-2",
+            name = "edit-one",
+            url = "jdbc:postgresql://localhost:5432/db",
+            username = "admin",
+            password = "plain-pwd",
+        )
+        whenCalled(service.get("ds-2", SysDataSourceEdit::class)).thenReturn(edit)
+
+        val result = controller.getEdit("ds-2")
+
+        assertEquals(SysDataSourceConsts.PASSWORD_MASK, result.password)
+        assertEquals("edit-one", result.name)
+        verify(service).get("ds-2", SysDataSourceEdit::class)
     }
 }

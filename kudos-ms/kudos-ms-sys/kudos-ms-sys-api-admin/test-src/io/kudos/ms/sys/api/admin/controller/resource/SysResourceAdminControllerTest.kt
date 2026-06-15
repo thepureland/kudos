@@ -57,6 +57,20 @@ internal class SysResourceAdminControllerTest {
     }
 
     @Test
+    fun getResourceDetailFallsBackToBaseGetDetailWhenServiceReturnsNull() {
+        // getDetailWithOptionalParents returns null -> the elvis branch calls super.getDetail(id),
+        // which resolves the detail VO class via reflection and delegates to the generic
+        // service.get(id, KClass) overload (stubbed with raw values, no eq() matcher).
+        val fallback = mock(SysResourceDetail::class.java)
+        whenCalled(service.getDetailWithOptionalParents("missing", false)).thenReturn(null)
+        whenCalled(service.get("missing", SysResourceDetail::class)).thenReturn(fallback)
+
+        assertSame(fallback, controller.getResourceDetail("missing"))
+        verify(service).getDetailWithOptionalParents("missing", false)
+        verify(service).get("missing", SysResourceDetail::class)
+    }
+
+    @Test
     fun getResourcesDefaultsSubSystemCode() {
         val list = listOf(mock(SysResourceCacheEntry::class.java))
         whenCalled(service.getResourcesFromCacheBySubSystemAndType(ResourceTypeEnum.MENU, defaultSub)).thenReturn(list)
