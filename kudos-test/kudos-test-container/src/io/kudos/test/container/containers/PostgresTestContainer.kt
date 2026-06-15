@@ -107,7 +107,7 @@ object PostgresTestContainer {
      *
      * @return the postgres container definition
      */
-    private fun getOrCreateContainer(): GenericContainer<*> {
+    internal fun getOrCreateContainer(): GenericContainer<*> {
         if (container == null) {
             container = GenericContainer(IMAGE_NAME).apply {
                 // Do not call bindingPort — let testcontainers auto-assign a host port. With a fixed 25432,
@@ -133,7 +133,7 @@ object PostgresTestContainer {
      *
      * @return the path when a non-empty absolute or canonical path is configured; `null` when unconfigured (no volume mounted)
      */
-    private fun resolveHostDataDir(): String? {
+    internal fun resolveHostDataDir(): String? {
         val fromProp = System.getProperty(SYS_PROP_HOST_DATA_DIR)?.trim().orEmpty()
         if (fromProp.isNotEmpty()) {
             return fromProp
@@ -177,7 +177,7 @@ object PostgresTestContainer {
      * @param runningContainer the currently running container
      * @return the JDBC URL pointing to the postgres admin database
      */
-    private fun buildAdminJdbcUrl(runningContainer: Container): String {
+    internal fun buildAdminJdbcUrl(runningContainer: Container): String {
         val port = runningContainer.ports.firstOrNull()?.publicPort
             ?: error("Postgres container has no public port mapping; cannot connect to admin DB.")
         return "jdbc:postgresql://$LOCALHOST:$port/postgres?sslmode=disable"
@@ -199,7 +199,7 @@ object PostgresTestContainer {
     /**
      * Restricts the character set of database names to avoid the risks of empty or invalid identifiers during creation.
      */
-    private fun validateDatabaseName(database: String) {
+    internal fun validateDatabaseName(database: String) {
         require(database.isNotBlank()) { "database must not be blank" }
         require(database.matches(Regex("[A-Za-z0-9_]+"))) {
             "database contains unsupported characters: $database"
@@ -209,7 +209,7 @@ object PostgresTestContainer {
     /**
      * Sleeps briefly before retrying when the database is not yet ready.
      */
-    private fun sleepBeforeRetry() {
+    internal fun sleepBeforeRetry() {
         try {
             Thread.sleep(DATABASE_READY_RETRY_INTERVAL_MILLIS)
         } catch (e: InterruptedException) {
@@ -221,7 +221,7 @@ object PostgresTestContainer {
     /**
      * Registers data-source properties corresponding to the specified database.
      */
-    private fun registerProperties(
+    internal fun registerProperties(
         registry: DynamicPropertyRegistry,
         runningContainer: Container,
         database: String

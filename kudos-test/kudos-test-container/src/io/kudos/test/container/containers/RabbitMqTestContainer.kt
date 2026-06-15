@@ -64,7 +64,7 @@ object RabbitMqTestContainer {
      * @author K
      * @since 1.0.0
      */
-    private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
+    internal fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
         val firstPort = runningContainer.ports.first()
         val host = requireNotNull(firstPort.ip) { "container port ip is null" }
         val port = requireNotNull(firstPort.publicPort) { "container publicPort is null" }

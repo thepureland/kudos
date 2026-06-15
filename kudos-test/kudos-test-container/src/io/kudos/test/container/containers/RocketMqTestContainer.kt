@@ -97,7 +97,7 @@ object RocketMqTestContainer {
      * @author K
      * @since 1.0.0
      */
-    private fun registerProperties(registry: DynamicPropertyRegistry, runningNameServerContainer: Container) {
+    internal fun registerProperties(registry: DynamicPropertyRegistry, runningNameServerContainer: Container) {
         registry.add("spring.cloud.stream.rocketmq.binder.name-server") { NAMESRV_ADDR }
     }
 

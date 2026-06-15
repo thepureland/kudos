@@ -55,7 +55,7 @@ object DockerKit {
 
     // ---------- Installation detection ----------
 
-    private data class InstallInfo(
+    internal data class InstallInfo(
         val installed: Boolean,
         val cliAvailable: Boolean,
         val desktopAppFound: Boolean,
@@ -75,7 +75,7 @@ object DockerKit {
      * @author K
      * @since 1.0.0
      */
-    private fun detectDockerInstall(): InstallInfo {
+    internal fun detectDockerInstall(): InstallInfo {
         val os = SystemKit.currentOs()
 
         val cliAvailable = isDockerCliAvailable()
@@ -125,7 +125,7 @@ object DockerKit {
      * @author K
      * @since 1.0.0
      */
-    private fun buildNotInstalledMessage(info: InstallInfo): String {
+    internal fun buildNotInstalledMessage(info: InstallInfo): String {
         return buildString {
             appendLine("Docker is not installed; cannot start it automatically.")
             appendLine("Detection result:")
@@ -149,7 +149,7 @@ object DockerKit {
      * @author K
      * @since 1.0.0
      */
-    private fun isDockerRunning(): Boolean {
+    internal fun isDockerRunning(): Boolean {
         val r = runCommand(listOf("docker", "info"), timeoutMillis = 12_000)
         return r.exitCode == 0
     }
@@ -161,7 +161,7 @@ object DockerKit {
      * @author K
      * @since 1.0.0
      */
-    private fun isDockerCliAvailable(): Boolean {
+    internal fun isDockerCliAvailable(): Boolean {
         val r = runCommand(listOf("docker", "--version"), timeoutMillis = 6_000)
         return r.exitCode == 0
     }
@@ -267,12 +267,12 @@ object DockerKit {
      * @author K
      * @since 1.0.0
      */
-    private fun windowsDockerDesktopExeCandidates(): List<String> = listOf(
+    internal fun windowsDockerDesktopExeCandidates(): List<String> = listOf(
         """C:\Program Files\Docker\Docker\Docker Desktop.exe""",
         """C:\Program Files (x86)\Docker\Docker\Docker Desktop.exe"""
     )
 
-    private data class CmdResult(val exitCode: Int, val stdout: String, val stderr: String)
+    internal data class CmdResult(val exitCode: Int, val stdout: String, val stderr: String)
 
     /**
      * Generic external command execution: collects stdout/stderr asynchronously, force-kills on timeout, catches all exceptions.
@@ -288,7 +288,7 @@ object DockerKit {
      * @author K
      * @since 1.0.0
      */
-    private fun runCommand(cmd: List<String>, timeoutMillis: Long): CmdResult {
+    internal fun runCommand(cmd: List<String>, timeoutMillis: Long): CmdResult {
         return try {
             val p = ProcessBuilder(cmd).start()
 

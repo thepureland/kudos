@@ -40,7 +40,7 @@ internal object CacheTestResetSupport {
      *
      * The test container is reused; without an initial flush, keys left by a previous test class would pollute subsequent assertions.
      */
-    private fun flushRedis() {
+    internal fun flushRedis() {
         val redisTemplates = getBeanByClassName(REDIS_TEMPLATES_CLASS) ?: return
         val defaultRedisTemplate = invokeGetter(redisTemplates, "defaultRedisTemplate") ?: return
         val connectionFactory = invokeGetter(defaultRedisTemplate, "connectionFactory") ?: return
@@ -56,7 +56,7 @@ internal object CacheTestResetSupport {
     /**
      * Separates plain caches from hash caches based on `sys_cache` configuration and clears/reloads each set.
      */
-    private fun resetCaches(allConfigs: Map<*, *>) {
+    internal fun resetCaches(allConfigs: Map<*, *>) {
         val keyValueCacheNames = allConfigs.filterCacheNames(expectHash = false)
         val hashCacheNames = allConfigs.filterCacheNames(expectHash = true)
 
@@ -70,7 +70,7 @@ internal object CacheTestResetSupport {
     /**
      * Filters cache names of the specified type from the cache configuration.
      */
-    private fun Map<*, *>.filterCacheNames(expectHash: Boolean): List<String> {
+    internal fun Map<*, *>.filterCacheNames(expectHash: Boolean): List<String> {
         return entries
             .filter { (_, config) -> readHashFlag(config) == expectHash }
             .mapNotNull { (name, _) -> name as? String }
@@ -79,21 +79,21 @@ internal object CacheTestResetSupport {
     /**
      * Invokes the cache kit's `doClear` to uniformly clear the target caches.
      */
-    private fun clearCaches(kitClassName: String, cacheNames: List<String>) {
+    internal fun clearCaches(kitClassName: String, cacheNames: List<String>) {
         cacheNames.forEach { invokeStatic(kitClassName, "doClear", it) }
     }
 
     /**
      * Invokes the cache kit's `reloadAll` to restore caches to the state corresponding to current database data.
      */
-    private fun reloadCaches(kitClassName: String, cacheNames: List<String>) {
+    internal fun reloadCaches(kitClassName: String, cacheNames: List<String>) {
         cacheNames.forEach { invokeStatic(kitClassName, "reloadAll", it) }
     }
 
     /**
      * Reads the `hash` flag from the cache config object; on failure, treats it as a plain cache.
      */
-    private fun readHashFlag(config: Any?): Boolean {
+    internal fun readHashFlag(config: Any?): Boolean {
         if (config == null) return false
         return invokeGetter(config, "hash") as? Boolean ?: false
     }
@@ -103,7 +103,7 @@ internal object CacheTestResetSupport {
      *
      * Returning null means the current test context has no such component; callers should treat it as "no reset needed for this capability".
      */
-    private fun getBeanByClassName(className: String): Any? {
+    internal fun getBeanByClassName(className: String): Any? {
         val beanClass = runCatching { Class.forName(className) }.getOrNull() ?: return null
         val ctx = runCatching { SpringKit.applicationContext }.getOrNull() ?: return null
         return runCatching { ctx.getBean(beanClass) }.getOrNull()
@@ -112,7 +112,7 @@ internal object CacheTestResetSupport {
     /**
      * Reads a property using the JavaBean getter convention to avoid depending on the target type directly.
      */
-    private fun invokeGetter(target: Any, propertyName: String): Any? {
+    internal fun invokeGetter(target: Any, propertyName: String): Any? {
         val getterName = "get${propertyName.replaceFirstChar { it.uppercase() }}"
         return invoke(target, getterName)
     }
@@ -122,7 +122,7 @@ internal object CacheTestResetSupport {
      *
      * The goal here is test-infrastructure compatibility, not strict typing; any runtime-assignable method signature is acceptable.
      */
-    private fun invoke(target: Any, methodName: String, vararg args: Any?): Any? {
+    internal fun invoke(target: Any, methodName: String, vararg args: Any?): Any? {
         val parameterTypes = args.map { it?.javaClass ?: Any::class.java }.toTypedArray()
         val method = target.javaClass.methods.firstOrNull { method ->
             method.name == methodName &&
@@ -138,7 +138,7 @@ internal object CacheTestResetSupport {
     /**
      * Invokes a method on a Kotlin `object` singleton.
      */
-    private fun invokeStatic(className: String, methodName: String, vararg args: Any?) {
+    internal fun invokeStatic(className: String, methodName: String, vararg args: Any?) {
         val clazz = runCatching { Class.forName(className) }.getOrNull() ?: return
         val instance = clazz.getField("INSTANCE").get(null)
         invoke(instance, methodName, *args)

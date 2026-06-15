@@ -63,7 +63,7 @@ object ClickHouseTestContainer {
         }
     }
 
-    private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer: Container) {
+    internal fun registerProperties(registry: DynamicPropertyRegistry, runningContainer: Container) {
         // ports[0] = 8123 (HTTP), ports[1] = 9000 (native protocol). The kudos audit-clickhouse
         // module talks to ClickHouse over JDBC-on-HTTP, so the HTTP-side public port is the one
         // we route to.
