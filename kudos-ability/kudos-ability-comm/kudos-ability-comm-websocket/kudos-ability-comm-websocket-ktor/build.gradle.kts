@@ -13,4 +13,7 @@ dependencies {
 
     testImplementation(project(":kudos-test:kudos-test-common"))
     testImplementation(libs.ktor.server.test.host)
+    // RedisWebSocketBroadcastChannel is compiled against compileOnly spring-data-redis; unit tests
+    // need it on the test runtime classpath (collaborators are mocked, no real Redis involved).
+    testImplementation(libs.spring.boot.starter.data.redis)
 }

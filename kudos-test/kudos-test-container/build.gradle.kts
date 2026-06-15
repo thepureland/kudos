@@ -1,4 +1,8 @@
 dependencies {
+    // PostgreSQL JDBC driver: only used by PostgresDockerIT to exercise PostgresTestContainer's
+    // ensureDatabaseExists/databaseExists JDBC bootstrap against a live container.
+    testImplementation(libs.postgresql)
+
     api(project(":kudos-context"))
     api(project(":kudos-test:kudos-test-common"))
     api(libs.testcontainers) {

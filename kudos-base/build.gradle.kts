@@ -62,6 +62,10 @@ dependencies {
     api(libs.github.classgraph)
 
     testImplementation(libs.kotlin.test.junit5)
+    // PasswordKit relies on spring-security-crypto, whose spring-core dependency is optional;
+    // spring-boot-starter-test puts spring-core (via spring-test) on the test classpath so
+    // BCrypt-related tests can run.
+    testImplementation(libs.spring.boot.starter.test)
 }
 
 
