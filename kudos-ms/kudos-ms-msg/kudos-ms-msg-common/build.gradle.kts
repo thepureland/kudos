@@ -4,4 +4,7 @@ dependencies {
     // Same pattern as sys-common / user-common / auth-common: method-level only; do not put @RequestMapping on the interface type.
     compileOnly(platform(libs.spring.boot.bom))
     compileOnly("org.springframework:spring-web")
+
+    testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.spring.boot.starter.test)
 }
