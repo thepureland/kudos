@@ -48,6 +48,19 @@ internal class UserCodesRetrieverTest {
     }
 
     @Test
+    fun supportsHashCommentStyleMarkers() {
+        val content = buildString {
+            appendLine("#//region your codes 1")
+            appendLine("py_code = 1")
+            appendLine("#//endregion your codes 1")
+        }
+        val result = UserCodesRetriever(content).retrieve()
+
+        assertEquals(setOf(1), result.keys)
+        assertTrue(result.getValue(1).contains("py_code = 1"))
+    }
+
+    @Test
     fun supportsHtmlCommentStyleMarkers() {
         val content = buildString {
             appendLine("<!--//region your codes 1-->")

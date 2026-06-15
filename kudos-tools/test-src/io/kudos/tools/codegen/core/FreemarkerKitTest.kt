@@ -43,5 +43,18 @@ internal class FreemarkerKitTest {
         assertTrue(FreemarkerKit.getAvailableAutoInclude(conf, listOf("missing.include")).isEmpty())
     }
 
+    @Test
+    fun processTemplateWritesRenderedContentToFileWithEncoding() {
+        val conf = newConfiguration().apply {
+            templateLoader = StringTemplateLoader().apply { putTemplate("t", "你好, \${name}!") }
+        }
+        val template = conf.getTemplate("t")
+        val outputFile = java.io.File.createTempFile("freemarker-kit", ".txt").apply { deleteOnExit() }
+
+        FreemarkerKit.processTemplate(template, mapOf("name" to "K"), outputFile, "UTF-8")
+
+        assertEquals("你好, K!", outputFile.readText(Charsets.UTF_8))
+    }
+
     private fun newConfiguration() = Configuration(Configuration.VERSION_2_3_30)
 }
