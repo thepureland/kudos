@@ -312,6 +312,7 @@ object JsonKit {
      * dynamic/scripting scenarios. For type-sensitive deserialization use [readValue].
      */
     private fun unwrap(elem: JsonElement): Any? = when (elem) {
+        JsonNull -> null
         is JsonPrimitive -> elem.booleanOrNull
             ?: elem.longOrNull
             ?: elem.intOrNull
@@ -320,6 +321,5 @@ object JsonKit {
 
         is JsonArray -> elem.map { unwrap(it) }
         is JsonObject -> elem.mapValues { unwrap(it.value) }
-        JsonNull -> null
     }
 }

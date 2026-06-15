@@ -46,11 +46,11 @@ internal class JsonKitMoreTest {
         @Suppress("UNCHECKED_CAST")
         val obj = JsonKit.getPropertyValue(jsonStr, "obj") as Map<String, Any?>
         assertEquals(true, obj["k"])
-        // NOTE: `unwrap` matches `is JsonPrimitive` before the `JsonNull -> null` branch, and in kotlinx
-        // `JsonNull` is itself a `JsonPrimitive`, so a JSON null nested in an object/array is stringified to the
-        // literal "null" rather than mapped to a Kotlin null. This is the *current* (suspected-buggy) behavior;
-        // see suspectedBugs. Asserting the actual behavior here keeps the test green while still exercising the line.
-        assertEquals("null", obj["n"])
+        // Regression (bug B3): `unwrap` must match the `JsonNull -> null` branch BEFORE `is JsonPrimitive`,
+        // because in kotlinx `JsonNull` is itself a `JsonPrimitive`. A JSON null nested in an object/array must
+        // therefore map to a Kotlin null, not be stringified to the literal "null".
+        assertNull(obj["n"])
+        assertTrue(obj.containsKey("n"))
     }
 
     @Test

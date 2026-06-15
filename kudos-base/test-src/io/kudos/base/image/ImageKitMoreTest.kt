@@ -206,10 +206,38 @@ internal class ImageKitMoreTest {
         }
     }
 
-    // NOTE: ImageKit.renderSvgToImage is intentionally not unit-tested here. It hard-codes the SAX
-    // parser class "org.apache.xerces.parsers.SAXParser" (ImageKit.kt:315) which is not on the
-    // module's runtime classpath, so any call throws SAXIOException/ClassNotFoundException. This is a
-    // main-code defect recorded in suspectedBugs, not a test gap.
+    @Test
+    fun renderSvgToImage_tinySvg_rendersWithoutXercesClassNotFound() {
+        // Regression test for the bug where renderSvgToImage hard-coded the xerces SAX parser class
+        // ("org.apache.xerces.parsers.SAXParser"), which is not on the classpath and threw
+        // ClassNotFoundException, making the whole SVG render path dead. The fix lets Batik auto-detect
+        // the parser via JAXP (XMLResourceDescriptor.getXMLParserClassName() -> null -> JDK parser).
+        // This test asserts the call produces a non-null image of the requested size and, in particular,
+        // that no ClassNotFoundException for xerces escapes.
+        val svg = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="10" viewBox="0 0 20 10">
+                <rect x="0" y="0" width="20" height="10" fill="#ff0000"/>
+            </svg>
+        """.trimIndent()
+
+        val image = try {
+            ImageKit.renderSvgToImage(svg, 20, 10)
+        } catch (e: Throwable) {
+            // Surface the underlying cause chain so a regression to the xerces ClassNotFoundException
+            // is unmistakable in the failure message.
+            val causes = generateSequence(e as Throwable?) { it.cause }
+            assertFalse(
+                causes.any { it is ClassNotFoundException || (it.message?.contains("xerces") == true) },
+                "SVG render path must not require the missing xerces SAX parser: ${e.message}"
+            )
+            throw e
+        }
+
+        assertNotNull(image)
+        assertEquals(20, image.width)
+        assertEquals(10, image.height)
+    }
 
     @Test
     fun readImageFromUri_fileScheme_byUriAndByString() {

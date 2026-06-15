@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Null
 import jakarta.validation.constraints.Pattern
 import org.hibernate.validator.constraints.Length
+import org.hibernate.validator.constraints.Range
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -54,10 +55,20 @@ internal class ConstraintsTest {
         val bean6 = TestConstraintsBean("ABCDE")
         assert(ValidationKit.validateProperty(bean6, "captcha").isEmpty())
 
-        // NOTE: Range (a composite of Min and Max) as a sub-constraint of Constraints is
-        // currently broken in the main code: ConstraintsValidator.doValidate re-initializes
-        // the Min/Max validators with the Range annotation itself, causing a
-        // ClassCastException. See the suspected-bug report; no assertion here until fixed.
+        // Composite Range sub-constraint (Min + Max): a value inside [10, 20] passes.
+        // Regression guard for B7: ConstraintsValidator used to re-initialize the expanded
+        // Min/Max validators with the raw Range annotation, throwing ClassCastException. It must
+        // now validate without throwing.
+        val beanRangeOk = TestConstraintsBean("ABCDE", "abc", 15)
+        assert(ValidationKit.validateProperty(beanRangeOk, "score").isEmpty())
+
+        // Composite Range sub-constraint: a value below the lower bound fails (no CCE).
+        val beanRangeLow = TestConstraintsBean("ABCDE", "abc", 5)
+        assert(ValidationKit.validateProperty(beanRangeLow, "score").isNotEmpty())
+
+        // Composite Range sub-constraint: a value above the upper bound fails (no CCE).
+        val beanRangeHigh = TestConstraintsBean("ABCDE", "abc", 25)
+        assert(ValidationKit.validateProperty(beanRangeHigh, "score").isNotEmpty())
 
         // AndOrEnum.OR: when one rule holds
         assert(ValidationKit.validateValue(TestConstraintsBean::class, "name", null).isEmpty())
@@ -87,7 +98,12 @@ internal class ConstraintsTest {
             pattern = Pattern(regexp = "[a-z]+", message = "name must consist of lowercase letters"),
             message = "name validation failed"
         )
-        val name: String? = ""
+        val name: String? = "",
+
+        @get:Constraints(
+            range = Range(min = 10, max = 20, message = "score must be between 10 and 20")
+        )
+        val score: Int? = null
 
     )
 

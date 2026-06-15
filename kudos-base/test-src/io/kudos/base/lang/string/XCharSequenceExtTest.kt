@@ -155,11 +155,14 @@ internal class XCharSequenceExtTest {
 
     @Test
     fun splitByCharacterType() {
-        // NOTE: the two extension names delegate to the swapped Commons methods; assert actual behavior.
-        // splitByCharacterType() -> Commons splitByCharacterTypeCamelCase -> camel-case aware grouping
-        assertContentEquals(arrayOf("foo", "Bar"), "fooBar".splitByCharacterType())
-        // splitByCharacterTypeCamelCase() -> Commons splitByCharacterType -> pure type grouping
-        assertContentEquals(arrayOf("foo", "B", "ar"), "fooBar".splitByCharacterTypeCamelCase())
+        // splitByCharacterType() -> Commons splitByCharacterType -> pure type grouping (upper kept with following upper)
+        assertContentEquals(arrayOf("foo", "B", "ar"), "fooBar".splitByCharacterType())
+        assertContentEquals(arrayOf("foo", "200", "B", "ar"), "foo200Bar".splitByCharacterType())
+        assertContentEquals(arrayOf("ASFR", "ules"), "ASFRules".splitByCharacterType())
+        // splitByCharacterTypeCamelCase() -> Commons splitByCharacterTypeCamelCase -> camel-case aware grouping
+        assertContentEquals(arrayOf("foo", "Bar"), "fooBar".splitByCharacterTypeCamelCase())
+        assertContentEquals(arrayOf("foo", "200", "Bar"), "foo200Bar".splitByCharacterTypeCamelCase())
+        assertContentEquals(arrayOf("ASF", "Rules"), "ASFRules".splitByCharacterTypeCamelCase())
     }
 
     @Test
@@ -218,14 +221,26 @@ internal class XCharSequenceExtTest {
         assertTrue("abc".isAlpha())
         assertFalse("ab2c".isAlpha())
         assertTrue("ab c".isAlphaSpace())
-        assertTrue("abc".isAlphanumeric())   // delegates to isAlpha per implementation
+        // isAlphanumeric -> Commons isAlphanumeric: letters and/or digits, no spaces
+        assertTrue("abc".isAlphanumeric())
+        assertTrue("ab2c".isAlphanumeric())
+        assertTrue("12".isAlphanumeric())
+        assertFalse("ab c".isAlphanumeric())
+        assertFalse("ab-c".isAlphanumeric())
+        // isAlphanumericSpace -> Commons isAlphanumericSpace: letters, digits and/or spaces
         assertTrue("ab2c".isAlphanumericSpace())
+        assertTrue("ab c".isAlphanumericSpace())
+        assertTrue("12 3".isAlphanumericSpace())
+        assertFalse("ab-c".isAlphanumericSpace())
         assertTrue("ab-c~".isAsciiPrintable())
         assertTrue("123".isNumeric())
         assertFalse("12.3".isNumeric())
-        // NOTE: isNumericSpace delegates to Commons isNumeric (not isNumericSpace), so a space -> false
-        assertFalse("12 3".isNumericSpace())
+        // isNumericSpace -> Commons isNumericSpace: digits and/or spaces
+        assertTrue("12 3".isNumericSpace())
+        assertTrue("1 2".isNumericSpace())
         assertTrue("123".isNumericSpace())
+        assertFalse("ab2c".isNumericSpace())
+        assertFalse("12-3".isNumericSpace())
         assertTrue("  ".isWhitespace())
         assertFalse("abc".isWhitespace())
         assertTrue("abc".isAllLowerCase())

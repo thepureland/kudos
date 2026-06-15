@@ -132,7 +132,7 @@ class SeriesValidator : ConstraintValidator<Series, Any?> {
     private fun validate(type: SeriesTypeEnum, step: Double, vararg values: BigDecimal): Boolean {
         return when (type) {
             SeriesTypeEnum.INC_DIFF -> values.toList().zipWithNext().all { (prev, curr) ->
-                if (step == 0.0) prev < curr else prev + BigDecimal(step) == curr
+                if (step == 0.0) prev < curr else (prev + BigDecimal.valueOf(step)).compareTo(curr) == 0
             }
             SeriesTypeEnum.DESC_DIFF -> {
                 validate(SeriesTypeEnum.INC_DIFF, step, *values.reversed().toTypedArray())
@@ -169,12 +169,12 @@ class SeriesValidator : ConstraintValidator<Series, Any?> {
                 values.toSet().size != values.size -> false
                 step == 0.0 -> true
                 else -> values.toList().zipWithNext().all { (prev, curr) ->
-                    (prev - curr).abs() == BigDecimal(step)
+                    (prev - curr).abs().compareTo(BigDecimal.valueOf(step)) == 0
                 }
             }
             SeriesTypeEnum.INC_EQ -> values.toList().zipWithNext().all { (prev, curr) ->
                 if (step == 0.0) prev <= curr
-                else prev == curr || prev + BigDecimal(step) == curr
+                else prev.compareTo(curr) == 0 || (prev + BigDecimal.valueOf(step)).compareTo(curr) == 0
             }
             SeriesTypeEnum.DESC_EQ -> {
                 validate(SeriesTypeEnum.INC_EQ, step, *values.reversed().toTypedArray())
@@ -226,7 +226,8 @@ class SeriesValidator : ConstraintValidator<Series, Any?> {
                 }
             }
             SeriesTypeEnum.EQ -> {
-                values.toSet().size == 1
+                val first = values.firstOrNull()
+                first == null || values.all { it.compareTo(first) == 0 }
             }
         }
     }

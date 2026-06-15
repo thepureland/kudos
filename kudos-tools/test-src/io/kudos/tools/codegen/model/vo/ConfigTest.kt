@@ -95,6 +95,15 @@ internal class ConfigTest {
     }
 
     @Test
+    fun getTemplateInfoReturnsNullWhenNoModelBound() {
+        // freshly constructed Config: templateInfo property holds null (no SelectionModel bound yet).
+        // getTemplateInfo() must return null instead of throwing NPE on templateInfo.get().selectedItem.
+        val config = Config()
+        assertNull(config.templateInfoProperty().get())
+        assertNull(config.getTemplateInfo())
+    }
+
+    @Test
     fun templateNameAndRootDirToStringReturnsNameOnly() {
         val item = Config.TemplateNameAndRootDir("My Template", "/some/root/dir")
         assertEquals("My Template", item.toString(), "toString must return name for combo box display")

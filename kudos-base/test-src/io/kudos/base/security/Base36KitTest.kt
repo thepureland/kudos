@@ -94,6 +94,40 @@ internal class Base36KitTest {
         assertEquals("C", recovered)
     }
 
+    /**
+     * Regression test for the diyToAscii range off-by-one bug.
+     *
+     * With capitalOnly = false (base-62), a multi-character string containing lowercase letters
+     * must round-trip through encrypt/decrypt unchanged. The bug previously decoded the custom
+     * encoding value 36 (lowercase 'a') as '[' (ASCII 91) because diyToAscii used ranges
+     * `10..36` / `37..62` instead of `10..35` / `36..61`.
+     */
+    @Test
+    fun multiChar_encryptDecrypt_capitalOnlyFalse_isReversible() {
+        val key = 123456789012345678L
+
+        // The algorithm's transform domain is strictly base-62 alphanumeric [0-9A-Za-z];
+        // non-alphanumeric chars (e.g. spaces) are out of domain and intentionally not round-trippable.
+        // 'a' is the lowercase letter that maps to the boundary custom value (36) the bug got wrong.
+        val inputs = listOf(
+            "a",
+            "abc",
+            "aZ9",
+            "Hello",
+            "Mix3dCase",
+            "abcdefghijklmnopqrstuvwxyz",
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            "DATA123ROUNDTRIP456"
+        )
+
+        for (input in inputs) {
+            val cipher = Base36Kit.encrypt(input, key, capitalOnly = false)
+            assertNotNull(cipher)
+            val recovered = Base36Kit.decrypt(cipher, key, capitalOnly = false)
+            assertEquals(input, recovered, "round-trip failed for input: $input")
+        }
+    }
+
     @Test
     fun tryDecryptIgnoreCase_checksumMismatch_returnsFailure() {
         val cipher = Base36Kit.encryptIgnoreCase("HELLO", defaultKey)

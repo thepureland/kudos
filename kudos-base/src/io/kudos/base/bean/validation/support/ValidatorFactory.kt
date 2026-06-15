@@ -28,7 +28,7 @@ import java.util.Date
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
-private typealias ValidatorBuilder = (annotation: Annotation, value: Any) -> List<ConstraintValidator<*, *>>
+private typealias ValidatorBuilder = (annotation: Annotation, value: Any) -> List<Pair<ConstraintValidator<*, *>, Annotation>>
 
 /**
  * Validator factory.
@@ -57,8 +57,21 @@ private typealias ValidatorBuilder = (annotation: Annotation, value: Any) -> Lis
  */
 object ValidatorFactory {
 
-    /** Validator instance cache: keyed by (annotation, value's runtime class) to avoid duplicate construction and initialize */
-    private val CACHE: MutableMap<CacheKey, List<ConstraintValidator<*, *>>> = ConcurrentHashMap()
+    /**
+     * Validator instance cache: keyed by (annotation, value's runtime class) to avoid duplicate construction and initialize.
+     *
+     * Each entry pairs the validator with the *concrete* annotation it was initialized with. For composite
+     * annotations (e.g. Range) this is the expanded sub-annotation (Min / Max), NOT the original Range — so that
+     * downstream re-initialization (e.g. ConstraintsValidator) uses the matching annotation type and does not throw.
+     */
+    private val CACHE: MutableMap<CacheKey, List<Pair<ConstraintValidator<*, *>, Annotation>>> = ConcurrentHashMap()
+
+    /**
+     * Validators-only view cache, derived from [CACHE]. Kept as a separate cache so [getValidator] returns a
+     * *stable* List instance across calls (callers rely on List identity), instead of allocating a fresh `map`
+     * result every time.
+     */
+    private val VALIDATORS_ONLY_CACHE: MutableMap<CacheKey, List<ConstraintValidator<*, *>>> = ConcurrentHashMap()
 
     /**
      * Return the validator instances corresponding to the validation rule annotation.
@@ -69,6 +82,28 @@ object ValidatorFactory {
      */
     fun getValidator(annotation: Annotation, value: Any): List<ConstraintValidator<*, *>> {
         val key = CacheKey(annotation, value::class.java)
+        return VALIDATORS_ONLY_CACHE.computeIfAbsent(key) {
+            getValidatorsWithAnnotations(annotation, value).map { it.first }
+        }
+    }
+
+    /**
+     * Return the validators paired with the concrete annotation each one was initialized with.
+     *
+     * For composite annotations this carries the *expanded* sub-annotation rather than the original composite
+     * annotation. Callers that need to re-initialize a validator (such as ConstraintsValidator, which drives the
+     * validators manually through the Hibernate descriptor overload) MUST use the paired annotation, otherwise a
+     * composite like Range would have its Min/Max validators initialized with the raw Range annotation -> ClassCastException.
+     *
+     * @param annotation the validation rule annotation
+     * @param value the value to validate
+     * @return list of (validator, matching annotation) pairs; empty for unsupported annotations
+     */
+    fun getValidatorsWithAnnotations(
+        annotation: Annotation,
+        value: Any
+    ): List<Pair<ConstraintValidator<*, *>, Annotation>> {
+        val key = CacheKey(annotation, value::class.java)
         return CACHE.computeIfAbsent(key) { build(annotation, value) }
     }
 
@@ -77,6 +112,7 @@ object ValidatorFactory {
      */
     internal fun clearCacheForTest() {
         CACHE.clear()
+        VALIDATORS_ONLY_CACHE.clear()
     }
 
     /**
@@ -88,7 +124,7 @@ object ValidatorFactory {
      * @author K
      * @since 1.0.0
      */
-    private fun build(annotation: Annotation, value: Any): List<ConstraintValidator<*, *>> {
+    private fun build(annotation: Annotation, value: Any): List<Pair<ConstraintValidator<*, *>, Annotation>> {
         val builder = BUILDERS[annotation.annotationClass] ?: return emptyList()
         return builder(annotation, value)
     }
@@ -125,11 +161,11 @@ object ValidatorFactory {
 
     /** Single validator that does not depend on the value type and needs no initialize */
     private fun raw(create: () -> ConstraintValidator<*, *>): ValidatorBuilder =
-        { _, _ -> listOf(create()) }
+        { annotation, _ -> listOf(create() to annotation) }
 
     /** Single validator that does not depend on the value type but needs initialize */
     private fun simple(create: () -> ConstraintValidator<*, *>): ValidatorBuilder =
-        { annotation, _ -> listOf(initialize(create(), annotation)) }
+        { annotation, _ -> listOf(initialize(create(), annotation) to annotation) }
 
     /**
      * Dispatch template for numeric constraints (DecimalMax / DecimalMin / Max / Min / Negative / NegativeOrZero / Positive / PositiveOrZero).
@@ -161,7 +197,7 @@ object ValidatorFactory {
             is Number -> number
             else -> error("The ${name} constraint annotation does not support validation of type [${value::class}]!")
         }
-        listOf(initialize(factory(), annotation))
+        listOf(initialize(factory(), annotation) to annotation)
     }
 
     /** Dispatch template for date/time constraints (Future / FutureOrPresent / Past / PastOrPresent). */
@@ -203,7 +239,7 @@ object ValidatorFactory {
             is ZonedDateTime -> zonedDateTime
             else -> error("The ${name} constraint annotation does not support validation of type [${value::class}]!")
         }
-        listOf(initialize(factory(), annotation))
+        listOf(initialize(factory(), annotation) to annotation)
     }
 
     /** Dispatch template for collection/array constraints (NotEmpty / Size). */
@@ -237,7 +273,7 @@ object ValidatorFactory {
             is Map<*, *> -> map
             else -> error("The ${name} constraint annotation does not support validation of type [${value::class}]!")
         }
-        listOf(initialize(factory(), annotation))
+        listOf(initialize(factory(), annotation) to annotation)
     }
 
     /**
@@ -400,7 +436,7 @@ object ValidatorFactory {
                 is Number -> { -> DigitsValidatorForNumber() }
                 else -> error("The Digits constraint annotation does not support validation of type [${value::class}]!")
             }
-            listOf(initialize(factory(), annotation))
+            listOf(initialize(factory(), annotation) to annotation)
         }
 
         this[Future::class] = dateBound(
@@ -519,7 +555,7 @@ object ValidatorFactory {
                 LuhnCheck::class,
                 mapOf("ignoreNonDigitCharacters" to cc.ignoreNonDigitCharacters)
             )
-            getValidator(luhnCheck, value)
+            getValidatorsWithAnnotations(luhnCheck, value)
         }
         this[EAN::class] = simple { EANValidator() }
         this[ISBN::class] = simple { ISBNValidator() }
@@ -533,8 +569,8 @@ object ValidatorFactory {
             val minAnnotation = createAnnotationByNamedArgs(Min::class, mapOf("value" to range.min))
             val maxAnnotation = createAnnotationByNamedArgs(Max::class, mapOf("value" to range.max))
             listOf(
-                getValidator(minAnnotation, value).first(),
-                getValidator(maxAnnotation, value).first()
+                getValidatorsWithAnnotations(minAnnotation, value).first(),
+                getValidatorsWithAnnotations(maxAnnotation, value).first()
             )
         }
         this[UniqueElements::class] = raw { UniqueElementsValidator() }
@@ -553,7 +589,7 @@ object ValidatorFactory {
             if (value !is CharSequence) {
                 error("The Matches constraint annotation does not support validation of type [${value::class}]!")
             }
-            listOf(initialize(MatchesValidator(), annotation))
+            listOf(initialize(MatchesValidator(), annotation) to annotation)
         }
     }
 

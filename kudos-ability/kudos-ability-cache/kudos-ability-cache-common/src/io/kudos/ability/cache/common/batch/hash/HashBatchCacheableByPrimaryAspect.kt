@@ -1,5 +1,6 @@
 package io.kudos.ability.cache.common.batch.hash
 
+import io.kudos.ability.cache.common.batch.keyvalue.BatchCacheableAspect
 import io.kudos.ability.cache.common.batch.keyvalue.IKeysGenerator
 import io.kudos.ability.cache.common.core.hash.MixHashCacheManager
 import io.kudos.ability.cache.common.kit.HashCacheKit
@@ -17,8 +18,6 @@ import org.springframework.cache.annotation.CacheConfig
 import org.springframework.context.annotation.Lazy
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
-import java.math.BigInteger
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
@@ -184,34 +183,26 @@ class HashBatchCacheableByPrimaryAspect {
         paramIndexes.forEachIndexed { segIdx, paramIndex ->
             val paramValue = args[paramIndex]
             if (paramValue is Collection<*> || paramValue is Array<*>) {
+                val first = when (paramValue) {
+                    is Collection<*> -> paramValue.first()
+                    else -> (paramValue as Array<*>).first()
+                }
+                val sample = requireNotNull(first) { "Batch cache parameter collection contains null elements; cannot infer type." }
+                val elemType = sample::class
                 val elemValues = noExistKeys.map { key ->
                     val seg = key.split(delimiter)
                     val segStr = if (segIdx < seg.size) seg[segIdx] else key
-                    val first = when (paramValue) {
-                        is Collection<*> -> paramValue.first()
-                        else -> (paramValue as Array<*>).first()
-                    }
-                    val sample = requireNotNull(first) { "Batch cache parameter collection contains null elements; cannot infer type." }
-                    segStr.toType(sample::class)
+                    segStr.toType(elemType)
                 }
-                val clazz = parameterTypes[paramIndex].kotlin
-                // The `as List<X>` casts below are definitely safe: elemValues comes from `toType(sample::class)`, with aligned element types.
-                @Suppress("UNCHECKED_CAST")
-                args[paramIndex] = when (clazz) {
-                    List::class, Collection::class -> elemValues
-                    Set::class -> elemValues.toSet()
-                    Array<String>::class -> (elemValues as List<String>).toTypedArray()
-                    Array<Char>::class -> (elemValues as List<Char>).toTypedArray()
-                    Array<Boolean>::class -> (elemValues as List<Boolean>).toTypedArray()
-                    Array<Byte>::class -> (elemValues as List<Byte>).toTypedArray()
-                    Array<Short>::class -> (elemValues as List<Short>).toTypedArray()
-                    Array<Int>::class -> (elemValues as List<Int>).toTypedArray()
-                    Array<Long>::class -> (elemValues as List<Long>).toTypedArray()
-                    Array<Float>::class -> (elemValues as List<Float>).toTypedArray()
-                    Array<Double>::class -> (elemValues as List<Double>).toTypedArray()
-                    Array<BigDecimal>::class -> (elemValues as List<BigDecimal>).toTypedArray()
-                    Array<BigInteger>::class -> (elemValues as List<BigInteger>).toTypedArray()
-                    else -> elemValues
+                val clazz = parameterTypes[paramIndex]
+                // Every `Array<X>::class` erases to the same `kotlin.Array` KClass, so dispatching on `Array<Int>::class`,
+                // `Array<Long>::class`, ... would collapse to the first Array branch and silently mis-handle non-String
+                // arrays. Detect the array case via the Java `Class.isArray` and build an array whose runtime component
+                // type is the actual element type, so reflective invoke receives e.g. a real `Integer[]`/`Long[]`.
+                args[paramIndex] = when {
+                    clazz.isArray -> BatchCacheableAspect.toTypedArray(elemValues, elemType)
+                    Set::class.java.isAssignableFrom(clazz) -> elemValues.toSet()
+                    else -> elemValues // List / Collection and any other Collection subtype
                 }
             }
         }

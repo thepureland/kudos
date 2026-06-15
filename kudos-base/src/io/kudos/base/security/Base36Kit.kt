@@ -335,8 +335,8 @@ object Base36Kit {
     private fun diyToAscii(codeNum: Int): Int { // convert custom encoding back to ASCII
         return when(codeNum) {
             in -1..9 -> codeNum + 48
-            in 10..36 -> codeNum - 10 + 65
-            in 37..62 -> codeNum - 36 + 97
+            in 10..35 -> codeNum - 10 + 65
+            in 36..61 -> codeNum - 36 + 97
             else -> codeNum
         }
     }

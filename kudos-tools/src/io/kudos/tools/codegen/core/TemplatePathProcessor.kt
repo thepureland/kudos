@@ -37,7 +37,7 @@ object TemplatePathProcessor {
      * @since 1.0.0
      */
     fun readPaths(includeEntityRelativeFile: Boolean): List<GenFile> {
-        val templateRootDir = CodeGeneratorContext.config.getTemplateInfo().rootDir
+        val templateRootDir = CodeGeneratorContext.config.getTemplateInfo()!!.rootDir
         val fileFilter: IOFileFilter = object : IOFileFilter {
             override fun accept(file: File): Boolean = "macro.include" != file.name
             override fun accept(file: File, s: String): Boolean = "macro.include" != s
@@ -73,7 +73,7 @@ object TemplatePathProcessor {
      */
     private val jarFiles: Collection<File>
         get() = ClassPathScanner
-            .scanForResources(CodeGeneratorContext.config.getTemplateInfo().rootDir, "", "")
+            .scanForResources(CodeGeneratorContext.config.getTemplateInfo()!!.rootDir, "", "")
             .filter { it.filename.isNotBlank() && !it.filename.contains("macro.include") }
             .mapNotNull { it.locationOnDisk?.let(::File) }
 

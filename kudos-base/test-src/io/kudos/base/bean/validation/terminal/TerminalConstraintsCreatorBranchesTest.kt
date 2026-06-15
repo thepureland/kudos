@@ -43,6 +43,25 @@ internal class TerminalConstraintsCreatorBranchesTest {
     }
 
     @Test
+    fun cascadedListElementConstraintsAreCollected() {
+        // Regression: `@get:Valid List<Item>` must resolve the element type via
+        // prop.returnType.arguments[0].type, not prop.typeParameters[0] (which is empty for a
+        // normal property and previously threw IndexOutOfBoundsException).
+        val result = TerminalConstraintsCreator.create(ListParent::class)
+        assertContains(result, "'items.name'")
+        assertContains(requireNotNull(result["'items.name'"]), "NotBlank")
+    }
+
+    @Test
+    fun cascadedMapValueConstraintsAreCollected() {
+        // Regression: `@get:Valid Map<String, Item>` must resolve the value type via
+        // prop.returnType.arguments[1].type, not prop.typeParameters[1].
+        val result = TerminalConstraintsCreator.create(MapParent::class)
+        assertContains(result, "'entries.name'")
+        assertContains(requireNotNull(result["'entries.name'"]), "NotBlank")
+    }
+
+    @Test
     fun classLevelConstraintAnnotationIsCollected() {
         val result = TerminalConstraintsCreator.create(ClassLevelBean::class)
         // AtLeast is a class-level constraint listing properties mobile/email
@@ -75,6 +94,16 @@ internal class TerminalConstraintsCreatorBranchesTest {
     internal data class ObjectParent(
         @get:Valid
         val child: ObjectChild?,
+    )
+
+    internal data class ListParent(
+        @get:Valid
+        val items: List<ObjectChild>?,
+    )
+
+    internal data class MapParent(
+        @get:Valid
+        val entries: Map<String, ObjectChild>?,
     )
 
     @AtLeast(properties = ["mobile", "email"], message = "at least one")
