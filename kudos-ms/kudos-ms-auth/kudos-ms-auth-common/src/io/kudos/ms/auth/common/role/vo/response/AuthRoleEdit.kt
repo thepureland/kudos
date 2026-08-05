@@ -7,6 +7,7 @@ import io.kudos.base.model.contract.entity.IIdEntity
  * Response VO for editing a role.
  *
  * @author K
+ * @author AI: Claude
  * @since 1.0.0
  */
 data class AuthRoleEdit (
@@ -31,6 +32,12 @@ data class AuthRoleEdit (
 
     /** Data-scope policy code (see DataScopeEnum); NULL = ALL. */
     val dataScope: String? = null,
+
+    /** Delegation ceiling; see IAuthRoleFormBase.delegableMax. */
+    val delegableMax: Int? = null,
+
+    /** Whether assigning this role requires approval. */
+    val approvalRequired: Boolean? = null,
 
     /** Remark. */
     val remark: String? = null,

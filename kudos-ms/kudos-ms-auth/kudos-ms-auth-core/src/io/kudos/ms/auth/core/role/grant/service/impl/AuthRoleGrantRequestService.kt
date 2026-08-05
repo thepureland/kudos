@@ -3,7 +3,9 @@ package io.kudos.ms.auth.core.role.grant.service.impl
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.auth.common.grant.enums.GrantRequestStatus
+import io.kudos.ms.auth.core.platform.authz.init.properties.AuthzProperties
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.grant.dao.AuthRoleGrantRequestDao
 import io.kudos.ms.auth.core.role.grant.model.po.AuthRoleGrantRequest
 import io.kudos.ms.auth.core.role.grant.service.iservice.IAuthRoleGrantRequestService
@@ -37,6 +39,12 @@ open class AuthRoleGrantRequestService(
 
     @Resource
     private lateinit var authRoleUserService: IAuthRoleUserService
+
+    @Resource
+    private lateinit var authRoleUserDao: AuthRoleUserDao
+
+    @Resource
+    private lateinit var authzProperties: AuthzProperties
 
     private val log = LogFactory.getLog(this::class)
 
@@ -76,12 +84,17 @@ open class AuthRoleGrantRequestService(
     @Transactional
     override fun approve(id: String, comment: String?): Boolean {
         val request = loadPendingOrThrow(id)
+        val approverId = CurrentUserKit.currentUserIdOrNull()
+        assertMayApprove(approverId, request.roleId)
+
         // Perform the actual bind first; if it throws (e.g. SoD violation) the whole transaction
-        // rolls back and the request stays PENDING — the approver sees the error.
-        authRoleUserService.batchBind(request.roleId, listOf(request.userId))
+        // rolls back and the request stays PENDING — the approver sees the error. This is the one
+        // path that may bind a role marked `approval_required`, because it is the one path on which
+        // a second person has signed off.
+        authRoleUserService.bindApproved(request.roleId, request.userId)
 
         request.status = GrantRequestStatus.APPROVED.name
-        request.approverId = CurrentUserKit.currentUserIdOrNull()
+        request.approverId = approverId
         request.decisionComment = comment
         request.decisionTime = LocalDateTime.now()
         val success = dao.update(request)
@@ -109,6 +122,35 @@ open class AuthRoleGrantRequestService(
         val success = dao.update(request)
         log.debug("Cancelled grant request $id.")
         return success
+    }
+
+    /**
+     * Asserts that [approverId] is entitled to decide a request for [roleId].
+     *
+     * The rule: an approver must be somebody who **could have granted the role themselves** — they
+     * hold it through a live direct grant that still carries delegation allowance, or they are a
+     * platform administrator. Anything looser makes the approval step theatre: a workflow that any
+     * authenticated user can sign off adds a row to the table and nothing to the security of the
+     * system.
+     *
+     * The delegation chain is what supplies the answer, which is why no separate approver-registry
+     * table is needed: the people upstream of a role are already recorded.
+     */
+    private fun assertMayApprove(approverId: String?, roleId: String) {
+        requireNotNull(approverId) { "an approval must be attributable to a logged-in approver." }
+        if (isPlatformAdmin(approverId)) return
+        val ownGrant = authRoleUserDao.findLiveDirectGrant(roleId, approverId)
+        require(ownGrant != null && (ownGrant.delegableDepth ?: 0) >= 1) {
+            "approver ${approverId} may not decide requests for role ${roleId}: approving requires " +
+                "being able to grant it, i.e. holding it through a delegable direct grant."
+        }
+    }
+
+    private fun isPlatformAdmin(userId: String): Boolean {
+        val adminCodes = authzProperties.platformAdminRoleCodes
+        if (adminCodes.isEmpty()) return false
+        return authRoleUserDao.searchRoleIdsByUserId(userId)
+            .any { roleId -> authRoleDao.get(roleId)?.code in adminCodes }
     }
 
     /** Re-read the row and assert it's still PENDING; the guard against double-decision races. */

@@ -1,5 +1,7 @@
 package io.kudos.ms.auth.api.admin.controller.temporal
 
+import io.kudos.ability.log.audit.common.annotation.WebAudit
+import io.kudos.ability.log.audit.common.enums.OperationTypeEnum
 import io.kudos.ms.auth.common.temporal.vo.request.AuthRoleUserTemporalBindRequest
 import io.kudos.ms.auth.common.temporal.vo.response.RoleTemporalGrantRow
 import io.kudos.ms.auth.core.role.temporal.service.iservice.IAuthRoleUserTemporalService
@@ -38,10 +40,17 @@ class AuthRoleUserTemporalAdminController(
 
     /** Grant a role to a user with an optional validity window (replace semantics). */
     @PostMapping("/bind")
+    @WebAudit(opType = OperationTypeEnum.CREATE, moduleCode = MODULE_CODE, desc = "临时授权(时间窗)")
     fun bind(@RequestBody request: AuthRoleUserTemporalBindRequest): String =
         service.bindTemporal(request.roleId, request.userId, request.startTime, request.endTime)
 
     /** Delete all expired grants and evict the affected users' caches. Returns the purged count. */
     @PostMapping("/purgeExpired")
+    @WebAudit(opType = OperationTypeEnum.DELETE, moduleCode = MODULE_CODE, desc = "清理过期授权")
     fun purgeExpired(): Int = service.purgeExpired()
+
+    companion object {
+        /** 审计日志的归属模块编码 */
+        private const val MODULE_CODE = "auth-role-user-temporal"
+    }
 }

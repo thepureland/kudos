@@ -10,7 +10,7 @@ spring:
       primary: ds1
       hikari:
         # ClickHouse needs more time to accept connections than H2; bump the timeout.
-        connection-timeout: 30000
+        connection-timeout: 3000
         max-pool-size: 4
         min-idle: 1
         # ClickHouse doesn't honor explicit COMMIT for INSERTs (data appears at merge time anyway),

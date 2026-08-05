@@ -4,6 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.auth.core.role.model.po.AuthRole
 import org.ktorm.schema.boolean
 import org.ktorm.schema.datetime
+import org.ktorm.schema.int
 import org.ktorm.schema.varchar
 
 
@@ -12,6 +13,7 @@ import org.ktorm.schema.varchar
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 object AuthRoles : StringIdTable<AuthRole>("auth_role") {
@@ -42,6 +44,9 @@ object AuthRoles : StringIdTable<AuthRole>("auth_role") {
 
     /** Whether built-in */
     var builtIn = boolean("built_in").bindTo { it.builtIn }
+
+    /** Delegation ceiling: how many hops a grant of this role may ever carry. 0 = no delegation. */
+    var delegableMax = int("delegable_max").bindTo { it.delegableMax }
 
     /** Whether assigning this role requires approval. */
     var approvalRequired = boolean("approval_required").bindTo { it.approvalRequired }

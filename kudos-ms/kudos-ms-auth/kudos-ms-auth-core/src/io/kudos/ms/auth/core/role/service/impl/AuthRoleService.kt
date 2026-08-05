@@ -22,6 +22,7 @@ import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.event.AuthRoleBatchDeleted
 import io.kudos.ms.auth.core.role.event.AuthRoleDeleted
 import io.kudos.ms.auth.core.role.event.AuthRoleInserted
+import io.kudos.ms.auth.core.policy.iservice.IAuthGrantPolicyService
 import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
 import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleResourceService
@@ -43,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 @Service
@@ -64,6 +66,9 @@ open class AuthRoleService(
 
     @Resource
     private lateinit var sysResourceHashCache: SysResourceHashCache
+
+    @Resource
+    private lateinit var grantPolicyService: IAuthGrantPolicyService
 
     @Resource
     private lateinit var authRoleHashCache: AuthRoleHashCache
@@ -471,6 +476,12 @@ open class AuthRoleService(
             require(selfId !in parentAncestors) {
                 "Role ${selfId} is already an ancestor of parent ${parentId}; assigning it would create a cycle."
             }
+
+            // Structural validity is not admissibility. Re-parenting silently rewrites the effective
+            // permissions of every holder of this role and of its descendants, so it can introduce a
+            // separation-of-duties breach that no bind-time check would ever catch — SoD is evaluated
+            // when a grant is written, and this writes no grant.
+            grantPolicyService.assertNoRejection(grantPolicyService.screenReparent(selfId, parentId))
         }
     }
 

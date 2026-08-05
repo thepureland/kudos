@@ -29,6 +29,7 @@ import org.springframework.transaction.event.TransactionalEventListener
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 @Component
@@ -74,7 +75,7 @@ open class ResourceIdsByTenantIdAndRoleCodeCache : AbstractKeyValueCacheHandler<
         val allRoleResources = authRoleResourceDao.allSearch()
         val roleIdToResourceIdsMap = allRoleResources
             .groupBy { it.roleId }
-            .mapValues { entry -> entry.value.map { it.resourceId.trim() } }
+            .mapValues { entry -> entry.value.mapNotNull { it.resourceId?.trim() } }
 
         log.debug("Loaded ${roles.size} roles and ${allRoleResources.size} role-resource associations from DB.")
 

@@ -91,6 +91,43 @@ class AuthRoleUserTemporalServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
+    fun searchGrantsStartedBetween_matchesOnlyWindowOpeningsInsideTheInterval() {
+        val now = LocalDateTime.now()
+        // Opened 30 minutes ago: inside (now-1h, now].
+        service.bindTemporal(role1, user2, now.minusMinutes(30), now.plusDays(1))
+        // Opened 2 days ago: outside the interval.
+        service.bindTemporal(role2, user2, now.minusDays(2), now.plusDays(1))
+
+        val started = dao.searchGrantsStartedBetween(now.minusHours(1), now)
+        val startedRoleIds = started.map { it.roleId }
+        assertTrue(startedRoleIds.contains(role1), "a grant that opened inside the interval must match")
+        assertFalse(startedRoleIds.contains(role2), "a grant that opened before the interval must not match")
+    }
+
+    @Test
+    fun searchGrantsStartedBetween_ignoresImmediateGrants() {
+        // A NULL start_time grant is live from the moment it is written, so its cache was already
+        // correct — it must never be re-announced by the activation sweep.
+        service.bindTemporal(role2, user2, null, null)
+        val now = LocalDateTime.now()
+        val started = dao.searchGrantsStartedBetween(now.minusDays(1), now)
+        assertFalse(started.any { it.roleId == role2 && it.userId == user2 })
+    }
+
+    @Test
+    fun activateStarted_countsCrossingsAndIgnoresEmptyInterval() {
+        val now = LocalDateTime.now()
+        service.bindTemporal(role1, user2, now.minusMinutes(10), now.plusDays(1))
+
+        val activated = service.activateStarted(now.minusHours(1), now)
+        assertTrue(activated >= 1, "the grant that just opened must be counted")
+
+        // A degenerate interval must be a no-op rather than re-announcing everything.
+        assertEquals(0, service.activateStarted(now, now))
+        assertEquals(0, service.activateStarted(now, now.minusHours(1)))
+    }
+
+    @Test
     fun purgeExpired_deletesExpiredKeepsActive() {
         val now = LocalDateTime.now()
         service.bindTemporal(role1, user2, now.minusDays(2), now.minusDays(1)) // expired

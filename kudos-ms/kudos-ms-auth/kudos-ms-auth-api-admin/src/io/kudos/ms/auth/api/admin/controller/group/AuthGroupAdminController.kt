@@ -1,7 +1,11 @@
 package io.kudos.ms.auth.api.admin.controller.group
 
+import io.kudos.ability.log.audit.common.annotation.WebAudit
+import io.kudos.ability.log.audit.common.enums.OperationTypeEnum
 import io.kudos.ability.web.springmvc.controller.BaseCrudController
 import io.kudos.ms.auth.common.group.vo.request.AuthGroupBatchBindUsersRequest
+import io.kudos.ms.auth.common.group.vo.request.GroupMembershipBindRequest
+import io.kudos.ms.auth.common.group.vo.response.GroupMembershipVo
 import io.kudos.ms.auth.common.group.vo.request.AuthGroupFormCreate
 import io.kudos.ms.auth.common.group.vo.request.AuthGroupFormUpdate
 import io.kudos.ms.auth.common.group.vo.request.AuthGroupQuery
@@ -31,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController
  * by business key, not single-record mutations keyed by primary id.
  *
  * @author K
+ * @author AI: Claude
  * @since 1.0.0
  */
 @RestController
@@ -56,11 +61,28 @@ class AuthGroupAdminController :
 
     /** Batch-add users to a group. Returns the number of newly created relations. */
     @PostMapping("/bindUsers")
+    @WebAudit(opType = OperationTypeEnum.CREATE, moduleCode = MODULE_CODE, desc = "用户组添加成员")
     fun bindUsers(@RequestParam groupId: String, @RequestBody userIds: Collection<String>): Int =
         authGroupUserService.batchBind(groupId, userIds)
 
+    /** All memberships of a group with their validity windows (including ones not in force). */
+    @GetMapping("/listMemberships")
+    fun listMemberships(@RequestParam groupId: String): List<GroupMembershipVo> =
+        authGroupUserService.listMemberships(groupId)
+
+    /**
+     * Add a member with an explicit validity window (replace semantics for the pair). Membership has
+     * to be able to express what a direct grant can, or "put them in the group" becomes the way
+     * around an expiry somebody set.
+     */
+    @PostMapping("/bindUserTemporal")
+    @WebAudit(opType = OperationTypeEnum.CREATE, moduleCode = MODULE_CODE, desc = "用户组添加时间窗成员")
+    fun bindUserTemporal(@RequestBody request: GroupMembershipBindRequest): String =
+        authGroupUserService.bindTemporal(request.groupId, request.userId, request.startTime, request.endTime)
+
     /** Unbind a group-to-user relation. */
     @DeleteMapping("/unbindUser")
+    @WebAudit(opType = OperationTypeEnum.DELETE, moduleCode = MODULE_CODE, desc = "用户组移除成员")
     fun unbindUser(@RequestParam groupId: String, @RequestParam userId: String): Boolean =
         authGroupUserService.unbind(groupId, userId)
 
@@ -76,11 +98,13 @@ class AuthGroupAdminController :
 
     /** Batch-bind roles to a group. Returns the number of newly created relations. */
     @PostMapping("/bindRoles")
+    @WebAudit(opType = OperationTypeEnum.CREATE, moduleCode = MODULE_CODE, desc = "用户组绑定角色")
     fun bindRoles(@RequestParam groupId: String, @RequestBody roleIds: Collection<String>): Int =
         authGroupRoleService.batchBind(groupId, roleIds)
 
     /** Unbind a group-to-role relation. */
     @DeleteMapping("/unbindRole")
+    @WebAudit(opType = OperationTypeEnum.DELETE, moduleCode = MODULE_CODE, desc = "用户组解绑角色")
     fun unbindRole(@RequestParam groupId: String, @RequestParam roleId: String): Boolean =
         authGroupRoleService.unbind(groupId, roleId)
 
@@ -102,7 +126,12 @@ class AuthGroupAdminController :
      * in `groupIds`. Per-group transactional boundary — partial failures returned in the response.
      */
     @PostMapping("/batchBindUsers")
+    @WebAudit(opType = OperationTypeEnum.CREATE, moduleCode = MODULE_CODE, desc = "用户组批量添加成员")
     fun batchBindUsers(@RequestBody request: AuthGroupBatchBindUsersRequest): BatchBindResultVo =
         service.batchBindUsers(request.groupIds, request.userIds)
 
+    companion object {
+        /** 审计日志的归属模块编码 */
+        private const val MODULE_CODE = "auth-group"
+    }
 }

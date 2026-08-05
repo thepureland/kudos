@@ -9,6 +9,7 @@ import java.time.LocalDateTime
  * Resource cache entry.
  *
  * @author K
+ * @author AI: Claude
  * @since 1.0.0
  */
 data class SysResourceCacheEntry (
@@ -18,6 +19,9 @@ data class SysResourceCacheEntry (
 
     /** Name */
     val name: String?,
+
+    /** Semantic permission code; the durable identity of this permission point. */
+    val permissionCode: String? = null,
 
     /** url */
     val url: String?,

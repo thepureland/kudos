@@ -1,10 +1,15 @@
 package io.kudos.ms.auth.core.group.service
 
+import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
+import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupUserService
+import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
+import java.time.LocalDateTime
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -22,6 +27,66 @@ class AuthGroupUserServiceTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var authGroupUserService: IAuthGroupUserService
+
+    @Resource
+    private lateinit var authGroupUserDao: AuthGroupUserDao
+
+    @Resource
+    private lateinit var roleIdsByUserIdCache: RoleIdsByUserIdCache
+
+    /**
+     * The whole reason the sweep exists: the roles a membership confers are **cached**, and the
+     * clock passing `end_time` changes no row, so nothing fires an eviction. Without the sweep, a
+     * lapsed membership keeps granting the group's roles out of a snapshot that will never be
+     * recomputed — the read-path filter alone does not close it.
+     */
+    @Test
+    fun announceWindowChanges_evictsSnapshotsHoldingALapsedMembership() {
+        val group = "9c1b2a3d-0000-0000-0000-000000000088"
+        val role = "9c1b2a3d-0000-0000-0000-000000000087"
+        val user = "9c1b2a3d-0000-0000-0000-000000000082"
+        val now = LocalDateTime.now()
+
+        val membershipId = authGroupUserService.bindTemporal(group, user, now.minusDays(1), now.plusDays(1))
+        try {
+            // Prime the snapshot while the membership is genuinely in force.
+            assertTrue(
+                roleIdsByUserIdCache.getRoleIds(user).contains(role),
+                "an in-force membership must confer the group's roles",
+            )
+
+            // Close the window behind the cache's back — a DAO write publishes no domain event,
+            // which is exactly what the passage of time looks like to this module.
+            authGroupUserDao.update(authGroupUserDao.get(membershipId)!!.apply {
+                this.endTime = now.minusSeconds(30)
+            })
+            assertTrue(
+                authGroupUserDao.searchGroupIdsByUserId(user).isEmpty(),
+                "resolution drops the lapsed membership immediately...",
+            )
+            assertTrue(
+                roleIdsByUserIdCache.getRoleIds(user).contains(role),
+                "...but the cached snapshot still confers the role, which is the gap the sweep closes",
+            )
+
+            val announced = authGroupUserService.announceWindowChanges(now.minusMinutes(1), now)
+            assertEquals(1, announced, "the membership that just lapsed must be announced exactly once")
+
+            // AFTER_COMMIT listeners do not fire inside these rolled-back tests, so the eviction the
+            // announcement triggers is driven directly — same convention as RoleIdsByUserIdCacheTest.
+            roleIdsByUserIdCache.on(AuthGroupUserRelationsChanged(group, listOf(user)))
+            assertFalse(
+                roleIdsByUserIdCache.getRoleIds(user).contains(role),
+                "after the sweep the lapsed membership must confer nothing",
+            )
+
+            // A degenerate interval is a no-op rather than a re-announcement of everything.
+            assertEquals(0, authGroupUserService.announceWindowChanges(now, now))
+            assertEquals(0, authGroupUserService.announceWindowChanges(now, now.minusHours(1)))
+        } finally {
+            authGroupUserService.unbind(group, user)
+        }
+    }
 
     @Test
     fun getUserIdsByGroupId() {
@@ -79,16 +144,67 @@ class AuthGroupUserServiceTest : RdbAndRedisCacheTestBase() {
         val groupId = "9c1b2a3d-0000-0000-0000-000000000083"
         val userId = "9c1b2a3d-0000-0000-0000-000000000081"
 
-        // Verify relation exists
-        assertTrue(authGroupUserService.exists(groupId, userId))
+        assertTrue(authGroupUserService.getUserIdsByGroupId(groupId).contains(userId))
 
-        // Unbind
         assertTrue(authGroupUserService.unbind(groupId, userId))
 
-        // Verify relation no longer exists
-        assertFalse(authGroupUserService.exists(groupId, userId))
+        // Resolution stops counting them immediately...
+        assertFalse(authGroupUserService.getUserIdsByGroupId(groupId).contains(userId))
+        // ...while the row survives, which is what keeps "who was removed, and why" answerable.
+        assertTrue(authGroupUserService.exists(groupId, userId), "the membership row is kept for audit")
 
-        // Re-bind for subsequent tests
         authGroupUserService.batchBind(groupId, listOf(userId))
+    }
+
+    /**
+     * The bug soft revocation introduces if nothing handles it: the (group, user) pair is unique, so
+     * a revoked row still occupies it. Code that treats "a row exists" as "already a member" makes
+     * re-adding somebody a silent no-op — the worst possible answer to "why can't they get back in".
+     */
+    @Test
+    fun aRemovedMemberCanBeAddedBackAgain() {
+        val groupId = "9c1b2a3d-0000-0000-0000-000000000083"
+        val userId = "9c1b2a3d-0000-0000-0000-000000000080"
+
+        assertTrue(authGroupUserService.unbind(groupId, userId, "left the team"))
+        assertFalse(authGroupUserService.getUserIdsByGroupId(groupId).contains(userId))
+
+        val reinstated = authGroupUserService.batchBind(groupId, listOf(userId))
+        assertEquals(1, reinstated, "reinstating must count as a real change, not be skipped")
+        assertTrue(
+            authGroupUserService.getUserIdsByGroupId(groupId).contains(userId),
+            "the member must actually be back in the group",
+        )
+    }
+
+    /** Revoking twice is not a second revocation; the second call reports that there was nothing to do. */
+    @Test
+    fun unbindingAnAlreadyRemovedMemberIsANoOp() {
+        val groupId = "9c1b2a3d-0000-0000-0000-000000000083"
+        val userId = "9c1b2a3d-0000-0000-0000-000000000081"
+
+        assertTrue(authGroupUserService.unbind(groupId, userId))
+        assertFalse(authGroupUserService.unbind(groupId, userId))
+
+        authGroupUserService.batchBind(groupId, listOf(userId))
+    }
+
+    /**
+     * The revoked membership must stop conferring the group's roles at once — the read-path filter
+     * added earlier now has a writer, and this is what proves the two halves meet.
+     */
+    @Test
+    fun aRevokedMembershipStopsConferringTheGroupsRoles() {
+        val group = "9c1b2a3d-0000-0000-0000-000000000088"
+        val role = "9c1b2a3d-0000-0000-0000-000000000087"
+        val user = "9c1b2a3d-0000-0000-0000-000000000082"
+
+        authGroupUserService.batchBind(group, listOf(user))
+        roleIdsByUserIdCache.on(AuthGroupUserRelationsChanged(group, listOf(user)))
+        assertTrue(roleIdsByUserIdCache.getRoleIds(user).contains(role))
+
+        authGroupUserService.unbind(group, user, "no longer needed")
+        roleIdsByUserIdCache.on(AuthGroupUserRelationsChanged(group, listOf(user)))
+        assertFalse(roleIdsByUserIdCache.getRoleIds(user).contains(role))
     }
 }

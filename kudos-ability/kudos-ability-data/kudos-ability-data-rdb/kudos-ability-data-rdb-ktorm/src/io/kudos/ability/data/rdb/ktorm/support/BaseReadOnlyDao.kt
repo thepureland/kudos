@@ -1,6 +1,7 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
 import io.kudos.ability.data.rdb.ktorm.datasource.currentDatabase
+import io.kudos.ability.data.rdb.ktorm.rowscope.RowScopeEnforcer
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.lang.GenericKit
@@ -39,6 +40,7 @@ import kotlin.reflect.full.primaryConstructor
  * @param T Type of the database table-entity binding object
  * @author K
  * @author AI: Codex
+ * @author AI: Claude
  * @since 1.0.0
  */
 open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBaseReadOnlyDao<PK, E> {
@@ -53,6 +55,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      *
      * @return Database table-entity binding object
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
@@ -118,6 +121,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      *
      * @return Database object containing the current table
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     protected fun database(): Database = KudosContextHolder.currentDatabase()
@@ -127,6 +131,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      *
      * @return Query source
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     protected fun querySource(): QuerySource = database().from(table())
@@ -136,12 +141,48 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      *
      * @return Entity sequence
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     protected fun entitySequence(): EntitySequence<E, T> = database().sequenceOf(table())
 
+
+    //region Row scope (data permission)
+
+    /**
+     * The row-scope predicate for this DAO's entity, or null when the query must be left as written.
+     *
+     * Null is the answer in every one of these cases, and they are all normal: filtering is switched
+     * off, the entity declares no scope, the caller declared system authority, or the subject is
+     * unrestricted. See [io.kudos.ability.data.rdb.ktorm.rowscope.RowScopeEnforcer].
+     */
+    protected fun rowScopeExpr(): ColumnDeclaring<Boolean>? =
+        RowScopeEnforcer.current?.predicateFor(table(), entityClass())
+
+    /** ANDs the row scope onto an existing predicate. */
+    protected fun withRowScope(base: ColumnDeclaring<Boolean>): ColumnDeclaring<Boolean> {
+        val scope = rowScopeExpr() ?: return base
+        return base.and(scope)
+    }
+
+    /**
+     * The entity sequence every **read** goes through, already narrowed to the rows the subject may
+     * see.
+     *
+     * Deliberately a separate method from [entitySequence] rather than a change to it: Ktorm's
+     * `update`/`add` on a sequence do not honour its filter, so silently scoping the sequence every
+     * DAO method shares would look like it protected writes while doing nothing. Writes are scoped
+     * explicitly at their own call sites instead.
+     */
+    protected fun readSequence(): EntitySequence<E, T> {
+        val scope = rowScopeExpr() ?: return entitySequence()
+        return entitySequence().filter { scope }
+    }
+
+    //endregion Row scope
+
     private fun filteredSequence(criteria: Criteria?): EntitySequence<E, T> {
-        val seq = entitySequence()
+        val seq = readSequence()
         return if (criteria == null) seq
         else seq.filter { CriteriaConverter.convert(criteria, table()) }
     }
@@ -151,6 +192,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      *
      * @return Primary key column object
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
@@ -166,6 +208,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param value Value to query
      * @return Column declaration object
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
@@ -176,7 +219,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     //region Search
 
     override fun get(id: PK): E? {
-        return entitySequence().firstOrNull { getPkColumn() eq id }
+        return readSequence().firstOrNull { getPkColumn() eq id }
     }
 
     override fun <R : Any> get(id: PK, returnType: KClass<R>?): R? {
@@ -205,6 +248,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param id Primary key value; must be one of: String, Int, Long
      * @return Result object of the specified type; null if not found
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     inline fun <reified R : Any> getAs(id: PK): R? = get(id, R::class)
@@ -213,7 +257,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         if (ids.isEmpty()) return listOf()
         val results = mutableListOf<E>()
         GroupExecutor(ids, countOfEachBatch) { subList ->
-            val result = entitySequence().filter { getPkColumn().inList(subList) }.toList()
+            val result = readSequence().filter { getPkColumn().inList(subList) }.toList()
             results.addAll(result)
         }.execute()
         return results
@@ -250,6 +294,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param countOfEachBatch Batch size; defaults to 1000
      * @return List of objects of the specified element type; empty list when ids is empty
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     inline fun <reified T : Any> getByIdsAs(ids: Collection<PK>, countOfEachBatch: Int = 1000): List<T> =
@@ -329,7 +374,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
     //region allSearch
 
     override fun allSearch(vararg orders: Order): List<E> {
-        return entitySequence().toList()
+        return readSequence().toList()
     }
 
     /**
@@ -440,7 +485,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         val column = requireNotNull(ColumnHelper.columnOf(table(), property)[property]) {
             "Database column for property [$property] not found."
         }
-        var entitySequence = entitySequence().filter { column.inCollection(values) }
+        var entitySequence = readSequence().filter { column.inCollection(values) }
         entitySequence = entitySequence.sortedBy(*sortBy(*orders))
         return entitySequence.toList()
     }
@@ -519,6 +564,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return List of objects of the specified result type
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     inline fun <reified T : Any> searchAs(
@@ -643,6 +689,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return List of objects of the specified result type
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     inline fun <reified T : Any> pagingSearchAs(
@@ -664,6 +711,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return List of values for that column in the current page
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
@@ -749,6 +797,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      *   listSearchPayload is treated with an "equals" operation. Defaults to null.
      * @return Result list — three possible types; see @see SearchPayload
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
@@ -822,7 +871,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @return Record count
      */
     protected fun countByCriteria(criteria: Criteria?): Int =
-        if (criteria == null) entitySequence().count()
+        if (criteria == null) readSequence().count()
         else filteredSequence(criteria).aggregateColumns { count(getPkColumn()) } ?: 0
 
     override fun count(searchPayload: ISearchPayload?): Int {
@@ -839,6 +888,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      *   are treated with an "equals" operation. Defaults to null.
      * @return Record count
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     open fun count(
@@ -924,6 +974,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders array; empty returns an empty list (query gets no order by)
      * @return List of ktorm sort expressions
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun sortOf(vararg orders: Order): List<OrderByExpression> {
@@ -954,6 +1005,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return Array of sort functions for ktorm entity sequences
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun sortBy(vararg orders: Order): Array<(T) -> OrderByExpression> {
@@ -982,6 +1034,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param whereConditionFactory Custom condition generator; null uses the default
      * @return Combined condition expression; null when no condition is produced (the caller should skip the where clause)
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
@@ -1027,6 +1080,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return Entity list
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun doSearchEntity(
@@ -1035,7 +1089,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
         whereConditionFactory: ((Column<Any>, Any?) -> ColumnDeclaring<Boolean>?)? = null,
         vararg orders: Order
     ): List<E> {
-        var entitySequence = entitySequence()
+        var entitySequence = readSequence()
         propertyMap?.let { map ->
             val propMap = map.mapValues { (_, value) -> OperatorEnum.EQ to value }
             processWhere(propMap, logic, false, whereConditionFactory)?.let { expr ->
@@ -1057,6 +1111,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return List of column-name → column-value maps
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun doSearchProperties(
@@ -1095,6 +1150,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param returnColumnMap Property-name → column map (computed by [getColumns])
      * @return List of deserialized objects
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun <T : Any> processResult(
@@ -1119,6 +1175,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param returnColumnMap Property-name → column map
      * @return One map per row
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun processResult(query: Query, returnColumnMap: Map<String, Column<Any>>): List<Map<String, *>> {
@@ -1140,6 +1197,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return List of column-name → column-value maps
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun doInSearchProperties(
@@ -1168,6 +1226,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return Entity list
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun searchEntityCriteria(
@@ -1192,6 +1251,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return List of column-name → column-value maps
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun searchPropertiesCriteria(
@@ -1221,6 +1281,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return List of objects of the target type
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun <T : Any> searchByCriteria(
@@ -1251,6 +1312,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param orders Sort orders
      * @return The constructed ktorm [Query]
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun prepareQuery(
@@ -1264,7 +1326,9 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
 
         // where
         if (criteria != null) {
-            query = query.where { CriteriaConverter.convert(criteria, table()) }
+            query = query.where { withRowScope(CriteriaConverter.convert(criteria, table())) }
+        } else {
+            rowScopeExpr()?.let { scope -> query = query.where { scope } }
         }
 
         // order
@@ -1292,6 +1356,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param returnItemClassOverride Explicit return type; takes precedence over payload.returnEntityClass
      * @return List of deserialized objects (type determined by effectiveReturnClass)
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun searchByPayload(
@@ -1333,6 +1398,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @return List of business property names on the entity
      * @throws IllegalArgumentException If the table is not bound to an entity type
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     protected fun getEntityProperties(): List<String> {
@@ -1356,6 +1422,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param entityProperties Legal property list of the current table entity (used as a whitelist filter)
      * @return Map of column name → (operator, value)
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     protected fun getWherePropertyMap(
@@ -1404,6 +1471,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param returnType Target return type
      * @return Map of property name → column
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     protected fun getColumns(returnType: KClass<*>): Map<String, Column<Any>> {
@@ -1450,6 +1518,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @return The deserialized instance
      * @throws IllegalArgumentException When required fields are missing
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun <R : Any> instantiateResultItem(
@@ -1515,6 +1584,7 @@ open class BaseReadOnlyDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>> : IBase
      * @param target Target object
      * @param propertyValues Column name → column value
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun populateResultItem(target: Any, propertyValues: Map<String, Any?>) {

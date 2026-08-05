@@ -9,6 +9,7 @@ import java.time.LocalDateTime
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 interface AuthRole : IDbEntity<String, AuthRole> {
@@ -41,6 +42,9 @@ interface AuthRole : IDbEntity<String, AuthRole> {
 
     /** Whether built-in */
     var builtIn: Boolean?
+
+    /** Delegation ceiling: how many hops a grant of this role may ever carry. 0 = no delegation. */
+    var delegableMax: Int?
 
     /** Whether assigning this role requires an approval workflow (see auth_role_grant_request). */
     var approvalRequired: Boolean?

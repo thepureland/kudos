@@ -18,6 +18,7 @@ import kotlin.test.*
  * Requires Docker for Redis, and AUTH_ROLE__HASH (hash=true) configured in sys_cache.
  *
  * @author K
+ * @author AI: Claude
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
@@ -45,7 +46,7 @@ class AuthRoleHashCacheTest : RdbAndRedisCacheTestBase() {
         assertNotNull(item)
         assertEquals(roleId1, item.id)
         assertEquals("ROLE_ADMIN", item.code)
-        assertEquals("System Administrator", item.name)
+        assertEquals("系统管理员", item.name)
         assertEquals(tenant001, item.tenantId)
         val itemAgain = cacheHandler.getRoleById(roleId1)
         if (isLocalCacheEnabled()) assertSame(item, itemAgain)
@@ -144,10 +145,12 @@ class AuthRoleHashCacheTest : RdbAndRedisCacheTestBase() {
     }
 
     private fun insertNewRecordToDb(): String {
-        val timestamp = System.currentTimeMillis()
+        // A millisecond stamp is not unique enough: two calls inside the same millisecond collide on
+        // uk_auth_role(code, tenant_id). Use a random token instead (code is varchar(32)).
+        val token = java.util.UUID.randomUUID().toString().take(8)
         val authRole = AuthRole.Companion().apply {
-            code = "TEST_ROLE_${timestamp}"
-            name = "TestRole_${timestamp}"
+            code = "TEST_ROLE_${token}"
+            name = "TestRole_${token}"
             tenantId = tenant001
             subsysCode = "default"
             active = true

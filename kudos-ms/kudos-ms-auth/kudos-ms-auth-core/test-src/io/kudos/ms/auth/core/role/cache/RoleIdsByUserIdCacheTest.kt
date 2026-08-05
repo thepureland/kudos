@@ -4,11 +4,15 @@ import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
+import io.kudos.ms.auth.core.group.event.AuthGroupUpdated
 import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
 import io.kudos.ms.auth.core.group.model.po.AuthGroup
 import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
 import io.kudos.ms.auth.core.group.model.po.AuthGroupUser
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
+import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.user.core.account.event.UserAccountDeleted
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
@@ -16,6 +20,7 @@ import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 
@@ -26,6 +31,7 @@ import kotlin.test.assertTrue
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
@@ -36,6 +42,9 @@ class RoleIdsByUserIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var authRoleUserDao: AuthRoleUserDao
+
+    @Resource
+    private lateinit var authRoleDao: AuthRoleDao
 
     @Resource
     private lateinit var authGroupDao: AuthGroupDao
@@ -282,6 +291,72 @@ class RoleIdsByUserIdCacheTest : RdbAndRedisCacheTestBase() {
             } finally {
                 authGroupRoleDao.deleteById(newGrId)
             }
+        } finally {
+            authGroupRoleDao.deleteById(grId)
+            authGroupUserDao.deleteById(guId)
+            authGroupDao.deleteById(gId)
+            cacheHandler.evict(userId)
+        }
+    }
+
+    // -------------------- Deactivation semantics (`active = false`) --------------------
+
+    @Test
+    fun getRoleIds_excludesDeactivatedRole() {
+        val userId = "88207878-3333-3333-3333-333333333333"
+        val roleId = authRoleDao.insert(AuthRole.Companion().apply {
+            this.code = "ROLE_IDS_DEACT"
+            this.name = "deactivation probe"
+            this.tenantId = "tenant-001-Gv4Pb40w"
+            this.subsysCode = "ams"
+            this.active = true
+            this.builtIn = false
+        })
+        val ruId = authRoleUserDao.insert(AuthRoleUser.Companion().apply {
+            this.roleId = roleId
+            this.userId = userId
+        })
+        try {
+            cacheHandler.evict(userId)
+            assertTrue(cacheHandler.getRoleIds(userId).contains(roleId), "an active role belongs to the effective set")
+
+            val role = authRoleDao.get(roleId)!!
+            role.active = false
+            authRoleDao.update(role)
+            // Drive the listener directly: AFTER_COMMIT does not fire inside @Transactional tests.
+            cacheHandler.on(AuthRoleUpdated(roleId))
+
+            assertFalse(
+                cacheHandler.getRoleIds(userId).contains(roleId),
+                "a deactivated role must drop out of the effective set, and the event must invalidate the cache",
+            )
+        } finally {
+            authRoleUserDao.deleteById(ruId)
+            authRoleDao.deleteById(roleId)
+            cacheHandler.evict(userId)
+        }
+    }
+
+    @Test
+    fun getRoleIds_excludesRolesRelayedByADeactivatedGroup() {
+        val userId = "88207878-3333-3333-3333-333333333333"
+        val roleId = "88207878-2222-2222-2222-222222222222" // ROLE_USER
+        val groupId = "88207878-grp9-9999-9999-999999999999"
+
+        val (gId, guId, grId) = bindUserToRoleViaGroup(groupId, userId, roleId)
+        try {
+            cacheHandler.evict(userId)
+            assertTrue(cacheHandler.getRoleIds(userId).contains(roleId), "an active group relays its roles")
+
+            val group = authGroupDao.get(gId)!!
+            group.active = false
+            authGroupDao.update(group)
+            cacheHandler.on(AuthGroupUpdated(gId))
+
+            assertFalse(
+                cacheHandler.getRoleIds(userId).contains(roleId),
+                "a deactivated group must relay nothing",
+            )
         } finally {
             authGroupRoleDao.deleteById(grId)
             authGroupUserDao.deleteById(guId)

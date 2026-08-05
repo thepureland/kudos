@@ -6,6 +6,7 @@ import io.kudos.base.bean.validation.constraint.annotations.MaxLength
  * Base fields for the role form (shared by create and update).
  *
  * @author K
+ * @author AI: Claude
  * @since 1.0.0
  */
 interface IAuthRoleFormBase {
@@ -33,9 +34,16 @@ interface IAuthRoleFormBase {
     val approvalRequired: Boolean?
 
     /**
+     * How many delegation hops a grant of this role may ever carry — the ceiling, not the
+     * allowance. 0 (the default) forbids re-delegation outright; the per-grant depth chosen when
+     * somebody delegates must stay within it.
+     */
+    val delegableMax: Int?
+
+    /**
      * Data-scope policy code (see DataScopeEnum: ALL / ORG_AND_CHILD / ORG / SELF / CUSTOM).
      * Null is treated as ALL (no row restriction). CUSTOM additionally uses the role's
-     * auth_role_org grants, managed separately via the data-scope admin endpoint.
+     * auth_role_scope grants, managed separately via the data-scope admin endpoint.
      */
     val dataScope: String?
 

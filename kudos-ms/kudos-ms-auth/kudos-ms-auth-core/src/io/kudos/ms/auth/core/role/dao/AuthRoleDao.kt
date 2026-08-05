@@ -16,6 +16,7 @@ import org.springframework.stereotype.Repository
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 @Repository
@@ -49,6 +50,44 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
         val criteria = Criteria(AuthRole::tenantId eq tenantId)
             .addAnd(AuthRole::active eq true)
         return searchProperty(criteria, AuthRole::id).filterNotNull()
+    }
+
+    /**
+     * Returns the ids of every currently active role.
+     *
+     * Bulk counterpart of [filterActiveRoleIds], for the cache reload paths that expand thousands of
+     * users in one pass and must not issue a query per user.
+     *
+     * @return the id set of all roles with `active = true`
+     */
+    open fun searchActiveRoleIdSet(): Set<String> {
+        val criteria = Criteria(AuthRole::active eq true)
+        return searchProperty(criteria, AuthRole::id).filterNotNull().toSet()
+    }
+
+    /**
+     * Narrows [roleIds] to the subset that is currently active.
+     *
+     * **Deactivation semantics** (the single definition for the whole module): `active = false`
+     * removes *only that role's own contribution* from every holder's effective permission set. It
+     * does **not** sever the parent chain — a deactivated role still relays its ancestors to the
+     * roles below it, so switching off one node never silently strips an unrelated grandparent's
+     * resources from its descendants' holders. Concretely: the parent walk
+     * ([searchAncestorRoleIds]) runs over the raw graph, and this filter is applied to the
+     * *resulting set*, never during the walk.
+     *
+     * Ids that no longer exist are dropped as well (a dangling relation grants nothing).
+     *
+     * @param roleIds candidate role ids (may contain ids of deleted roles)
+     * @return the subset that exists and is active; empty when [roleIds] is empty
+     */
+    open fun filterActiveRoleIds(roleIds: Collection<String>): Set<String> {
+        if (roleIds.isEmpty()) return emptySet()
+        val criteria = Criteria.and(
+            AuthRole::id inList roleIds.toSet(),
+            AuthRole::active eq true,
+        )
+        return searchProperty(criteria, AuthRole::id).filterNotNull().toSet()
     }
 
     /**
@@ -109,5 +148,35 @@ open class AuthRoleDao : BaseCrudDao<String, AuthRole, AuthRoles>() {
             depth++
         }
         return descendants
+    }
+
+    /**
+     * Takes an exclusive row lock on the role and holds it until the surrounding transaction ends.
+     *
+     * The role-scoped sibling of `AuthPrincipalVersionDao.lockPrincipal`, for read-then-write
+     * sequences whose invariant is a property of the **role**, not of any principal — "this role has
+     * no holders yet" being the motivating case: two concurrent first-administrator appointments
+     * bind *different* principals, so the per-principal locks never collide, and both observe the
+     * empty holder set. Same mechanics as lockPrincipal and for the same reason: an UPDATE rather
+     * than `SELECT ... FOR UPDATE`, because the select form did not serialise writers on H2's
+     * MVStore, and a lock that silently does not lock is worse than none.
+     *
+     * No create-retry loop is needed here — the caller has the role in hand, so its row exists; zero
+     * rows touched means it was deleted out from under us, which must fail the write anyway.
+     *
+     * Must be called inside a transaction; the lock is released when it commits or rolls back.
+     */
+    open fun lockRole(roleId: String) {
+        require(roleId.isNotBlank()) { "roleId must not be blank." }
+        val touched = database().useConnection { connection ->
+            connection.prepareStatement(
+                """update "auth_role" set "update_time" = ? where "id" = ?""",
+            ).use { statement ->
+                statement.setTimestamp(1, java.sql.Timestamp.valueOf(java.time.LocalDateTime.now()))
+                statement.setString(2, roleId)
+                statement.executeUpdate()
+            }
+        }
+        check(touched > 0) { "role ${roleId} no longer exists; the write is refused." }
     }
 }

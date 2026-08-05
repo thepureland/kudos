@@ -32,6 +32,6 @@ merge into "auth_role_user" ("id", "role_id", "user_id", "create_user_id", "crea
     ('5a7a5c0e-0000-0000-0000-00000000ae04', '5a7a5c0e-0000-0000-0000-0000000000f4', '5a7a5c0e-0000-0000-0000-0000000000e4', 'system', '系统'),
     ('5a7a5c0e-0000-0000-0000-00000000ae05', '5a7a5c0e-0000-0000-0000-0000000000f2', '5a7a5c0e-0000-0000-0000-0000000000e5', 'system', '系统');
 
--- auth_role_org: custom 角色(f4) 授权 other(d3)
-merge into "auth_role_org" ("id", "role_id", "org_id", "create_user_id", "create_user_name") values
-    ('5a7a5c0e-0000-0000-0000-00000000a000', '5a7a5c0e-0000-0000-0000-0000000000f4', '5a7a5c0e-0000-0000-0000-0000000000d3', 'system', '系统');
+-- auth_role_scope: custom 角色(f4) 在 org 维度上授权 other(d3)
+merge into "auth_role_scope" ("id", "role_id", "dimension", "scope_value", "create_user_id", "create_user_name") values
+    ('5a7a5c0e-0000-0000-0000-00000000a000', '5a7a5c0e-0000-0000-0000-0000000000f4', 'org', '5a7a5c0e-0000-0000-0000-0000000000d3', 'system', '系统');

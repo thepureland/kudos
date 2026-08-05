@@ -6,12 +6,16 @@ import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
+import io.kudos.ms.auth.core.group.event.AuthGroupUpdated
 import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
 import io.kudos.ms.auth.core.group.model.po.AuthGroup
 import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
 import io.kudos.ms.auth.core.group.model.po.AuthGroupUser
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
+import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.user.core.account.event.UserAccountDeleted
@@ -20,6 +24,7 @@ import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 
@@ -30,6 +35,7 @@ import kotlin.test.assertTrue
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
@@ -40,6 +46,9 @@ class ResourceIdsByUserIdCacheTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var authRoleUserDao: AuthRoleUserDao
+
+    @Resource
+    private lateinit var authRoleDao: AuthRoleDao
 
     @Resource
     private lateinit var authRoleResourceDao: AuthRoleResourceDao
@@ -377,6 +386,179 @@ class ResourceIdsByUserIdCacheTest : RdbAndRedisCacheTestBase() {
             authGroupDao.deleteById(gId)
             cacheHandler.evict(userId)
         }
+    }
+
+    // -------------------- Deactivation semantics (`active = false`) --------------------
+
+    @Test
+    fun getResourceIds_excludesDeactivatedRole() {
+        val userId = "165f7094-3333-3333-3333-333333333333"
+        val roleId = createRole("DEACT_1", parentId = null)
+        val rrId = bindResource(roleId, "resource-deact-own")
+        val ruId = authRoleUserDao.insert(AuthRoleUser.Companion().apply {
+            this.roleId = roleId
+            this.userId = userId
+        })
+        try {
+            cacheHandler.evict(userId)
+            assertTrue(
+                cacheHandler.getResourceIds(userId).contains("resource-deact-own"),
+                "an active role must grant its own resources",
+            )
+
+            setRoleActive(roleId, false)
+            cacheHandler.evict(userId)
+            assertFalse(
+                cacheHandler.getResourceIds(userId).contains("resource-deact-own"),
+                "a deactivated role must grant nothing",
+            )
+        } finally {
+            authRoleUserDao.deleteById(ruId)
+            authRoleResourceDao.deleteById(rrId)
+            authRoleDao.deleteById(roleId)
+            cacheHandler.evict(userId)
+        }
+    }
+
+    /**
+     * The documented rule: deactivating a role withholds *only its own* resources. The parent chain
+     * still runs through it, so an active grandparent keeps reaching the holder of an active child.
+     */
+    @Test
+    fun getResourceIds_deactivatedMidChainRole_stillRelaysItsAncestors() {
+        val userId = "165f7094-3333-3333-3333-333333333333"
+        val grandParentId = createRole("CHAIN_GP", parentId = null)
+        val parentId = createRole("CHAIN_P", parentId = grandParentId)
+        val childId = createRole("CHAIN_C", parentId = parentId)
+        val rrGp = bindResource(grandParentId, "resource-chain-gp")
+        val rrP = bindResource(parentId, "resource-chain-p")
+        val rrC = bindResource(childId, "resource-chain-c")
+        val ruId = authRoleUserDao.insert(AuthRoleUser.Companion().apply {
+            this.roleId = childId
+            this.userId = userId
+        })
+        try {
+            cacheHandler.evict(userId)
+            val before = cacheHandler.getResourceIds(userId)
+            assertTrue(before.containsAll(listOf("resource-chain-c", "resource-chain-p", "resource-chain-gp")))
+
+            // Switch off the middle of the chain.
+            setRoleActive(parentId, false)
+            cacheHandler.evict(userId)
+            val after = cacheHandler.getResourceIds(userId)
+            assertTrue(after.contains("resource-chain-c"), "the directly granted child is untouched")
+            assertFalse(after.contains("resource-chain-p"), "the deactivated role withholds its own resources")
+            assertTrue(
+                after.contains("resource-chain-gp"),
+                "a deactivated role must not sever the chain: the active grandparent still applies; actual: ${after}",
+            )
+        } finally {
+            authRoleUserDao.deleteById(ruId)
+            listOf(rrGp, rrP, rrC).forEach { authRoleResourceDao.deleteById(it) }
+            listOf(childId, parentId, grandParentId).forEach { authRoleDao.deleteById(it) }
+            cacheHandler.evict(userId)
+        }
+    }
+
+    @Test
+    fun on_AuthRoleUpdated_invalidatesHoldersOfTheRoleAndOfItsDescendants() {
+        val directHolder = "165f7094-3333-3333-3333-333333333333"
+        val childHolder = "165f7094-2222-2222-2222-222222222222"
+        val parentId = createRole("EVT_P", parentId = null)
+        val childId = createRole("EVT_C", parentId = parentId)
+        val rrP = bindResource(parentId, "resource-evt-p")
+        val ruParent = authRoleUserDao.insert(AuthRoleUser.Companion().apply {
+            this.roleId = parentId
+            this.userId = directHolder
+        })
+        val ruChild = authRoleUserDao.insert(AuthRoleUser.Companion().apply {
+            this.roleId = childId
+            this.userId = childHolder
+        })
+        try {
+            cacheHandler.evict(directHolder)
+            cacheHandler.evict(childHolder)
+            // Warm both caches: the direct holder gets the parent's resource, and so does the
+            // holder of the child (inheritance walks up).
+            assertTrue(cacheHandler.getResourceIds(directHolder).contains("resource-evt-p"))
+            assertTrue(cacheHandler.getResourceIds(childHolder).contains("resource-evt-p"))
+
+            // Deactivate the parent and let the event do the invalidation — no manual evict here,
+            // that is exactly what is under test.
+            setRoleActive(parentId, false)
+            cacheHandler.on(AuthRoleUpdated(parentId))
+
+            assertFalse(
+                cacheHandler.getResourceIds(directHolder).contains("resource-evt-p"),
+                "the direct holder's cache must be invalidated by AuthRoleUpdated",
+            )
+            assertFalse(
+                cacheHandler.getResourceIds(childHolder).contains("resource-evt-p"),
+                "the descendant's holder inherits the role, so their cache must be invalidated too",
+            )
+        } finally {
+            authRoleUserDao.deleteById(ruParent)
+            authRoleUserDao.deleteById(ruChild)
+            authRoleResourceDao.deleteById(rrP)
+            listOf(childId, parentId).forEach { authRoleDao.deleteById(it) }
+            cacheHandler.evict(directHolder)
+            cacheHandler.evict(childHolder)
+        }
+    }
+
+    @Test
+    fun on_AuthGroupUpdated_deactivatedGroupRelaysNothing() {
+        val userId = "165f7094-3333-3333-3333-333333333333"
+        val roleId = "165f7094-2222-2222-2222-222222222222" // ROLE_USER -> ccc/ddd
+        val groupId = "165f7094-grp5-eeee-eeee-eeeeeeeeeeee"
+        val cleanupCriteria = Criteria(AuthRoleUser::userId.name, OperatorEnum.EQ, userId)
+        authRoleUserDao.search(cleanupCriteria).forEach { authRoleUserDao.deleteById(it.id) }
+
+        val (gId, guId, grId) = bindUserToRoleViaGroup(groupId, userId, roleId)
+        try {
+            cacheHandler.evict(userId)
+            assertTrue(cacheHandler.getResourceIds(userId).contains("resource-ccc-6Z55FylV"))
+
+            val group = authGroupDao.get(gId)!!
+            group.active = false
+            authGroupDao.update(group)
+            cacheHandler.on(AuthGroupUpdated(gId))
+
+            assertFalse(
+                cacheHandler.getResourceIds(userId).contains("resource-ccc-6Z55FylV"),
+                "a deactivated group must relay no roles, and the event must invalidate its members",
+            )
+        } finally {
+            authGroupRoleDao.deleteById(grId)
+            authGroupUserDao.deleteById(guId)
+            authGroupDao.deleteById(gId)
+            cacheHandler.evict(userId)
+        }
+    }
+
+    // -------------------- helpers --------------------
+
+    private fun createRole(code: String, parentId: String?): String =
+        authRoleDao.insert(AuthRole.Companion().apply {
+            this.code = code
+            this.name = code
+            this.tenantId = "tenant-001-6Z55FylV"
+            this.subsysCode = "ams"
+            this.active = true
+            this.builtIn = false
+            this.parentId = parentId
+        })
+
+    private fun bindResource(roleId: String, resourceId: String): String =
+        authRoleResourceDao.insert(AuthRoleResource.Companion().apply {
+            this.roleId = roleId
+            this.resourceId = resourceId
+        })
+
+    private fun setRoleActive(roleId: String, active: Boolean) {
+        val role = authRoleDao.get(roleId)!!
+        role.active = active
+        authRoleDao.update(role)
     }
 
     private fun bindUserToRoleViaGroup(

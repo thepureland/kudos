@@ -3,6 +3,7 @@ create table if not exists "sys_resource"
 (
     "id"                      char(36)  default RANDOM_UUID() not null primary key,
     "name"                    character varying(64)           not null,
+    "permission_code"         character varying(128),
     "url"                     character varying(256),
     "resource_type_dict_code" char(1)                         not null,
     "parent_id"               char(36),
@@ -21,6 +22,10 @@ create table if not exists "sys_resource"
 );
 
 create unique index if not exists "uq_sys_resource" on "sys_resource" ("name", "sub_system_code");
+
+-- A permission code identifies one permission point within a subsystem. NULLs compare as distinct,
+-- so rows that have not been assigned a code yet do not collide.
+create unique index if not exists "uq_sys_resource_permission_code" on "sys_resource" ("permission_code", "sub_system_code");
 
 create index if not exists "idx_sys_resource_parent_id" on "sys_resource" ("parent_id");
 
@@ -41,6 +46,11 @@ create index if not exists "idx_sys_resource_sub_system_code" on "sys_resource" 
 comment on table "sys_resource" is '资源';
 comment on column "sys_resource"."id" is '主键';
 comment on column "sys_resource"."name" is '名称';
+-- This table is the permission-point REGISTRY. A row's durable identity is its permission_code
+-- (`域:资源类型:动作`, e.g. `sys:user:delete`), not its primary key: the code survives环境重建 and
+-- can be granted with wildcards. The menu attributes (icon/order_num/parent_id) are merely how a
+-- permission projects onto the UI — MENU rows are one projection, FUNCTION/ACTION rows have none.
+comment on column "sys_resource"."permission_code" is '权限编码，如 sys:user:delete，授权与鉴权的稳定标识';
 comment on column "sys_resource"."url" is 'url';
 comment on column "sys_resource"."resource_type_dict_code" is '资源类型字典代码';
 comment on column "sys_resource"."parent_id" is '父id';

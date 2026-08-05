@@ -3,9 +3,13 @@ package io.kudos.ms.auth.core.group.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
 import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupRoleService
+import io.kudos.ms.auth.core.policy.GrantCandidate
+import io.kudos.ms.auth.core.policy.iservice.IAuthGrantPolicyService
+import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
@@ -15,8 +19,13 @@ import org.springframework.transaction.annotation.Transactional
 /**
  * Group-role relation service.
  *
+ * [batchBind] is the broadcast grant: one row hands the role to every current member of the group.
+ * That makes it the widest-reaching write in the module and the one that most needs the shared
+ * admission gate — see [IAuthGrantPolicyService].
+ *
  * @author K
  * @author AI: Codex
+ * @author AI: Claude
  * @since 1.0.0
  */
 @Service
@@ -29,6 +38,12 @@ open class AuthGroupRoleService(
 
     @Autowired
     private lateinit var eventPublisher: ApplicationEventPublisher
+
+    @Resource
+    private lateinit var authGroupUserDao: AuthGroupUserDao
+
+    @Resource
+    private lateinit var grantPolicyService: IAuthGrantPolicyService
 
     private val log = LogFactory.getLog(this::class)
 
@@ -50,6 +65,26 @@ open class AuthGroupRoleService(
             log.debug("Batch-binding group ${groupId} to ${roleIds.size} roles: all already exist, nothing inserted.")
             return 0
         }
+        // The broadcast write of the whole module: this single row hands `newRoleIds` to every
+        // current member at once. It is screened per (member, role) — and because the binding is one
+        // row, it cannot be applied to some members only: any rejection aborts the call, naming the
+        // members that blocked it so the admin can act on them.
+        // Screened against the raw roster rather than the currently-in-force one: a future-dated
+        // membership will receive these roles the moment its window opens, and by then there is no
+        // second chance to refuse. Screening early can only be over-strict, never permissive.
+        val memberIds = authGroupUserDao.searchMemberUserIdsByGroupId(groupId)
+        if (memberIds.isNotEmpty()) {
+            grantPolicyService.assertNoRejection(
+                grantPolicyService.screenGrants(
+                    newRoleIds.flatMap { roleId ->
+                        memberIds.map { userId ->
+                            GrantCandidate(roleId, userId, via = GrantCandidate.Via.GROUP_ROLE_BINDING)
+                        }
+                    },
+                ),
+            )
+        }
+
         val relations = newRoleIds.map { roleId ->
             AuthGroupRole {
                 this.groupId = groupId

@@ -92,4 +92,17 @@ open class AuthRoleUserTemporalService(
         return expired.size
     }
 
+    @Transactional
+    override fun activateStarted(since: LocalDateTime, now: LocalDateTime): Int {
+        if (!since.isBefore(now)) return 0
+        val started = dao.searchGrantsStartedBetween(since, now)
+        if (started.isEmpty()) return 0
+        // No row changes — the grants were already stored; only the cached snapshots are stale.
+        started.groupBy { it.roleId }.forEach { (roleId, grants) ->
+            eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, grants.map { it.userId }.distinct()))
+        }
+        log.debug("Activated ${started.size} role-user grant(s) whose window opened in (${since}, ${now}].")
+        return started.size
+    }
+
 }

@@ -7,6 +7,8 @@ import jakarta.annotation.Resource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -32,6 +34,9 @@ class AuthRoleDataScopeServiceTest : RdbAndRedisCacheTestBase() {
     private val orgOther = "5a7a5c0e-0000-0000-0000-0000000000d3"
 
     private val bindTestRoleId = "5a7a5c0e-0000-0000-0000-0000000000f9"
+
+    /** The CUSTOM-scoped role held by [userCustom]; grants on it drive that user's resolution. */
+    private val roleCustomForUser = "5a7a5c0e-0000-0000-0000-0000000000f4"
 
     private val userAll = "5a7a5c0e-0000-0000-0000-0000000000e0"
     private val userOrgChild = "5a7a5c0e-0000-0000-0000-0000000000e1"
@@ -147,5 +152,144 @@ class AuthRoleDataScopeServiceTest : RdbAndRedisCacheTestBase() {
         assertFalse(vo.all)
         assertTrue(vo.self)
         assertTrue(vo.orgIds.isEmpty())
+    }
+
+    // -------------------- the scope model is multi-dimensional --------------------
+
+    @Test
+    fun scopeGrantsAreDimensionQualified() {
+        // Organization is the built-in dimension, but it is data rather than a table name: an
+        // application slicing rows by region should not have to fork the model to get it.
+        service.bindOrgs(bindTestRoleId, listOf(orgOther))
+        service.bindScope(bindTestRoleId, "region", listOf("emea", "apac"))
+
+        assertEquals(setOf("emea", "apac"), service.getScopeValues(bindTestRoleId, "region"))
+        assertEquals(setOf(orgOther), service.getOrgIdsByRoleId(bindTestRoleId), "the org grants are untouched")
+        assertEquals(setOf("org", "region"), service.getAllScopes(bindTestRoleId).keys)
+    }
+
+    @Test
+    fun rebindingOneDimensionLeavesTheOthersAlone() {
+        // The failure this prevents: an admin edits a role's orgs on one screen and silently wipes
+        // the regions somebody configured on another.
+        service.bindScope(bindTestRoleId, "region", listOf("emea"))
+        service.bindOrgs(bindTestRoleId, listOf(orgOther))
+
+        assertEquals(setOf("emea"), service.getScopeValues(bindTestRoleId, "region"))
+        assertEquals(setOf(orgOther), service.getOrgIdsByRoleId(bindTestRoleId))
+    }
+
+    @Test
+    fun clearingADimensionRemovesOnlyThatDimension() {
+        service.bindOrgs(bindTestRoleId, listOf(orgOther))
+        service.bindScope(bindTestRoleId, "region", listOf("emea"))
+        assertEquals(0, service.bindScope(bindTestRoleId, "region", emptyList()))
+        assertTrue(service.getScopeValues(bindTestRoleId, "region").isEmpty())
+        assertEquals(setOf(orgOther), service.getOrgIdsByRoleId(bindTestRoleId))
+    }
+
+    @Test
+    fun aScopeGrantMustNameItsDimension() {
+        assertFailsWith<IllegalArgumentException> { service.bindScope(bindTestRoleId, "  ", listOf("x")) }
+    }
+
+    // -------------------- resolution is multi-dimensional too --------------------
+
+    @Test
+    fun resolve_customScope_carriesEveryDimensionTheRoleWasGranted() {
+        // The gap this closes: storage and registration were dimension-aware, but resolution read
+        // only `org`. A second dimension could then be configured and would silently never reach a
+        // consumer — worse than not supporting it, because the screen says it is configured.
+        service.bindScope(roleCustomForUser, "region", listOf("emea"))
+
+        val vo = service.resolveUserDataScope(userCustom)
+        assertFalse(vo.all)
+        assertEquals(setOf(orgOther), vo.orgIds, "the org dimension still resolves as before")
+        assertEquals(setOf("emea"), vo.valuesOf("region"), "and so does the one the application added")
+        assertTrue(vo.restricts("region"))
+    }
+
+    @Test
+    fun resolve_anUnrestrictedDimensionIsAbsentRatherThanEmpty() {
+        // A consumer must be able to tell "this dimension does not restrict" from "restricted to
+        // nothing"; conflating them would turn an unconfigured dimension into an impossible
+        // predicate that hides every row.
+        val vo = service.resolveUserDataScope(userCustom)
+        assertTrue(vo.valuesOf("no-such-dimension").isEmpty())
+        assertFalse(vo.restricts("no-such-dimension"))
+    }
+
+    @Test
+    fun resolve_expansionFollowsThePolicyNotTheDimension() {
+        // ORG_AND_CHILD carries the subtree; ORG does not. Expansion belongs to the policy, so a
+        // resolver that expanded every dimension uniformly would quietly turn the second into the
+        // first — which is exactly what an earlier version of this code did.
+        val withChildren = service.resolveUserDataScope(userOrgChild)
+        assertTrue(withChildren.orgIds.contains(orgChild), "own org")
+        assertTrue(withChildren.orgIds.contains(orgGrand), "and its descendants")
+
+        val ownOnly = service.resolveUserDataScope(userOrg)
+        assertEquals(setOf(orgChild), ownOnly.orgIds, "ORG must not pick up the subtree")
+
+        // A CUSTOM list is likewise exactly what an admin picked.
+        assertEquals(setOf(orgOther), service.resolveUserDataScope(userCustom).orgIds)
+    }
+
+    @Test
+    fun resolve_allShortCircuitsToNoDimensions() {
+        val vo = service.resolveUserDataScope(userAll)
+        assertTrue(vo.all)
+        assertTrue(vo.dimensions.isEmpty(), "ALL means unrestricted, not restricted to everything")
+    }
+
+    // -------------------- explaining the outcome --------------------
+
+    @Test
+    fun explain_namesTheRoleWhoseAllOverridesEveryRestriction() {
+        // The question this endpoint exists for. userAll holds an ALL-scoped role, so every other
+        // restriction on them is irrelevant — and reading one role's configuration would never
+        // reveal that.
+        val explanation = service.explainUserDataScope(userAll)
+        assertTrue(explanation.resolved.all)
+        assertNotNull(explanation.overriddenBy, "an ALL role must be named, not merely implied")
+        assertEquals("ALL", explanation.overriddenBy!!.policy)
+    }
+
+    @Test
+    fun explain_breaksTheOutcomeDownPerRole() {
+        val explanation = service.explainUserDataScope(userCustom)
+        assertFalse(explanation.resolved.all)
+        assertNull(explanation.overriddenBy, "nothing overrode anything here")
+
+        val custom = explanation.contributions.single { it.policy == "CUSTOM" }
+        assertEquals(setOf(orgOther), custom.contributed["org"], "a role's own contribution, not the merged set")
+        assertEquals("DIRECT", custom.source)
+        assertNotNull(custom.roleName, "the role is named so the reader can go and change it")
+    }
+
+    @Test
+    fun explain_showsWhatEachPolicyContributesOnItsOwn() {
+        // ORG contributes only the subject's own org; ORG_AND_CHILD contributes the subtree. Showing
+        // the merged result for both would hide exactly the difference the reader is looking for.
+        val ownOrgOnly = service.explainUserDataScope(userOrg).contributions.single { it.policy == "ORG" }
+        assertEquals(setOf(orgChild), ownOrgOnly.contributed["org"])
+
+        val withChildren = service.explainUserDataScope(userOrgChild)
+            .contributions.single { it.policy == "ORG_AND_CHILD" }
+        assertTrue(withChildren.contributed["org"]!!.containsAll(setOf(orgChild, orgGrand)))
+    }
+
+    @Test
+    fun explain_marksTheSelfContribution() {
+        val explanation = service.explainUserDataScope(userSelf)
+        assertTrue(explanation.contributions.any { it.contributesSelf })
+        assertTrue(explanation.resolved.self)
+    }
+
+    @Test
+    fun explain_forASubjectWithNoRolesIsEmptyButValid() {
+        val explanation = service.explainUserDataScope("non-existent-user-id")
+        assertTrue(explanation.contributions.isEmpty())
+        assertTrue(explanation.resolved.self, "the restrictive fallback still applies")
     }
 }

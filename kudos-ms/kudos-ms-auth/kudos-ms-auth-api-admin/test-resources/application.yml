@@ -1,0 +1,71 @@
+# Configuration for the shadow-mode dev run (ShadowModeDemoLauncher) — and for any future
+# api-admin integration test that boots the full application.
+#
+# Static half of the environment only. The H2 side is knowable in advance because the test
+# container binds its fixed port (1521); the Redis container maps a random port, so the launcher
+# injects kudos.ability.data.redis.* / spring.data.redis.* as system properties after starting it.
+
+server:
+  port: 8080   # where kudos-console-ui's vite proxy expects the backend
+
+spring:
+  datasource:
+    dynamic:
+      primary: tcp-ds1
+      hikari:
+        connection-timeout: 3000
+        validation-timeout: 5000
+        idle-timeout: 600000
+        leak-detection-threshold: 0
+        max-lifetime: 1800000
+        max-pool-size: 10
+        min-idle: 10
+        initialization-fail-timeout: 1
+        is-auto-commit: false
+        is-read-only: false
+        is-isolate-internal-queries: false
+        is-register-mbeans: false
+        is-allow-pool-suspension: false
+      datasource:
+        master:
+          hikari:
+            is-auto-commit: false
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:~/h2/ds-master;DATABASE_TO_LOWER=TRUE;
+          username: sa
+          password: sa
+        tcp-ds1:
+          driver-class-name: org.h2.Driver
+          url: jdbc:h2:tcp://localhost:1521/mem:test;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
+          username: sa
+          password: sa
+
+kudos:
+  ability:
+    flyway:
+      # sys first (sys_cache etc.), then user, then auth — same ordering the core tests use.
+      datasource-config:
+        tcp-ds1: sys,user,auth
+      execution-order:
+        - tcp-ds1
+    cache:
+      enabled: true
+
+    # ---- The point of this file: shadow mode, lit. ----
+    security:
+      enforcement:
+        # Installs the URL filter. shadow-mode stays at its default (true), so every request that
+        # would have been refused becomes a WARN line instead — the migration work-list, produced
+        # from real traffic. Nothing is actually blocked.
+        enabled: true
+    data:
+      rdb:
+        row-scope:
+          # Same shape for row filtering: on, observing, changing no query results. With no entity
+          # declared @DataScoped yet, the honest expected outcome is "shadow on, zero findings" —
+          # which the findings page states explicitly rather than passing off as an all-clear.
+          enabled: true
+
+cache:
+  config:
+    strategy: SINGLE_LOCAL

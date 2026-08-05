@@ -28,7 +28,10 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import org.springframework.http.converter.HttpMessageConverter
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
 import tools.jackson.databind.ObjectMapper
+import tools.jackson.databind.json.JsonMapper
 import java.util.EventListener
 
 
@@ -108,10 +111,40 @@ open class SpringMvcAutoConfiguration : WebMvcConfigurer, IComponentInitializer 
     @ConditionalOnMissingBean
     open fun corsHandlerInterceptor(): HandlerInterceptor = CorsHandlerInterceptor()
 
-    /** Default Jackson 3 [ObjectMapper]; business code may override via a custom bean to inject custom modules / time-zone strategies. */
+    /**
+     * Default Jackson 3 [ObjectMapper]; business code may override via a custom bean to inject
+     * custom modules / time-zone strategies.
+     *
+     * **Modules are discovered, not omitted.** A bare `ObjectMapper()` registers nothing, and the
+     * one that matters here is the Kotlin module: a Kotlin data class has no no-arg constructor, so
+     * without it Jackson cannot construct one and every `@RequestBody` taking a data class fails
+     * with "no Creators, like default constructor, exist". That failure is invisible to unit tests,
+     * which call services directly and never cross the HTTP boundary — it only appears the first
+     * time somebody POSTs real JSON.
+     */
     @Bean
-    @ConditionalOnMissingBean
-    open fun objectMapper(): ObjectMapper = ObjectMapper()
+    @ConditionalOnMissingBean(ObjectMapper::class)
+    open fun objectMapper(): JsonMapper = JsonMapper.builder().findAndAddModules().build()
+
+    /**
+     * Makes the MVC message converters use [objectMapper].
+     *
+     * Necessary because [EnableWebMvc] takes over converter construction from Spring Boot: the
+     * framework builds its own Jackson converter with its own mapper, so configuring the bean alone
+     * would leave request bodies parsed by a mapper nobody configured.
+     *
+     * The JSON converter is replaced **in place** rather than prepended. Ordering is load-bearing
+     * here: put a JSON converter first and it also claims `String` return values, which then come
+     * back JSON-quoted — a subtle break in every endpoint returning a bare string. Substituting at
+     * the same index changes the mapper and nothing else.
+     */
+    override fun extendMessageConverters(converters: MutableList<HttpMessageConverter<*>>) {
+        // objectMapper() goes through the @Configuration proxy, so this is the same singleton the
+        // rest of the application injects — one mapper, one set of rules, everywhere.
+        val replacement = JacksonJsonHttpMessageConverter(objectMapper())
+        val at = converters.indexOfFirst { it is JacksonJsonHttpMessageConverter }
+        if (at >= 0) converters[at] = replacement else converters.add(replacement)
+    }
 
     /** Unified response handler for bad request errors (parameter / binding / Bean Validation errors). */
     @Bean

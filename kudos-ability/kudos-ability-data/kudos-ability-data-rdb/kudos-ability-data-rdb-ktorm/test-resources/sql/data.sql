@@ -16,3 +16,11 @@ INSERT INTO "test_built_in_ktorm" ("id", "name", "built_in") VALUES
 (902, 'built_in_row', 't'),
 (903, 'custom_del_b', 'f');
 
+
+-- org / region / creator matrix, so a filtered query has both hits and misses to prove itself on.
+INSERT INTO "test_scoped_order" ("id", "title", "org_id", "region_code", "create_user_id") VALUES
+('so-1', 'org-a emea, by alice',  'org-a', 'emea', 'alice'),
+('so-2', 'org-a apac, by bob',    'org-a', 'apac', 'bob'),
+('so-3', 'org-b emea, by bob',    'org-b', 'emea', 'bob'),
+('so-4', 'org-c emea, by alice',  'org-c', 'emea', 'alice'),
+('so-5', 'no org, by alice',      NULL,    'emea', 'alice');

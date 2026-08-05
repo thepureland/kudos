@@ -215,7 +215,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
 
         val directUserIds = authRoleUserDao.searchUserIdsByRoleId(roleId)
         val groupIds = authGroupRoleDao.searchGroupIdsByRoleId(roleId)
-        val viaGroupUserIds = groupIds.flatMap { gid -> authGroupUserDao.searchUserIdsByGroupId(gid) }.distinct()
+        val viaGroupUserIds = groupIds.flatMap { gid -> authGroupUserDao.searchMemberUserIdsByGroupId(gid) }.distinct()
         val allUserIds = (directUserIds + viaGroupUserIds).distinct()
         if (allUserIds.isEmpty()) return
 
@@ -270,7 +270,7 @@ open class ResourceIdsByTenantIdAndUsernameCache : AbstractKeyValueCacheHandler<
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthGroupRoleRelationsChanged) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val userIds = authGroupUserDao.searchUserIdsByGroupId(event.groupId)
+        val userIds = authGroupUserDao.searchMemberUserIdsByGroupId(event.groupId)
         if (userIds.isEmpty()) return
         evictByUserIds(userIds)
     }

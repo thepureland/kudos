@@ -45,4 +45,19 @@ interface IAuthRoleUserTemporalService {
      */
     fun purgeExpired(): Int
 
+    /**
+     * Evict the caches of users whose grants **became effective** inside `(since, now]`.
+     *
+     * The expiry side of a window is self-healing (a lapsed grant is deleted by [purgeExpired],
+     * which publishes the eviction), but the activation side is not: the cached permission snapshot
+     * is computed when the grant is written, at which point a future-dated grant is correctly
+     * filtered out — and nothing would ever recompute it once `start_time` arrives. This sweep is
+     * that missing trigger.
+     *
+     * @param since exclusive lower bound — normally the previous sweep's instant
+     * @param now inclusive upper bound
+     * @return the number of grants that crossed into their window
+     */
+    fun activateStarted(since: LocalDateTime, now: LocalDateTime): Int
+
 }

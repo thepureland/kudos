@@ -28,6 +28,7 @@ import kotlin.reflect.full.superclasses
  * @param T database table-entity association type
  * @author K
  * @author AI: Codex
+ * @author AI: Claude
  * @since 1.0.0
  */
 open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
@@ -245,6 +246,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @return number of updated records
      * @throws IllegalArgumentException when no query criteria is supplied
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     @Suppress("UNCHECKED_CAST")
@@ -299,7 +301,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
 
         val props = properties.toMutableMap()
         setDefault(props)
-        val whereExpression = CriteriaConverter.convert(criteria, table())
+        val whereExpression = withRowScope(CriteriaConverter.convert(criteria, table()))
         val columnMap = ColumnHelper.columnOf(table(), *props.keys.toTypedArray())
         return database().batchUpdate(table()) {
             item {
@@ -346,7 +348,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         // on the non-null PK property rather than throwing; guard by supported PK types here to avoid
         // a downstream ClassCastException when binding parameters.
         check(id is String || id is Int || id is Long) { "Unsupported primary key type [${id::class}]" }
-        val count = entitySequence().removeIf { getPkColumn() eq id }
+        val count = entitySequence().removeIf { withRowScope(getPkColumn() eq id) }
         return count == 1
     }
 
@@ -357,12 +359,12 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     override fun batchDelete(ids: Collection<PK>): Int {
         require(!ids.isEmpty()) { "Batch entity delete requires a non-empty primary key collection!" }
         val criteria = Criteria.of(IDbEntity<PK, E>::id.name, OperatorEnum.IN, ids.toList())
-        return entitySequence().removeIf { CriteriaConverter.convert(criteria, table()) }
+        return entitySequence().removeIf { withRowScope(CriteriaConverter.convert(criteria, table())) }
     }
 
     override fun batchDeleteCriteria(criteria: Criteria): Int {
         require(!criteria.isEmpty()) { "Batch entity delete requires a non-empty query criteria!" }
-        return entitySequence().removeIf { CriteriaConverter.convert(criteria, table()) }
+        return entitySequence().removeIf { withRowScope(CriteriaConverter.convert(criteria, table())) }
     }
 
     override fun batchDeleteWhen(searchPayload: ISearchPayload): Int {
@@ -379,6 +381,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @return number of deleted records
      * @throws IllegalArgumentException when no query criteria is supplied
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     open fun batchDeleteWhen(
@@ -395,7 +398,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         val andOr = searchPayload?.getAndOr() ?: AndOrEnum.AND
         val whereExpression = processWhere(wherePropertyMap, andOr, true, whereConditionFactory)
         whereExpression ?: throw IllegalArgumentException("Unconditional database table delete is not allowed!")
-        return entitySequence().removeIf { whereExpression }
+        return entitySequence().removeIf { withRowScope(whereExpression) }
     }
 
     //endregion Delete
@@ -414,6 +417,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @return 是否更新成功
      * @throws IllegalArgumentException id 为 null
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun updateByCriteria(id: PK?, propertyMap: Map<String, *>, criteria: Criteria?): Boolean {
@@ -430,7 +434,9 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             where {
                 var whereExpression = getPkColumn() eq id
                 criteria?.let { whereExpression = whereExpression.and(CriteriaConverter.convert(it, table())) }
-                whereExpression
+                // Update-by-id is scoped too: without it the row a subject cannot see is still one
+                // they can change, which is not a boundary.
+                withRowScope(whereExpression)
             }
         } == 1
     }
@@ -451,6 +457,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
      * @return 实际更新的总行数
      * @throws IllegalArgumentException entities 为空集合
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun batchUpdateByCriteria(
@@ -471,7 +478,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                 columnMap.filter { it.key in propertyNames }
             }
         }
-        val criteriaExpression = criteria?.let { CriteriaConverter.convert(it, table()) }
+        val criteriaExpression = criteria?.let { withRowScope(CriteriaConverter.convert(it, table())) } ?: rowScopeExpr()
         GroupExecutor(entities, countOfEachBatch) { it ->
             val counts = database().batchUpdate(table()) {
                 for (entity in it) {

@@ -9,6 +9,11 @@ dependencies {
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-local:kudos-ability-cache-local-caffeine"))
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-remote:kudos-ability-cache-remote-redis"))
 
+    // Implements the enforcement layer's ports (IAuthzDecisionProvider / IPermissionPointRegistry).
+    // The dependency runs ms -> ability on purpose: the ability module must stay free of any
+    // microservice dependency so a different authorization backend can supply the same ports.
+    api(project(":kudos-ability:kudos-ability-security:kudos-ability-security-enforcement"))
+
     // h2
     // h2 supports pagination via PostgreSqlDialect
     testImplementation(libs.h2database.h2)

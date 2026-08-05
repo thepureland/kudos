@@ -6,7 +6,7 @@ feign:
   hystrix:
     enabled: false
   httpclient:
-    connection-timeout: 30000
+    connection-timeout: 3000
 
 server:
   port: 0

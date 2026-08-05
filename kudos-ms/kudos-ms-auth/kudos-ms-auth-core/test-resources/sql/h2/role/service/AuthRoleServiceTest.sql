@@ -12,8 +12,9 @@ merge into "auth_role" ("id", "code", "name", "tenant_id", "subsys_code", "paren
     ('249363d1-0000-0000-0000-000000000030', 'svc-role-hier-root-bq0Y0mrl', 'svc-role-hier-root-name', 'svc-tenant-hier-1-bq0Y0mrl', 'ams', null, 'hierarchy root', true, false, 'system', '系统'),
     ('249363d1-0000-0000-0000-000000000031', 'svc-role-hier-mid-bq0Y0mrl', 'svc-role-hier-mid-name', 'svc-tenant-hier-1-bq0Y0mrl', 'ams', '249363d1-0000-0000-0000-000000000030', 'hierarchy mid', true, false, 'system', '系统'),
     ('249363d1-0000-0000-0000-000000000032', 'svc-role-hier-leaf-bq0Y0mrl', 'svc-role-hier-leaf-name', 'svc-tenant-hier-1-bq0Y0mrl', 'ams', '249363d1-0000-0000-0000-000000000031', 'hierarchy leaf', true, false, 'system', '系统'),
-    ('249363d1-0000-0000-0000-000000000033', 'svc-role-hier-othertenant-bq0Y0mrl', 'svc-role-hier-othertenant-name', 'svc-tenant-hier-2-bq0Y0mrl', 'ams', null, 'cross-tenant sibling', true, false, 'system', '系统'),
-    ('249363d1-0000-0000-0000-000000000034', 'svc-role-hier-othersubsys-bq0Y0mrl', 'svc-role-hier-othersubsys-name', 'svc-tenant-hier-1-bq0Y0mrl', 'svc-subsys-hier-other-bq0Y0mrl', null, 'cross-subsystem sibling', true, false, 'system', '系统');
+    -- code stays within auth_role.code varchar(32); the full "othertenant"/"othersubsys" spellings overflowed it.
+    ('249363d1-0000-0000-0000-000000000033', 'svc-role-hier-oten-bq0Y0mrl', 'svc-role-hier-othertenant-name', 'svc-tenant-hier-2-bq0Y0mrl', 'ams', null, 'cross-tenant sibling', true, false, 'system', '系统'),
+    ('249363d1-0000-0000-0000-000000000034', 'svc-role-hier-osub-bq0Y0mrl', 'svc-role-hier-othersubsys-name', 'svc-tenant-hier-1-bq0Y0mrl', 'svc-subsys-hier-other-bq0Y0mrl', null, 'cross-subsystem sibling', true, false, 'system', '系统');
 
 -- user_account: 供 getUsersByRoleCode 用例使用
 merge into "user_account" ("id", "username", "tenant_id", "login_password", "supervisor_id", "org_id", "remark", "active", "built_in", "create_user_id", "create_user_name") values

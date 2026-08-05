@@ -5,7 +5,7 @@
 --   ORG_AND_CHILD  the user's own org plus all descendant orgs
 --   ORG            the user's own org only
 --   SELF           only rows the user created
---   CUSTOM         an explicit set of orgs listed in auth_role_org
+--   CUSTOM         an explicit set of values listed in auth_role_scope
 --
 -- Stored as the enum's code string (see DataScopeEnum). Default 'ALL' so every existing role
 -- keeps its current unrestricted behaviour — turning the feature on never silently tightens

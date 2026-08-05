@@ -44,13 +44,28 @@ open class AuthRoleExclusionDao : BaseCrudDao<String, AuthRoleExclusion, AuthRol
     }
 
     /**
-     * Find all exclusion pairs for a tenant involving a specific role on either side.
-     * Used by the admin UI's "show constraints for this role" view.
+     * Find all exclusion pairs for a tenant involving a specific role on **either** side. Backs both
+     * the admin "constraints for this role" view and the separation-of-duties check on the bind path.
+     *
+     * Each side gets its own [Criteria] on purpose: `addAnd` mutates the receiver and returns it, so
+     * threading one instance through both queries would AND the two role predicates together
+     * (`role_a_id = X AND role_b_id = X`) — a shape no row can satisfy, since self-exclusion is
+     * forbidden by a check constraint. The second query then returned nothing and every rule whose
+     * canonical ordering put this role in the B slot went unenforced.
      */
     open fun searchByRoleIdAndTenant(roleId: String, tenantId: String): List<AuthRoleExclusion> {
-        val byCriteria = Criteria(AuthRoleExclusion::tenantId eq tenantId)
-        val byA = search(byCriteria.addAnd(AuthRoleExclusion::roleAId eq roleId))
-        val byB = search(byCriteria.addAnd(AuthRoleExclusion::roleBId eq roleId))
+        val byA = search(
+            Criteria.and(
+                AuthRoleExclusion::tenantId eq tenantId,
+                AuthRoleExclusion::roleAId eq roleId,
+            ),
+        )
+        val byB = search(
+            Criteria.and(
+                AuthRoleExclusion::tenantId eq tenantId,
+                AuthRoleExclusion::roleBId eq roleId,
+            ),
+        )
         val seen = HashSet<String>()
         return (byA + byB).filter { seen.add(it.id) }
     }

@@ -1,5 +1,7 @@
 package io.kudos.ms.auth.api.admin.controller.grant
 
+import io.kudos.ability.log.audit.common.annotation.WebAudit
+import io.kudos.ability.log.audit.common.enums.OperationTypeEnum
 import io.kudos.ability.web.springmvc.controller.BaseReadOnlyController
 import io.kudos.ms.auth.common.grant.vo.request.AuthRoleGrantDecisionRequest
 import io.kudos.ms.auth.common.grant.vo.request.AuthRoleGrantRequestQuery
@@ -43,21 +45,30 @@ class AuthRoleGrantRequestAdminController :
 
     /** Submit a new grant request. Returns the new request id. */
     @PostMapping("/submit")
+    @WebAudit(opType = OperationTypeEnum.CREATE, moduleCode = MODULE_CODE, desc = "提交角色授权申请")
     fun submit(@RequestBody request: AuthRoleGrantSubmitRequest): String =
         service.submit(request.roleId, request.userId, request.reason)
 
     /** Approve a pending request (performs the actual bind, subject to SoD checks). */
     @PostMapping("/approve")
+    @WebAudit(opType = OperationTypeEnum.UPDATE, moduleCode = MODULE_CODE, desc = "批准角色授权申请")
     fun approve(@RequestBody request: AuthRoleGrantDecisionRequest): Boolean =
         service.approve(request.id, request.comment)
 
     /** Reject a pending request. */
     @PostMapping("/reject")
+    @WebAudit(opType = OperationTypeEnum.UPDATE, moduleCode = MODULE_CODE, desc = "驳回角色授权申请")
     fun reject(@RequestBody request: AuthRoleGrantDecisionRequest): Boolean =
         service.reject(request.id, request.comment)
 
     /** Cancel a pending request (requester action). */
     @PostMapping("/cancel")
+    @WebAudit(opType = OperationTypeEnum.UPDATE, moduleCode = MODULE_CODE, desc = "撤回角色授权申请")
     fun cancel(@RequestBody request: AuthRoleGrantDecisionRequest): Boolean =
         service.cancel(request.id)
+
+    companion object {
+        /** 审计日志的归属模块编码 */
+        private const val MODULE_CODE = "auth-role-grant-request"
+    }
 }

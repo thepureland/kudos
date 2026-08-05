@@ -16,7 +16,7 @@ spring:
                     # Spring TX 之外的孤儿连接上，is-auto-commit=false 让 Hikari 还池时回滚了它。
       primary: postgres
       hikari:
-        connection-timeout: 30000
+        connection-timeout: 3000
         validation-timeout: 5000
         idle-timeout: 600000
         leak-detection-threshold: 0

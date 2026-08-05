@@ -2,17 +2,18 @@ package io.kudos.ms.auth.core.role.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
-import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.common.delegation.vo.RevokeImpactVo
+import io.kudos.ms.auth.common.delegation.vo.RoleGrantRequest
+import io.kudos.ms.auth.core.policy.GrantCandidate
+import io.kudos.ms.auth.core.policy.iservice.IAuthGrantPolicyService
 import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
-import io.kudos.ms.auth.core.role.exclusion.service.iservice.IAuthRoleExclusionService
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleUserService
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
-import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
-import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
+import io.kudos.ms.auth.core.version.dao.AuthPrincipalVersionDao
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
@@ -23,15 +24,15 @@ import org.springframework.transaction.annotation.Transactional
 /**
  * Role-User relation business.
  *
- * In addition to standard CRUD, [batchBind] now runs a Separation-of-Duties check before
- * inserting new role assignments: for each user in the batch, the service expands that user's
- * current effective role set (direct + group-inherited + parent-chain-inherited) and rejects
- * the bind if adding [roleId] would violate any exclusion pair defined for the tenant.
+ * [batchBind] does not decide for itself whether an assignment is admissible: it deduplicates
+ * against what the users already hold, then hands the remainder to
+ * [IAuthGrantPolicyService] — the one place where tenant, existence and separation-of-duties
+ * constraints live, shared with the group write paths that used to enforce none of them.
  *
- * If ANY user in the batch violates a rule, the entire batch for that user is rejected, but
- * other users in the same batch are still processed (per-user granularity, not per-batch
- * atomicity).  The caller (AuthRoleAdminController) receives a per-user failure detail via
- * [BatchBindResultVo] so the admin UI can show which users were blocked and why.
+ * A direct bind is all-or-nothing: it names its users explicitly, so a rejected member aborts the
+ * call rather than being silently skipped. The batch-across-roles entry point
+ * (`IAuthRoleService.batchBindUsers`) keeps per-role granularity and reports failures in
+ * `BatchBindResultVo`.
  *
  * @author K
  * @author AI: Cursor
@@ -58,17 +59,11 @@ open class AuthRoleUserService(
     @Autowired
     private lateinit var eventPublisher: ApplicationEventPublisher
 
-    @Autowired
-    private lateinit var authRoleDao: AuthRoleDao
+    @Resource
+    private lateinit var grantPolicyService: IAuthGrantPolicyService
 
     @Resource
-    private lateinit var authGroupUserDao: AuthGroupUserDao
-
-    @Resource
-    private lateinit var authGroupRoleDao: AuthGroupRoleDao
-
-    @Resource
-    private lateinit var exclusionService: IAuthRoleExclusionService
+    private lateinit var authPrincipalVersionDao: AuthPrincipalVersionDao
 
     private val log = LogFactory.getLog(this::class)
 
@@ -98,10 +93,24 @@ open class AuthRoleUserService(
      *   The message names the violating user and the conflicting role pair.
      */
     @Transactional
-    override fun batchBind(roleId: String, userIds: Collection<String>): Int {
+    override fun batchBind(roleId: String, userIds: Collection<String>): Int =
+        doBind(roleId, userIds, approvalSatisfied = false)
+
+    @Transactional
+    override fun bindApproved(roleId: String, userId: String): Int =
+        doBind(roleId, listOf(userId), approvalSatisfied = true)
+
+    /**
+     * The shared bind, with the one thing that differs between an ordinary assignment and an
+     * approved one made explicit.
+     *
+     * @param approvalSatisfied true only when a grant-request workflow has collected the sign-off a
+     *   role marked `approval_required` demands. Passed through to the policy layer rather than
+     *   checked here, so the rule lives in one place with the others.
+     */
+    private fun doBind(roleId: String, userIds: Collection<String>, approvalSatisfied: Boolean): Int {
         if (userIds.isEmpty()) return 0
 
-        val tenantId = authRoleDao.get(roleId)?.tenantId
         val existing = dao.searchUserIdsByRoleId(roleId).toSet()
         val candidates = userIds.toSet() - existing
         if (candidates.isEmpty()) {
@@ -109,24 +118,13 @@ open class AuthRoleUserService(
             return 0
         }
 
-        // SoD check — only when exclusion rules exist for the tenant.
-        if (tenantId != null) {
-            val violations = mutableListOf<String>()
-            for (userId in candidates) {
-                val effectiveRoles = computeEffectiveRoleIds(userId)
-                val violation = exclusionService.findViolation(tenantId, roleId, effectiveRoles)
-                if (violation != null) {
-                    violations += "User $userId: binding role $roleId would conflict with " +
-                        "${violation.roleAId} ↔ ${violation.roleBId} (exclusion ${violation.id})."
-                }
-            }
-            if (violations.isNotEmpty()) {
-                throw IllegalArgumentException(
-                    "SoD constraint violation — the following assignments were blocked:\n" +
-                        violations.joinToString("\n"),
-                )
-            }
-        }
+        // All-or-nothing: a direct role bind is an explicit administrative act on a named set of
+        // users, so a rejected member aborts the call rather than being quietly dropped.
+        grantPolicyService.assertNoRejection(
+            grantPolicyService.screenGrants(
+                candidates.map { GrantCandidate(roleId, it, approvalSatisfied = approvalSatisfied) },
+            ),
+        )
 
         val relations = candidates.map { userId ->
             AuthRoleUser {
@@ -135,18 +133,151 @@ open class AuthRoleUserService(
             }
         }
         dao.batchInsert(relations)
-        log.debug("Bound ${candidates.size} users to role $roleId (SoD check passed, ${existing.size} already existed).")
+        log.debug("Bound ${candidates.size} users to role $roleId (policy check passed, ${existing.size} already existed).")
         eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, candidates.toList()))
         return candidates.size
     }
 
     @Transactional
+    override fun grant(request: RoleGrantRequest, operatorId: String): List<String> {
+        require(operatorId.isNotBlank()) { "a delegated grant must name the operator making it." }
+        if (request.userIds.isEmpty()) return emptyList()
+
+        val existing = dao.searchUserIdsByRoleId(request.roleId).toSet()
+        val recipients = request.userIds.toSet() - existing
+        if (recipients.isEmpty()) {
+            log.debug("All ${request.userIds.size} recipients already hold role ${request.roleId}; nothing granted.")
+            return emptyList()
+        }
+
+        grantPolicyService.assertNoRejection(
+            grantPolicyService.screenGrants(
+                recipients.map { userId ->
+                    GrantCandidate(
+                        roleId = request.roleId,
+                        principalId = userId,
+                        operatorId = operatorId,
+                        requestedDepth = request.delegableDepth,
+                        endTime = request.endTime,
+                    )
+                },
+            ),
+        )
+
+        // The operator's own grant is the parent of every grant made from it — the edge revocation
+        // will later follow, and the reason a grantor losing their role takes these with it. Its
+        // scope is copied rather than re-read at revoke time, so a later reorg cannot widen what was
+        // handed out here.
+        val ownGrant = dao.findLiveDirectGrant(request.roleId, operatorId)
+        val ids = recipients.map { userId ->
+            dao.insert(
+                AuthRoleUser {
+                    this.roleId = request.roleId
+                    this.userId = userId
+                    this.grantedBy = operatorId
+                    this.parentGrantId = ownGrant?.id
+                    this.delegableDepth = request.delegableDepth
+                    this.scopeSnapshot = ownGrant?.scopeSnapshot
+                    this.startTime = request.startTime
+                    this.endTime = request.endTime
+                    this.revoked = false
+                },
+            )
+        }
+        log.debug(
+            "Operator ${operatorId} delegated role ${request.roleId} to ${recipients.size} principal(s) " +
+                "at depth ${request.delegableDepth}, parent grant ${ownGrant?.id ?: "none"}.",
+        )
+        eventPublisher.publishEvent(AuthRoleUserRelationsChanged(request.roleId, recipients.toList()))
+        return ids
+    }
+
+    @Transactional
+    override fun revoke(grantId: String, reason: String?): Int {
+        val root = dao.get(grantId) ?: return 0
+        val subtree = listOf(root) + lockedDelegatedDescendants(root)
+        val live = subtree.filter { it.revoked != true }
+        if (live.isEmpty()) return 0
+
+        live.forEach { grant ->
+            grant.revoked = true
+            grant.revokeReason = reason
+            dao.update(grant)
+        }
+        // One event per role so each cache invalidates exactly the principals it must.
+        live.groupBy { it.roleId }.forEach { (roleId, grants) ->
+            eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, grants.map { it.userId }.distinct()))
+        }
+        log.debug("Revoked grant ${grantId} and ${live.size - 1} grant(s) delegated from it. Reason: ${reason ?: "none given"}.")
+        return live.size
+    }
+
+    @Transactional(readOnly = true)
+    override fun getRevokeImpact(grantId: String): RevokeImpactVo {
+        val root = dao.get(grantId) ?: return RevokeImpactVo.none(grantId)
+        val descendants = dao.searchDelegatedDescendants(listOf(grantId)).filter { it.revoked != true }
+
+        // Depth is computed from the chain rather than stored: it describes a position in the tree,
+        // which changes as ancestors are revoked, whereas delegable_depth describes an allowance.
+        val parentOf = descendants.associate { it.id to it.parentGrantId }
+        fun depthOf(id: String?): Int {
+            var current = id
+            var depth = 0
+            while (current != null && current != grantId && depth < MAX_CHAIN_WALK_DEPTH) {
+                current = parentOf[current]
+                depth++
+            }
+            return depth
+        }
+
+        val cascaded = descendants.map { grant ->
+            RevokeImpactVo.CascadedGrant(
+                grantId = grant.id,
+                roleId = grant.roleId,
+                userId = grant.userId,
+                depth = depthOf(grant.id),
+            )
+        }
+        return RevokeImpactVo(
+            grantId = grantId,
+            roleId = root.roleId,
+            userId = root.userId,
+            cascadedGrants = cascaded,
+            affectedUserCount = (cascaded.map { it.userId } + root.userId).distinct().size,
+        )
+    }
+
+    @Transactional
     override fun unbind(roleId: String, userId: String): Boolean {
+        // Whatever this principal delegated from this role goes with it. Cascading *before* the
+        // delete matters: once the row is gone the chain below it is unreachable, and the downstream
+        // grants would keep working with no traceable source of authority — the exact shape of a
+        // zombie permission.
+        //
+        // The principal being unbound is locked first — the same lock every delegation takes on its
+        // operator (see AuthGrantPolicyService.screenGrants) — so a delegation racing this removal
+        // either committed its children before the descendant read below, or waits and finds the
+        // grant gone.
+        authPrincipalVersionDao.lockPrincipal(userId)
+        val cascaded = lockedDescendantsOf(
+            dao.searchGrantsByRoleId(roleId).filter { it.userId == userId }.map { it.id },
+        ).filter { it.revoked != true }
+        cascaded.forEach { grant ->
+            grant.revoked = true
+            grant.revokeReason = "upstream grant of role ${roleId} was removed from ${userId}"
+            dao.update(grant)
+        }
+
         val count = dao.deleteByRoleIdAndUserId(roleId, userId)
         val success = count > 0
         if (success) {
-            log.debug("Unbinding relation between role $roleId and user $userId.")
+            log.debug("Unbound role $roleId from user $userId; ${cascaded.size} delegated grant(s) cascaded.")
             eventPublisher.publishEvent(AuthRoleUserRelationsChanged(roleId, listOf(userId)))
+            cascaded.groupBy { it.roleId }.forEach { (cascadedRoleId, grants) ->
+                eventPublisher.publishEvent(
+                    AuthRoleUserRelationsChanged(cascadedRoleId, grants.map { it.userId }.distinct()),
+                )
+            }
         } else {
             log.warn("Failed to unbind relation between role $roleId and user $userId; relation does not exist.")
         }
@@ -156,21 +287,43 @@ open class AuthRoleUserService(
     @Transactional(readOnly = true)
     override fun exists(roleId: String, userId: String): Boolean = dao.exists(roleId, userId)
 
-    // ---------- Private helpers ----------
+    /** [lockedDescendantsOf] rooted at one grant, with the root's own holder locked first. */
+    private fun lockedDelegatedDescendants(root: AuthRoleUser): List<AuthRoleUser> {
+        root.userId?.let { authPrincipalVersionDao.lockPrincipal(it) }
+        return lockedDescendantsOf(listOf(root.id))
+    }
 
     /**
-     * Full effective role set for [userId]: direct + group-derived + ancestor (parent-chain) roles.
-     * This is the set against which the SoD check is run — it mirrors the expansion that
-     * ResourceIdsByUserIdCache performs when computing accessible resources.
+     * The delegation subtree under [rootGrantIds], read under the same per-principal locks that
+     * every delegation takes on its operator.
+     *
+     * A cascade is a read-then-write over rows other transactions are still adding to: every holder
+     * in the subtree may be an operator with a delegation in flight, and children inserted after a
+     * plain snapshot would survive the cascade as live grants under a revoked parent — authority
+     * with no traceable source, which no later cascade would ever find again. So each holder is
+     * locked (blocking their in-flight delegations) and the subtree re-read until no new holders
+     * appear. Chains are short and contention rare; the loop settles in one round in practice.
+     *
+     * Locks are necessarily acquired incrementally as the subtree is discovered, so a global lock
+     * order cannot be promised here the way `screenGrants` promises it. The accepted worst case is a
+     * database-detected deadlock aborting one side loudly — a retryable error, chosen over the
+     * quiet alternative of cascading past an unlocked branch.
      */
-    private fun computeEffectiveRoleIds(userId: String): Set<String> {
-        val direct = dao.searchRoleIdsByUserId(userId)
-        val groupIds = authGroupUserDao.searchGroupIdsByUserId(userId)
-        val groupDerived = if (groupIds.isEmpty()) emptyList()
-        else groupIds.flatMap { gid -> authGroupRoleDao.searchRoleIdsByGroupId(gid) }
-        val granted = (direct + groupDerived).distinct()
-        if (granted.isEmpty()) return emptySet()
-        val ancestors = authRoleDao.searchAncestorRoleIds(granted)
-        return (granted + ancestors).toSet()
+    private fun lockedDescendantsOf(rootGrantIds: Collection<String>): List<AuthRoleUser> {
+        if (rootGrantIds.isEmpty()) return emptyList()
+        val locked = mutableSetOf<String>()
+        while (true) {
+            val descendants = dao.searchDelegatedDescendants(rootGrantIds)
+            val holders = descendants.mapNotNull { it.userId }.toSortedSet()
+            val unlocked = holders - locked
+            if (unlocked.isEmpty()) return descendants
+            unlocked.forEach { authPrincipalVersionDao.lockPrincipal(it) }
+            locked += unlocked
+        }
+    }
+
+    companion object {
+        /** Safety cap on the delegation-chain walk; the column is a plain self-reference. */
+        private const val MAX_CHAIN_WALK_DEPTH = 32
     }
 }

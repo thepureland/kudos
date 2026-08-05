@@ -5,14 +5,17 @@ import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.enums.OperatorEnum
+import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
+import io.kudos.ms.auth.core.group.event.AuthGroupUpdated
 import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
+import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
 import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.user.core.account.dao.UserAccountDao
@@ -37,6 +40,7 @@ import org.springframework.transaction.event.TransactionalEventListener
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 @Component
@@ -56,6 +60,12 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
 
     @Autowired
     private lateinit var authRoleDao: AuthRoleDao
+
+    @Autowired
+    private lateinit var authGroupDao: AuthGroupDao
+
+    @Autowired
+    private lateinit var affectedUserResolver: AffectedUserResolver
 
     @Autowired
     private lateinit var userAccountDao: UserAccountDao
@@ -88,12 +98,15 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
         // Snapshot of every role's parent (NULL pruned), so the per-user loop can expand
         // effective roles with parent-inherited roles in memory rather than re-querying.
         val roleIdToParentId = authRoleDao.searchAllRoleIdToParentIdForCache()
+        // Deactivated roles/groups grant nothing; snapshot both id sets once instead of per user.
+        val activeRoleIds = authRoleDao.searchActiveRoleIdSet()
+        val activeGroupIds = authGroupDao.searchActiveGroupIdSet()
 
         log.debug(
             "Loaded ${users.size} users, ${userIdToDirectRoleIds.size} direct-role groups, " +
                 "${userIdToGroupIds.size} user-group groups, ${groupIdToRoleIds.size} group-role groups, " +
-                "${roleIdToResourceIdsMap.size} role-resource groups, and ${roleIdToParentId.size} role-parent links " +
-                "from the database."
+                "${roleIdToResourceIdsMap.size} role-resource groups, ${roleIdToParentId.size} role-parent links, " +
+                "${activeRoleIds.size} active roles and ${activeGroupIds.size} active groups from the database."
         )
 
         if (clear) {
@@ -108,6 +121,8 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
                 groupIds = userIdToGroupIds[userId].orEmpty(),
                 groupIdToRoleIds = groupIdToRoleIds,
                 roleIdToParentId = roleIdToParentId,
+                activeRoleIds = activeRoleIds,
+                activeGroupIds = activeGroupIds,
             )
             if (effectiveRoleIds.isEmpty()) return@forEach
             val resourceIds = effectiveRoleIds.flatMap { roleId ->
@@ -140,7 +155,8 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
         }
 
         val direct = authRoleUserDao.searchRoleIdsByUserId(userId)
-        val groupIds = authGroupUserDao.searchGroupIdsByUserId(userId)
+        // A deactivated group relays no roles.
+        val groupIds = authGroupDao.filterActiveGroupIds(authGroupUserDao.searchGroupIdsByUserId(userId))
         val groupDerived = if (groupIds.isEmpty()) emptyList() else {
             groupIds.flatMap { gid -> authGroupRoleDao.searchRoleIdsByGroupId(gid) }
         }
@@ -151,13 +167,20 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
         }
 
         // Role inheritance: a role X with parent Y implicitly grants Y's resources too. Walk up
-        // the parent chain from every granted role and union with the original set.
+        // the parent chain from every granted role and union with the original set. The walk runs
+        // over the raw graph and the active filter is applied to the *result*, so a deactivated
+        // role withholds only its own resources without cutting its descendants off from the
+        // ancestors above it (see AuthRoleDao.filterActiveRoleIds).
         val ancestorRoleIds = authRoleDao.searchAncestorRoleIds(grantedRoleIds)
-        val effectiveRoleIds = (grantedRoleIds + ancestorRoleIds).distinct()
+        val effectiveRoleIds = authRoleDao.filterActiveRoleIds(grantedRoleIds + ancestorRoleIds)
+        if (effectiveRoleIds.isEmpty()) {
+            log.debug("User ${userId} holds only deactivated roles; no resources granted.")
+            return emptyList()
+        }
 
         val resultList = authRoleResourceDao.searchResourceIdsByRoleIds(effectiveRoleIds)
         log.debug(
-            "Loaded ${effectiveRoleIds.size} effective roles for user ${userId} " +
+            "Loaded ${effectiveRoleIds.size} active effective roles for user ${userId} " +
                 "(direct ${direct.size} + group-inherited ${groupDerived.size} + parent-inherited ${ancestorRoleIds.size}) " +
                 "from the database, yielding ${resultList.size} resource IDs (after deduplication)."
         )
@@ -174,8 +197,12 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
      * @param groupIdToRoleIds group id -> list of role ids held by that group (pre-loaded in batch to avoid N+1)
      * @param roleIdToParentId role id -> direct parent role id snapshot (NULL parents pruned), used to
      *   expand granted roles with parent-inherited roles entirely in memory
-     * @return deduplicated list of effective role ids (granted + ancestors)
+     * @param activeRoleIds snapshot of every active role id; the walk runs over the raw graph and this
+     *   filter is applied to the result, so a deactivated role withholds only its own resources
+     * @param activeGroupIds snapshot of every active group id; groups outside it relay nothing
+     * @return deduplicated list of active effective role ids (granted + ancestors)
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun computeEffectiveRoleIds(
@@ -183,11 +210,13 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
         groupIds: Collection<String>,
         groupIdToRoleIds: Map<String, List<String>>,
         roleIdToParentId: Map<String, String> = emptyMap(),
+        activeRoleIds: Set<String>,
+        activeGroupIds: Set<String>,
     ): List<String> {
         if (directRoleIds.isEmpty() && groupIds.isEmpty()) return emptyList()
-        val groupDerived = groupIds.flatMap { groupIdToRoleIds[it].orEmpty() }
+        val groupDerived = groupIds.filter { it in activeGroupIds }.flatMap { groupIdToRoleIds[it].orEmpty() }
         val granted = (directRoleIds + groupDerived).distinct()
-        if (roleIdToParentId.isEmpty()) return granted
+        if (roleIdToParentId.isEmpty()) return granted.filter { it in activeRoleIds }
 
         // Walk up the parent chain from each granted role, collecting ancestors in memory. The depth
         // cap guards against a malformed snapshot that contains a cycle (validation forbids cycles at
@@ -202,7 +231,7 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
                 depth++
             }
         }
-        return seen.toList()
+        return seen.filter { it in activeRoleIds }
     }
 
     /**
@@ -243,7 +272,7 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
 
         // Users who inherit the role via a group: locate every group holding the role, then expand to userIds.
         val groupIds = authGroupRoleDao.searchGroupIdsByRoleId(roleId)
-        val viaGroupUserIds = groupIds.flatMap { gid -> authGroupUserDao.searchUserIdsByGroupId(gid) }.distinct()
+        val viaGroupUserIds = groupIds.flatMap { gid -> authGroupUserDao.searchMemberUserIdsByGroupId(gid) }.distinct()
 
         val allUserIds = (directUserIds + viaGroupUserIds).distinct()
         if (allUserIds.isEmpty()) return
@@ -266,6 +295,28 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthRoleResourceRelationsChanged): Unit = syncOnRoleResourceChange(event.roleId)
 
+    /**
+     * The role row itself changed. Both `active` (does the role contribute at all) and `parent_id`
+     * (which ancestors it pulls in) alter the resolved resource set, so holders of the role *and* of
+     * its descendants are invalidated — see [AffectedUserResolver.usersAffectedByRoleChange].
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleUpdated) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        val userIds = affectedUserResolver.usersAffectedByRoleChange(event.id)
+        if (userIds.isEmpty()) return
+        syncByUserIds(userIds)
+    }
+
+    /** Deactivating a group stops it relaying roles, so its members lose those roles' resources. */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupUpdated) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        val userIds = affectedUserResolver.usersAffectedByGroupChange(event.id)
+        if (userIds.isEmpty()) return
+        syncByUserIds(userIds)
+    }
+
     /** Users joining or leaving a group changes their effective role set, so recompute the resources. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthGroupUserRelationsChanged): Unit = syncByUserIds(event.userIds)
@@ -274,7 +325,7 @@ open class ResourceIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthGroupRoleRelationsChanged) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val userIds = authGroupUserDao.searchUserIdsByGroupId(event.groupId)
+        val userIds = authGroupUserDao.searchMemberUserIdsByGroupId(event.groupId)
         if (userIds.isEmpty()) return
         syncByUserIds(userIds)
     }

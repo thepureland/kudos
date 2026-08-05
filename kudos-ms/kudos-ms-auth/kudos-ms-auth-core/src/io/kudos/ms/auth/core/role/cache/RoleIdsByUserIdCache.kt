@@ -3,11 +3,18 @@ package io.kudos.ms.auth.core.role.cache
 import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheHandler
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
+import io.kudos.ms.auth.core.group.event.AuthGroupUpdated
 import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
+import io.kudos.ms.auth.core.platform.cache.AffectedUserResolver
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
+import io.kudos.ms.auth.core.role.source.ExternalRoleSourceChanged
+import io.kudos.ms.auth.core.role.source.RoleSourceRegistry
 import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
 import io.kudos.ms.user.core.account.dao.UserAccountDao
 import io.kudos.ms.user.core.account.event.UserAccountBatchDeleted
@@ -36,6 +43,7 @@ import org.springframework.transaction.event.TransactionalEventListener
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 @Component
@@ -51,7 +59,19 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
     private lateinit var authGroupRoleDao: AuthGroupRoleDao
 
     @Autowired
+    private lateinit var authRoleDao: AuthRoleDao
+
+    @Autowired
+    private lateinit var authGroupDao: AuthGroupDao
+
+    @Autowired
+    private lateinit var affectedUserResolver: AffectedUserResolver
+
+    @Autowired
     private lateinit var userAccountDao: UserAccountDao
+
+    @Autowired
+    private lateinit var roleSourceRegistry: RoleSourceRegistry
 
     companion object {
         private const val CACHE_NAME = "AUTH_ROLE_IDS_BY_USER_ID"
@@ -71,10 +91,14 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
         val userIdToDirectRoleIds = authRoleUserDao.searchAllUserIdToRoleIdsForCache()
         val userIdToGroupIds = authGroupUserDao.searchAllUserIdToGroupIdsForCache()
         val groupIdToRoleIds = authGroupRoleDao.searchAllGroupIdToRoleIdsForCache()
+        // Deactivated roles/groups grant nothing; snapshot both id sets once instead of per user.
+        val activeRoleIds = authRoleDao.searchActiveRoleIdSet()
+        val activeGroupIds = authGroupDao.searchActiveGroupIdSet()
 
         log.debug(
             "Loaded from DB: ${users.size} users, direct-role groups ${userIdToDirectRoleIds.size}, " +
-                "user-group groups ${userIdToGroupIds.size}, group-role groups ${groupIdToRoleIds.size}."
+                "user-group groups ${userIdToGroupIds.size}, group-role groups ${groupIdToRoleIds.size}, " +
+                "active roles ${activeRoleIds.size}, active groups ${activeGroupIds.size}."
         )
 
         if (clear) {
@@ -88,6 +112,8 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
                 directRoleIds = userIdToDirectRoleIds[userId].orEmpty(),
                 groupIds = userIdToGroupIds[userId].orEmpty(),
                 groupIdToRoleIds = groupIdToRoleIds,
+                activeRoleIds = activeRoleIds,
+                activeGroupIds = activeGroupIds,
             )
             if (effectiveRoleIds.isNotEmpty()) {
                 KeyValueCacheKit.put(CACHE_NAME, userId, effectiveRoleIds)
@@ -100,32 +126,42 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
      * Returns the effective role-ID list for a user from the cache, loading from the DB and writing back on a miss.
      * Effective = direct grants ∪ inherited via user groups.
      *
+     * The empty result is cached too. A principal holding no role is a stable fact, invalidated by
+     * the same events as any other, and this method is consulted per request whenever a deployment
+     * configures platform-administrator roles — leaving it uncached sent that population to the
+     * database on every call. See [io.kudos.ms.auth.core.platform.authz.cache.PermissionGrantsByUserIdCache].
+     *
      * @param userId User ID
      * @return List<roleId>
      */
-    @Cacheable(
-        cacheNames = [CACHE_NAME],
-        key = "#userId",
-        unless = "#result == null || #result.isEmpty()"
-    )
+    @Cacheable(cacheNames = [CACHE_NAME], key = "#userId")
     open fun getRoleIds(userId: String): List<String> {
         if (KeyValueCacheKit.isCacheActive(CACHE_NAME)) {
             log.debug("Cache miss for user ${userId}'s role IDs; loading from DB...")
         }
         val direct = authRoleUserDao.searchRoleIdsByUserId(userId)
-        val groupIds = authGroupUserDao.searchGroupIdsByUserId(userId)
+        // A deactivated group relays no roles.
+        val groupIds = authGroupDao.filterActiveGroupIds(authGroupUserDao.searchGroupIdsByUserId(userId))
         val groupDerived = if (groupIds.isEmpty()) emptyList() else {
             groupIds.flatMap { gid -> authGroupRoleDao.searchRoleIdsByGroupId(gid) }
         }
-        val effective = (direct + groupDerived).distinct()
+        // Roles the principal holds by virtue of something outside auth — a position, an org
+        // attribute. Empty unless the deployment registered a source; see IRoleSourceProvider for
+        // why these are resolved rather than mirrored into auth_role_user.
+        val external = roleSourceRegistry.contributedRoleIds(userId)
+        // A deactivated role is not part of anyone's effective set (see AuthRoleDao.filterActiveRoleIds).
+        // Contributed roles go through the same filter: a source may add a role, never exempt one.
+        val effective = authRoleDao.filterActiveRoleIds((direct + groupDerived + external).distinct()).toList()
         log.debug(
-            "Loaded effective roles for user ${userId} from DB: direct=${direct.size}, group-inherited=${groupDerived.size}, distinct=${effective.size}."
+            "Loaded effective roles for user ${userId} from DB: direct=${direct.size}, " +
+                "group-inherited=${groupDerived.size}, external=${external.size}, active=${effective.size}."
         )
         return effective
     }
 
     /**
-     * Merges "directly bound roles" and "roles inherited via groups" into a deduplicated effective role list.
+     * Merges "directly bound roles" and "roles inherited via groups" into a deduplicated effective role list,
+     * dropping anything deactivated.
      *
      * Early-return path: when both sides are empty, return an empty list immediately to avoid unnecessary
      * flatMap/distinct overhead.
@@ -133,18 +169,23 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
      * @param directRoleIds Role IDs directly held by the user
      * @param groupIds Group IDs the user belongs to
      * @param groupIdToRoleIds Group ID -> role ID list held by that group (preloaded in bulk to avoid N+1 inside flatMap)
-     * @return Deduplicated effective role IDs
+     * @param activeRoleIds Snapshot of every active role id; roles outside it contribute nothing
+     * @param activeGroupIds Snapshot of every active group id; groups outside it relay nothing
+     * @return Deduplicated, active-only effective role IDs
      * @author K
+     * @author AI: Claude
      * @since 1.0.0
      */
     private fun computeEffectiveRoleIds(
         directRoleIds: Collection<String>,
         groupIds: Collection<String>,
         groupIdToRoleIds: Map<String, List<String>>,
+        activeRoleIds: Set<String>,
+        activeGroupIds: Set<String>,
     ): List<String> {
         if (directRoleIds.isEmpty() && groupIds.isEmpty()) return emptyList()
-        val groupDerived = groupIds.flatMap { groupIdToRoleIds[it].orEmpty() }
-        return (directRoleIds + groupDerived).distinct()
+        val groupDerived = groupIds.filter { it in activeGroupIds }.flatMap { groupIdToRoleIds[it].orEmpty() }
+        return (directRoleIds + groupDerived).distinct().filter { it in activeRoleIds }
     }
 
     /**
@@ -181,6 +222,28 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthRoleUserRelationsChanged): Unit = syncByUserIds(event.userIds)
 
+    /**
+     * The role row itself changed. `active` decides whether the role belongs to anyone's effective
+     * set at all, so this cache must react — holders of the role *and* of its descendants (see
+     * [AffectedUserResolver.usersAffectedByRoleChange]) are invalidated.
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthRoleUpdated) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        val userIds = affectedUserResolver.usersAffectedByRoleChange(event.id)
+        if (userIds.isEmpty()) return
+        syncByUserIds(userIds)
+    }
+
+    /** Deactivating a group stops it relaying roles, so its members' effective sets change. */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: AuthGroupUpdated) {
+        if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
+        val userIds = affectedUserResolver.usersAffectedByGroupChange(event.id)
+        if (userIds.isEmpty()) return
+        syncByUserIds(userIds)
+    }
+
     /** A user added to or removed from a group is equivalent to a direct role-set change. */
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthGroupUserRelationsChanged): Unit = syncByUserIds(event.userIds)
@@ -192,10 +255,18 @@ open class RoleIdsByUserIdCache : AbstractKeyValueCacheHandler<List<String>>() {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: AuthGroupRoleRelationsChanged) {
         if (!KeyValueCacheKit.isCacheActive(CACHE_NAME)) return
-        val userIds = authGroupUserDao.searchUserIdsByGroupId(event.groupId)
+        val userIds = authGroupUserDao.searchMemberUserIdsByGroupId(event.groupId)
         if (userIds.isEmpty()) return
         syncByUserIds(userIds)
     }
+
+    /**
+     * An external role source changed its answer. kudos cannot observe a table it does not know
+     * about, so this event is the only thing that can make the change take effect promptly — see
+     * [io.kudos.ms.auth.core.role.source.IRoleSourceProvider].
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
+    open fun on(event: ExternalRoleSourceChanged): Unit = syncByUserIds(event.principalIds)
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: UserAccountDeleted): Unit = evictByUserId(event.id)

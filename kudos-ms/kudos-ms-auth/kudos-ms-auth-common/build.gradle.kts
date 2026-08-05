@@ -4,4 +4,6 @@ dependencies {
     // Same pattern as kudos-ms-sys-common / kudos-ms-user-common: method-level only, no @RequestMapping on the interface type.
     compileOnly(platform(libs.spring.boot.bom))
     compileOnly("org.springframework:spring-web")
+
+    testImplementation(project(":kudos-test:kudos-test-common"))
 }

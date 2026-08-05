@@ -11,6 +11,7 @@ import org.ktorm.schema.varchar
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 object AuthRoleResources : StringIdTable<AuthRoleResource>("auth_role_resource") {
@@ -20,6 +21,15 @@ object AuthRoleResources : StringIdTable<AuthRoleResource>("auth_role_resource")
 
     /** Resource id */
     var resourceId = varchar("resource_id").bindTo { it.resourceId }
+
+    /** Semantic permission code; the durable handle. */
+    var permissionCode = varchar("permission_code").bindTo { it.permissionCode }
+
+    /** ALLOW or DENY. */
+    var effect = varchar("effect").bindTo { it.effect }
+
+    /** Optional restricted condition expression. */
+    var condition = varchar("condition").bindTo { it.condition }
 
     /** Creator id */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }

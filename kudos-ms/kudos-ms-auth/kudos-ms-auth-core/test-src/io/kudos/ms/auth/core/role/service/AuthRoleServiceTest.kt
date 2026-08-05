@@ -14,6 +14,7 @@ import kotlin.test.*
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
@@ -169,9 +170,17 @@ class AuthRoleServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun update_settingValidAncestorReparent_succeeds() {
         // Re-parent leaf directly under root (skipping mid) — same tenant + subsystem, no cycle.
+        // The form is a full replacement, not a patch: BaseCrudDao.update copies every property
+        // across (nulls included), so the not-null columns must be restated even when unchanged.
+        // The rejection cases above can leave them null because validation trips before the write.
         val form = AuthRoleFormUpdate(
-            id = leafRoleId, code = null, name = null, tenantId = null,
-            subsysCode = null, parentId = rootRoleId, remark = null,
+            id = leafRoleId,
+            code = "svc-role-hier-leaf-bq0Y0mrl",
+            name = "svc-role-hier-leaf-name",
+            tenantId = "svc-tenant-hier-1-bq0Y0mrl",
+            subsysCode = "ams",
+            parentId = rootRoleId,
+            remark = null,
         )
         assertTrue(authRoleService.update(form))
         assertEquals(listOf(rootRoleId), authRoleService.getAncestorRoleIds(leafRoleId))

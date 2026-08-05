@@ -18,6 +18,7 @@ import kotlin.test.*
  * Requires Docker to run Redis, and AUTH_GROUP__HASH (hash=true) must be configured in sys_cache.
  *
  * @author K
+ * @author AI: Claude
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
@@ -45,7 +46,7 @@ class AuthGroupHashCacheTest : RdbAndRedisCacheTestBase() {
         assertNotNull(item)
         assertEquals(groupId1, item.id)
         assertEquals("GROUP_ADMIN", item.code)
-        assertEquals("Administrator group", item.name)
+        assertEquals("管理员组", item.name)
         assertEquals(tenant001, item.tenantId)
         val itemAgain = cacheHandler.getGroupById(groupId1)
         if (isLocalCacheEnabled()) assertSame(item, itemAgain)

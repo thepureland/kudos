@@ -13,3 +13,13 @@ merge into "auth_group" ("id", "code", "name", "tenant_id", "subsys_code", "rema
 merge into "auth_group_user" ("id", "group_id", "user_id", "create_user_id", "create_user_name") values
     ('9c1b2a3d-0000-0000-0000-000000000085', '9c1b2a3d-0000-0000-0000-000000000083', '9c1b2a3d-0000-0000-0000-000000000080', 'system', '系统'),
     ('9c1b2a3d-0000-0000-0000-000000000086', '9c1b2a3d-0000-0000-0000-000000000083', '9c1b2a3d-0000-0000-0000-000000000081', 'system', '系统');
+
+-- 组成员有效期扫描用例（announceWindowChanges）：一个组带一个角色，成员通过组间接持有该角色
+merge into "auth_role" ("id", "code", "name", "tenant_id", "subsys_code", "remark", "active", "built_in", "create_user_id", "create_user_name") values
+    ('9c1b2a3d-0000-0000-0000-000000000087', 'svc-gu-sweep-role-Np4k', 'svc-gu-sweep-role-name', 'svc-tenant-gpu-test-1-Np4kQmR7', 'ams', 'from AuthGroupUserServiceTest', true, false, 'system', '系统');
+
+merge into "auth_group" ("id", "code", "name", "tenant_id", "subsys_code", "remark", "active", "built_in", "create_user_id", "create_user_name") values
+    ('9c1b2a3d-0000-0000-0000-000000000088', 'svc-gu-sweep-group-Np4k', 'svc-gu-sweep-group-name', 'svc-tenant-gpu-test-1-Np4kQmR7', 'ams', 'from AuthGroupUserServiceTest', true, false, 'system', '系统');
+
+merge into "auth_group_role" ("id", "group_id", "role_id", "create_user_id", "create_user_name") values
+    ('9c1b2a3d-0000-0000-0000-000000000089', '9c1b2a3d-0000-0000-0000-000000000088', '9c1b2a3d-0000-0000-0000-000000000087', 'system', '系统');

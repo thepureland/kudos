@@ -10,12 +10,16 @@ import org.ktorm.schema.varchar
  * Resource table-to-entity binding.
  *
  * @author K
+ * @author AI: Claude
  * @since 1.0.0
  */
 object SysResources : ManagedTable<SysResource>("sys_resource") {
 
     /** Name */
     var name = varchar("name").bindTo { it.name }
+
+    /** Semantic permission code; the durable identity of this permission point. */
+    var permissionCode = varchar("permission_code").bindTo { it.permissionCode }
 
     /** url */
     var url = varchar("url").bindTo { it.url }

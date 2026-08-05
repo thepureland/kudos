@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository
  *
  * @author K
  * @author AI: Cursor
+ * @author AI: Claude
  * @since 1.0.0
  */
 @Repository
@@ -26,7 +27,9 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
      * @param roleId role id
      * @param resourceId resource id
      * @return true if it exists
+     * @author K
      * @author AI: Cursor
+     * @author AI: Claude
      * @since 1.0.0
      */
     fun exists(roleId: String, resourceId: String): Boolean {
@@ -40,7 +43,9 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
      *
      * @param resourceId resource id
      * @return set of role IDs
+     * @author K
      * @author AI: Cursor
+     * @author AI: Claude
      * @since 1.0.0
      */
     fun searchRoleIdsByResourceId(resourceId: String): Set<String> {
@@ -58,8 +63,25 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
     fun searchResourceIdsByRoleIds(roleIds: Collection<String>): Set<String> {
         if (roleIds.isEmpty()) return emptySet()
         val criteria = Criteria(AuthRoleResource::roleId inList roleIds.toList())
+        // Code-addressed bindings carry a null resource_id; they are consumed by the decision layer, not here.
         val list = searchProperty(criteria, AuthRoleResource::resourceId)
-        return list.map { it.trim() }.distinct().toSet()
+        return list.filterNotNull().map { it.trim() }.distinct().toSet()
+    }
+
+    /**
+     * Returns the full binding rows for [roleIds] — not just the resource ids.
+     *
+     * The decision point needs the effect and the condition too, which the id-only projections
+     * deliberately drop (they exist for menu rendering, where every binding is an unconditional
+     * ALLOW by construction).
+     *
+     * @param roleIds the roles to read bindings for
+     * @return every binding row belonging to those roles
+     */
+    open fun searchBindingsByRoleIds(roleIds: Collection<String>): List<AuthRoleResource> {
+        if (roleIds.isEmpty()) return emptyList()
+        val criteria = Criteria(AuthRoleResource::roleId inList roleIds.toList())
+        return search(criteria)
     }
 
     /**
@@ -69,7 +91,7 @@ open class AuthRoleResourceDao : BaseCrudDao<String, AuthRoleResource, AuthRoleR
      */
     fun searchAllRoleIdToResourceIdsForCache(): Map<String, List<String>> {
         val all = allSearch()
-        return all.groupBy { it.roleId }.mapValues { (_, list) -> list.map { it.resourceId.trim() } }
+        return all.groupBy { it.roleId }.mapValues { (_, list) -> list.mapNotNull { it.resourceId?.trim() } }
     }
 
     /**

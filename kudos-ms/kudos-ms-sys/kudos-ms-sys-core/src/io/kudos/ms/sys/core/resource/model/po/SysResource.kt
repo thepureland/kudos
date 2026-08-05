@@ -8,6 +8,7 @@ import io.kudos.base.query.sort.Sortable
  * Resource database entity
  *
  * @author K
+ * @author AI: Claude
  * @since 1.0.0
  */
 interface SysResource : IManagedDbEntity<String, SysResource> {
@@ -17,6 +18,13 @@ interface SysResource : IManagedDbEntity<String, SysResource> {
     /** Name */
     @get:Sortable
     var name: String
+
+    /**
+     * Semantic permission code (`域:资源类型:动作`, e.g. `sys:user:delete`) — the durable identity of
+     * this permission point, stable across environments and grantable with `*` wildcards. The
+     * primary key is not: it differs per deployment and dies with the row.
+     */
+    var permissionCode: String?
 
     /** URL */
     var url: String?

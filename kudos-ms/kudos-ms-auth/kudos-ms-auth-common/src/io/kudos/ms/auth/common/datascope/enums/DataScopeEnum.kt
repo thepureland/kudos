@@ -27,7 +27,7 @@ enum class DataScopeEnum(val code: String) {
     /** Only rows the user created. Most restrictive (no org grant). */
     SELF("SELF"),
 
-    /** An explicit set of orgs, listed in `auth_role_org`. */
+    /** An explicit set of values, listed in `auth_role_scope` for the relevant dimension. */
     CUSTOM("CUSTOM"),
     ;
 

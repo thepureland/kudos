@@ -2,6 +2,7 @@ package io.kudos.ms.auth.core.group.model.table
 
 import io.kudos.ability.data.rdb.ktorm.support.StringIdTable
 import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
+import org.ktorm.schema.boolean
 import org.ktorm.schema.datetime
 import org.ktorm.schema.varchar
 
@@ -11,6 +12,7 @@ import org.ktorm.schema.varchar
  *
  * @author K
  * @author AI: Codex
+ * @author AI: Claude
  * @since 1.0.0
  */
 object AuthGroupRoles : StringIdTable<AuthGroupRole>("auth_group_role") {
@@ -20,6 +22,18 @@ object AuthGroupRoles : StringIdTable<AuthGroupRole>("auth_group_role") {
 
     /** Role id. */
     var roleId = varchar("role_id").bindTo { it.roleId }
+
+    /** Who bound this role to the group. */
+    var grantedBy = varchar("granted_by").bindTo { it.grantedBy }
+
+    /** Upstream grant this binding was delegated from. */
+    var parentGrantId = varchar("parent_grant_id").bindTo { it.parentGrantId }
+
+    /** Soft revocation flag. */
+    var revoked = boolean("revoked").bindTo { it.revoked }
+
+    /** Why the binding was revoked. */
+    var revokeReason = varchar("revoke_reason").bindTo { it.revokeReason }
 
     /** Creator id. */
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }

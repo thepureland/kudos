@@ -9,6 +9,7 @@ create table if not exists "auth_role"
     "remark"      character varying(256),
     "active"      boolean default TRUE   not null,
     "built_in"    boolean default FALSE,
+    "delegable_max" int default 0 not null,
     "create_user_id" character varying(36),
     "create_user_name" character varying(32),
     "create_time" timestamp(6),
@@ -27,6 +28,10 @@ comment on column "auth_role"."subsys_code" is '子系统编码';
 comment on column "auth_role"."remark" is '备注';
 comment on column "auth_role"."active" is '是否激活';
 comment on column "auth_role"."built_in" is '是否内置';
+-- Delegation ceiling: how many further hops a grant of this role may ever carry. 0 = the role can
+-- never be re-delegated. The per-grant allowance (auth_role_user.delegable_depth) is chosen at
+-- grant time and may never exceed this ceiling. Built-in and platform-admin roles stay at 0.
+comment on column "auth_role"."delegable_max" is '可转授层数上限，0=禁止转授';
 comment on column "auth_role"."create_user_id" is '创建者id';
 comment on column "auth_role"."create_user_name" is '创建者名称';
 comment on column "auth_role"."create_time" is '创建时间';
