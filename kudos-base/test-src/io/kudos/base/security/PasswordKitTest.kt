@@ -68,6 +68,16 @@ internal class PasswordKitTest {
     }
 
     @Test
+    fun matchesSwallowsBcryptShapedButCorruptHash() {
+        // A 60-char string with a valid bcrypt prefix shape but a corrupt cost/salt body makes
+        // BCryptPasswordEncoder.matches throw IllegalArgumentException; PasswordKit must swallow it
+        // (the catch branch) and return false rather than propagate.
+        val corrupt = "\$2a\$ab\$" + "z".repeat(53) // invalid cost "ab"
+        assertEquals(60, corrupt.length)
+        assertFalse(PasswordKit.matches("whatever", corrupt))
+    }
+
+    @Test
     fun looksLikeBcryptHashDistinguishesLegacyData() {
         assertTrue(PasswordKit.looksLikeBcryptHash("\$2a\$10\$" + "x".repeat(53)))
         assertTrue(PasswordKit.looksLikeBcryptHash("\$2b\$12\$" + "y".repeat(53)))

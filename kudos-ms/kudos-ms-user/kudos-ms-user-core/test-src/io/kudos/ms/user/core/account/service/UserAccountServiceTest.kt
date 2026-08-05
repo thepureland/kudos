@@ -5,6 +5,7 @@ import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import kotlin.test.*
 
 /**
@@ -233,8 +234,10 @@ class UserAccountServiceTest : RdbAndRedisCacheTestBase() {
     @Test
     fun freezeAccount_writesAllSixFields() {
         val id = "a970f8c0-0000-0000-0000-000000000017"
-        val start = LocalDateTime.now().minusMinutes(1)
-        val end = LocalDateTime.now().plusHours(1)
+        // Truncate to micros: H2 stores microsecond precision, so a nanosecond-precision value
+        // would round on the DB round-trip and break the equality assertions below.
+        val start = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS).minusMinutes(1)
+        val end = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS).plusHours(1)
         val ok = userAccountService.freezeAccount(
             id = id,
             freezeType = "manual",

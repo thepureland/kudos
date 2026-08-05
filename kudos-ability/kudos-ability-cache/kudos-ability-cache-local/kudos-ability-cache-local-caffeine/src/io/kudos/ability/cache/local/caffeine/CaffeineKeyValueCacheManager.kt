@@ -81,7 +81,9 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
         val cache = getCache(cacheName) ?: return
         val realPattern: String = versionConfig.getFinalCacheName(versionConfig.getRealCacheName(pattern))
         val nativeCache = (cache as CaffeineCache).nativeCache.asMap()
-        val regex = "^" + realPattern.replace("*", ".*") + "$"
+        // Quote the literal fragments between wildcards: keys may legally contain regex metacharacters
+        // (".", "[", "(", "+", ...) — splicing them unescaped over-matches or breaks Pattern.compile.
+        val regex = "^" + realPattern.split("*").joinToString(".*") { Pattern.quote(it) } + "$"
         val p = Pattern.compile(regex)
         for (key in nativeCache.keys) {
             if (p.matcher(key.toString()).matches()) {

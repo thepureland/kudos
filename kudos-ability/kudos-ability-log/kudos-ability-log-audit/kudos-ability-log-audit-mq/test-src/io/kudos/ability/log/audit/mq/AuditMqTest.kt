@@ -2,8 +2,11 @@ package io.kudos.ability.log.audit.mq
 
 import io.kudos.ability.distributed.stream.common.annotations.MqProducer
 import io.kudos.ability.log.audit.common.api.IAuditService
+import io.kudos.ability.log.audit.common.api.IMonitorService
 import io.kudos.ability.log.audit.common.entity.SysAuditLogModel
+import io.kudos.ability.log.audit.common.entity.SysMonitorMsgVo
 import io.kudos.ability.log.audit.mq.beans.MqAuditService
+import io.kudos.ability.log.audit.mq.beans.MqMonitorService
 import io.kudos.ability.log.audit.mq.TestMqAuditService.SaveModel
 import io.kudos.test.common.init.EnableKudosTest
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,18 +28,30 @@ import kotlin.test.assertTrue
 class AuditMqTest @Autowired constructor(
     private val service: TestMqAuditService,
     private val auditService: IAuditService,
+    private val monitorService: IMonitorService,
 ) {
 
     @Test
     fun testLog() {
         val model = SaveModel("asda")
         model.code = "!121"
+        assertEquals("asda", model.id)
+        assertEquals("!121", model.code)
+        // @Audit-annotated method must complete normally even though the MQ submit is a no-op stub
         service.saveLog()
+        assertEquals("code-load-success", service.load(model.code))
+        assertEquals("code-load-success", service.load(null))
     }
 
     @Test
     fun mqAuditServiceIsPrimaryAuditService() {
         assertIs<MqAuditService>(auditService)
+    }
+
+    @Test
+    fun mqMonitorServiceIsPrimaryMonitorService() {
+        assertIs<MqMonitorService>(monitorService)
+        assertTrue(monitorService.submit(SysMonitorMsgVo()))
     }
 
     @Test

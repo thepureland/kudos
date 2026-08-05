@@ -155,6 +155,38 @@ internal class MinioUploadServiceTest {
         assertTrue(path.endsWith(".txt"))
     }
 
+    /**
+     * Test conditions
+     * 1) minioClient uses the default uploader user (whose policy includes s3:CreateBucket).
+     * 2) The target bucket does NOT exist yet.
+     *
+     * Expectation: createBucket() detects the missing bucket and creates it on the fly
+     * (covers the makeBucket branch, which the fixed `docs` bucket tests never reach),
+     * then the upload succeeds into the brand-new bucket.
+     */
+    @Test
+    fun fileUpload_with_default_minio_client_creates_missing_bucket() {
+        // Legal S3 bucket name: lowercase alphanumerics + hyphen, 3-63 chars.
+        val bucketName = "kudos-" + RandomStringKit.uuid().lowercase().replace("-", "").take(16)
+        val tenantId = RandomStringKit.uuid()
+        val resourceAsStream =
+            MinioUploadServiceTest::class.java.classLoader.getResourceAsStream("files/test-file.txt")
+                ?: "hello-minio".byteInputStream()
+
+        val uploadFileModel = UploadFileModel<InputStreamSource>().apply {
+            this.bucketName = bucketName
+            this.category = "test"
+            this.tenantId = tenantId
+            this.fileSuffix = ".txt"
+            this.inputStreamSource = InputStreamResource(resourceAsStream)
+        }
+
+        val uploadFileResult = uploadService.fileUpload(uploadFileModel)
+        val path = requireNotNull(uploadFileResult.filePath) { "filePath" }
+        assertTrue(path.startsWith("/$bucketName"))
+        assertTrue(path.endsWith(".txt"))
+    }
+
     companion object {
         // ---- Root administrator (the default root from MinioTestContainer) ----
         private const val ROOT_USER = "admin"

@@ -8,11 +8,18 @@ Msg 原子服务的 **Flyway 资源模块**——只放 `*.sql`，没有 Kotlin 
 
 ```
 resources/sql/msg/
-└── h2/                    ← 当前**只有 h2 一份脚本**；mysql / postgres / oracle 方言尚未补齐
+├── h2/                    ← 测试 / 本地
+├── postgresql/            ← 与 h2 版本号一一对齐
+└── mysql/                 ← 与 h2 版本号一一对齐（oracle 尚未提供）
+    各方言内：
     ├── V1.0.0.0..6        ← 系统配置 / 字典 / i18n 引导
     ├── V1.0.0.20..25      ← msg_* 业务表 DDL
+    ├── V1.0.0.26          ← msg_send 幂等键 alter
     (中间 V1.0.0.7..19 保留给后续脚本)
 ```
+
+运行时由 Flyway 按 `RdbTypeEnum` 自动选择方言目录；DML 侧 PG 用 `on conflict do nothing`、
+MySQL 用 `insert ignore` 保证幂等（详见组级 README"整体已知限制"）。
 
 ## 迁移清单
 
@@ -65,16 +72,14 @@ msg_receiver_group ── 独立 lookup 表，
 
 ## 已知限制 / 后续工作
 
-- ❗ **只有 h2 方言**——mysql / postgres / oracle 子目录尚未创建；生产部署需先补齐对应 DDL。
-  h2 用 `RANDOM_UUID()`、`varchar`（无界）、`TIMESTAMP(6)` 等非 ANSI 语法，直接搬到其他
-  方言会失败
-- ❗ **`msg_template.content` 是 `varchar`（无界）**——h2 默认转 `CLOB`，但 mysql 移植到
-  `VARCHAR(?)` 时需要确定上限或改 `TEXT`。配合 msg-core 已知问题（"模板内容大小无上限"），
-  应用层 form 校验需先加 maxLength
-- ❗ **缺索引**：`msg_template`（无 tenant_id 索引）、`msg_instance`（无 template_id /
-  tenant_id 索引）、`msg_send`（无 tenant_id / send_status_dict_code 索引）、
-  `msg_receive`（无 receiver_id / receive_status 索引）。状态查询 / 多租户隔离查询会
-  全表扫
+- ✅ **方言已补 PG + MySQL**——`h2` / `postgresql` / `mysql` 三套并存、版本号对齐；
+  oracle 尚未提供。h2 仍用 `RANDOM_UUID()`、无界 `varchar` 等方言语法，仅供测试 / 本地
+- ✅ **`msg_template.content` 列类型已按方言落地**——PG / MySQL 版用 `text`，配合应用层
+  `IMsgTemplateFormBase` 的 `@MaxLength(65535)` 校验封顶；h2 的无界 `varchar` 仅测试用
+- ❗ **部分索引仍缺**：`idx_msg_template__tenant_event` 已补在 PG / MySQL（h2 暂未补）；
+  但 `msg_instance`（template_id / tenant_id）、`msg_send`（tenant_id /
+  send_status_dict_code）、`msg_receive`（receiver_id / receive_status）等索引在三套方言
+  中均未建。状态查询 / 多租户隔离查询 / 收件箱查询会全表扫
 - ❗ **审计列不一致**：`msg_receiver_group` 有完整 `create_user_id` / `create_user_name` /
   `create_time` / `update_*` 六列；其他 5 张 msg_* 表只有 `create_time` / `update_time`，
   缺操作人。合规审计场景需先补列

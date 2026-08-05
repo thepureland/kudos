@@ -29,6 +29,10 @@ internal class ScanKitTest {
         }
         println("findClassesWithAnnotation-1 took ${timeMillis}ms")
         assert(classes.contains(Person::class))
+
+        // non-recursive: Person lives in a sub-package of io.kudos.base, so it should NOT be found
+        val nonRecursive = ScanKit.findClassesWithAnnotation(basePackage, annoClass, false)
+        assert(!nonRecursive.contains(Person::class))
     }
 
     @Test
@@ -51,6 +55,10 @@ internal class ScanKitTest {
         }
         println("findSubclassesOf-2 took ${timeMillis}ms")
         assert(!classes.contains(Slf4jLoggerCreator::class))
+
+        // non-recursive: ObjectNotFoundException lives in a sub-package, should NOT be found
+        val nonRecursive = ScanKit.findSubclassesOf(basePackage, clazz, false)
+        assert(!nonRecursive.contains(ObjectNotFoundException::class))
     }
 
     @Test
@@ -64,6 +72,10 @@ internal class ScanKitTest {
         }
         println("findImplementations-1 took ${timeMillis}ms")
         assert(classes.contains(Slf4jLoggerCreator::class))
+
+        // non-recursive: Slf4jLoggerCreator lives in a sub-package, should NOT be found
+        val nonRecursive = ScanKit.findImplementations(basePackage, iClazz, false)
+        assert(!nonRecursive.contains(Slf4jLoggerCreator::class))
 
         // class, should not pass
         basePackage = "io.kudos.base"
@@ -103,5 +115,9 @@ internal class ScanKitTest {
         }
         println("findResourcesMatching took ${timeMillis}ms")
         assert(paths.any { it.endsWith(".png") })
+
+        // non-recursive at root: logo.png at the resources root should still be found
+        val nonRecursive = ScanKit.findResourcesMatching("", "logo.*", false)
+        assert(nonRecursive.any { it.endsWith(".png") })
     }
 }

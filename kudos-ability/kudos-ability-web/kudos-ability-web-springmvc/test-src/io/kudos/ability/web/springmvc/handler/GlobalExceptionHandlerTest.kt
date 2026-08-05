@@ -133,6 +133,26 @@ class GlobalExceptionHandlerTest {
             .andExpect(jsonPath("$.message").value(CommonErrorCodeEnum.SYSTEM_ERROR.displayText))
     }
 
+    @Test
+    fun handleBindException_plainBindException_returnsValidationError() {
+        // Direct call: a plain BindException (form/query binding) is not a MethodArgumentNotValidException,
+        // so it dispatches to handleBindException instead of the @RequestBody handler.
+        val bindingResult = org.springframework.validation.BeanPropertyBindingResult(TestRequest(), "form")
+        val response = GlobalExceptionHandler().handleBindException(org.springframework.validation.BindException(bindingResult))
+        kotlin.test.assertFalse(response.success)
+        kotlin.test.assertEquals(CommonErrorCodeEnum.VALIDATION_ERROR.code, response.code)
+        kotlin.test.assertEquals(CommonErrorCodeEnum.VALIDATION_ERROR.displayText, response.message)
+    }
+
+    @Test
+    fun handleIllegalArgumentWithNullMessage_fallsBackToBadRequestText() {
+        // Direct call: covers the `ex.message ?: BAD_REQUEST.displayText` null branch.
+        val response = GlobalExceptionHandler().handleIllegalArgumentOrStateException(IllegalArgumentException())
+        kotlin.test.assertFalse(response.success)
+        kotlin.test.assertEquals(CommonErrorCodeEnum.BAD_REQUEST.code, response.code)
+        kotlin.test.assertEquals(CommonErrorCodeEnum.BAD_REQUEST.displayText, response.message)
+    }
+
     private class TestRequest {
 
         @field:NotBlank(message = "name must not be blank")

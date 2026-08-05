@@ -48,6 +48,12 @@ open class KafkaTest {
     fun setUp() {
         val args = arrayOf(
             "--spring.cloud.stream.kafka.binder.brokers=${kafkaContainer.ports.first().ip}:${kafkaContainer.ports.first().publicPort}",
+            // Workaround for Spring Boot 4.1: io.kudos.context.init.ValidatorAutoConfiguration#defaultValidator
+            // clashes with boot's ValidationAutoConfiguration#defaultValidator. Must be passed as args because
+            // application-kafka-producer.yml is loaded via @PropertySource, too late for spring.main.* binding.
+            "--spring.main.allow-bean-definition-overriding=true",
+            // Spring Cloud's compatibility verifier does not yet list Boot 4.1 as compatible.
+            "--spring.cloud.compatibility-verifier.enabled=false",
         )
         SpringApplication.run(KafkaProducerApplication::class.java, *args)
     }

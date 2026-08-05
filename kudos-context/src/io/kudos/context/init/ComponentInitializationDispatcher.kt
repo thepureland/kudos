@@ -38,10 +38,16 @@ open class ComponentInitializationDispatcher :
 
     private lateinit var beanFactory: ConfigurableListableBeanFactory
 
-    // key = configuration class beanName
-    private val componentBeanNames = mutableMapOf<String, MutableSet<String>>()
-
-    private val remainingCount = mutableMapOf<String, Int>()
+    /**
+     * key = configuration class beanName; value = the set of child beans (plus the component itself) that have
+     * **not yet** finished initialization. Shrinks as beans complete; when it becomes empty, afterInit fires.
+     *
+     * Set-removal (instead of the previous "fixed child set + remaining counter" pair) is deliberately idempotent:
+     * the same beanName may flow through both [getEarlyBeanReference] (circular-dependency early proxy exposure)
+     * and [postProcessAfterInitialization] — with a counter that meant a double decrement and a prematurely
+     * triggered afterInit; removing from a set counts each bean exactly once no matter how many paths it takes.
+     */
+    private val remainingBeanNames = mutableMapOf<String, MutableSet<String>>()
 
     // Cache an instance of each configuration class, passed in by Spring
     private val initializerInstances = mutableMapOf<String, IComponentInitializer>()
@@ -59,17 +65,17 @@ open class ComponentInitializationDispatcher :
      * 1. Type cast: cast BeanFactory to ConfigurableListableBeanFactory.
      * 2. Find components: get all bean names of type IComponentInitializer.
      * 3. Collect child beans: for each component, collect all beans it creates (matched by factoryBeanName).
-     * 4. Record information: store the component name and child bean set in componentBeanNames.
-     * 5. Initialize counters: set remainingCount, used to track bean initialization progress.
+     * 4. Record information: store the component name and child bean set in [remainingBeanNames].
      *
      * Child bean collection:
      * - Look up all beans whose factoryBeanName equals the component name.
      * - Add the component itself to the child bean set.
      * - When these beans finish initializing, the component's afterInit is triggered.
      *
-     * Counting mechanism:
-     * - remainingCount records how many child beans each component still has uninitialized.
-     * - When the counter drops to 0, all child beans are initialized and afterInit can be invoked.
+     * Tracking mechanism:
+     * - [remainingBeanNames] holds, per component, the set of beans not yet initialized.
+     * - Each bean is removed from the set once it finishes initializing (idempotently).
+     * - When the set becomes empty, all child beans have finished and afterInit can be invoked.
      *
      * @param factory The Spring BeanFactory
      */
@@ -88,8 +94,7 @@ open class ComponentInitializationDispatcher :
                     .toMutableSet()
                     .apply { add(compName) }
 
-                componentBeanNames[compName] = children
-                remainingCount[compName] = children.size
+                remainingBeanNames[compName] = children
             }
     }
 
@@ -135,16 +140,17 @@ open class ComponentInitializationDispatcher :
      * initialized.
      *
      * Workflow:
-     * 1. Iterate over all components: check whether the current bean belongs to any component's child-bean set.
-     * 2. Update the counter: decrement the corresponding component's remainingCount by 1.
-     * 3. Completion check: if the counter drops to 0, all child beans are initialized.
-     * 4. Invoke afterInit: get the component instance from the cache and call afterInit.
-     * 5. Mark as called: add the component name to the afterCalled set.
+     * 1. Iterate over all components: remove the current bean from each component's remaining-bean set.
+     * 2. Completion check: if a set becomes empty, all of that component's child beans are initialized.
+     * 3. Invoke afterInit: get the component instance from the cache and call afterInit.
+     * 4. Mark as called: add the component name to the afterCalled set.
      *
-     * Counting mechanism:
-     * - Each component maintains a remainingCount initialized to its child-bean count.
-     * - Each time a child bean is initialized, the counter is decremented by 1.
-     * - When the counter reaches 0, all child beans have finished initializing.
+     * Tracking mechanism:
+     * - Each component maintains a remaining-bean set initialized to all its child beans (plus itself).
+     * - Each time a child bean finishes initializing, it is removed from the set.
+     * - `Set.remove` is idempotent: a beanName entering twice (e.g. via [getEarlyBeanReference] **and** this
+     *   method during circular-dependency proxying) is counted only once, so afterInit cannot fire prematurely.
+     * - When the set becomes empty, all child beans have finished initializing.
      *
      * Invocation timing:
      * - After all of the bean's initialization methods have finished executing.
@@ -159,16 +165,11 @@ open class ComponentInitializationDispatcher :
      * @return The processed bean instance
      */
     override fun postProcessAfterInitialization(bean: Any, beanName: String): Any {
-        componentBeanNames.forEach { (compName, names) ->
-            if (beanName in names && compName !in afterCalled) {
-                val left = (remainingCount[compName] ?: 0) - 1
-                remainingCount[compName] = left
-                if (left == 0) {
-                    // Fetch the instance directly from the cache to avoid calling getBean() again
-                    val initializer = initializerInstances[compName]
-                    initializer?.afterInit()
-                    afterCalled += compName
-                }
+        remainingBeanNames.forEach { (compName, names) ->
+            if (compName !in afterCalled && names.remove(beanName) && names.isEmpty()) {
+                // Fetch the instance directly from the cache to avoid calling getBean() again
+                initializerInstances[compName]?.afterInit()
+                afterCalled += compName
             }
         }
         return bean
@@ -178,16 +179,16 @@ open class ComponentInitializationDispatcher :
      * Obtain an early bean reference (e.g. during circular dependency resolution).
      *
      * Forwards to [postProcessAfterInitialization] so that proxy objects also participate in the child-bean
-     * completion countdown. If a particular Spring version or proxy strategy causes the same beanName to enter this
-     * path multiple times, it may stack with the plain initialization path; if `afterInit` triggers at unexpected
-     * times, use an integration test to verify behavior against the current Spring minor version.
+     * completion tracking. Since tracking is based on idempotent set removal, the same beanName entering both this
+     * path and the plain initialization path is counted exactly once — the historical "double decrement causing
+     * premature afterInit" issue with the counter-based implementation no longer applies.
      *
      * @param bean The bean instance
      * @param beanName The bean name
      * @return The processed bean instance (possibly a proxy)
      */
     override fun getEarlyBeanReference(bean: Any, beanName: String): Any {
-        // Let the proxy also participate in postProcessAfterInitialization's countdown
+        // Let the proxy also participate in postProcessAfterInitialization's completion tracking
         return postProcessAfterInitialization(bean, beanName)
     }
 

@@ -21,6 +21,10 @@ internal class DictEnumItemCodeTest {
 
         val bean2 = TestDictEnumCodeBean("4")
         assertFalse(ValidationKit.validateBean(bean2).isEmpty())
+
+        // null values pass directly (null handling is delegated to @NotNull etc.)
+        val bean3 = TestDictEnumCodeBean(null)
+        assert(ValidationKit.validateBean(bean3).isEmpty())
     }
 
     internal data class TestDictEnumCodeBean(

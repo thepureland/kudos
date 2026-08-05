@@ -42,4 +42,19 @@ internal class SeataFeignXidProcessorTest {
 
         assertFalse(template.headers().containsKey(RootContext.KEY_XID))
     }
+
+    @Test
+    fun processContext_preservesExistingHeadersAndSupportsTypicalXidFormat() {
+        // Typical Seata XID format: "ip:port:transactionId"
+        RootContext.bind("192.168.0.1:8091:1234567890")
+        val template = RequestTemplate().header("X-Custom", "keep-me")
+
+        SeataFeignXidProcessor().processContext(template, KudosContext())
+
+        assertEquals(listOf("keep-me"), template.headers()["X-Custom"]?.toList())
+        assertEquals(
+            listOf("192.168.0.1:8091:1234567890"),
+            template.headers()[RootContext.KEY_XID]?.toList()
+        )
+    }
 }

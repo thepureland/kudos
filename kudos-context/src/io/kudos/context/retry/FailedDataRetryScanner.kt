@@ -100,9 +100,9 @@ class FailedDataRetryScanner {
     internal fun lockRetry(handler: IFailedDataHandler<*>, appName: String?) {
         val lockProvider = lockProviderSupplier()
         val key = "$FAILED_DATA_RETRY_LOCK_PREFIX${handler.businessType}_$appName"
-        val lock = lockProvider.tryLock(key, 600)
+        val lock = lockProvider.tryLock(key, RETRY_LOCK_LEASE_SECONDS)
         if (!lock) {
-            logger.warn("another task is still in progress; the lock has not been released")
+            logger.warn("Another retry task still holds the lock [$key]; skipping this round")
             return
         }
         try {
@@ -160,6 +160,12 @@ class FailedDataRetryScanner {
     companion object {
         /** Failed-data retry lock key prefix (historical typo `faile-data-retry` has been corrected). */
         private const val FAILED_DATA_RETRY_LOCK_PREFIX = "failed-data-retry-"
+
+        /**
+         * Lease seconds for the retry distributed lock. If one retry batch takes longer than this, other instances
+         * can acquire the lock concurrently — [IFailedDataHandler] implementations must therefore be idempotent.
+         */
+        private const val RETRY_LOCK_LEASE_SECONDS = 600
 
         /**
          * Regex for valid failed-data file names: `{timestamp}-{UUID}.json`.

@@ -46,7 +46,13 @@ open class RocketMqTest {
     @BeforeAll
     fun setUp() {
         val args = arrayOf(
-            "--spring.cloud.stream.rocketmq.binder.name-server=${RocketMqTestContainer.NAMESRV_ADDR}"
+            "--spring.cloud.stream.rocketmq.binder.name-server=${RocketMqTestContainer.NAMESRV_ADDR}",
+            // Workaround for Spring Boot 4.1: io.kudos.context.init.ValidatorAutoConfiguration#defaultValidator
+            // clashes with boot's ValidationAutoConfiguration#defaultValidator. Must be passed as args because
+            // application-rocketmq-producer.yml is loaded via @PropertySource, too late for spring.main.* binding.
+            "--spring.main.allow-bean-definition-overriding=true",
+            // Spring Cloud's compatibility verifier does not yet list Boot 4.1 as compatible.
+            "--spring.cloud.compatibility-verifier.enabled=false",
         )
         SpringApplication.run(RocketMqProducerApplication::class.java, *args)
     }

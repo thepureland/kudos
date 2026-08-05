@@ -2,6 +2,10 @@ package io.kudos.ms.sys.core.dict.cache
 
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ms.sys.core.dict.dao.SysDictDao
+import io.kudos.ms.sys.core.dict.event.SysDictBatchDeleted
+import io.kudos.ms.sys.core.dict.event.SysDictDeleted
+import io.kudos.ms.sys.core.dict.event.SysDictInserted
+import io.kudos.ms.sys.core.dict.event.SysDictUpdated
 import io.kudos.ms.sys.core.dict.model.po.SysDict
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -43,6 +47,11 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         val itemAgain = cache.getDictById(id)
         if (isLocalCacheEnabled()) assertSame(item, itemAgain, "Fetching the same id from cache again should return the same object reference")
         assertNull(cache.getDictById("sdch-nonexistent-00000000000000000000"))
+    }
+
+    @Test
+    fun getDictById_blankRejected() {
+        assertFailsWith<IllegalArgumentException> { cache.getDictById("") }
     }
 
     @Test
@@ -203,6 +212,33 @@ class SysDictHashCacheTest : RdbAndRedisCacheTestBase() {
         val key = cache.getKeyAtomicServiceCodeAndDictType("sdch-ms-a", "type-1")
         assertTrue(key.contains("sdch-ms-a"))
         assertTrue(key.contains("type-1"))
+    }
+
+    // ---------- transactional event listeners (delegate to syncOn*) ----------
+
+    @Test
+    fun onEvents_delegateToSync() {
+        cache.reloadAll(true)
+        val newDict = insertNewDict()
+        // inserted -> syncOnInsert
+        cache.on(SysDictInserted(id = newDict.id))
+        assertNotNull(cache.getDictById(newDict.id))
+
+        // updated -> syncOnUpdate
+        sysDictDao.updateProperties(newDict.id, mapOf(SysDict::dictName.name to "sdch-on-updated"))
+        cache.on(SysDictUpdated(id = newDict.id))
+        assertEquals("sdch-on-updated", cache.getDictById(newDict.id)?.dictName)
+
+        // deleted -> syncOnDelete
+        sysDictDao.deleteById(newDict.id)
+        cache.on(SysDictDeleted(id = newDict.id))
+        assertNull(sysDictDao.get(newDict.id))
+
+        // batch deleted -> syncOnBatchDelete
+        val d2 = insertNewDict()
+        sysDictDao.deleteById(d2.id)
+        cache.on(SysDictBatchDeleted(ids = listOf(d2.id)))
+        assertNull(sysDictDao.get(d2.id))
     }
 
     private fun insertNewDict(): SysDict {

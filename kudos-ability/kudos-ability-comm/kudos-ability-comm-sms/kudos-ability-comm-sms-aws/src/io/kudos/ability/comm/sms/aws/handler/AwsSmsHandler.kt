@@ -87,7 +87,7 @@ class AwsSmsHandler {
      * @author K
      * @since 1.0.0
      */
-    private fun doSend(
+    internal fun doSend(
         smsRequest: AwsSmsRequest,
         callback: ((AwsSmsCallBackParam) -> Unit)? = null
     ) {
@@ -178,7 +178,7 @@ class AwsSmsHandler {
      * @since 1.0.0
      */
     @PostConstruct
-    private fun initApacheHttpClient() {
+    internal fun initApacheHttpClient() {
         if (proxyProperties.enable) {
             LOG.info("AWS SMS send: HTTP proxy enabled")
             HTTP_CLIENT = ApacheHttpClient.builder()

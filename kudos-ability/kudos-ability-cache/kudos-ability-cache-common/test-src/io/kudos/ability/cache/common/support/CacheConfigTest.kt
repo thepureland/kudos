@@ -103,6 +103,27 @@ internal class CacheConfigTest {
     }
 
     @Test
+    fun ignoreVersion_and_rawWriteInTime_areReadWritable() {
+        val cfg = CacheConfig().apply {
+            ignoreVersion = true
+            writeInTime = true
+            hash = true
+        }
+        // raw getters (distinct from the derived isWriteInTime) are exercised here.
+        assertEquals(true, cfg.ignoreVersion)
+        assertEquals(true, cfg.writeInTime)
+        assertTrue(cfg.hash)
+        cfg.ignoreVersion = false
+        assertEquals(false, cfg.ignoreVersion)
+    }
+
+    @Test
+    fun isWriteInTime_explicitTrue() {
+        val cfg = CacheConfig().apply { writeInTime = true }
+        assertTrue(cfg.isWriteInTime)
+    }
+
+    @Test
     fun constructor_setsAllExplicitFields() {
         val cfg = CacheConfig(
             name = "USER",

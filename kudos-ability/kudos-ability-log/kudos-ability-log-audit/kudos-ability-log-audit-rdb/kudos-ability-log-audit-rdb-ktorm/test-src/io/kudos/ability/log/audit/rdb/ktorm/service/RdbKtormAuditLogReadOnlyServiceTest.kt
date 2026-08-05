@@ -13,6 +13,7 @@ import io.kudos.context.core.KudosContextHolder
 import io.kudos.test.common.init.EnableKudosTest
 import jakarta.annotation.Resource
 import org.ktorm.dsl.deleteAll
+import org.ktorm.dsl.insert
 import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDateTime
@@ -39,6 +40,12 @@ import kotlin.test.assertTrue
  *  - page slicing + total invariants (total is the *unsliced* count)
  *  - empty filter on an empty table returns AuditLogPage.empty
  *  - pageNo / pageSize coercion (< 1 clamps to 1)
+ *  - findDetailById miss returns null
+ *  - full column mapping of both row mappers (main vo + detail vo), incl. Unicode and long IP
+ *  - remaining predicate branches: sourceTenantId / subSysCode / moduleCode exact / operatorUserType /
+ *    entityId / operateTimeFrom-only / operateTimeTo-only
+ *  - second-page slicing (offset arithmetic) keeps DESC ordering
+ *  - empty-string operatorLike / moduleCodeLike / operateType are all treated as "no filter"
  */
 @EnableKudosTest(properties = ["spring.flyway.enabled=false"])
 internal open class RdbKtormAuditLogReadOnlyServiceTest {
@@ -265,6 +272,250 @@ internal open class RdbKtormAuditLogReadOnlyServiceTest {
         assertEquals("ro-14a", page.items.single().id)
     }
 
+    @Test
+    fun findDetailById_returnsNull_whenAuditIdAbsent() {
+        // Main rows without a detail row are routine (the aspect only writes details in the `after`
+        // phase for web requests); callers must get null, not an exception.
+        seed("ro-15", operator = "u-1") // no detailId → no detail row
+        assertNull(readOnlyService.findDetailById("ro-15"))
+        assertNull(readOnlyService.findDetailById("never-existed"))
+    }
+
+    @Test
+    fun findById_mapsEveryColumnBackToVo() {
+        val opTime = LocalDateTime.of(2026, 6, 1, 8, 30, 15)
+        val entity = SysAuditLogVo().apply {
+            id = "ro-full"
+            entityId = "ent-1"
+            operateTypeId = 4
+            operateType = "删除"
+            moduleId = 11
+            moduleName = "字典模块-🦊"
+            moduleCode = "SYS.DICT"
+            description = "全字段映射回归"
+            operator = "李四"
+            operatorId = "op-9"
+            operatorUserType = "STAFF"
+            tenantId = "t-map"
+            sourceTenantId = "src-map"
+            subSysCode = "sys-map"
+            operateTime = Date.from(opTime.atZone(java.time.ZoneId.systemDefault()).toInstant())
+            operateIp = 167772161L
+            operateIpDictCode = "ipv4"
+            clientOs = "macOS"
+            clientBrowser = "Safari"
+            requestType = "PUT"
+        }
+        auditService.submit(SysAuditLogModel().apply { entities = mutableListOf(entity) })
+
+        val vo = readOnlyService.findById("ro-full")
+
+        assertNotNull(vo)
+        assertEquals("ro-full", vo.id)
+        assertEquals("ent-1", vo.entityId)
+        assertEquals(4, vo.operateTypeId)
+        assertEquals("删除", vo.operateType)
+        assertEquals(11, vo.moduleId)
+        assertEquals("字典模块-🦊", vo.moduleName)
+        assertEquals("SYS.DICT", vo.moduleCode)
+        assertEquals("全字段映射回归", vo.description)
+        assertEquals("李四", vo.operator)
+        assertEquals("op-9", vo.operatorId)
+        assertEquals("STAFF", vo.operatorUserType)
+        assertEquals("t-map", vo.tenantId)
+        assertEquals("src-map", vo.sourceTenantId)
+        assertEquals("sys-map", vo.subSysCode)
+        assertEquals(167772161L, vo.operateIp)
+        assertEquals("ipv4", vo.operateIpDictCode)
+        assertEquals("macOS", vo.clientOs)
+        assertEquals("Safari", vo.clientBrowser)
+        assertEquals("PUT", vo.requestType)
+        // LocalDateTime (DB) → java.util.Date (VO) must round-trip through the system zone unchanged
+        assertEquals(
+            Date.from(opTime.atZone(java.time.ZoneId.systemDefault()).toInstant()),
+            vo.operateTime,
+        )
+    }
+
+    @Test
+    fun findDetailById_mapsEveryColumnBackToVo() {
+        val entity = SysAuditLogVo().apply {
+            id = "ro-dfull"
+            operateTime = Date()
+        }
+        val detail = SysAuditDetailLogVo().apply {
+            id = "rod-full"
+            auditId = "ro-dfull"
+            operateUrl = "/api/x?q=中文"
+            stringParams = "a=1"
+            objectParams = """{"deep":{"emoji":"🦊"}}"""
+            requestReferer = "https://ref.example"
+            requestFormData = "f=v"
+            description = "detail 映射"
+        }
+        auditService.submit(SysAuditLogModel().apply {
+            entities = mutableListOf(entity)
+            sysAuditDetailLogs = mutableListOf(detail)
+        })
+
+        val vo = readOnlyService.findDetailById("ro-dfull")
+
+        assertNotNull(vo)
+        assertEquals("rod-full", vo.id)
+        assertEquals("ro-dfull", vo.auditId)
+        assertEquals("/api/x?q=中文", vo.operateUrl)
+        assertEquals("a=1", vo.stringParams)
+        assertEquals("""{"deep":{"emoji":"🦊"}}""", vo.objectParams)
+        assertEquals("https://ref.example", vo.requestReferer)
+        assertEquals("f=v", vo.requestFormData)
+        assertEquals("detail 映射", vo.description)
+    }
+
+    @Test
+    fun findById_toleratesNullOperateTimeColumn() {
+        // Legacy or externally-inserted rows can carry NULL operate_time (the production write path
+        // always defaults it, but retention imports may not). The row mapper must surface null, not NPE.
+        TransactionTemplate(transactionManager).execute {
+            val db = KudosContextHolder.currentDatabase()
+            db.insert(SysAuditLogTable) {
+                set(SysAuditLogTable.id, "ro-null-time")
+            }
+        }
+
+        val vo = readOnlyService.findById("ro-null-time")
+
+        assertNotNull(vo)
+        assertNull(vo.operateTime, "NULL operate_time column must map to a null VO field")
+    }
+
+    @Test
+    fun pagingSearch_filterBySourceTenantId() {
+        seed("ro-16a", operator = "u-1", sourceTenant = "src-A")
+        seed("ro-16b", operator = "u-2", sourceTenant = "src-B")
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { sourceTenantId = "src-A" }, pageNo = 1, pageSize = 10,
+        )
+
+        assertEquals(1L, page.total)
+        assertEquals("ro-16a", page.items.single().id)
+    }
+
+    @Test
+    fun pagingSearch_filterBySubSysCode() {
+        seed("ro-17a", operator = "u-1", subSys = "sys-user")
+        seed("ro-17b", operator = "u-2", subSys = "sys-auth")
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { subSysCode = "sys-auth" }, pageNo = 1, pageSize = 10,
+        )
+
+        assertEquals(1L, page.total)
+        assertEquals("ro-17b", page.items.single().id)
+    }
+
+    @Test
+    fun pagingSearch_moduleCode_exactMatchOnly() {
+        seed("ro-18a", operator = "u-x", moduleCode = "user")
+        seed("ro-18b", operator = "u-x", moduleCode = "user.account") // prefix sibling must NOT match exact filter
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { moduleCode = "user" }, pageNo = 1, pageSize = 10,
+        )
+
+        assertEquals(1L, page.total)
+        assertEquals("ro-18a", page.items.single().id)
+    }
+
+    @Test
+    fun pagingSearch_filterByOperatorUserType() {
+        seed("ro-19a", operator = "u-1", operatorUserType = "ADMIN")
+        seed("ro-19b", operator = "u-2", operatorUserType = "STAFF")
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { operatorUserType = "ADMIN" }, pageNo = 1, pageSize = 10,
+        )
+
+        assertEquals(1L, page.total)
+        assertEquals("ro-19a", page.items.single().id)
+    }
+
+    @Test
+    fun pagingSearch_filterByEntityId() {
+        seed("ro-20a", operator = "u-1") // seed sets entityId = "entity-ro-20a"
+        seed("ro-20b", operator = "u-2")
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { entityId = "entity-ro-20b" }, pageNo = 1, pageSize = 10,
+        )
+
+        assertEquals(1L, page.total)
+        assertEquals("ro-20b", page.items.single().id)
+    }
+
+    @Test
+    fun pagingSearch_operateTimeFromOnly_isInclusiveLowerBoundWithoutUpper() {
+        val base = LocalDateTime.of(2026, 6, 2, 9, 0, 0)
+        seed("ro-21a", operator = "u-x", operateTime = base.minusMinutes(1))
+        seed("ro-21b", operator = "u-x", operateTime = base)
+        seed("ro-21c", operator = "u-x", operateTime = base.plusYears(1)) // far future still matches (no upper bound)
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { operateTimeFrom = base }, pageNo = 1, pageSize = 10,
+        )
+
+        assertEquals(2L, page.total)
+        assertEquals(setOf("ro-21b", "ro-21c"), page.items.map { it.id }.toSet())
+    }
+
+    @Test
+    fun pagingSearch_operateTimeToOnly_isExclusiveUpperBoundWithoutLower() {
+        val base = LocalDateTime.of(2026, 6, 2, 9, 0, 0)
+        seed("ro-22a", operator = "u-x", operateTime = base.minusYears(1)) // distant past matches (no lower bound)
+        seed("ro-22b", operator = "u-x", operateTime = base.minusSeconds(1))
+        seed("ro-22c", operator = "u-x", operateTime = base) // exactly at upper bound → excluded
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { operateTimeTo = base }, pageNo = 1, pageSize = 10,
+        )
+
+        assertEquals(2L, page.total)
+        assertEquals(setOf("ro-22a", "ro-22b"), page.items.map { it.id }.toSet())
+    }
+
+    @Test
+    fun pagingSearch_secondPage_returnsNextSliceInDescOrder() {
+        val t0 = LocalDateTime.of(2026, 6, 3, 10, 0, 0)
+        // operate_time ascending with the id suffix, so DESC order is ro-23-5, ro-23-4, ..., ro-23-1
+        (1..5).forEach { seed("ro-23-$it", operator = "u-x", operateTime = t0.plusMinutes(it.toLong())) }
+
+        val page2 = readOnlyService.pagingSearch(AuditLogQuery(), pageNo = 2, pageSize = 2)
+
+        assertEquals(5L, page2.total)
+        assertEquals(2, page2.pageNo)
+        assertEquals(
+            listOf("ro-23-3", "ro-23-2"), page2.items.map { it.id },
+            "Page 2 of size 2 must skip the 2 newest rows and keep DESC ordering",
+        )
+
+        val page3 = readOnlyService.pagingSearch(AuditLogQuery(), pageNo = 3, pageSize = 2)
+        assertEquals(listOf("ro-23-1"), page3.items.map { it.id }, "Last page carries the remainder slice")
+    }
+
+    @Test
+    fun pagingSearch_emptyStringOperatorLikeModuleCodeLikeAndOperateType_skipTheirFilters() {
+        seed("ro-24", operator = "u-x", operatorName = "Nobody", moduleCode = "misc", operateTypeText = "noop")
+
+        val query = AuditLogQuery().apply {
+            operatorLike = ""
+            moduleCodeLike = ""
+            operateType = ""
+        }
+        val page = readOnlyService.pagingSearch(query, pageNo = 1, pageSize = 10)
+
+        assertEquals(1L, page.total, "Empty-string fuzzy/exact text filters must behave as 'no filter', not LIKE '%%' or = ''")
+    }
+
     // ----- Fixtures -----
 
     /**
@@ -274,8 +525,11 @@ internal open class RdbKtormAuditLogReadOnlyServiceTest {
     private fun seed(
         id: String,
         tenant: String? = "t-default",
+        sourceTenant: String? = null,
+        subSys: String? = null,
         operator: String? = "u-default",
         operatorName: String? = null,
+        operatorUserType: String? = null,
         moduleCode: String? = "USER",
         operateTypeText: String? = null,
         operateTypeId: Int? = 2,
@@ -293,7 +547,10 @@ internal open class RdbKtormAuditLogReadOnlyServiceTest {
             this.moduleCode = moduleCode
             this.operator = operatorName
             this.operatorId = operator
+            this.operatorUserType = operatorUserType
             this.tenantId = tenant
+            this.sourceTenantId = sourceTenant
+            this.subSysCode = subSys
             this.operateTime = Date.from(operateTime.atZone(java.time.ZoneId.systemDefault()).toInstant())
         }
         val detail: SysAuditDetailLogVo? = detailId?.let {

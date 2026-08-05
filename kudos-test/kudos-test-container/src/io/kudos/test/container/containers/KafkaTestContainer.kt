@@ -18,7 +18,7 @@ object KafkaTestContainer {
 
     private const val IMAGE_NAME = "apache/kafka-native:4.1.1"
 
-    private var imageName = DockerImageName
+    private val imageName = DockerImageName
         .parse(IMAGE_NAME)
 //        .asCompatibleSubstituteFor("apache/kafka")
 
@@ -59,7 +59,7 @@ object KafkaTestContainer {
      * @author K
      * @since 1.0.0
      */
-    private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
+    internal fun registerProperties(registry: DynamicPropertyRegistry, runningContainer : Container) {
         val host = runningContainer.ports.first().ip
         val port = runningContainer.ports.first().publicPort
 

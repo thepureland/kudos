@@ -54,18 +54,12 @@ open class AuthRoleExclusionDao : BaseCrudDao<String, AuthRoleExclusion, AuthRol
      * canonical ordering put this role in the B slot went unenforced.
      */
     open fun searchByRoleIdAndTenant(roleId: String, tenantId: String): List<AuthRoleExclusion> {
-        val byA = search(
-            Criteria.and(
-                AuthRoleExclusion::tenantId eq tenantId,
-                AuthRoleExclusion::roleAId eq roleId,
-            ),
-        )
-        val byB = search(
-            Criteria.and(
-                AuthRoleExclusion::tenantId eq tenantId,
-                AuthRoleExclusion::roleBId eq roleId,
-            ),
-        )
+        // Each query needs its OWN Criteria: addAnd mutates and returns the SAME instance, so reusing
+        // one would carry the roleAId condition into the byB query (tenant AND roleAId=roleId AND
+        // roleBId=roleId — impossible), silently dropping every pair whose roleBId == roleId. That
+        // bypassed the SoD check whenever the candidate role was the canonically-larger side.
+        val byA = search(Criteria.and(AuthRoleExclusion::tenantId eq tenantId, AuthRoleExclusion::roleAId eq roleId))
+        val byB = search(Criteria.and(AuthRoleExclusion::tenantId eq tenantId, AuthRoleExclusion::roleBId eq roleId))
         val seen = HashSet<String>()
         return (byA + byB).filter { seen.add(it.id) }
     }
@@ -81,5 +75,22 @@ open class AuthRoleExclusionDao : BaseCrudDao<String, AuthRoleExclusion, AuthRol
             AuthRoleExclusion::tenantId eq tenantId,
         )
         return search(criteria).isNotEmpty()
+    }
+
+    /**
+     * Deletes every exclusion pair involving the role (on either side). Used by the role-delete
+     * cascade: an exclusion rule that references a removed role is meaningless and would otherwise
+     * linger as a dead constraint.
+     *
+     * Two criteria deletes are issued (one per column) because an OR across the two indexed
+     * columns cannot use both indexes efficiently — same rationale as [searchByRoleIds].
+     *
+     * @param roleId role id
+     * @return number of rows deleted
+     */
+    open fun deleteByRoleId(roleId: String): Int {
+        val byA = batchDeleteCriteria(Criteria(AuthRoleExclusion::roleAId eq roleId))
+        val byB = batchDeleteCriteria(Criteria(AuthRoleExclusion::roleBId eq roleId))
+        return byA + byB
     }
 }

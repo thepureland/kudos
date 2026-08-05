@@ -20,11 +20,8 @@ import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.aspectj.lang.JoinPoint
-import org.springframework.core.DefaultParameterNameDiscoverer
-import org.springframework.core.ParameterNameDiscoverer
 import org.springframework.web.util.ContentCachingRequestWrapper
 import java.lang.reflect.Modifier
-import java.util.ArrayList
 import java.util.Date
 import java.util.LinkedList
 import kotlin.reflect.KClass
@@ -47,7 +44,6 @@ import kotlin.reflect.KClass
  */
 object AuditLogTool {
     private val LOG = LogFactory.getLog(AuditLogTool::class)
-    private val parameterNameDiscoverer: ParameterNameDiscoverer = DefaultParameterNameDiscoverer()
 
     @Volatile
     private var cachedTenantProvider: ILogSourceTenantProvider? = null

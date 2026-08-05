@@ -59,7 +59,7 @@ object MongoTestContainer {
      * @param registry the Spring dynamic property registry
      * @param runningContainer the running container
      */
-    private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer: Container) {
+    internal fun registerProperties(registry: DynamicPropertyRegistry, runningContainer: Container) {
         val firstPort = runningContainer.ports.first()
         val host = requireNotNull(firstPort.ip) { "container port ip is null" }
         val port = requireNotNull(firstPort.publicPort) { "container publicPort is null" }

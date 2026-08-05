@@ -15,8 +15,6 @@ import org.springframework.cache.annotation.CacheConfig
 import org.springframework.context.annotation.Lazy
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
-import java.math.BigDecimal
-import java.math.BigInteger
 import kotlin.reflect.KClass
 import kotlin.reflect.KFunction
 import kotlin.reflect.full.findAnnotation
@@ -218,24 +216,15 @@ class BatchCacheableAspect {
                 // keysGenerator.getDelimiter is expected to provide a "collision-free enough" delimiter. A complete fix requires escaping at the keysGenerator
                 // layer, which is out of scope for this pass.
                 val elemValues = noExistKeys.map { key -> key.split(delimiter)[segIndex].toType(elemType) }
-                // The `as List<X>` casts below are definitely safe: each item in elemValues is a `toType(elemType)` result,
-                // and elemType is the actual KClass of the original input collection's element. We only convert List<Any> to a strongly typed List and then call toTypedArray().
-                @Suppress("UNCHECKED_CAST")
-                val params: Any? = when (clazz.kotlin) {
-                    List::class, Collection::class -> elemValues
-                    Set::class -> elemValues.toSet()
-                    Array<String>::class -> (elemValues as List<String>).toTypedArray()
-                    Array<Char>::class -> (elemValues as List<Char>).toTypedArray()
-                    Array<Boolean>::class -> (elemValues as List<Boolean>).toTypedArray()
-                    Array<Byte>::class -> (elemValues as List<Byte>).toTypedArray()
-                    Array<Short>::class -> (elemValues as List<Short>).toTypedArray()
-                    Array<Int>::class -> (elemValues as List<Int>).toTypedArray()
-                    Array<Long>::class -> (elemValues as List<Long>).toTypedArray()
-                    Array<Float>::class -> (elemValues as List<Float>).toTypedArray()
-                    Array<Double>::class -> (elemValues as List<Double>).toTypedArray()
-                    Array<BigDecimal>::class -> (elemValues as List<BigDecimal>).toTypedArray()
-                    Array<BigInteger>::class -> (elemValues as List<BigInteger>).toTypedArray()
-                    else -> null
+                // Re-wrap into the originally declared parameter type. Note: every `Array<X>::class` erases to the
+                // same `kotlin.Array` KClass, so dispatching on `Array<Int>::class`, `Array<Long>::class`, ... would
+                // collapse to the first Array branch and silently mis-handle non-String arrays. Instead we detect the
+                // array case via the Java reflection `clazz.isArray` and build an array whose runtime component type is
+                // the actual element type (`elemType`), so reflective invoke receives e.g. a real `Integer[]`/`Long[]`.
+                val params: Any? = when {
+                    clazz.isArray -> toTypedArray(elemValues, elemType)
+                    Set::class.java.isAssignableFrom(clazz) -> elemValues.toSet()
+                    else -> elemValues // List / Collection and any other Collection subtype
                 }
                 newArgs[index] = params
             }
@@ -260,6 +249,29 @@ class BatchCacheableAspect {
 
     companion object {
         private val log = LogFactory.getLog(BatchCacheableAspect::class)
+
+        /**
+         * Builds an array whose runtime component type matches [elemType], populated with [elemValues].
+         *
+         * Using [java.lang.reflect.Array.newInstance] (rather than Kotlin's `List.toTypedArray()`, which always
+         * yields an `Object[]`/`Array<Any>`) guarantees the produced array's component type is the real element type
+         * (e.g. `Integer[]`, `Long[]`, `BigDecimal[]`). This is required because the target method is invoked
+         * reflectively via `joinPoint.proceed(newArgs)`: passing a `String[]` where the signature declares `Integer[]`
+         * throws `IllegalArgumentException: argument type mismatch`.
+         *
+         * @param elemValues the converted element values
+         * @param elemType the element KClass (derived from the original collection/array's first element)
+         * @return a typed array of component type [elemType]
+         * @author K
+         * @since 1.0.0
+         */
+        internal fun toTypedArray(elemValues: List<Any?>, elemType: KClass<*>): Any {
+            // Use javaObjectType (boxed, e.g. java.lang.Long) not java (which is the primitive `long` for Long::class):
+            // a Kotlin `Array<Long>` parameter compiles to a boxed `Long[]`, so the array's component type must be boxed.
+            val array = java.lang.reflect.Array.newInstance(elemType.javaObjectType, elemValues.size)
+            elemValues.forEachIndexed { i, v -> java.lang.reflect.Array.set(array, i, v) }
+            return array
+        }
     }
 
 }

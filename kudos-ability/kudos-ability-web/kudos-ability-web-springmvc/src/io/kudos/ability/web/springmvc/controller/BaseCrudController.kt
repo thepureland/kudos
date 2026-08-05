@@ -41,11 +41,23 @@ open class BaseCrudController<
         UF: Any>
     :BaseReadOnlyController<PK, B, S, R, D>() {
 
-    private var createFormVoClass: KClass<CF>? = null
+    /** Create-form VO class, resolved lazily from the subclass's generic parameter (index 6). */
+    @Suppress("UNCHECKED_CAST")
+    private val createFormVoClass: KClass<CF> by lazy {
+        GenericKit.getSuperClassGenricClass(this::class, 6) as KClass<CF>
+    }
 
-    private var updateFormVoClass: KClass<UF>? = null
+    /** Update-form VO class, resolved lazily from the subclass's generic parameter (index 7). */
+    @Suppress("UNCHECKED_CAST")
+    private val updateFormVoClass: KClass<UF> by lazy {
+        GenericKit.getSuperClassGenricClass(this::class, 7) as KClass<UF>
+    }
 
-    private var editVoClass: KClass<E>? = null
+    /** Edit VO class, resolved lazily from the subclass's generic parameter (index 5). */
+    @Suppress("UNCHECKED_CAST")
+    private val editVoClass: KClass<E> by lazy {
+        GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<E>
+    }
 
     /**
      * Return the validation rules for the create form.
@@ -53,13 +65,8 @@ open class BaseCrudController<
      * @return WebResult(Map(property name, LinkedHashMap(constraint name, Array(Map(constraint annotation attribute name, constraint annotation attribute value)))))
      */
     @GetMapping("/getCreateValidationRule")
-    open fun getCreateValidationRule(): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
-        if (createFormVoClass == null) {
-            @Suppress("UNCHECKED_CAST")
-            createFormVoClass = GenericKit.getSuperClassGenricClass(this::class, 6) as KClass<CF>
-        }
-        return TerminalConstraintsCreator.create(requireNotNull(createFormVoClass) { "createFormVoClass is null" })
-    }
+    open fun getCreateValidationRule(): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> =
+        TerminalConstraintsCreator.create(createFormVoClass)
 
     /**
      * Return the validation rules for the edit form.
@@ -67,13 +74,8 @@ open class BaseCrudController<
      * @return WebResult(Map(property name, LinkedHashMap(constraint name, Array(Map(constraint annotation attribute name, constraint annotation attribute value)))))
      */
     @GetMapping("/getUpdateValidationRule")
-    open fun getUpdateValidationRule(): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> {
-        if (updateFormVoClass == null) {
-            @Suppress("UNCHECKED_CAST")
-            updateFormVoClass = GenericKit.getSuperClassGenricClass(this::class, 7) as KClass<UF>
-        }
-        return TerminalConstraintsCreator.create(requireNotNull(updateFormVoClass) { "updateFormVoClass is null" })
-    }
+    open fun getUpdateValidationRule(): Map<String, LinkedHashMap<String, Array<Map<String, Any>>>> =
+        TerminalConstraintsCreator.create(updateFormVoClass)
 
     /**
      * Return the edit record for the given primary key.
@@ -82,13 +84,8 @@ open class BaseCrudController<
      * @return edit VO
      */
     @GetMapping("/getEdit")
-    open fun getEdit(id: PK): E {
-        if (editVoClass == null) {
-            @Suppress("UNCHECKED_CAST")
-            editVoClass = GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<E>
-        }
-        return service.get(id, requireNotNull(editVoClass) { "editVoClass is null" }) ?: throw ObjectNotFoundException("Record not found!")
-    }
+    open fun getEdit(id: PK): E =
+        service.get(id, editVoClass) ?: throw ObjectNotFoundException("Record not found!")
 
     /**
      * Save the newly created record.

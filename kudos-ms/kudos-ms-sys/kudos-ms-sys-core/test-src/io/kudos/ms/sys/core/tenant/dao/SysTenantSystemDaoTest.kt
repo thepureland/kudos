@@ -52,6 +52,10 @@ class SysTenantSystemDaoTest : RdbTestBase() {
         // Test null argument (query all)
         val allGrouping = sysTenantSystemDao.groupingSystemCodesByTenantIds(null)
         assertTrue(allGrouping.isNotEmpty())
+
+        // Test the no-argument default overload (tenantIds defaults to null -> query all)
+        val allGroupingDefault = sysTenantSystemDao.groupingSystemCodesByTenantIds()
+        assertTrue(allGroupingDefault.isNotEmpty())
     }
 
     @Test
@@ -65,6 +69,10 @@ class SysTenantSystemDaoTest : RdbTestBase() {
         // Test null argument (query all)
         val allGrouping = sysTenantSystemDao.groupingTenantIdsBySystemCodes(null)
         assertTrue(allGrouping.isNotEmpty())
+
+        // Test the no-argument default overload (systemCodes defaults to null -> query all)
+        val allGroupingDefault = sysTenantSystemDao.groupingTenantIdsBySystemCodes()
+        assertTrue(allGroupingDefault.isNotEmpty())
     }
 
     @Test

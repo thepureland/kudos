@@ -181,3 +181,40 @@ testImplementation(project(":kudos-test:kudos-test-common"))
 testImplementation(libs.spring.boot.starter.webmvc.test)
 testImplementation(libs.spring.boot.starter.jetty)
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+**功能缺陷 / 幽灵配置**
+- `resources/kudos-ability-web-springmvc.yml` 中的 `server.max-request-hold` / `server.max-request-exclude`
+  在全仓库源码中没有任何读取方——属于"只存在于配置和 README 的功能"。要么实现对应的最大并发
+  护栏 / 限流逻辑，要么删除配置项与 README 段落，避免误导业务方以为限流已生效。
+- 模块组内没有任何请求限流能力（无 RateLimiter / bucket4j / resilience4j 集成点）；建议在
+  `SpringMvcAutoConfiguration` 预留一个 `HandlerInterceptor` 级别的限流 SPI（默认不启用）。
+
+**可维护性 / 重复代码**
+- `handler/GlobalExceptionHandler.kt` 中 `MethodArgumentNotValidException` / `BindException` /
+  `MissingServletRequestParameterException` / `MethodArgumentTypeMismatchException` /
+  `HttpMessageNotReadableException` 5 个 handler 与 `BadRequestExceptionHandler` 完全重叠；两者同时
+  装配时后者（`@Order(HIGHEST_PRECEDENCE)` + `ResponseEntityExceptionHandler`）先行命中，前者成为
+  实际不可达路径（单独装配的测试上下文除外）。建议精简 `GlobalExceptionHandler`，只保留
+  `ServiceException` / `ConstraintViolationException` / `IllegalArgument|IllegalState` / 兜底 `Exception`。
+- `controller/BaseCrudController.kt` / `BaseReadOnlyController.kt` 的泛型索引 4/5/6/7 是魔法值，
+  依赖类型参数声明顺序；建议提取命名常量（如 `GENERIC_INDEX_DETAIL_VO = 4`），或提供按构造器
+  显式传 `KClass` 的备用通道，解除"子类必须直接继承"的反射限制。
+
+**接口约定**
+- 所有异常响应均回 HTTP 200 + body 业务码（测试已锁定该约定）。若属刻意的"业务码在 body"
+  风格，建议在本 README 显式声明；否则建议系统错误对齐 5xx（`@ResponseStatus`），便于网关 /
+  APM 按 HTTP 状态码告警——当前 `GlobalExceptionHandler.handleException` 的 500 业务码对监控不可见。
+
+**可观测性**
+- 缺访问日志与慢请求日志：`filter/WebContextInitFilter.kt` 已掌握请求起止点，建议补可配置
+  阈值的慢请求 WARN（如 `kudos.ability.web.springmvc.slow-request-threshold`）与 access-log 开关。
+- traceKey 只回填进 `ApiResponse.traceId`，未写响应 header（如 `X-Trace-Id`）；非 JSON 响应、
+  `@IgnoreApiResponseWrap` 场景及容器层 4xx 短路时客户端拿不到 trace。建议在
+  `WebContextInitFilter` 统一 `response.setHeader`。
+
+**测试缺口**
+- `WebContextInitFilter` 仍无直接单测（MockHttpServletRequest 即可覆盖，无需完整上下文），
+  应重点覆盖"无 session 时不创建 session（getSession(false)）"与 traceKey 解析分支。
+- `SwitchingServletWebServerFactory` 的"非法 server 值回退 TOMCAT 并告警"分支无测试。

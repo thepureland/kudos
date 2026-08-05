@@ -249,6 +249,176 @@ internal open class RdbClickhouseAuditLogReadOnlyServiceTest {
         assertEquals("match", page.items.single().id)
     }
 
+    @Test
+    fun findById_mapsEveryColumn_fullyPopulatedRow() {
+        seedFullRow(id = "full-1")
+
+        val vo = assertNotNull(readOnlyService.findById("full-1"))
+        assertEquals("full-1", vo.id)
+        assertEquals("ent-42", vo.entityId)
+        assertEquals(7, vo.operateTypeId)
+        assertEquals("update", vo.operateType)
+        assertEquals(3, vo.moduleId)
+        assertEquals("用户管理", vo.moduleName)
+        assertEquals("USER", vo.moduleCode)
+        assertEquals("full row 描述", vo.description)
+        assertEquals("alice O'Neil", vo.operator)
+        assertEquals("op-1", vo.operatorId)
+        assertEquals("ADMIN", vo.operatorUserType)
+        assertEquals("T-full", vo.tenantId)
+        assertEquals("T-source", vo.sourceTenantId)
+        assertEquals("sys-x", vo.subSysCode)
+        assertNotNull(vo.operateTime, "operate_time must round-trip to a non-null Date")
+        assertEquals(3232235777L, vo.operateIp, "operate_ip is a BIGINT (IPv4 as Int64)")
+        assertEquals("ipv4", vo.operateIpDictCode)
+        assertEquals("Windows 11", vo.clientOs)
+        assertEquals("Chrome", vo.clientBrowser)
+        assertEquals("POST", vo.requestType)
+    }
+
+    @Test
+    fun findById_minimalRow_nullableColumnsComeBackNull() {
+        // Row carrying only the NOT NULL columns: every Nullable(...) column must surface as
+        // Kotlin null — in particular the Int/Long ones, where ResultSet.getInt/getLong would
+        // otherwise lie with 0 (getNullableInt / getNullableLong wasNull guard).
+        seedDirectly(Triple("min-1", "T-min", LocalDateTime.of(2026, 1, 1, 12, 0)))
+
+        val vo = assertNotNull(readOnlyService.findById("min-1"))
+        assertNull(vo.entityId)
+        assertNull(vo.operateTypeId, "NULL Int32 must map to null, not 0")
+        assertNull(vo.moduleId)
+        assertNull(vo.operateIp, "NULL Int64 must map to null, not 0L")
+        assertNull(vo.description)
+        assertNull(vo.operator)
+        assertNull(vo.operatorId)
+        assertNull(vo.operatorUserType)
+        assertNull(vo.sourceTenantId)
+        assertNull(vo.subSysCode)
+        assertNull(vo.operateIpDictCode)
+        assertNull(vo.clientOs)
+        assertNull(vo.clientBrowser)
+        assertNull(vo.requestType)
+        assertEquals("T-min", vo.tenantId)
+    }
+
+    @Test
+    fun findDetailById_mapsEveryColumn_fullyPopulatedRow() {
+        val jdbcUrl = requireNotNull(environment.getProperty("spring.datasource.dynamic.datasource.ds1.url"))
+        DriverManager.getConnection(jdbcUrl, USERNAME, PASSWORD).use { conn ->
+            conn.createStatement().use { st ->
+                st.execute(
+                    "INSERT INTO sys_audit_detail_log " +
+                        "(id, audit_id, operate_url, string_params, object_params, request_referer, request_form_data, description) " +
+                        "VALUES ('fd-1', 'fa-1', '/api/users/42', 'p1=v1&p2=v2', '{\"k\":\"v\"}', " +
+                        "'https://admin.example.com/users', 'name=张三&age=30', 'detail 描述')",
+                )
+            }
+        }
+        forceMerge("sys_audit_detail_log")
+
+        val detail = assertNotNull(readOnlyService.findDetailById("fa-1"))
+        assertEquals("fd-1", detail.id)
+        assertEquals("fa-1", detail.auditId)
+        assertEquals("/api/users/42", detail.operateUrl)
+        assertEquals("p1=v1&p2=v2", detail.stringParams)
+        assertEquals("{\"k\":\"v\"}", detail.objectParams)
+        assertEquals("https://admin.example.com/users", detail.requestReferer)
+        assertEquals("name=张三&age=30", detail.requestFormData)
+        assertEquals("detail 描述", detail.description)
+    }
+
+    @Test
+    fun pagingSearch_remainingExactAndLikeFilters_eachNarrowsTheResult() {
+        // Covers the buildWhereClause branches the other tests don't touch: sourceTenantId,
+        // subSysCode, moduleCode (exact), operateTypeId, operatorUserType, operatorLike,
+        // moduleCodeLike, operateType (string), entityId. One fully matching row + one decoy
+        // per dimension proves both the SQL fragment and its binder line up positionally.
+        seedFullRow(id = "all-match")
+        seedFullRow(id = "off-source", sourceTenantId = "OTHER")
+        seedFullRow(id = "off-subsys", subSysCode = "sys-other")
+        seedFullRow(id = "off-module", moduleCode = "ORDER")
+        seedFullRow(id = "off-type-id", operateTypeId = 99)
+        seedFullRow(id = "off-user-type", operatorUserType = "GUEST")
+        seedFullRow(id = "off-operator", operator = "bob")
+        seedFullRow(id = "off-op-type", operateType = "delete")
+        seedFullRow(id = "off-entity", entityId = "ent-other")
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply {
+                sourceTenantId = "T-source"
+                subSysCode = "sys-x"
+                moduleCode = "USER"
+                operateTypeId = 7
+                operatorUserType = "ADMIN"
+                operatorLike = "lice O'Nei" // substring of "alice O'Neil"; quote also proves binding escapes
+                moduleCodeLike = "SE"       // substring of "USER"
+                operateType = "update"
+                entityId = "ent-42"
+            },
+            pageNo = 1, pageSize = 10,
+        )
+        assertEquals(1L, page.total)
+        assertEquals("all-match", page.items.single().id)
+    }
+
+    @Test
+    fun pagingSearch_emptyLikeStrings_skipTheirFilters() {
+        // operatorLike / moduleCodeLike / operateType use takeIf { isNotEmpty() } — empty input
+        // (cleared UI field) must behave like null, not LIKE '%%' / = ''.
+        seedDirectly(
+            Triple("skip-1", "T", LocalDateTime.of(2026, 2, 1, 8, 0)),
+            Triple("skip-2", "T", LocalDateTime.of(2026, 2, 1, 9, 0)),
+        )
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply {
+                operatorLike = ""
+                moduleCodeLike = ""
+                operateType = ""
+            },
+            pageNo = 1, pageSize = 10,
+        )
+        assertEquals(2L, page.total, "empty like/operateType strings must skip their filters")
+    }
+
+    /** Insert one fully populated main-table row via JDBC, with per-column overrides for decoys. */
+    private fun seedFullRow(
+        id: String,
+        tenant: String = "T-full",
+        sourceTenantId: String = "T-source",
+        subSysCode: String = "sys-x",
+        moduleCode: String = "USER",
+        operateTypeId: Int = 7,
+        operatorUserType: String = "ADMIN",
+        operator: String = "alice O'Neil",
+        operateType: String = "update",
+        entityId: String = "ent-42",
+    ) {
+        val jdbcUrl = requireNotNull(environment.getProperty("spring.datasource.dynamic.datasource.ds1.url"))
+        DriverManager.getConnection(jdbcUrl, USERNAME, PASSWORD).use { conn ->
+            conn.prepareStatement(
+                "INSERT INTO sys_audit_log (id, entity_id, operator_id, operator, operate_time, operate_type_id, " +
+                    "operate_type, module_name, module_code, module_id, description, request_type, client_os, " +
+                    "client_browser, operator_user_type, operate_ip, operate_ip_dict_code, tenant_id, " +
+                    "source_tenant_id, sub_sys_code) " +
+                    "VALUES (?, ?, 'op-1', ?, '2026-03-01 10:30:00', ?, ?, '用户管理', ?, 3, 'full row 描述', " +
+                    "'POST', 'Windows 11', 'Chrome', ?, 3232235777, 'ipv4', ?, ?, ?)",
+            ).use { ps ->
+                ps.setString(1, id)
+                ps.setString(2, entityId)
+                ps.setString(3, operator)
+                ps.setInt(4, operateTypeId)
+                ps.setString(5, operateType)
+                ps.setString(6, moduleCode)
+                ps.setString(7, operatorUserType)
+                ps.setString(8, tenant)
+                ps.setString(9, sourceTenantId)
+                ps.setString(10, subSysCode)
+                ps.execute()
+            }
+        }
+        forceMerge("sys_audit_log")
+    }
+
     private fun newModel(tenantId: String? = null, subSysCode: String? = null): SysAuditLogModel =
         SysAuditLogModel().apply {
             this.tenantId = tenantId
@@ -401,7 +571,10 @@ internal open class RdbClickhouseAuditLogReadOnlyServiceTest {
             val httpPort = running.ports.first { it.privatePort == 8123 }
             val host = requireNotNull(httpPort.ip)
             val port = requireNotNull(httpPort.publicPort)
-            val jdbcUrl = "jdbc:clickhouse://$host:$port/${ClickHouseTestContainer.DATABASE}?wait_end_of_query=1&async_insert=0"
+            // clickhouse-jdbc 0.9.x (client-v2) rejects unknown raw URL properties; server
+            // settings need the `clickhouse_setting_` prefix to be forwarded.
+            val jdbcUrl = "jdbc:clickhouse://$host:$port/${ClickHouseTestContainer.DATABASE}" +
+                "?clickhouse_setting_wait_end_of_query=1&clickhouse_setting_async_insert=0"
             registry.add("spring.datasource.dynamic.datasource.ds1.url") { jdbcUrl }
             registry.add("spring.datasource.dynamic.datasource.ds1.username") { USERNAME }
             registry.add("spring.datasource.dynamic.datasource.ds1.password") { PASSWORD }

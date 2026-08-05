@@ -13,6 +13,6 @@ kudos:
           # sub: 默认不设，由 createDefault(subject) 显式传入
           # aud: 业务自填（relying party 标识）
           exp: 3600               # 单位秒；getExpireAt() = now() + exp
-          nbf: now()              # now() | 数字（前推秒数）| 其它（视为 null 不下发 nbf 声明）
+          nbf: now()              # now() | 正整数 N（生效时间延后 N 秒，即 nbf = now()+N）| 其它（视为 null 不下发 nbf 声明）
           iat: now()              # 仅识别 now()；其它视为 null
           jti: uuid()             # 仅识别 uuid()；其它视为空串

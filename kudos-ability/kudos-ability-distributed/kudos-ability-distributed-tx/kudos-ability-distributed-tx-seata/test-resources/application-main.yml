@@ -54,6 +54,11 @@ spring:
 #            data: sql/mysql/data.sql
 
   cloud:
+    # Spring Boot 4.1.x 尚未進入當前 Spring Cloud release train 的兼容版本清單，
+    # CompositeCompatibilityVerifier 會直接拋 CompatibilityNotMetException；
+    # 與倉庫其他模塊（discovery-nacos / client-feign 等）一致，測試中關閉兼容性校驗。
+    compatibility-verifier:
+      enabled: false
     nacos:
       config:
         server-addr: localhost:38848

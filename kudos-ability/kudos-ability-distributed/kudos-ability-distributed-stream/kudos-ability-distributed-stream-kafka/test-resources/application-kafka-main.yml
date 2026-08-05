@@ -1,5 +1,14 @@
 spring:
+  main:
+    # Workaround for Spring Boot 4.1: io.kudos.context.init.ValidatorAutoConfiguration#defaultValidator
+    # clashes with org.springframework.boot.validation.autoconfigure.ValidationAutoConfiguration#defaultValidator.
+    # Remove once kudos-context backs off (e.g. @ConditionalOnMissingBean) on the boot-provided bean.
+    allow-bean-definition-overriding: true
   cloud:
+    # Workaround for Spring Boot 4.1: the current Spring Cloud release train does not yet list
+    # Boot 4.1 as compatible and CompositeCompatibilityVerifier fails the context.
+    compatibility-verifier:
+      enabled: false
     stream:
       function:
         #配置消费者消费的方法名称，按bindings顺序，多个以英文分号隔开
@@ -39,8 +48,11 @@ kudos:
       stream:
         save-exception: true
     flyway:
+      # datasource-config direction is <data source> -> <modules> (see FlywayMultiDataSourceProperties).
+      # The inherited kudos-ability-distributed-stream-common.yml declares it inverted (mq: ds-master),
+      # which makes sql/mq/h2 migrations never run; declare the correct orientation here.
       datasource-config:
-        mq: ds-master
+        ds-master: mq
 
 #logging:
 #  level:

@@ -43,6 +43,16 @@ internal class AppendCodesRetrieverTest {
     }
 
     @Test
+    fun unknownAppendTypeWordFails() {
+        val content = buildString {
+            appendLine("//region append UNKNOWN codes 3")
+            appendLine("x")
+            appendLine("//endregion append UNKNOWN codes 3")
+        }
+        assertFailsWith<IllegalArgumentException> { AppendCodesRetriever(content).retrieve() }
+    }
+
+    @Test
     fun capturesMixedTypesInOneFile() {
         val content = buildString {
             appendLine("//region append PARTIBLE codes 1")

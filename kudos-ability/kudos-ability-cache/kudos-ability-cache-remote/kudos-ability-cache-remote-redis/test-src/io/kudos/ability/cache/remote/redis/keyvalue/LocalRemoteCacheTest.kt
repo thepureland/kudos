@@ -14,10 +14,11 @@ import org.springframework.cache.CacheManager
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import kotlin.test.fail
 
 
 /**
@@ -72,24 +73,34 @@ internal class LocalRemoteCacheTest {
         val mixCache = mixCacheManager.getCache(CACHE_NAME)
         assert(mixCache != null)
 
-        val latch = CountDownLatch(1)
-        Thread {
-            val key = "local_remote_key"
+        // Run on a separate thread, propagating failures with a join timeout: the legacy
+        // latch.await() pattern hung the suite forever when an assertion fired inside the thread.
+        val error = AtomicReference<Throwable?>()
+        val thread = Thread {
+            try {
+                val key = "local_remote_key"
 
-            val value1 = cacheTestService.getData(key)
-            val value2 = cacheTestService.getData(key)
-            assert(value1 == value2)
+                val value1 = cacheTestService.getData(key)
+                val value2 = cacheTestService.getData(key)
+                assert(value1 == value2)
 
-            val value3 = localCache!!.get(key, String::class.java)
-            val value4 = remoteCache!!.get(key, String::class.java)
-            val value5 = mixCache!!.get(key, String::class.java)
-            assert(value3 == value4)
-            assert(value4 == value5)
-            assert(value3 == value2)
-
-            latch.countDown()
-        }.start()
-        latch.await()
+                val value3 = localCache!!.get(key, String::class.java)
+                val value4 = remoteCache!!.get(key, String::class.java)
+                val value5 = mixCache!!.get(key, String::class.java)
+                assert(value3 == value4)
+                assert(value4 == value5)
+                assert(value3 == value2)
+            } catch (t: Throwable) {
+                error.set(t)
+            }
+        }
+        thread.start()
+        thread.join(120_000)
+        if (thread.isAlive) {
+            thread.interrupt()
+            fail("test thread did not finish within 120s")
+        }
+        error.get()?.let { throw it }
     }
 
     @Test

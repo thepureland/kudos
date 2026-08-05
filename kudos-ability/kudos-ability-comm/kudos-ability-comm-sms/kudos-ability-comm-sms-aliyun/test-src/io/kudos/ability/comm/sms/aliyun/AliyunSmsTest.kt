@@ -12,6 +12,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Aliyun SMS send test case; uses WireMock to mock the Aliyun SMS service.
@@ -48,7 +49,7 @@ class AliyunSmsTest {
             try { codeBox[0] = body.code } finally { latch.countDown() }
         }
 
-        latch.await(10, TimeUnit.SECONDS)
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "callback was not invoked in time")
         assertEquals("OK", codeBox[0])
     }
 
@@ -73,7 +74,7 @@ class AliyunSmsTest {
             try { codeBox[0] = body.code } finally { latch.countDown() }
         }
 
-        latch.await(10, TimeUnit.SECONDS)
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "callback was not invoked in time")
         assertEquals("isv.BUSINESS_LIMIT_CONTROL", codeBox[0])
     }
 

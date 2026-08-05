@@ -2,6 +2,10 @@ package io.kudos.ms.auth.core.role.service.impl
 
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.role.exclusion.service.iservice.IAuthRoleExclusionService
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.common.delegation.vo.RevokeImpactVo
 import io.kudos.ms.auth.common.delegation.vo.RoleGrantRequest
@@ -65,6 +69,19 @@ open class AuthRoleUserService(
     @Resource
     private lateinit var authPrincipalVersionDao: AuthPrincipalVersionDao
 
+    // Needed by findSodViolationMessage below, which the temporal bind path calls directly.
+    @Autowired
+    private lateinit var authRoleDao: AuthRoleDao
+
+    @Resource
+    private lateinit var authGroupUserDao: AuthGroupUserDao
+
+    @Resource
+    private lateinit var authGroupRoleDao: AuthGroupRoleDao
+
+    @Resource
+    private lateinit var exclusionService: IAuthRoleExclusionService
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
@@ -86,11 +103,11 @@ open class AuthRoleUserService(
      *
      * The role's tenant is read from the cache to scope the exclusion lookup.
      *
-     * @param roleId The role to bind users into.
+     * @param roleId The role to bind users into; must reference an existing role.
      * @param userIds Users to bind; already-bound users are silently skipped.
      * @return Count of newly created bindings.
-     * @throws IllegalArgumentException if ANY user would violate an SoD constraint.
-     *   The message names the violating user and the conflicting role pair.
+     * @throws IllegalArgumentException if the role does not exist, or if ANY user would violate
+     *   an SoD constraint (the message names the violating user and the conflicting role pair).
      */
     @Transactional
     override fun batchBind(roleId: String, userIds: Collection<String>): Int =
@@ -293,6 +310,27 @@ open class AuthRoleUserService(
         return lockedDescendantsOf(listOf(root.id))
     }
 
+    // ---------- Shared SoD helpers ----------
+
+    /**
+     * Single-user SoD check shared by [batchBind] and the temporal bind path
+     * ([io.kudos.ms.auth.core.role.temporal.service.impl.AuthRoleUserTemporalService.bindTemporal]):
+     * expands [userId]'s effective role set and asks the exclusion service whether adding
+     * [roleId] would violate any SoD rule of [tenantId].
+     *
+     * `internal open` on purpose: internal so only this module's bind paths can call it, open so
+     * the CGLIB transaction proxy delegates the call to the initialized target bean.
+     *
+     * @return a human-readable violation message naming the user and the conflicting pair, or
+     *   null when the bind is allowed
+     */
+    internal open fun findSodViolationMessage(tenantId: String, roleId: String, userId: String): String? {
+        val effectiveRoles = computeEffectiveRoleIds(userId)
+        val violation = exclusionService.findViolation(tenantId, roleId, effectiveRoles) ?: return null
+        return "User $userId: binding role $roleId would conflict with " +
+            "${violation.roleAId} ↔ ${violation.roleBId} (exclusion ${violation.id})."
+    }
+
     /**
      * The delegation subtree under [rootGrantIds], read under the same per-principal locks that
      * every delegation takes on its operator.
@@ -325,5 +363,21 @@ open class AuthRoleUserService(
     companion object {
         /** Safety cap on the delegation-chain walk; the column is a plain self-reference. */
         private const val MAX_CHAIN_WALK_DEPTH = 32
+    }
+
+    /**
+     * Full effective role set for [userId]: direct + group-derived + ancestor (parent-chain) roles.
+     * This is the set against which the SoD check is run — it mirrors the expansion that
+     * ResourceIdsByUserIdCache performs when computing accessible resources.
+     */
+    private fun computeEffectiveRoleIds(userId: String): Set<String> {
+        val direct = dao.searchRoleIdsByUserId(userId)
+        val groupIds = authGroupUserDao.searchGroupIdsByUserId(userId)
+        val groupDerived = if (groupIds.isEmpty()) emptyList()
+        else groupIds.flatMap { gid -> authGroupRoleDao.searchRoleIdsByGroupId(gid) }
+        val granted = (direct + groupDerived).distinct()
+        if (granted.isEmpty()) return emptySet()
+        val ancestors = authRoleDao.searchAncestorRoleIds(granted)
+        return (granted + ancestors).toSet()
     }
 }

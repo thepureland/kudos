@@ -6,4 +6,6 @@ dependencies {
     compileOnly("org.springframework:spring-web")
 
     testImplementation(project(":kudos-test:kudos-test-common"))
+    testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.spring.boot.starter.test)
 }

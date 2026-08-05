@@ -94,7 +94,7 @@ object SeataTestContainer {
      * The test JVM runs on the host; if Nacos discovery is used, it returns the address Seata registered (possibly the container's internal IP), which the host cannot reach.
      * Override to file + direct connection to the host-mapped port — only the test side connects to TC directly; the Seata server still uses Nacos + the shared network.
      */
-    private fun registerProperties(registry: DynamicPropertyRegistry?, runningContainer: Container) {
+    internal fun registerProperties(registry: DynamicPropertyRegistry?, runningContainer: Container) {
         if (registry == null) return
         registry.add("seata.registry.type") { "file" }
         registry.add("seata.service.default.grouplist") { "127.0.0.1:$SERVICE_PORT" }

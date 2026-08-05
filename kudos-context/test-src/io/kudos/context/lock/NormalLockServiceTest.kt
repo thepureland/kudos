@@ -146,6 +146,105 @@ internal class NormalLockServiceTest {
     }
 
     // ============================================================
+    // doCache / hasKey / unLock edge cases
+    // ============================================================
+
+    @Test
+    fun doCachePutsKeyAndHasKeyObservesIt() {
+        val svc = NormalLockService()
+        assertFalse(svc.hasKey("cached"), "unknown key should not exist")
+        svc.doCache("cached", 60)
+        assertTrue(svc.hasKey("cached"), "doCache should hold the key")
+        assertFalse(svc.tryLock("cached", 60), "doCache occupies the key just like tryLock")
+    }
+
+    // Note: hasKey(null) currently throws NullPointerException (ConcurrentHashMap.containsKey rejects
+    // null) even though the parameter type is String?. Suspected main-code bug — the nullable signature
+    // implies "null never stored -> false". Not asserted here to avoid pinning the wrong behavior.
+
+    @Test
+    fun unLockOnAbsentKeyIsNoOp() {
+        val svc = NormalLockService()
+        svc.unLock("never-locked") // must not throw
+        assertTrue(svc.tryLock("never-locked", 30))
+    }
+
+    @Test
+    fun unLockRemovesStaleDelayQueueEntrySoNewLockSurvivesOldExpiry() {
+        // Pin down the documented fix: after unLock, the old delay-queue entry must not later
+        // wipe out a NEW lock that reuses the same key.
+        val svc = NormalLockService()
+        assertTrue(svc.tryLock("reused", 1), "old lock with 1s lease")
+        svc.unLock("reused")
+        assertTrue(svc.tryLock("reused", 60), "re-acquire the same key with a long lease")
+        Thread.sleep(1500) // wait past the OLD lock's expiry
+        assertFalse(
+            svc.tryLock("reused", 60),
+            "the new lock must still be held: the stale delay-queue entry must not have cleaned it"
+        )
+    }
+
+    @Test
+    fun reentrantLockReturnsNullWhenHeldByAnotherThread() {
+        val svc = NormalLockService()
+        val acquired = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val holder = Thread {
+            val lock = svc.lock("contended-reentrant")
+            acquired.countDown()
+            if (lock != null) {
+                release.await(5, TimeUnit.SECONDS)
+                svc.unLock(lock, "contended-reentrant")
+            }
+        }
+        holder.start()
+        assertTrue(acquired.await(5, TimeUnit.SECONDS))
+        assertNull(svc.lock("contended-reentrant"), "a key held by another thread must yield null")
+        release.countDown()
+        holder.join(5000)
+    }
+
+    // ============================================================
+    // Daemon thread: interruption handling
+    // ============================================================
+
+    @Test
+    fun expiryDaemonThreadStopsCleanlyOnInterrupt() {
+        val before = Thread.getAllStackTraces().keys.filterTo(HashSet()) { it.name == "kudos-normal-lock-expiry" }
+        NormalLockService() // spawns exactly one new expiry daemon
+        val daemon = Thread.getAllStackTraces().keys
+            .first { it.name == "kudos-normal-lock-expiry" && it !in before }
+        assertTrue(daemon.isDaemon, "the expiry thread must be a daemon")
+
+        daemon.interrupt()
+        daemon.join(5000)
+        assertFalse(daemon.isAlive, "the daemon must exit its loop when interrupted")
+    }
+
+    // ============================================================
+    // ExpiringKey: key-only equality contract (private class -> exercised reflectively, the same
+    // contract DelayQueue.remove relies on)
+    // ============================================================
+
+    @Test
+    fun expiringKeyEqualityAndHashAreKeyOnly() {
+        val clazz = Class.forName("io.kudos.context.lock.NormalLockService\$ExpiringKey")
+        val ctor = clazz.getDeclaredConstructor(Any::class.java, Long::class.javaPrimitiveType)
+        ctor.isAccessible = true
+        val now = System.currentTimeMillis()
+        val a1 = ctor.newInstance("same-key", now + 1000)
+        val a2 = ctor.newInstance("same-key", now + 99999) // different expiry, same key
+        val b = ctor.newInstance("other-key", now + 1000)
+
+        assertEquals(a1, a1, "reflexive")
+        assertEquals(a1, a2, "equality must ignore the expiry timestamp")
+        assertFalse(a1 == b, "different keys are not equal")
+        assertFalse(a1.equals("not-an-expiring-key"), "foreign types are not equal")
+        assertEquals(a1.hashCode(), a2.hashCode(), "hashCode must be consistent with key-only equals")
+        assertEquals("same-key".hashCode(), a1.hashCode())
+    }
+
+    // ============================================================
     // Concurrent contention: multiple threads tryLock the same key — exactly one should succeed
     // ============================================================
 

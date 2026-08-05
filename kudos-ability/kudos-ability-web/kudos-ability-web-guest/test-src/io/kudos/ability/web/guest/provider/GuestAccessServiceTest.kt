@@ -1,6 +1,7 @@
 package io.kudos.ability.web.guest.provider
 
 import io.kudos.ability.web.guest.init.properties.GuestProperties
+import io.kudos.base.security.CryptoKit
 import jakarta.servlet.http.Cookie
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.mock.web.MockHttpServletRequest
@@ -102,6 +103,54 @@ internal class GuestAccessServiceTest {
     }
 
     @Test
+    fun isEnabled_mirrorsPropertiesLive() {
+        properties.enabled = true
+        assertTrue(service.isEnabled())
+        properties.enabled = false
+        assertFalse(service.isEnabled(), "enabled must be re-read per call so config pushes take effect")
+        properties.enabled = true
+    }
+
+    @Test
+    fun isExclude_falseWhenNoIgnoreBeansRegistered() {
+        assertFalse(service.isExclude(MockHttpServletRequest()))
+    }
+
+    @Test
+    fun isExclude_trueWhenAnyIgnoreMatches_shortCircuitOr() {
+        val ignores = providerOf<IGuestAccessIgnore>(
+            IGuestAccessIgnore { false },
+            IGuestAccessIgnore { it.requestURI.startsWith("/_health") },
+        )
+        val svc = GuestAccessService(properties, uniqueKey, ignores)
+
+        assertTrue(svc.isExclude(MockHttpServletRequest("GET", "/_health/live")))
+        assertFalse(svc.isExclude(MockHttpServletRequest("GET", "/shop")))
+    }
+
+    @Test
+    fun fetchGuestToken_returnsNullWhenCookieValueIsNull() {
+        // jakarta Cookie tolerates a null value; the service must too (covers the `value ?:
+        // return null` guard rather than NPE-ing inside decodeCookie).
+        val request = MockHttpServletRequest().apply {
+            setCookies(Cookie("gi", null))
+        }
+        assertNull(service.fetchGuestToken(request))
+    }
+
+    @Test
+    fun fetchGuestToken_returnsNullWhenTokenDecryptsToBlankPlaintext() {
+        // A cookie that *successfully* decrypts but to an empty string (e.g. someone encrypted
+        // "" with the right key) is not a usable visitor token — must be treated as first-visit,
+        // distinguishing "decrypted to blank" from "decryption failed".
+        val blankCiphertext = CryptoKit.aesEncrypt("", properties.cookie.cipherKey)
+        val request = MockHttpServletRequest().apply {
+            setCookies(Cookie("gi", service.encodeCookie(arrayOf(blankCiphertext))))
+        }
+        assertNull(service.fetchGuestToken(request))
+    }
+
+    @Test
     fun genToken_setsCookieAndReturnsToken() {
         val request = MockHttpServletRequest()
         val response = MockHttpServletResponse()
@@ -113,6 +162,70 @@ internal class GuestAccessServiceTest {
         assertEquals(properties.cookie.path, cookie.path)
         assertTrue(cookie.isHttpOnly, "default cookie must be HttpOnly")
         assertTrue(cookie.maxAge > 0, "cookie maxAge must be set to a positive number of seconds, was ${cookie.maxAge}")
+        assertEquals(
+            properties.cookie.maxAge.toSeconds().toInt(), cookie.maxAge,
+            "maxAge must be the configured Duration translated to whole seconds",
+        )
+    }
+
+    @Test
+    fun genToken_setsSameSiteAttribute() {
+        // SameSite has no dedicated setter on jakarta Cookie — the service must write it through
+        // the Servlet 6 generic attribute API, otherwise the yml `same-site` knob silently no-ops.
+        val response = MockHttpServletResponse()
+        service.genToken(MockHttpServletRequest(), response)
+
+        val cookie = response.cookies.single()
+        assertEquals("lax", cookie.getAttribute("SameSite"), "default same-site=lax must reach the cookie")
+    }
+
+    @Test
+    fun genToken_omitsSameSiteWhenConfiguredBlank() {
+        val props = GuestProperties().apply {
+            cookie.cipherKey = "test-cipher-key-32bytes-padded--"
+            cookie.sameSite = ""
+        }
+        val svc = GuestAccessService(props, uniqueKey, noIgnores)
+        val response = MockHttpServletResponse()
+
+        svc.genToken(MockHttpServletRequest(), response)
+
+        assertNull(response.cookies.single().getAttribute("SameSite"), "blank same-site must not emit an empty attribute")
+    }
+
+    @Test
+    fun genToken_setsDomainWhenConfigured() {
+        val props = GuestProperties().apply {
+            cookie.cipherKey = "test-cipher-key-32bytes-padded--"
+            cookie.domain = "example.org"
+        }
+        val svc = GuestAccessService(props, uniqueKey, noIgnores)
+        val response = MockHttpServletResponse()
+
+        svc.genToken(MockHttpServletRequest(), response)
+
+        assertEquals("example.org", response.cookies.single().domain)
+    }
+
+    @Test
+    fun genToken_omitsDomainWhenNullOrBlank() {
+        // domain=null is the field default; domain="" (blank yml value) must behave the same —
+        // an empty Domain attribute would make browsers reject the cookie.
+        for (blankDomain in listOf(null, "", "   ")) {
+            val props = GuestProperties().apply {
+                cookie.cipherKey = "test-cipher-key-32bytes-padded--"
+                cookie.domain = blankDomain
+            }
+            val svc = GuestAccessService(props, uniqueKey, noIgnores)
+            val response = MockHttpServletResponse()
+
+            svc.genToken(MockHttpServletRequest(), response)
+
+            assertNull(
+                response.cookies.single().domain,
+                "domain=[$blankDomain] must not be written onto the cookie",
+            )
+        }
     }
 
     @Test
@@ -191,5 +304,14 @@ internal class GuestAccessServiceTest {
         override fun getIfUnique(): T? = null
         override fun stream(): Stream<T> = Stream.empty()
         override fun orderedStream(): Stream<T> = Stream.empty()
+    }
+
+    private fun <T : Any> providerOf(vararg beans: T): ObjectProvider<T> = object : ObjectProvider<T> {
+        override fun getObject(): T = beans.first()
+        override fun getObject(vararg args: Any?): T = beans.first()
+        override fun getIfAvailable(): T? = beans.firstOrNull()
+        override fun getIfUnique(): T? = beans.singleOrNull()
+        override fun stream(): Stream<T> = Stream.of(*beans)
+        override fun orderedStream(): Stream<T> = Stream.of(*beans)
     }
 }

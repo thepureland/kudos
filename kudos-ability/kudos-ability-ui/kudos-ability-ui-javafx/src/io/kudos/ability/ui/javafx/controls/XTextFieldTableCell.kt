@@ -2,11 +2,9 @@ package io.kudos.ability.ui.javafx.controls
 
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
-import javafx.scene.Node
 import javafx.scene.control.TablePosition
 import javafx.scene.control.TableView
 import javafx.scene.control.TextField
-import javafx.scene.control.TextInputControl
 import javafx.scene.control.cell.TextFieldTableCell
 import javafx.util.StringConverter
 
@@ -59,13 +57,9 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
     override fun startEdit() {
         super.startEdit()
         if (isEditing && myTextField == null) {
-            myTextField = findTextField()
-            if (myTextField == null) {
-                // something unexpected happened ...
-                // either throw an exception or return silently
-                return
-            }
-            val tf = requireNotNull(myTextField) { "myTextField is null" }
+            // something unexpected happened when the lookup fails ... return silently
+            val tf = findTextField() ?: return
+            myTextField = tf
             tf.focusedProperty().addListener { _, _, nvalue ->
                 if (!nvalue) {
                     commitEdit(converter.fromString(tf.text))
@@ -141,15 +135,13 @@ open class XTextFieldTableCell<S, T> @JvmOverloads constructor(converter: String
         val nodes = lookupAll(".text-field")
         // sane use-case: it's only one field
         if (nodes.size == 1) {
-            return nodes.toTypedArray()[0] as TextField
+            return nodes.first() as TextField
         }
         // corner case: there's a "real" graphic which is/contains
         // a textfield, differentiate by text
         val expectedText = converter.toString(item)
-        val fields = nodes
-            .filter { it is TextField && expectedText == (it as TextInputControl).text }
-            .toList()
-        return if (fields.size == 1) fields[0] as TextField else null
+        val fields = nodes.filterIsInstance<TextField>().filter { it.text == expectedText }
+        return fields.singleOrNull()
     }
 
     /**

@@ -103,6 +103,11 @@ open class AccessTokenMinioClientBuilder : MinioClientBuilder<AccessTokenServerP
 
         try {
             httpClient.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    // Do NOT include the response body in the exception: error pages may echo
+                    // request headers (i.e. the passed-through business token).
+                    throw ProviderException("Minio oauth2 token endpoint returned HTTP ${response.code}")
+                }
                 val rs = String(response.body.bytes())
                 val jwt = mapper.readValue(rs, Jwt::class.java)
                 // Historical issue: the old implementation used to log.info jwt.token() here -

@@ -1,12 +1,15 @@
 package io.kudos.ability.data.tsdb.influxdb.init
 
+import com.influxdb.LogLevel
 import com.influxdb.client.InfluxDBClient
 import io.kudos.ability.data.tsdb.influxdb.init.properties.InfluxdbProperties
 import org.mockito.Mockito
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
+import java.time.Duration
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -85,6 +88,65 @@ internal class InfluxdbAutoConfigurationTest {
                 assertEquals("my-org", props.org)
                 assertEquals("metrics", props.bucket)
             }
+    }
+
+    @Test
+    fun minimalUrlAndTokenOnly_clientIsWired_optionalPropsStayNull() {
+        // Covers the null-branches of `org?.let`, `bucket?.let`, `logLevel?.let` in the bean
+        // factory — proves the builder tolerates a minimal config without optional fields.
+        runner
+            .withPropertyValues(
+                "kudos.ability.tsdb.influxdb.url=http://localhost:8086",
+                "kudos.ability.tsdb.influxdb.token=secret-token",
+            )
+            .run { ctx ->
+                assertNotNull(
+                    ctx.getBean(InfluxDBClient::class.java),
+                    "client must wire with only url + token — org/bucket/logLevel are optional",
+                )
+                val props = ctx.getBean(InfluxdbProperties::class.java)
+                assertNull(props.org, "org must stay null when unset")
+                assertNull(props.bucket, "bucket must stay null when unset")
+                assertNull(props.logLevel, "logLevel must stay null when unset")
+                assertNull(props.readTimeout, "readTimeout must stay null when unset")
+                assertNull(props.writeTimeout, "writeTimeout must stay null when unset")
+            }
+    }
+
+    @Test
+    fun fullConfigWithLogLevelAndTimeouts_clientIsWired_andAllPropsBind() {
+        // Covers the non-null branch of `logLevel?.let` plus Duration binding of the two
+        // timeout fields (kept on the properties class for forward binary compatibility even
+        // though the autoconfig doesn't yet push them into OkHttp).
+        runner
+            .withPropertyValues(
+                "kudos.ability.tsdb.influxdb.url=http://localhost:8086",
+                "kudos.ability.tsdb.influxdb.token=secret-token",
+                "kudos.ability.tsdb.influxdb.org=my-org",
+                "kudos.ability.tsdb.influxdb.bucket=metrics",
+                "kudos.ability.tsdb.influxdb.log-level=BODY",
+                "kudos.ability.tsdb.influxdb.read-timeout=45s",
+                "kudos.ability.tsdb.influxdb.write-timeout=PT1M30S",
+            )
+            .run { ctx ->
+                assertNotNull(
+                    ctx.getBean(InfluxDBClient::class.java),
+                    "client must wire when logLevel is set — exercises the logLevel?.let branch",
+                )
+                val props = ctx.getBean(InfluxdbProperties::class.java)
+                assertEquals(LogLevel.BODY, props.logLevel, "log-level must bind to the InfluxDB LogLevel enum")
+                assertEquals(Duration.ofSeconds(45), props.readTimeout, "read-timeout must bind simple-style durations")
+                assertEquals(Duration.ofSeconds(90), props.writeTimeout, "write-timeout must bind ISO-8601 durations")
+            }
+    }
+
+    @Test
+    fun getComponentName_returnsModuleName() {
+        assertEquals(
+            "kudos-ability-data-tsdb-influxdb",
+            InfluxdbAutoConfiguration().getComponentName(),
+            "component name drives the kudos initializer banner and must match the module id",
+        )
     }
 
     @Test

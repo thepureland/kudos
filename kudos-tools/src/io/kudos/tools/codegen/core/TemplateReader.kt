@@ -44,7 +44,7 @@ class TemplateReader {
      * @since 1.0.0
      */
     private fun newFreeMarkerConfiguration(): Configuration {
-        val templateRootDir = CodeGeneratorContext.config.getTemplateInfo().rootDir
+        val templateRootDir = CodeGeneratorContext.config.getTemplateInfo()!!.rootDir
         val root = URI("file:$templateRootDir").toURL()
         val loader = MultiTemplateLoader(arrayOf(
             object : URLTemplateLoader() {
@@ -58,7 +58,7 @@ class TemplateReader {
             defaultEncoding = "UTF-8"
             setClassForTemplateLoading(
                 CodeGenerator::class.java,
-                "/templates/${CodeGeneratorContext.config.getTemplateInfo().name}"
+                "/templates/${CodeGeneratorContext.config.getTemplateInfo()!!.name}"
             )
             val autoIncludes = listOf("macro.include")
             val available = FreemarkerKit.getAvailableAutoInclude(this, autoIncludes)

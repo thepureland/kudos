@@ -46,6 +46,7 @@ class AuthGroupHashCacheTest : RdbAndRedisCacheTestBase() {
         assertNotNull(item)
         assertEquals(groupId1, item.id)
         assertEquals("GROUP_ADMIN", item.code)
+        // Name asserts the exact Unicode value seeded by AuthGroupHashCacheTest.sql (verifies UTF-8 round-trip through Redis/H2).
         assertEquals("管理员组", item.name)
         assertEquals(tenant001, item.tenantId)
         val itemAgain = cacheHandler.getGroupById(groupId1)

@@ -100,7 +100,10 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
      */
     @HashCacheableBySecondary(
         cacheNames = [CACHE_NAME],
-        filterExpressions = ["#tenantId", "#active"],
+        // Note: must only reference real method parameters. The previous ["#tenantId", "#active"] referenced
+        // a non-existent #active parameter, which evaluated to null in SpEL and caused the aspect to silently
+        // bypass the cache on every call (and "active" is not in filterableProperties either).
+        filterExpressions = ["#tenantId"],
         entityClass = UserOrgCacheEntry::class,
         filterableProperties = ["tenantId"]
     )

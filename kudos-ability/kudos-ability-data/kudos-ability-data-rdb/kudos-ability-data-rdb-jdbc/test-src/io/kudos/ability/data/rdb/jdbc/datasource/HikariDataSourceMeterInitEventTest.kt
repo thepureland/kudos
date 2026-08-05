@@ -97,6 +97,27 @@ internal class HikariDataSourceMeterInitEventTest {
         assertEquals("sa", property.username, "delegate must leave plain values untouched")
     }
 
+    @Test
+    fun bindTo_withNothingPending_isANoOp() {
+        val event = HikariDataSourceMeterInitEvent()
+        event.bindTo(SimpleMeterRegistry()) // empty queue -> early return, no exception
+    }
+
+    @Test
+    fun preExistingMetricRegistry_skipsTrackerFactoryAttachment() {
+        val event = HikariDataSourceMeterInitEvent()
+        val hikari = newIdleHikari()
+        hikari.metricRegistry = SimpleMeterRegistry() // user already wired metrics directly
+
+        event.bindTo(SimpleMeterRegistry())
+        event.afterCreate(hikari)
+
+        assertNull(
+            hikari.metricsTrackerFactory,
+            "Hikari forbids both metricRegistry and metricsTrackerFactory; the guard must skip"
+        )
+    }
+
     /**
      * An idle [HikariDataSource]: no connection pool spun up yet because no JDBC URL is set.
      * Sufficient for asserting only the metricsTrackerFactory state.

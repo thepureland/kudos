@@ -59,7 +59,7 @@ object WireMockTestContainer {
      * @author K
      * @since 1.0.0
      */
-    private fun registerProperties(registry: DynamicPropertyRegistry?, runningContainer: Container) {
+    internal fun registerProperties(registry: DynamicPropertyRegistry?, runningContainer: Container) {
     }
 
     /**

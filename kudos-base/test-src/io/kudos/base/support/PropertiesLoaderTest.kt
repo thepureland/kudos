@@ -215,4 +215,20 @@ internal class PropertiesLoaderTest {
         val loader = PropertiesLoader("classpath:i18n/kudos-base-test_zh_CN.properties")
         assertEquals("中文简体", loader.getProperty("language.zh_CN"))
     }
+
+    @Test
+    fun testConstructorWithLeadingSlashPath() {
+        // a leading-slash path is normalized (the slash stripped) before classpath lookup
+        val loader = PropertiesLoader("/i18n/kudos-base-test_zh_CN.properties")
+        assertEquals("中文简体", loader.getProperty("language.zh_CN"))
+    }
+
+    @Test
+    fun testConstructorWithMalformedPropertiesFileIsSwallowed() {
+        // Properties.load throws IllegalArgumentException on a malformed \\u escape; the loader must
+        // swallow it (logging a warning) rather than propagating, leaving the loaded set empty/partial.
+        val loader = PropertiesLoader("classpath:malformed.properties")
+        // The whole load aborts on the bad escape, so even the earlier good.key is not retained.
+        assertNull(loader.getProperty("bad.key"))
+    }
 }

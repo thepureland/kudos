@@ -59,3 +59,18 @@ main 类，可独立 `bootRun`，专门跑管理端 HTTP（与 `api-public` / `a
   之类哈希字段（虽然 service 层应已脱敏，但缺少 controller 层守卫；脱敏遗漏会泄露敏感数据）
 - ❗ **未与 `api-public` / `api-internal` 联合部署** — 当前是独立进程；若运维想"三合一"部署
   减少端口数，需要业务方在 build.gradle.kts 主动聚合并手动协调 controller 路径冲突
+
+## 改进建议（自动分析 2026-06-11）
+
+- ❗ **明文新密码走 `@RequestParam`**（`controller/account/UserAccountAdminController.kt#resetPassword/resetSecurityPassword`）：
+  `newPassword` 以请求参数传递，若客户端拼到 query string，明文密码会进入网关 / 容器访问日志与浏览器历史。
+  建议改为 `@RequestBody` VO（属 API 契约变更，未直接修改）。
+- ❗ **`listByUserId` 直接返回 PO**（`controller/account/UserAccountThirdAdminController.kt`）：
+  返回 ktorm 实体 `UserAccountThird` 而非 `user-common` 的 `UserAccountThirdRow` VO，破坏"controller 只出 VO"
+  的分层约定，且实体字段变更会直接改变线上的 JSON 契约。
+- ✅ 已修复（2026-06-11）**`getOrgUsers` / `getOrgAdmins` 泄露凭据字段**（`controller/org/UserOrgAdminController.kt`）：
+  两端点返回前统一调用 `user-common` 新增的 `eraseCredentials()` 脱敏拷贝（置空 `loginPassword` /
+  `securityPassword` / `authenticationKey` / `sessionKey`）；同时 `UserAccountAdminController`
+  覆写 `pagingSearch / getDetail / getEdit` 对 CRUD 读出口做同样脱敏，管理端不再可见任何凭据字段。
+- **`cleanExpiredFreezes` 端点无防护说明**：作为"应急 / 调试通道"的写操作端点，建议至少在网关侧
+  限制为运维角色，或加显式确认参数防止误触。

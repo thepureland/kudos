@@ -117,6 +117,43 @@ internal class MinioDownLoadServiceTest {
     }
 
     /**
+     * Streams a download using the configured username/password (default: rw_user).
+     * Covers readFileToStream's success path; the caller closes the stream.
+     */
+    @Test
+    fun downloadStream_with_default_minio_client() {
+        val uploaded = requireNotNull(uploadFileResult) { "upload not completed" }
+        val path = requireNotNull(uploaded.filePath) { "filePath" }
+        val downloadFileModel = DownloadFileModel.from(path)
+
+        val stream = requireNotNull(downLoadService.downloadStream(downloadFileModel)) { "stream is null" }
+        stream.use { s ->
+            assertTrue(s.readAllBytes().isNotEmpty(), "streamed download should return bytes")
+        }
+    }
+
+    /**
+     * Streams a download with an incorrect AccessKey/Secret; expects rejection
+     * (FILE_ACCESS_DENY) — covers readFileToStream's ErrorResponseException branch.
+     */
+    @Test
+    fun downloadStream_with_specify_access_key_without_auth() {
+        val uploaded = requireNotNull(uploadFileResult) { "upload not completed" }
+        val path = requireNotNull(uploaded.filePath) { "filePath" }
+        val downloadFileModel = DownloadFileModel.from(path)
+
+        // Intentionally use incorrect accessKey/secretKey.
+        downloadFileModel.authServerParam = AccessKeyServerParam("bad", "bad")
+
+        try {
+            downLoadService.downloadStream(downloadFileModel)
+            kotlin.test.fail("expected ServiceException(FileErrorCode.FILE_ACCESS_DENY)")
+        } catch (e: ServiceException) {
+            assertSame(e.errorCode, FileErrorCode.FILE_ACCESS_DENY)
+        }
+    }
+
+    /**
      * Downloads using the read-only user ro_user's AccessKey/Secret.
      * Expects success (ro_user's policy only allows GetObject).
      */

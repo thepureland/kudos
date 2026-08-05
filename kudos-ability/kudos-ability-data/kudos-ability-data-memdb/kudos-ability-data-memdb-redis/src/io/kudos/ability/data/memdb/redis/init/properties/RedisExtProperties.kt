@@ -82,7 +82,10 @@ class RedisExtProperties : DataRedisProperties() {
      */
     private fun getSerializerByType(type: String?): RedisSerializer<*> {
         val redisSerializerEnum = RedisSerializerEnum.ofEnum(type)
-            ?: throw RuntimeException("The specified redisSerializer does not exist in the RedisSerializerEnum enum!")
+            ?: throw RuntimeException(
+                "The specified redisSerializer [$type] does not exist in the RedisSerializerEnum enum! " +
+                        "Valid values: ${RedisSerializerEnum.entries.joinToString { it.type }}"
+            )
         val serializerClazz = redisSerializerEnum.serializerClazz
         if (serializerClazz.isAssignableFrom(StringRedisSerializer::class.java)) {
             return StringRedisSerializer.UTF_8

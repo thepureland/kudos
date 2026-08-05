@@ -139,6 +139,13 @@ internal class SortTest {
     }
 
     @Test
+    fun testEqualsWithNonSortIsFalse() {
+        val sort = Sort("name")
+        assertFalse(sort.equals("name"))
+        assertFalse(sort.equals(null))
+    }
+
+    @Test
     fun testHashCode() {
         val sort1 = Sort("name", "age")
         val sort2 = Sort("name", "age")

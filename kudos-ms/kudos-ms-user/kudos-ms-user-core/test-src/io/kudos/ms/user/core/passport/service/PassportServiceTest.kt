@@ -10,6 +10,7 @@ import io.kudos.ms.user.core.account.cache.UserAccountHashCache
 import io.kudos.ms.user.core.account.dao.UserAccountDao
 import io.kudos.ms.user.core.account.model.po.UserAccount
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
+import io.kudos.ms.user.core.passport.service.impl.PassportService
 import io.kudos.ms.user.core.passport.service.iservice.IPassportService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -409,6 +410,53 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
             PassportLoginRequest(tenantId, activeUsername, plainPassword)
         )
         assertEquals(PassportLoginStatusEnum.ACCOUNT_FROZEN, res.status)
+    }
+
+    // ---- Brute-force lockout gate --------------------------------------------------------
+
+    @Test
+    fun login_reachingErrorThreshold_locksAccountAndRejectsCorrectPassword() {
+        // 4 failures stay below the default threshold (5) and answer WRONG_PASSWORD
+        repeat(4) { i ->
+            val res = passportService.login(PassportLoginRequest(tenantId, activeUsername, "wrong-$i"))
+            assertEquals(PassportLoginStatusEnum.WRONG_PASSWORD, res.status)
+        }
+
+        // The 5th failure crosses the threshold: LOCKED + the account is auto-frozen
+        val fifth = passportService.login(PassportLoginRequest(tenantId, activeUsername, "wrong-4"))
+        assertEquals(PassportLoginStatusEnum.LOCKED, fifth.status)
+        assertEquals(5, fifth.loginErrorTimes)
+        val po = assertNotNull(userAccountDao.get(activeUserId))
+        assertEquals(PassportService.LOGIN_LOCK_FREEZE_TYPE, po.freezeType)
+        assertNotNull(po.freezeEndTime)
+
+        // While the lock window is active even the CORRECT password is rejected with LOCKED
+        userAccountHashCache.reloadAll(clear = true)
+        val locked = passportService.login(PassportLoginRequest(tenantId, activeUsername, plainPassword))
+        assertEquals(PassportLoginStatusEnum.LOCKED, locked.status)
+        // The locked attempt must not consume another error count
+        assertEquals(5, userAccountDao.get(activeUserId)?.loginErrorTimes)
+    }
+
+    @Test
+    fun login_afterLockWindowExpiresAndSuccess_resetsCounterAndLockIsGone() {
+        // Arm the lock by reaching the threshold
+        repeat(5) { i ->
+            passportService.login(PassportLoginRequest(tenantId, activeUsername, "wrong-$i"))
+        }
+        assertEquals(PassportService.LOGIN_LOCK_FREEZE_TYPE, userAccountDao.get(activeUserId)?.freezeType)
+
+        // Simulate window expiry by moving freeze_end_time into the past
+        userAccountDao.updateProperties(
+            activeUserId,
+            mapOf(UserAccount::freezeEndTime.name to java.time.LocalDateTime.now().minusMinutes(1)),
+        )
+        userAccountHashCache.reloadAll(clear = true)
+
+        // Correct password now passes and resets the error counter
+        val res = passportService.login(PassportLoginRequest(tenantId, activeUsername, plainPassword))
+        assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
+        assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
     }
 
     @Test

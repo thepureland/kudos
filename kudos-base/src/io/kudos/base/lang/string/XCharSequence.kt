@@ -585,7 +585,7 @@ fun CharSequence.substringsBetween(open: String, close: CharSequence): Array<Str
  * @author K
  * @since 1.0.0
  */
-fun CharSequence.splitByCharacterType(): Array<String> = StringUtils.splitByCharacterTypeCamelCase(this.toString())
+fun CharSequence.splitByCharacterType(): Array<String> = StringUtils.splitByCharacterType(this.toString())
 
 /**
  * Splits the string based on character type (as returned by `java.lang.Character.getType(char)`).
@@ -606,7 +606,7 @@ fun CharSequence.splitByCharacterType(): Array<String> = StringUtils.splitByChar
  * @author K
  * @since 1.0.0
  */
-fun CharSequence.splitByCharacterTypeCamelCase(): Array<String>? = StringUtils.splitByCharacterType(this.toString())
+fun CharSequence.splitByCharacterTypeCamelCase(): Array<String>? = StringUtils.splitByCharacterTypeCamelCase(this.toString())
 //endregion Splitting
 
 /**
@@ -994,7 +994,7 @@ fun CharSequence.isAlphaSpace(): Boolean = StringUtils.isAlphaSpace(this)
  * @author K
  * @since 1.0.0
  */
-fun CharSequence.isAlphanumeric(): Boolean = StringUtils.isAlpha(this)
+fun CharSequence.isAlphanumeric(): Boolean = StringUtils.isAlphanumeric(this)
 
 /**
  * Tests whether the character sequence contains only Unicode letters, spaces, or digits.
@@ -1012,7 +1012,7 @@ fun CharSequence.isAlphanumeric(): Boolean = StringUtils.isAlpha(this)
  * @author K
  * @since 1.0.0
  */
-fun CharSequence.isAlphanumericSpace(): Boolean = StringUtils.isAlphanumeric(this)
+fun CharSequence.isAlphanumericSpace(): Boolean = StringUtils.isAlphanumericSpace(this)
 
 /**
  * Tests whether the character sequence contains only printable ASCII characters.
@@ -1072,7 +1072,7 @@ fun CharSequence.isNumeric(): Boolean = StringUtils.isNumeric(this)
  * @author K
  * @since 1.0.0
  */
-fun CharSequence.isNumericSpace(): Boolean = StringUtils.isNumeric(this)
+fun CharSequence.isNumericSpace(): Boolean = StringUtils.isNumericSpace(this)
 
 /**
  * Tests whether the character sequence contains only whitespace characters.

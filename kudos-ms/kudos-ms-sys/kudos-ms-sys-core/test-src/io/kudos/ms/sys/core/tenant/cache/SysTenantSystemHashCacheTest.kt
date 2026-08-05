@@ -1,6 +1,9 @@
 package io.kudos.ms.sys.core.tenant.cache
 
 import io.kudos.ms.sys.core.tenant.dao.SysTenantSystemDao
+import io.kudos.ms.sys.core.tenant.event.SysTenantSystemBound
+import io.kudos.ms.sys.core.tenant.event.SysTenantSystemSystemsChanged
+import io.kudos.ms.sys.core.tenant.event.SysTenantSystemTenantsChanged
 import io.kudos.ms.sys.core.tenant.model.po.SysTenantSystem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -131,6 +134,64 @@ class SysTenantSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         cache.syncOnBatchDelete(listOf(id1, id2))
         assertFalse(cache.getTenantIdsBySubSystemCode(systemCode1).contains("218772a0-c053-4634-a5e5-444444448781"))
         assertFalse(cache.getTenantIdsBySubSystemCode(systemCode2).contains("218772a0-c053-4634-a5e5-555555558781"))
+    }
+
+    /** cacheName returns the configured cache name (public accessor). */
+    @Test
+    fun cacheName() {
+        assertEquals(SysTenantSystemHashCache.CACHE_NAME, cache.cacheName())
+    }
+
+    /**
+     * A cache-miss query (data present in DB but not yet in cache) loads from DB and writes back via
+     * the secondary index, exercising the write-back branch of getSubSystemCodesByTenantId /
+     * getTenantIdsBySubSystemCode.
+     */
+    @Test
+    fun secondaryQuery_cacheMissWritesBack() {
+        cache.reloadAll(true)
+        // Insert directly to DB without syncing the cache, so the next query is a genuine miss.
+        val freshTenantId = "218772a0-c053-4634-a5e5-999999998781"
+        val freshSystemCode = "subSys-writeback-test"
+        val rel = SysTenantSystem().apply {
+            tenantId = freshTenantId
+            systemCode = freshSystemCode
+        }
+        sysTenantSystemDao.insert(rel)
+
+        val codes = cache.getSubSystemCodesByTenantId(freshTenantId)
+        assertTrue(codes.contains(freshSystemCode))
+
+        val tenantIds = cache.getTenantIdsBySubSystemCode(freshSystemCode)
+        assertTrue(tenantIds.contains(freshTenantId))
+    }
+
+    /** The two-arg syncOnUpdate overload behaves identically to the single-arg one. */
+    @Test
+    fun syncOnUpdate_overload() {
+        cache.reloadAll(true)
+        val id = "b3846388-5e61-4b58-8fd8-aaaaaaaa8781"
+        cache.syncOnUpdate(Any(), id)
+        assertTrue(cache.getTenantIdsBySubSystemCode(systemCodeA).contains(tenantId1))
+    }
+
+    /** Event listeners delegate to the matching sync methods. */
+    @Test
+    fun eventListeners() {
+        cache.reloadAll(true)
+        val rel = insertNewRecordToDb()
+
+        // Bound -> syncOnInsert
+        cache.on(SysTenantSystemBound(id = rel.id, tenantId = rel.tenantId, systemCode = rel.systemCode))
+        assertTrue(cache.getTenantIdsBySubSystemCode(rel.systemCode).contains(rel.tenantId))
+
+        // SystemsChanged -> evict + reload by system code
+        cache.on(SysTenantSystemSystemsChanged(systemCodes = listOf(rel.systemCode)))
+        assertTrue(cache.getTenantIdsBySubSystemCode(rel.systemCode).contains(rel.tenantId))
+
+        // TenantsChanged -> syncOnBatchDelete (by tenant dimension)
+        sysTenantSystemDao.deleteById(rel.id)
+        cache.on(SysTenantSystemTenantsChanged(tenantIds = listOf(rel.tenantId)))
     }
 
     private fun insertNewRecordToDb(): SysTenantSystem {

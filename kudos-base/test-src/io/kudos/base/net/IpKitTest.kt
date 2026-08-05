@@ -219,6 +219,45 @@ internal class IpKitTest {
             IpKit.ipTextToUnsignedStorageDecimal("3232235777", IpKit.IpStorageNumericMode.IPV4),
         )
         assertNull(IpKit.ipTextToUnsignedStorageDecimal("   ", IpKit.IpStorageNumericMode.AUTO))
+
+        // default mode (AUTO) when mode arg omitted
+        assertEquals(
+            BigDecimal("2130706433"),
+            IpKit.ipTextToUnsignedStorageDecimal("127.0.0.1"),
+        )
+
+        // AUTO -> valid IPv6 branch
+        val v6 = IpKit.fullIpv6ColonGroupsTextToUnsignedDecimal(IpKit.toFullIpv6("::1"))
+        assertEquals(v6, IpKit.ipTextToUnsignedStorageDecimal("::1", IpKit.IpStorageNumericMode.AUTO))
+
+        // AUTO -> else fallback: not digits, not IPv4, not IPv6 but a parseable decimal ("1e3" -> 1000)
+        assertEquals(BigDecimal("1e3"), IpKit.ipTextToUnsignedStorageDecimal("1e3", IpKit.IpStorageNumericMode.AUTO))
+
+        // AUTO -> else fallback: completely unparseable -> null
+        assertNull(IpKit.ipTextToUnsignedStorageDecimal("not-an-ip", IpKit.IpStorageNumericMode.AUTO))
+
+        // IPV4 mode with a non-numeric, non-IPv4 string -> getNormalIpv4 empty -> getFixLengthIpv4 empty
+        //   -> BigDecimal(s) fails -> null
+        assertNull(IpKit.ipTextToUnsignedStorageDecimal("abc", IpKit.IpStorageNumericMode.IPV4))
+
+        // IPV4 mode with a valid dotted IPv4 (exercises ipv4DottedOrFixedToUnsignedDecimal success path)
+        assertEquals(
+            BigDecimal("3232235777"),
+            IpKit.ipTextToUnsignedStorageDecimal("192.168.1.1", IpKit.IpStorageNumericMode.IPV4),
+        )
+
+        // IPV6 mode: ":::" is not a resolvable address (no DNS lookup) and not a decimal -> null
+        assertNull(IpKit.ipTextToUnsignedStorageDecimal(":::", IpKit.IpStorageNumericMode.IPV6))
+    }
+
+    @Test
+    fun getLocalIp() {
+        // Should not throw; returns either the resolved host address or "" on UnknownHostException.
+        val ip = IpKit.getLocalIp()
+        // It is a String (possibly empty in restricted environments); when non-empty it must look like an address.
+        if (ip.isNotEmpty()) {
+            assert(ip.contains(".") || ip.contains(":")) { "unexpected local ip: $ip" }
+        }
     }
 
 }

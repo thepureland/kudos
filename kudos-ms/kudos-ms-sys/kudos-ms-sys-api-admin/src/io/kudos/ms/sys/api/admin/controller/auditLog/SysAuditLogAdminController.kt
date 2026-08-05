@@ -54,7 +54,10 @@ class SysAuditLogAdminController {
         val page = auditLogReadOnly.pagingSearch(
             query = request.toQuery(),
             pageNo = request.pageNo ?: 1,
-            pageSize = request.pageSize ?: 10,
+            // The storage layer only clamps the lower bound (coerceAtLeast(1)); cap the upper bound here
+            // so an inflated pageSize cannot dump the whole audit table in one request. 100 matches
+            // ListSearchPayload.getMaxPageSize() used by the other admin list endpoints.
+            pageSize = (request.pageSize ?: 10).coerceAtMost(MAX_PAGE_SIZE),
         )
         // Long → Int narrowing on totalCount: the frontend uses Number anyway. Audit volume past
         // Int.MAX_VALUE in a single tenant is implausible; if it ever happens the count would
@@ -74,5 +77,10 @@ class SysAuditLogAdminController {
             ?: throw ObjectNotFoundException("Audit log not found: $id")
         val detail = auditLogReadOnly.findDetailById(id)
         return AuditLogDetailDto.from(main, detail)
+    }
+
+    companion object {
+        /** Upper bound for [AuditLogPagingRequest.pageSize]; aligned with `ListSearchPayload.getMaxPageSize()`. */
+        private const val MAX_PAGE_SIZE = 100
     }
 }

@@ -38,9 +38,13 @@ import kotlin.test.assertNull
  *  - `findDetailById` reads the **embedded** detail (no separate collection) — null when the
  *    main doc carries no detail, null when the auditId itself doesn't exist.
  *  - `pagingSearch` handles: filter combinations (tenantId / operatorId / time bounds /
- *    descriptionLike / operatorLike), empty filter (all rows), pagination (pageNo+pageSize),
- *    sort (operate_time DESC by default), regex escaping (descriptionLike with `.` doesn't act
- *    as a wildcard), and the empty-result short-circuit (no count → empty page).
+ *    descriptionLike / operatorLike), the remaining exact filters (sourceTenantId / subSysCode /
+ *    moduleCode / operateTypeId / operatorUserType / operateType / entityId), moduleCodeLike
+ *    substring matching, one-sided time bounds (from-only inclusive, to-only exclusive),
+ *    empty-string operateType treated as no filter, empty filter (all rows), pagination
+ *    (pageNo+pageSize), sort (operate_time DESC by default), regex escaping (descriptionLike
+ *    with `.` doesn't act as a wildcard), and the empty-result short-circuit (no count → empty
+ *    page).
  *
  * @author AI: Claude
  * @since 1.0.0
@@ -267,6 +271,115 @@ internal class MongoAuditLogReadOnlyServiceTest {
         assertEquals("match", page.items.single().id)
     }
 
+    @Test
+    fun pagingSearch_remainingExactFilters_andCombined() {
+        // Exercises the exact-match criteria not covered elsewhere, AND-combined in one query:
+        // sourceTenantId / subSysCode / moduleCode / operateTypeId / operatorUserType /
+        // operateType / entityId. One fully matching row plus one near-miss per field.
+        fun fullDoc(id: String) = newDoc(
+            id = id,
+            entityId = "e-1",
+            sourceTenantId = "src-T",
+            subSysCode = "sys-A",
+            moduleCode = "user",
+            operateTypeId = 3,
+            operatorUserType = "sys_user",
+            operateType = "DELETE",
+        )
+        mongoTemplate.save(fullDoc("full-match"))
+        mongoTemplate.save(fullDoc("wrong-source").also { it.sourceTenantId = "src-X" })
+        mongoTemplate.save(fullDoc("wrong-subsys").also { it.subSysCode = "sys-B" })
+        mongoTemplate.save(fullDoc("wrong-module").also { it.moduleCode = "order" })
+        mongoTemplate.save(fullDoc("wrong-type-id").also { it.operateTypeId = 4 })
+        mongoTemplate.save(fullDoc("wrong-user-type").also { it.operatorUserType = "customer" })
+        mongoTemplate.save(fullDoc("wrong-op-type").also { it.operateType = "CREATE" })
+        mongoTemplate.save(fullDoc("wrong-entity").also { it.entityId = "e-2" })
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply {
+                sourceTenantId = "src-T"
+                subSysCode = "sys-A"
+                moduleCode = "user"
+                operateTypeId = 3
+                operatorUserType = "sys_user"
+                operateType = "DELETE"
+                entityId = "e-1"
+            },
+            pageNo = 1, pageSize = 10,
+        )
+
+        assertEquals(1L, page.total)
+        assertEquals("full-match", page.items.single().id)
+    }
+
+    @Test
+    fun pagingSearch_moduleCodeLike_isCaseInsensitiveSubstring() {
+        mongoTemplate.save(newDoc(id = "upper", moduleCode = "USER-Login"))
+        mongoTemplate.save(newDoc(id = "lower", moduleCode = "app-user-admin"))
+        mongoTemplate.save(newDoc(id = "other", moduleCode = "order"))
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { moduleCodeLike = "user" }, pageNo = 1, pageSize = 10
+        )
+
+        assertEquals(2L, page.total)
+        assertEquals(setOf("upper", "lower"), page.items.map { it.id }.toSet())
+    }
+
+    @Test
+    fun pagingSearch_operateTimeFromOnly_lowerBoundInclusive() {
+        val t9 = LocalDateTime.of(2026, 1, 1, 9, 0)
+        val t10 = LocalDateTime.of(2026, 1, 1, 10, 0)
+        mongoTemplate.save(newDoc(id = "before", operateTime = t9.toDate()))
+        mongoTemplate.save(newDoc(id = "at-bound", operateTime = t10.toDate()))
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { operateTimeFrom = t10 }, pageNo = 1, pageSize = 10
+        )
+
+        assertEquals(1L, page.total)
+        assertEquals("at-bound", page.items.single().id, "from-only bound is inclusive (gte)")
+    }
+
+    @Test
+    fun pagingSearch_operateTimeToOnly_upperBoundExclusive() {
+        val t9 = LocalDateTime.of(2026, 1, 1, 9, 0)
+        val t10 = LocalDateTime.of(2026, 1, 1, 10, 0)
+        mongoTemplate.save(newDoc(id = "before", operateTime = t9.toDate()))
+        mongoTemplate.save(newDoc(id = "at-bound", operateTime = t10.toDate()))
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { operateTimeTo = t10 }, pageNo = 1, pageSize = 10
+        )
+
+        assertEquals(1L, page.total)
+        assertEquals("before", page.items.single().id, "to-only bound is exclusive (lt)")
+    }
+
+    @Test
+    fun pagingSearch_operateTypeEmptyString_isTreatedAsNoFilter() {
+        mongoTemplate.save(newDoc(id = "any-1", operateType = "CREATE"))
+        mongoTemplate.save(newDoc(id = "any-2", operateType = "DELETE"))
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { operateType = "" }, pageNo = 1, pageSize = 10
+        )
+
+        assertEquals(2L, page.total, "empty operateType means no filter; all rows must come back")
+    }
+
+    @Test
+    fun pagingSearch_operatorLikeEmptyString_isTreatedAsNoFilter() {
+        mongoTemplate.save(newDoc(id = "any-1", operator = "alice"))
+        mongoTemplate.save(newDoc(id = "any-2", operator = "bob"))
+
+        val page = readOnlyService.pagingSearch(
+            AuditLogQuery().apply { operatorLike = "" }, pageNo = 1, pageSize = 10
+        )
+
+        assertEquals(2L, page.total, "empty operatorLike means no filter; all rows must come back")
+    }
+
     private fun newDoc(
         id: String,
         entityId: String? = null,
@@ -274,6 +387,12 @@ internal class MongoAuditLogReadOnlyServiceTest {
         operator: String? = null,
         operatorId: String? = null,
         tenantId: String? = null,
+        sourceTenantId: String? = null,
+        subSysCode: String? = null,
+        moduleCode: String? = null,
+        operateTypeId: Int? = null,
+        operatorUserType: String? = null,
+        operateType: String? = null,
         operateTime: Date? = Date(),
     ): SysAuditLogDocument = SysAuditLogDocument().also { d ->
         d.id = id
@@ -282,6 +401,12 @@ internal class MongoAuditLogReadOnlyServiceTest {
         d.operator = operator
         d.operatorId = operatorId
         d.tenantId = tenantId
+        d.sourceTenantId = sourceTenantId
+        d.subSysCode = subSysCode
+        d.moduleCode = moduleCode
+        d.operateTypeId = operateTypeId
+        d.operatorUserType = operatorUserType
+        d.operateType = operateType
         d.operateTime = operateTime
     }
 

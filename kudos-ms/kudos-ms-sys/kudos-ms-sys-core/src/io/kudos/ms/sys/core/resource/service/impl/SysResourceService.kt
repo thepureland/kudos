@@ -235,7 +235,7 @@ open class SysResourceService(
     /**
      * Recursively filter child resources.
      */
-    private fun filterChildrenRecursively(
+    internal fun filterChildrenRecursively(
         parentId: String,
         children: MutableList<SysResourceCacheEntry>,
         resources: Collection<SysResourceCacheEntry>
@@ -248,7 +248,7 @@ open class SysResourceService(
     /**
      * Assemble a flat resource list into a tree; returns the list of root nodes (nodes whose parentId is null/blank, or whose parent is not in the list).
      */
-    private fun <T : BaseMenuTreeNode> buildMenuTree(
+    internal fun <T : BaseMenuTreeNode> buildMenuTree(
         resources: List<SysResourceCacheEntry>,
         nodeFactory: (SysResourceCacheEntry) -> T
     ): List<T> {
@@ -359,7 +359,7 @@ open class SysResourceService(
      * @author K
      * @since 1.0.0
      */
-    private fun buildResourceTree(
+    internal fun buildResourceTree(
         records: List<SysResourceRow>,
         parentId: String?,
     ): List<SysResourceTreeRow> {
@@ -381,7 +381,7 @@ open class SysResourceService(
      * @author K
      * @since 1.0.0
      */
-    private fun toTreeRow(record: SysResourceRow): SysResourceTreeRow =
+    internal fun toTreeRow(record: SysResourceRow): SysResourceTreeRow =
         SysResourceTreeRow(
             id = record.id,
             name = record.name,
@@ -404,7 +404,7 @@ open class SysResourceService(
      * @author K
      * @since 1.0.0
      */
-    private fun sortResourceTree(nodes: MutableList<SysResourceTreeRow>) {
+    internal fun sortResourceTree(nodes: MutableList<SysResourceTreeRow>) {
         nodes.sortBy { it.orderNum ?: Int.MAX_VALUE }
         nodes.forEach { node ->
             node.children?.let(::sortResourceTree)

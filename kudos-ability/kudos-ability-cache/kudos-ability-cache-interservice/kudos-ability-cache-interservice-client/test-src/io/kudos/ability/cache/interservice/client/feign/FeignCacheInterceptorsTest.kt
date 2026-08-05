@@ -17,9 +17,9 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 
 /**
  * Protocol-contract unit tests for [FeignCacheRequestInterceptor] / [FeignCacheResponseInterceptor].
@@ -97,6 +97,43 @@ internal class FeignCacheInterceptorsTest {
 
         assertEquals(listOf(cacheKey), template.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.toList())
         assertEquals(listOf("uid-existing"), template.headers()[ClientCacheKey.HEADER_KEY_CACHE_UID]!!.toList())
+    }
+
+    @Test
+    fun request_nullTenantId_stillGeneratesCacheKey_distinctFromTenantKey() {
+        helper.localCacheEnabled = true
+        val interceptor = newRequestInterceptor(appName = "svc-A")
+
+        // Key for tenant-X (set in setup)
+        val tenantTemplate = newRequestTemplate(method = "GET", url = "/users/1")
+        interceptor.apply(tenantTemplate)
+        val tenantKey = tenantTemplate.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.first()
+
+        // Null tenant falls back to "" and must still produce a key — but a different one (tenant isolation)
+        KudosContextHolder.get().tenantId = null
+        val template = newRequestTemplate(method = "GET", url = "/users/1")
+        interceptor.apply(template)
+        val nullTenantKey = template.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]?.firstOrNull()
+
+        assertNotNull(nullTenantKey, "A cache key must still be generated when the tenant id is null")
+        assertNotEquals(tenantKey, nullTenantKey, "Different tenants must not share cache keys")
+    }
+
+    @Test
+    fun request_sameRequest_generatesStableKey() {
+        helper.localCacheEnabled = true
+        val interceptor = newRequestInterceptor(appName = "svc-A")
+
+        val t1 = newRequestTemplate(method = "POST", url = "/orders", body = "{\"id\":1}".toByteArray())
+        val t2 = newRequestTemplate(method = "POST", url = "/orders", body = "{\"id\":1}".toByteArray())
+        interceptor.apply(t1)
+        interceptor.apply(t2)
+
+        assertEquals(
+            t1.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.first(),
+            t2.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.first(),
+            "The same request must always map to the same cache key"
+        )
     }
 
     // endregion
@@ -197,6 +234,162 @@ internal class FeignCacheInterceptorsTest {
 
         assertEquals("decoded", result, "decoding still works when cache-key is missing")
         assertEquals(1, delegate.callCount)
+    }
+
+    @Test
+    fun response_missingStatusHeader_fallsThroughToDelegate() {
+        helper.localCacheEnabled = true
+        val delegate = RecordingDecoder("decoded")
+        val interceptor = FeignCacheResponseInterceptor(delegate, helper)
+
+        // cache-uid present but cache-status missing -> do not enter the cache path
+        val response = newResponse(
+            200,
+            headers = mapOf(ClientCacheKey.HEADER_KEY_CACHE_UID to listOf("uid-X")),
+            body = "body",
+            requestHeaders = mapOf(ClientCacheKey.HEADER_KEY_CACHE_KEY to listOf("cache-1")),
+        )
+        val result = interceptor.decode(response, String::class.java)
+
+        assertEquals("decoded", result)
+        assertEquals(1, delegate.callCount)
+        assertNull(helper.loadFromLocalCache("cache-1"), "nothing must be cached outside the cache path")
+    }
+
+    @Test
+    fun response_emptyCacheKeyHeaderValue_fallsThroughToDelegate() {
+        helper.localCacheEnabled = true
+        val delegate = RecordingDecoder("decoded")
+        val interceptor = FeignCacheResponseInterceptor(delegate, helper)
+
+        // The request carries a cache-key header whose value is an empty string (defensive branch)
+        val response = newResponse(
+            200,
+            headers = mapOf(
+                ClientCacheKey.HEADER_KEY_CACHE_UID to listOf("uid-X"),
+                ClientCacheKey.HEADER_KEY_CACHE_STATUS to listOf(ClientCacheKey.STATUS_DO_CACHE),
+            ),
+            body = "body",
+            requestHeaders = mapOf(ClientCacheKey.HEADER_KEY_CACHE_KEY to listOf("")),
+        )
+        val result = interceptor.decode(response, String::class.java)
+
+        assertEquals("decoded", result)
+        assertEquals(1, delegate.callCount)
+    }
+
+    @Test
+    fun response_emptyCacheKeyHeaderValueList_fallsThroughToDelegate() {
+        helper.localCacheEnabled = true
+        val delegate = RecordingDecoder("decoded")
+        val interceptor = FeignCacheResponseInterceptor(delegate, helper)
+
+        // The request header map contains the cache-key entry but with an EMPTY value list
+        // (distinct from the empty-string case): firstOrNull() yields null -> delegate path.
+        val response = newResponse(
+            200,
+            headers = mapOf(
+                ClientCacheKey.HEADER_KEY_CACHE_UID to listOf("uid-X"),
+                ClientCacheKey.HEADER_KEY_CACHE_STATUS to listOf(ClientCacheKey.STATUS_DO_CACHE),
+            ),
+            body = "body",
+            requestHeaders = mapOf(ClientCacheKey.HEADER_KEY_CACHE_KEY to emptyList()),
+        )
+        val result = interceptor.decode(response, String::class.java)
+
+        assertEquals("decoded", result)
+        assertEquals(1, delegate.callCount)
+    }
+
+    @Test
+    fun response_emptyUidHeaderValueList_decodesButSkipsCacheWrite() {
+        helper.localCacheEnabled = true
+        val delegate = RecordingDecoder("freshly-decoded")
+        val interceptor = FeignCacheResponseInterceptor(delegate, helper)
+
+        // cache-uid header key exists but with an EMPTY value list -> cacheUid is null
+        // (the null side of isNullOrEmpty, distinct from the blank-string case): decode, never cache.
+        val response = newResponse(
+            200,
+            headers = mapOf(
+                ClientCacheKey.HEADER_KEY_CACHE_UID to emptyList(),
+                ClientCacheKey.HEADER_KEY_CACHE_STATUS to listOf(ClientCacheKey.STATUS_DO_CACHE),
+            ),
+            body = "body",
+            requestHeaders = mapOf(ClientCacheKey.HEADER_KEY_CACHE_KEY to listOf("cache-1")),
+        )
+        val result = interceptor.decode(response, String::class.java)
+
+        assertEquals("freshly-decoded", result)
+        assertEquals(1, delegate.callCount)
+        assertNull(helper.loadFromLocalCache("cache-1"), "null uid must not be written into the local cache")
+    }
+
+    @Test
+    fun response_status304_localCacheMiss_returnsNullWithoutCallingDelegate() {
+        helper.localCacheEnabled = true // nothing written for "cache-miss"
+        val delegate = RecordingDecoder("should-not-be-called")
+        val interceptor = FeignCacheResponseInterceptor(delegate, helper)
+
+        val response = newResponse(
+            200,
+            headers = mapOf(
+                ClientCacheKey.HEADER_KEY_CACHE_UID to listOf("uid-A"),
+                ClientCacheKey.HEADER_KEY_CACHE_STATUS to listOf(ClientCacheKey.STATUS_USE_CACHE),
+            ),
+            body = "ignored",
+            requestHeaders = mapOf(ClientCacheKey.HEADER_KEY_CACHE_KEY to listOf("cache-miss")),
+        )
+        val result = interceptor.decode(response, String::class.java)
+
+        assertNull(result, "304 with an evicted/missing local entry yields null instead of decoding the body")
+        assertEquals(0, delegate.callCount)
+    }
+
+    @Test
+    fun response_status200_blankUid_decodesButSkipsCacheWrite() {
+        helper.localCacheEnabled = true
+        val delegate = RecordingDecoder("freshly-decoded")
+        val interceptor = FeignCacheResponseInterceptor(delegate, helper)
+
+        // cache-uid header exists but its value is blank -> decode normally, never cache
+        val response = newResponse(
+            200,
+            headers = mapOf(
+                ClientCacheKey.HEADER_KEY_CACHE_UID to listOf(""),
+                ClientCacheKey.HEADER_KEY_CACHE_STATUS to listOf(ClientCacheKey.STATUS_DO_CACHE),
+            ),
+            body = "body",
+            requestHeaders = mapOf(ClientCacheKey.HEADER_KEY_CACHE_KEY to listOf("cache-1")),
+        )
+        val result = interceptor.decode(response, String::class.java)
+
+        assertEquals("freshly-decoded", result)
+        assertEquals(1, delegate.callCount)
+        assertNull(helper.loadFromLocalCache("cache-1"), "blank uid must not be written into the local cache")
+    }
+
+    @Test
+    fun response_emptyStatusHeaderValues_treatedAsFreshData() {
+        helper.localCacheEnabled = true
+        val delegate = RecordingDecoder("freshly-decoded")
+        val interceptor = FeignCacheResponseInterceptor(delegate, helper)
+
+        // cache-status header key exists with an empty value list -> cacheStatus is null -> fresh-data path
+        val response = newResponse(
+            200,
+            headers = mapOf(
+                ClientCacheKey.HEADER_KEY_CACHE_UID to listOf("uid-Z"),
+                ClientCacheKey.HEADER_KEY_CACHE_STATUS to emptyList(),
+            ),
+            body = "body",
+            requestHeaders = mapOf(ClientCacheKey.HEADER_KEY_CACHE_KEY to listOf("cache-1")),
+        )
+        val result = interceptor.decode(response, String::class.java)
+
+        assertEquals("freshly-decoded", result)
+        assertEquals(1, delegate.callCount)
+        assertEquals("uid-Z", helper.loadFromLocalCache("cache-1")?.uuid)
     }
 
     // endregion

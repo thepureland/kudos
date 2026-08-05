@@ -55,13 +55,16 @@ open class MsgEmailDispatchListener(
         onComplete: (successUserIds: Collection<String>, failUserIds: Collection<String>) -> Unit,
     ) {
         val req = buildRequest(contactByUserId.values.toSet(), event)
-        val emailToUserId = contactByUserId.entries.associate { (uid, email) -> email to uid }
+        // One email address may be shared by several userIds (e.g. a team mailbox). groupBy (not
+        // associate) keeps every userId; associate would silently drop all but the last user per
+        // address, so those users would never be counted as success nor failure.
+        val userIdsByEmail = contactByUserId.entries.groupBy({ it.value }, { it.key })
 
         // EmailHandler.send is asynchronous + callback-driven; map SMTP-level success/fail email lists
         // back to userIds and hand them to the base for persistence + status aggregation.
         emailHandler.send(req) { cb ->
-            val successUserIds = cb.successEmails.orEmpty().mapNotNull { emailToUserId[it] }
-            val failUserIds = cb.failEmails.orEmpty().mapNotNull { emailToUserId[it] }
+            val successUserIds = cb.successEmails.orEmpty().flatMap { userIdsByEmail[it].orEmpty() }
+            val failUserIds = cb.failEmails.orEmpty().flatMap { userIdsByEmail[it].orEmpty() }
             onComplete(successUserIds, failUserIds)
         }
     }

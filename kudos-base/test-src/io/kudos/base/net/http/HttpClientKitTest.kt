@@ -278,6 +278,60 @@ class HttpClientKitTest {
     }
 
     @Test
+    fun async_put_method_works() {
+        val resp = HttpClientKit.asyncPut<String>(url("/method-echo")) {
+            method("PUT", java.net.http.HttpRequest.BodyPublishers.noBody())
+        }
+        assertEquals(200, resp.statusCode())
+        assertEquals("PUT", resp.body())
+    }
+
+    @Test
+    fun async_delete_method_works() {
+        val resp = HttpClientKit.asyncDelete<String>(url("/method-echo")) {
+            method("DELETE", java.net.http.HttpRequest.BodyPublishers.noBody())
+        }
+        assertEquals(200, resp.statusCode())
+        assertEquals("DELETE", resp.body())
+    }
+
+    @Test
+    fun async_options_method_works() {
+        val resp = HttpClientKit.asyncOptions<String>(url("/method-echo")) {
+            method("OPTIONS", java.net.http.HttpRequest.BodyPublishers.noBody())
+        }
+        assertEquals(200, resp.statusCode())
+        assertEquals("OPTIONS", resp.body())
+    }
+
+    @Test
+    fun async_trace_method_works() {
+        val resp = HttpClientKit.asyncTrace<String>(url("/method-echo")) {
+            method("TRACE", java.net.http.HttpRequest.BodyPublishers.noBody())
+        }
+        assertEquals(200, resp.statusCode())
+        assertEquals("TRACE", resp.body())
+    }
+
+    @Test
+    fun async_patch_method_works() {
+        val resp = HttpClientKit.asyncPatch<String>(url("/method-echo")) {
+            method("PATCH", java.net.http.HttpRequest.BodyPublishers.ofString("p"))
+        }
+        assertEquals(200, resp.statusCode())
+        assertEquals("PATCH", resp.body())
+    }
+
+    @Test
+    fun post_method_works() {
+        val resp = HttpClientKit.post<String>(url("/method-echo")) {
+            method("POST", java.net.http.HttpRequest.BodyPublishers.ofString("p"))
+        }
+        assertEquals(200, resp.statusCode())
+        assertEquals("POST", resp.body())
+    }
+
+    @Test
     fun download_full_file_to_target() {
         val target = tmpDir.resolve("kudos_full.png")
         val resp = HttpClientKit.download(

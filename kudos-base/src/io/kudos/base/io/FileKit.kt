@@ -1,6 +1,5 @@
 package io.kudos.base.io
 
-import io.kudos.base.io.FileKit.checksum
 import io.kudos.base.logger.LogFactory
 import net.lingala.zip4j.ZipFile
 import net.lingala.zip4j.model.ZipParameters

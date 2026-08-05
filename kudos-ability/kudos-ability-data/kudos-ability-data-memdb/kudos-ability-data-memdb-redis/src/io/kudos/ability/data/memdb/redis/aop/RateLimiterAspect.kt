@@ -127,7 +127,7 @@ class RateLimiterAspect {
          * Note: [org.springframework.data.redis.serializer.GenericToStringSerializer] cannot be used,
          * because the result type of RedisScript is controlled independently by this serializer and must be decoded precisely as Long.
          */
-        private fun resultSerializer(): RedisSerializer<Long> {
+        internal fun resultSerializer(): RedisSerializer<Long> {
             return object : RedisSerializer<Long> {
                 override fun serialize(aLong: Long?): ByteArray {
                     return aLong.toString().toByteArray()

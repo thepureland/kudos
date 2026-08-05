@@ -25,7 +25,11 @@ import kotlin.test.assertSame
  *    are registered. (The `@ConditionalOnProperty` covers the class itself.)
  *  - `@ConditionalOnMissingBean` allows a user-defined [OpenAPI] to take precedence; the
  *    module-provided default does not overwrite it.
+ *  - [IComponentInitializer.getComponentName] returns the module's canonical component name.
+ *  - `url` / `group-name` / `contact.contact-url` bind into [SwaggerProperties] (url and groupName
+ *    are metadata-only fields — they must bind but not affect the [Info] block).
  *
+ * @author K
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -106,6 +110,33 @@ internal class SwaggerAutoConfigurationTest {
                 val props = ctx.getBean(SwaggerProperties::class.java)
                 assertEquals(true, props.production)
                 assertNotNull(ctx.getBean(OpenAPI::class.java), "production=true must not suppress the OpenAPI bean")
+            }
+    }
+
+    @Test
+    fun componentName_isModuleArtifactId() {
+        runner.run { ctx ->
+            val config = ctx.getBean(SwaggerAutoConfiguration::class.java)
+            assertEquals("kudos-ability-web-swagger", config.getComponentName())
+        }
+    }
+
+    @Test
+    fun metadataOnlyProperties_bindButDoNotTouchInfoBlock() {
+        runner
+            .withPropertyValues(
+                "kudos.ability.web.swagger.url=https://example.com/tos",
+                "kudos.ability.web.swagger.group-name=core-api",
+                "kudos.ability.web.swagger.contact.contact-url=https://example.com/team",
+            )
+            .run { ctx ->
+                val props = ctx.getBean(SwaggerProperties::class.java)
+                assertEquals("https://example.com/tos", props.url)
+                assertEquals("core-api", props.groupName)
+                assertEquals("https://example.com/team", props.contact.contactUrl)
+                val info = ctx.getBean(OpenAPI::class.java).info
+                assertEquals("https://example.com/team", info.contact.url, "contactUrl must propagate into Info.contact")
+                assertEquals("kudos", info.title, "url/groupName are metadata-only and must not disturb yml defaults")
             }
     }
 

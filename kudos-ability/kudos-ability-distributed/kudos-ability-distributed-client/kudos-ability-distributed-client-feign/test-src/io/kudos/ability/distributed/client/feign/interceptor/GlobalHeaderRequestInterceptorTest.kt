@@ -38,6 +38,9 @@ import kotlin.test.assertTrue
  *  - **When locale is missing**, falls back to `zh_CN`.
  *  - **FEIGN_REQUEST marker** is always written.
  *  - **`IFeignRequestContextProcess` SPI is invoked** — verifies the bean-cache path works.
+ *  - **Context-signature headers**: null / blank secret disables signing; a configured secret
+ *    produces deterministic HMAC-SHA256 headers (pinned value plus an independently recomputed
+ *    value when optional payload headers are absent).
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -162,6 +165,61 @@ internal class GlobalHeaderRequestInterceptorTest {
         assertNull(template.headers()[FeignContextSignature.TIMESTAMP_HEADER])
         assertNull(template.headers()[FeignContextSignature.NONCE_HEADER])
         assertNull(template.headers()[FeignContextSignature.SIGNATURE_HEADER])
+    }
+
+    @Test
+    fun contextSignatureSecretWhitespaceOnly_doesNotWriteSignatureHeaders() {
+        // takeIf { it.isNotBlank() } must treat a whitespace-only secret as "signing disabled",
+        // same as null / empty — otherwise a misconfigured blank secret would sign with spaces.
+        val properties = OpenFeignProperties().apply { contextSignatureSecret = "   " }
+        val template = newTemplate("GET", "/x")
+
+        GlobalHeaderRequestInterceptor(properties).apply(template)
+
+        assertNull(template.headers()[FeignContextSignature.TIMESTAMP_HEADER])
+        assertNull(template.headers()[FeignContextSignature.NONCE_HEADER])
+        assertNull(template.headers()[FeignContextSignature.SIGNATURE_HEADER])
+    }
+
+    @Test
+    fun contextSignatureSecretPresent_missingOptionalHeaders_useEmptyStringInPayload() {
+        // No dataSourceId in context -> DATASOURCE_ID header absent -> firstHeader(...).orEmpty()
+        // must contribute an empty string to the payload instead of throwing or writing "null".
+        KudosContextHolder.get().apply {
+            tenantId = "tenant-X"
+            subSystemCode = "sys-A"
+            traceKey = "trace-existing"
+            dataSourceId = null
+        }
+        val properties = OpenFeignProperties().apply { contextSignatureSecret = "secret" }
+        val signedInterceptor = GlobalHeaderRequestInterceptor(
+            properties = properties,
+            clock = Clock.fixed(Instant.ofEpochMilli(123456789L), ZoneOffset.UTC),
+            nonceSupplier = { "nonce-1" }
+        )
+        val template = newTemplate("POST", "/users")
+
+        signedInterceptor.apply(template)
+
+        assertNull(template.headers()[Consts.RequestHeader.DATASOURCE_ID])
+        assertEquals(listOf("123456789"), template.headers()[FeignContextSignature.TIMESTAMP_HEADER]?.toList())
+        assertEquals(listOf("nonce-1"), template.headers()[FeignContextSignature.NONCE_HEADER]?.toList())
+
+        // Independently recompute the expected HMAC over the documented payload layout
+        // (method\nurl\ntenant\nsubSys\ntrace\ndataSource\nlocale\ntimestamp\nnonce) with the
+        // missing DATASOURCE_ID contributing "" — pins both the layout and the orEmpty() behaviour.
+        // Note: RequestTemplate.url() resolves against the target, so it is the absolute URL.
+        val payload = listOf(
+            "POST", "http://localhost/users", "tenant-X", "sys-A", "trace-existing", "", "zh_CN",
+            "123456789", "nonce-1"
+        ).joinToString("\n")
+        val mac = javax.crypto.Mac.getInstance("HmacSHA256")
+        mac.init(javax.crypto.spec.SecretKeySpec("secret".toByteArray(Charsets.UTF_8), "HmacSHA256"))
+        val expected = java.util.Base64.getEncoder().encodeToString(mac.doFinal(payload.toByteArray(Charsets.UTF_8)))
+        assertEquals(
+            listOf(expected),
+            template.headers()[FeignContextSignature.SIGNATURE_HEADER]?.toList()
+        )
     }
 
     @Test

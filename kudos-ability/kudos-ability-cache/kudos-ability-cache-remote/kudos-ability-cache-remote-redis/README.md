@@ -166,3 +166,13 @@ testImplementation(project(":kudos-ability:kudos-ability-cache:kudos-ability-cac
 
 `cache-local-caffeine` 仅 testImplementation——本模块自身不依赖本地缓存，但
 LOCAL_REMOTE 测试需要本地实现配合验证"远端写 → 本地清"链路。
+
+## 改进建议（自动分析 2026-06-11）
+
+- **`RedisTemplate.keys` 阻塞风险**：`ScanClearRedisCache.clear` 与
+  `RedisKeyValueCacheManager.evictByPattern` 都用 `keys(pattern) + delete`（KDoc 已标注"量大改 SCAN"）。
+  建议直接改为 `SCAN` 游标迭代删除，消除对"key 数量很小"前提的依赖。
+- **`findRedisTemplate` 的不确定选择**：`ScanClearRedisCache.kt` 顶部的 `findRedisTemplate()` 在没有
+  `stringRedisTemplate` 时取 `values.firstOrNull()` 并 unchecked cast——容器里有多个 `RedisTemplate`
+  时选中哪个取决于 bean 注册顺序。建议改为显式注入 / 按 `remoteStore` 解析。
+- **TTL 无抖动**：`RedisKeyValueCacheManager.createCache` 固定 `entryTtl`，见组级 README 雪崩防护条目。

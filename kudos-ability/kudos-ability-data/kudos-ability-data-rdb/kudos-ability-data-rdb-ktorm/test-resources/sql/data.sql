@@ -24,3 +24,7 @@ INSERT INTO "test_scoped_order" ("id", "title", "org_id", "region_code", "create
 ('so-3', 'org-b emea, by bob',    'org-b', 'emea', 'bob'),
 ('so-4', 'org-c emea, by alice',  'org-c', 'emea', 'alice'),
 ('so-5', 'no org, by alice',      NULL,    'emea', 'alice');
+-- update_time / update_user_id deliberately NULL so that the audit auto-fill tests can verify they get populated
+INSERT INTO "test_managed_ktorm" ("id", "name", "create_time", "active", "built_in") VALUES
+('m-1', 'managed_row_1', '2026-01-01 00:00:00', 't', 'f');
+

@@ -1,10 +1,15 @@
 package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.NotNullOn
+import io.kudos.base.bean.validation.constraint.validator.NotNullOnValidator
 import io.kudos.base.bean.validation.kit.ValidationKit
 import io.kudos.base.bean.validation.support.Depends
+import jakarta.validation.ConstraintValidatorContext
 import org.hibernate.validator.constraints.Length
+import java.lang.reflect.Proxy
 import kotlin.test.Test
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * Test cases for NotNullOn.
@@ -41,6 +46,25 @@ internal class NotNullOnTest {
         assert(ValidationKit.validateBean(bean6).isEmpty())
     }
 
+
+    /**
+     * Without a bean in the ValidationContext (e.g. a mock context), the validator
+     * degrades to a plain not-null check.
+     */
+    @Test
+    fun isValidWithoutBeanInContext() {
+        val validator = NotNullOnValidator()
+        validator.initialize(
+            NotNullOn(Depends(properties = arrayOf("validate"), values = arrayOf("true")))
+        )
+        val context = Proxy.newProxyInstance(
+            ConstraintValidatorContext::class.java.classLoader,
+            arrayOf(ConstraintValidatorContext::class.java)
+        ) { _, _, _ -> null } as ConstraintValidatorContext
+
+        assertTrue(validator.isValid("x", context))
+        assertFalse(validator.isValid(null, context))
+    }
 
     internal data class TestNotNullOnBean(
 

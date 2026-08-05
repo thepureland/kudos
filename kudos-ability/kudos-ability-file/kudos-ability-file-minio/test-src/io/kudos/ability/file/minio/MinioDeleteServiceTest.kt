@@ -24,7 +24,9 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import java.io.ByteArrayInputStream
 import java.io.File
+import io.kudos.ability.file.common.code.FileErrorCode
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -122,6 +124,84 @@ internal class MinioDeleteServiceTest {
         model.bucketName = "no_exist"
         model.filePath = "_"
         assertFailsWith<ServiceException> { deleteService.delete(model) }
+    }
+
+    /**
+     * Scenario 2b: bucket with a *valid name* that does not exist -> FILE_NO_EXISTS.
+     *
+     * Note: scenario 2 above uses "no_exist", which contains an underscore — an *illegal*
+     * S3 bucket name that the MinIO SDK rejects client-side (IllegalArgumentException),
+     * landing in the generic catch (FILE_DELETE_FAIL) instead of the ErrorResponseException
+     * branch. This test uses a legal-but-absent bucket so the server actually answers
+     * NoSuchBucket and the FILE_NO_EXISTS mapping is exercised.
+     */
+    @Test
+    fun delete_no_such_bucket_with_legal_name() {
+        val model = DeleteFileModel()
+        model.bucketName = "kudos-no-such-bucket"
+        model.filePath = "whatever.txt"
+        // Use the root account: a restricted user would get AccessDenied (policy is
+        // evaluated first), masking the NoSuchBucket answer this test is about.
+        model.authServerParam = AccessKeyServerParam(ROOT_USER, ROOT_USER_SECRET)
+
+        val e = assertFailsWith<ServiceException> { deleteService.delete(model) }
+        assertEquals(FileErrorCode.FILE_NO_EXISTS, e.errorCode)
+    }
+
+    /**
+     * Scenario 2c: bucket exists but the object key does not -> NoSuchKey -> FILE_NO_EXISTS.
+     */
+    @Test
+    fun delete_no_such_key_in_existing_bucket() {
+        val model = DeleteFileModel()
+        model.bucketName = "docs"
+        model.filePath = "never/exists/__nope__.txt"
+
+        val e = assertFailsWith<ServiceException> { deleteService.delete(model) }
+        assertEquals(FileErrorCode.FILE_NO_EXISTS, e.errorCode)
+    }
+
+    /**
+     * Scenario 2d: unknown access key -> server answers InvalidAccessKeyId -> FILE_INVALID_ACCESS_KEY.
+     */
+    @Test
+    fun delete_with_unknown_access_key() {
+        val model = DeleteFileModel()
+        model.bucketName = "docs"
+        model.filePath = "whatever.txt"
+        model.authServerParam = AccessKeyServerParam("kudos_no_such_user", "whatever12345")
+
+        val e = assertFailsWith<ServiceException> { deleteService.delete(model) }
+        assertEquals(FileErrorCode.FILE_INVALID_ACCESS_KEY, e.errorCode)
+    }
+
+    /**
+     * Scenario 2e: a real user with NO policy bound -> server answers AccessDenied -> FILE_ACCESS_DENY.
+     */
+    @Test
+    fun delete_with_user_without_permission() {
+        val model = DeleteFileModel()
+        model.bucketName = "docs"
+        model.filePath = "whatever.txt"
+        model.authServerParam = AccessKeyServerParam(NO_PERM_USER, NO_PERM_USER_SECRET)
+
+        val e = assertFailsWith<ServiceException> { deleteService.delete(model) }
+        assertEquals(FileErrorCode.FILE_ACCESS_DENY, e.errorCode)
+    }
+
+    /**
+     * Scenario 2f: existing user but wrong secret -> SignatureDoesNotMatch (neither NoSuchKey /
+     * InvalidAccessKeyId / AccessDenied) -> the `else` branch -> FILE_DELETE_FAIL.
+     */
+    @Test
+    fun delete_with_wrong_secret_falls_into_generic_delete_fail() {
+        val model = DeleteFileModel()
+        model.bucketName = "docs"
+        model.filePath = "whatever.txt"
+        model.authServerParam = AccessKeyServerParam(DELETE_ONLY_USER, "definitely_wrong_secret")
+
+        val e = assertFailsWith<ServiceException> { deleteService.delete(model) }
+        assertEquals(FileErrorCode.FILE_DELETE_FAIL, e.errorCode)
     }
 
     /**
@@ -226,6 +306,10 @@ internal class MinioDeleteServiceTest {
         private const val DELETE_ONLY_USER = "delete_only_user"
         private const val DELETE_ONLY_USER_SECRET = "delete_only_user_secret"
 
+        // ---- User without any policy bound (used for the AccessDenied branch) ----
+        private const val NO_PERM_USER = "no_perm_user"
+        private const val NO_PERM_USER_SECRET = "no_perm_user_secret"
+
         @JvmStatic
         @DynamicPropertySource
         fun property(registry: DynamicPropertyRegistry) {
@@ -306,6 +390,17 @@ internal class MinioDeleteServiceTest {
 
             // Bind the policy to the user.
             admin.setPolicy(DELETE_ONLY_USER, false, "delete-policy")
+
+            // Create a user WITHOUT binding any policy (covers the AccessDenied branch).
+            runCatching {
+                admin.addUser(
+                    NO_PERM_USER,
+                    Status.ENABLED,
+                    NO_PERM_USER_SECRET,
+                    null,
+                    null
+                )
+            }
         }
     }
 }

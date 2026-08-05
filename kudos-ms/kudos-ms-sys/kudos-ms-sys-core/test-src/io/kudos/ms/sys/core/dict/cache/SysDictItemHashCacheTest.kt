@@ -3,6 +3,10 @@ package io.kudos.ms.sys.core.dict.cache
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ms.sys.core.dict.dao.SysDictItemDao
 import io.kudos.ms.sys.core.dict.dao.VSysDictItemDao
+import io.kudos.ms.sys.core.dict.event.SysDictItemBatchDeleted
+import io.kudos.ms.sys.core.dict.event.SysDictItemDeleted
+import io.kudos.ms.sys.core.dict.event.SysDictItemInserted
+import io.kudos.ms.sys.core.dict.event.SysDictItemUpdated
 import io.kudos.ms.sys.core.dict.model.po.SysDictItem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -99,6 +103,26 @@ class SysDictItemHashCacheTest : RdbAndRedisCacheTestBase() {
         val listAgain = cache.getDictItems(atomicServiceCode, dictType)
         if (isLocalCacheEnabled()) assertSame(list.first(), listAgain.first(), "When local cache is enabled, fetching the same dimension again should return the same object reference")
         assertTrue(cache.getDictItems("sdih-ms-nonexistent", "sdih-type-x").isEmpty())
+    }
+
+    // ---------- By parentId ----------
+
+    @Test
+    fun getDictItems_byParentId_emptyWhenNoChildren() {
+        cache.reloadAll(true)
+        // seeded items have no parentId, so querying any id as parent yields an empty child list
+        val children = cache.getDictItems("sdih-i001-1a2b-4c5d-8e9f-000001")
+        assertTrue(children.isEmpty())
+    }
+
+    @Test
+    fun getDictItems_byParentId_blankRejected() {
+        assertFailsWith<IllegalArgumentException> { cache.getDictItems("   ") }
+    }
+
+    @Test
+    fun getDictItemById_blankRejected() {
+        assertFailsWith<IllegalArgumentException> { cache.getDictItemById("") }
     }
 
     // ---------- Full reload ----------
@@ -211,6 +235,41 @@ class SysDictItemHashCacheTest : RdbAndRedisCacheTestBase() {
         val key = cache.getKeyAtomicServiceCodeAndDictType("sdih-ms-a", "type-1")
         assertTrue(key.contains("sdih-ms-a"))
         assertTrue(key.contains("type-1"))
+    }
+
+    // ---------- transactional event listeners (delegate to syncOn*) ----------
+
+    @Test
+    fun onEvents_delegateToSync() {
+        cache.reloadAll(true)
+        val newItem = insertNewDictItem()
+        // inserted -> syncOnInsert
+        cache.on(SysDictItemInserted(id = newItem.id.trim()))
+        assertNotNull(cache.getDictItemById(newItem.id.trim()))
+
+        // updated -> syncOnUpdate
+        sysDictItemDao.updateProperties(newItem.id.trim(), mapOf(SysDictItem::itemName.name to "sdih-on-updated"))
+        cache.on(SysDictItemUpdated(id = newItem.id.trim()))
+        assertEquals("sdih-on-updated", cache.getDictItemById(newItem.id.trim())?.itemName?.trim())
+
+        // deleted -> syncOnDelete (carries dimensions)
+        val entry = assertNotNull(cache.getDictItemById(newItem.id.trim()))
+        sysDictItemDao.deleteById(newItem.id.trim())
+        cache.on(
+            SysDictItemDeleted(
+                id = newItem.id.trim(),
+                atomicServiceCode = entry.atomicServiceCode.trim(),
+                dictType = entry.dictType.trim(),
+                itemCode = entry.itemCode.trim(),
+            )
+        )
+        assertNull(vSysDictItemDao.get(newItem.id.trim()))
+
+        // batch deleted -> syncOnBatchDelete
+        val item2 = insertNewDictItem()
+        sysDictItemDao.deleteById(item2.id.trim())
+        cache.on(SysDictItemBatchDeleted(ids = listOf(item2.id.trim())))
+        assertNull(vSysDictItemDao.get(item2.id.trim()))
     }
 
     private fun insertNewDictItem(): SysDictItem {

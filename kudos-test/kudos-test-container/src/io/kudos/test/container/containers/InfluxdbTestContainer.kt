@@ -71,7 +71,7 @@ object InfluxdbTestContainer {
         }
     }
 
-    private fun registerProperties(registry: DynamicPropertyRegistry, runningContainer: Container) {
+    internal fun registerProperties(registry: DynamicPropertyRegistry, runningContainer: Container) {
         val port = runningContainer.ports.firstOrNull { it.privatePort == 8086 }
             ?: error("InfluxDB container exposes no 8086 mapping")
         val host = requireNotNull(port.ip) { "container port ip is null" }

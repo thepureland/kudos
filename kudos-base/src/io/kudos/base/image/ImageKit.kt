@@ -6,6 +6,7 @@ import org.apache.batik.bridge.BridgeContext
 import org.apache.batik.bridge.GVTBuilder
 import org.apache.batik.bridge.UserAgentAdapter
 import org.apache.batik.gvt.renderer.ConcreteImageRendererFactory
+import org.apache.batik.util.XMLResourceDescriptor
 import org.w3c.dom.svg.SVGDocument
 import org.w3c.dom.svg.SVGElement
 import java.awt.Color
@@ -312,7 +313,12 @@ object ImageKit {
         // the following is necessary so that batik knows how to resolve URI fragments
         // (#myLinearGradient). Otherwise the resolution fails and you cannot render.
         val uri = "${PathKit.getTempDirectoryPath()}/temp.svg"
-        val df = SAXSVGDocumentFactory("org.apache.xerces.parsers.SAXParser")
+        // Let Batik auto-detect the SAX parser via JAXP instead of hard-coding the xerces class.
+        // In Batik 1.14+ the xerces dependency was dropped; XMLResourceDescriptor.getXMLParserClassName()
+        // returns the configured parser class (null by default), and SAXSVGDocumentFactory falls back to the
+        // JDK's built-in JAXP parser when it is null. Hard-coding "org.apache.xerces.parsers.SAXParser" would
+        // throw ClassNotFoundException because xerces is not on the classpath.
+        val df = SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName())
         val document = df.createSVGDocument(uri, StringReader(xmlContent))
         if (idRegex != null && replacementColor != null) {
             replaceFill(document, idRegex, replacementColor)

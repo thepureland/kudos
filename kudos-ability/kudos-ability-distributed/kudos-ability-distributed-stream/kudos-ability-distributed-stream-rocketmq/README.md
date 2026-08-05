@@ -113,3 +113,22 @@ api(libs.spring.cloud.starter.stream.rocketmq)
 
 testImplementation(project(":kudos-test:kudos-test-container"))
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+- 【功能缺陷】`support/RocketMqBatchConsumer.kt`：init 块中 `consumer.subscribe` / `consumer.start`
+  失败仅 `log.error`，对象仍构造成功，之后 `start()` 的 poll 循环会持续抛异常或空转，业务侧无感知。
+  建议改为 fail-fast（向上抛出）或暴露 `isHealthy` 状态供健康检查。
+- 【可扩展性】`support/RocketMqBatchConsumer.kt`：`pullBatchSize = 32`、
+  `consumerPullTimeoutMillis = 5000` 为硬编码魔法值，吞吐调优需要改代码；建议提为构造参数或配置项。
+- 【可维护性】`support/RocketMqBatchConsumer.kt`：`saveErrorData` 把整个 `MessageExt` 列表用
+  `JSONObject.toJSONString` 序列化后整体入一行 `sys_mq_fail_msg`，与 producer 侧按
+  `msgBodyClassName` 可恢复的格式不一致，事后人工恢复困难；建议逐条入库并记录原始 body 的
+  base64 + 类型信息。
+- 【可扩展性/测试】`init/properties/RocketMqProperties.kt`：用 `@Component` + `@Value` 而非
+  `@ConfigurationProperties`，且 `RocketMqProperties.instance` 走 `SpringKit.getBean` service
+  locator；建议迁移到 `@ConfigurationProperties` 并通过构造注入消除静态查找（注意保持二进制兼容）。
+- 【安全性】配置示例未覆盖 RocketMQ ACL（`access-key` / `secret-key`）；启用 ACL 的生产环境
+  需通过 `spring.cloud.stream.rocketmq.binder.*` 外部化注入凭证，建议在 README 补充示例。
+- 【可观测性】`RocketMqBatchConsumer` 仅有日志，没有批次大小 / 处理耗时 / 失败批次的指标；
+  消费位点 lag 需依赖 RocketMQ 控制台，建议补充 Micrometer 指标。

@@ -127,7 +127,7 @@ class StreamProducerExceptionHandler : AbstractFailedDataHandler<StreamProducerM
         return streamProducerHelper.doRealSend(bindName, message, true)
     }
 
-    private fun readMessageBody(msgBodyJson: String, className: String?): Any? {
+    internal fun readMessageBody(msgBodyJson: String, className: String?): Any? {
         if (!className.isNullOrBlank()) {
             runCatching {
                 @Suppress("UNCHECKED_CAST")

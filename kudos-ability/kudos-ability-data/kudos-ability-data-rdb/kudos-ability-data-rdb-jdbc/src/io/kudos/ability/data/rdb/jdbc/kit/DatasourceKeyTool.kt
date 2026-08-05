@@ -47,8 +47,7 @@ object DatasourceKeyTool {
         if (contextMapKey.isNullOrBlank()) {
             return ""
         }
-        val parts: Array<String?> =
-            contextMapKey.split(SEPERATOR.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+        val parts = contextMapKey.split(SEPERATOR).dropLastWhile { it.isEmpty() }
         return if (parts.size == 1) {
             //Not configured; fall back to the default service.
             null
@@ -66,10 +65,8 @@ object DatasourceKeyTool {
         if (cacheMapKey.isNullOrBlank()) {
             return ""
         }
-        val parts: Array<String?> =
-            cacheMapKey.split(SEPERATOR.toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-        // Return the last element.
-        return if (parts.isNotEmpty()) parts[parts.size - 1] else ""
+        // Return the last element ("" when every segment is empty, e.g. the input is all separators).
+        return cacheMapKey.split(SEPERATOR).dropLastWhile { it.isEmpty() }.lastOrNull() ?: ""
     }
 
     /** Determines whether dsKey is a "read-only replica" (suffix [DatasourceConst.MODE_READONLY]). */

@@ -16,7 +16,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.*
 
 /**
@@ -72,26 +72,36 @@ internal class LocalRemoteHashCacheTest {
         val mixCache = HashCacheKit.getHashCache(cacheName)
         assertNotNull(mixCache)
 
-        val latch = CountDownLatch(1)
-        Thread {
-            val cache = HashCacheKit.getHashCache(cacheName)
-            val key = "local_remote_hash_key"
-            cache.save(cacheName, TestRow(id = key, name = "LocalRemote", type = 1))
+        // Run on a separate thread, propagating failures with a join timeout: the legacy
+        // latch.await() pattern hung the suite forever when an assertion fired inside the thread.
+        val error = AtomicReference<Throwable?>()
+        val thread = Thread {
+            try {
+                val cache = HashCacheKit.getHashCache(cacheName)
+                val key = "local_remote_hash_key"
+                cache.save(cacheName, TestRow(id = key, name = "LocalRemote", type = 1))
 
-            val found = cache.getById(cacheName, key, TestRow::class)
-            assertNotNull(found)
-            assertEquals(key, found.id)
-            assertEquals("LocalRemote", found.name)
-            assertEquals(1, found.type)
-            val foundAgain = cache.getById(cacheName, key, TestRow::class)
-            assertSame(found, foundAgain, "Under LOCAL_REMOTE, fetching the same id from the cache again should return the same object reference")
+                val found = cache.getById(cacheName, key, TestRow::class)
+                assertNotNull(found)
+                assertEquals(key, found.id)
+                assertEquals("LocalRemote", found.name)
+                assertEquals(1, found.type)
+                val foundAgain = cache.getById(cacheName, key, TestRow::class)
+                assertSame(found, foundAgain, "Under LOCAL_REMOTE, fetching the same id from the cache again should return the same object reference")
 
-            val all = cache.listAll(cacheName, TestRow::class)
-            assertTrue(all.any { it.id == key && it.name == "LocalRemote" })
-
-            latch.countDown()
-        }.start()
-        latch.await()
+                val all = cache.listAll(cacheName, TestRow::class)
+                assertTrue(all.any { it.id == key && it.name == "LocalRemote" })
+            } catch (t: Throwable) {
+                error.set(t)
+            }
+        }
+        thread.start()
+        thread.join(120_000)
+        if (thread.isAlive) {
+            thread.interrupt()
+            fail("test thread did not finish within 120s")
+        }
+        error.get()?.let { throw it }
     }
 
     @Test

@@ -1,3 +1,5 @@
 dependencies {
     api(project(":kudos-context"))
+
+    testImplementation(libs.kotlin.test.junit5)
 }

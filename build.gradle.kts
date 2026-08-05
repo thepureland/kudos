@@ -26,6 +26,18 @@ subprojects {
     // Spring's CGLIB subclass proxies will emit "cannot get proxied via CGLIB" on every final method and silently
     // disable @Transactional / AOP aspects on those methods.
     apply(plugin = "org.jetbrains.kotlin.plugin.spring")
+    // JaCoCo code coverage: per-module reports via ./gradlew :module:test :module:jacocoTestReport
+    apply(plugin = "jacoco")
+    extensions.configure<JacocoPluginExtension> {
+        // 0.8.13+ is required to read Java 25 (major 69) class files
+        toolVersion = "0.8.13"
+    }
+    tasks.withType<JacocoReport> {
+        reports {
+            xml.required = true
+            html.required = true
+        }
+    }
 
     // Kotlin source directories
     extensions.configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> {

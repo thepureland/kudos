@@ -5,6 +5,7 @@ import org.springframework.context.support.StaticApplicationContext
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertSame
 
@@ -65,9 +66,18 @@ internal class AbstractCacheHandlerTest {
         assertSame(h2, resolved)
     }
 
+    @Test
+    fun reloadAll_defaultClearArg_isTrue() {
+        // Invoking reloadAll() without the argument exercises the abstract method's default-value bridge.
+        val handler = DefaultHandler()
+        handler.reloadAll()
+        assertEquals(listOf(true), handler.reloadClears, "default clear should be true")
+    }
+
     private open class DefaultHandler : AbstractCacheHandler<String>() {
+        val reloadClears = mutableListOf<Boolean>()
         override fun cacheName(): String = "test"
-        override fun reloadAll(clear: Boolean) {}
+        override fun reloadAll(clear: Boolean) { reloadClears.add(clear) }
         // Exposes the protected getSelf for tests.
         fun <S : AbstractCacheHandler<*>?> exposeSelf(): S = getSelf()
     }

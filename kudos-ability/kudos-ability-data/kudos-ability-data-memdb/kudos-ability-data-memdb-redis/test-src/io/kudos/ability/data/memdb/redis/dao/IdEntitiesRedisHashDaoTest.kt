@@ -9,10 +9,16 @@ import io.kudos.test.common.init.EnableKudosTest
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.RedisTestContainer
 import jakarta.annotation.Resource
+import org.mockito.Mockito
+import org.springframework.data.redis.core.HashOperations
+import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.core.ZSetOperations
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -108,6 +114,18 @@ internal class IdEntitiesRedisHashDaoTest {
         assertEquals("A", dao.getById(k, "u1", TestRow::class)?.name)
         dao.deleteById(k, "u1", TestRow::class)  // no indexes, no index arguments required
         assertNull(dao.getById(k, "u1", TestRow::class))
+    }
+
+    /** Deleting a missing id is a no-op apart from the hash-field delete; existing rows are untouched. */
+    @Test
+    fun deleteById_missingEntity_isNoop() {
+        val dao = dao()
+        val k = key("deleteMissing")
+        dao.save(k, TestRow(id = "keep", name = "K"))
+        dao.deleteById(k, "ghost", TestRow::class, setIdx, zsetIdx)
+        val all = dao.listAll(k, TestRow::class)
+        assertEquals(1, all.size)
+        assertEquals("keep", all[0].id)
     }
 
     /** When saving with indexes, delete must be passed the same set of index attributes to correctly remove them from the indexes. */
@@ -309,6 +327,239 @@ internal class IdEntitiesRedisHashDaoTest {
         assertEquals(1, page2.size)
         assertEquals("c", page2[0].id)
     }
+
+    @Test
+    fun list_withoutOrders_pagesInNaturalOrder() {
+        val dao = dao()
+        val k = key("listNoOrders")
+        dao.save(k, TestRowWithTime(id = "1", type = 1, sortScore = 100.0))
+        dao.save(k, TestRowWithTime(id = "2", type = 1, sortScore = 200.0))
+        dao.save(k, TestRowWithTime(id = "3", type = 2, sortScore = 150.0))
+        val all = dao.list(k, TestRowWithTime::class, null, 1, 10)
+        assertEquals(3, all.size)
+        assertEquals(setOf("1", "2", "3"), all.map { it.id }.toSet())
+        val page2 = dao.list(k, TestRowWithTime::class, null, 2, 2)
+        assertEquals(1, page2.size)
+    }
+
+    @Test
+    fun list_nonPositivePageArgs_areNormalizedToOne() {
+        val dao = dao()
+        val k = key("listPageArgNorm")
+        dao.save(k, TestRowWithTime(id = "a", type = 0, sortScore = 10.0), setIdx, zsetIdx)
+        dao.save(k, TestRowWithTime(id = "b", type = 0, sortScore = 20.0), setIdx, zsetIdx)
+        val page = dao.list(k, TestRowWithTime::class, null, 0, 0, Order.asc("sortScore"))
+        assertEquals(1, page.size)
+        assertEquals("a", page[0].id)
+    }
+
+    @Test
+    fun list_criteriaMatchingNothing_returnsEmpty() {
+        val dao = dao()
+        val k = key("listEmptyCriteriaResult")
+        dao.save(k, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
+        val criteria = Criteria.of("type", OperatorEnum.EQ, 99)
+        assertTrue(dao.list(k, TestRowWithTime::class, criteria, 1, 10, Order.desc("sortScore")).isEmpty())
+    }
+
+    @Test
+    fun listBySetIndex_missingValue_returnsEmpty() {
+        val dao = dao()
+        val k = key("listBySetIndexMissing")
+        dao.save(k, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
+        assertTrue(dao.listBySetIndex(k, TestRowWithTime::class, "type", 42).isEmpty())
+    }
+
+    @Test
+    fun listAll_missingKey_returnsEmpty() {
+        assertTrue(dao().listAll(key("listAllMissing"), TestRow::class).isEmpty())
+    }
+
+    // ---------- existsById / clear / refreshAll(empty) ----------
+
+    @Test
+    fun existsById_doesNotDeserialize() {
+        val dao = dao()
+        val k = key("existsById")
+        dao.save(k, TestRow(id = "e1", name = "E"))
+        assertTrue(dao.existsById(k, "e1"))
+        assertFalse(dao.existsById(k, "ghost"))
+    }
+
+    @Test
+    fun clear_removesDataAndAllIndexes() {
+        val dao = dao()
+        val k = key("clear")
+        dao.save(k, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
+        dao.save(k, TestRowWithTime(id = "2", type = 2, sortScore = 200.0), setIdx, zsetIdx)
+        dao.clear(k)
+        assertTrue(dao.listAll(k, TestRowWithTime::class).isEmpty())
+        assertTrue(dao.listBySetIndex(k, TestRowWithTime::class, "type", 1).isEmpty())
+        assertTrue(dao.listPageByZSetIndex(k, TestRowWithTime::class, "sortScore", 0, 10).isEmpty())
+    }
+
+    @Test
+    fun refreshAll_emptyList_clearsTable() {
+        val dao = dao()
+        val k = key("refreshAllEmpty")
+        dao.save(k, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
+        dao.refreshAll(k, emptyList<TestRowWithTime>(), setIdx, zsetIdx)
+        assertTrue(dao.listAll(k, TestRowWithTime::class).isEmpty())
+        assertTrue(dao.listBySetIndex(k, TestRowWithTime::class, "type", 1).isEmpty())
+    }
+
+    // ---------- id normalization / null id ----------
+
+    @Test
+    fun pkField_isTrimmedOnSaveAndQuery() {
+        val dao = dao()
+        val k = key("pkTrim")
+        dao.save(k, TestRow(id = "  padded  ", name = "P"))
+        assertEquals("P", dao.getById(k, "padded", TestRow::class)?.name)
+        assertTrue(dao.existsById(k, " padded "))
+    }
+
+    @Test
+    fun save_nullId_throwsIllegalArgument() {
+        val ex = assertFailsWith<IllegalArgumentException> {
+            dao().save(key("saveNullId"), NullableIdRow(id = null, name = "X"))
+        }
+        assertEquals("entity.id must not be null", ex.message)
+    }
+
+    @Test
+    fun saveBatch_filtersNullIdEntities() {
+        val dao = dao()
+        val k = key("saveBatchNullIdEntity")
+        dao.saveBatch(k, listOf(NullableIdRow(id = "n1", name = "N1"), NullableIdRow(id = null, name = "skip")))
+        val all = dao.listAll(k, NullableIdRow::class)
+        assertEquals(1, all.size)
+        assertEquals("n1", all[0].id)
+    }
+
+    @Test
+    fun saveBatch_allInvalidIds_isNoop() {
+        val dao = dao()
+        val k = key("saveBatchAllInvalid")
+        dao.saveBatch(k, listOf(NullableIdRow(id = null), NullableIdRow(id = "   ")))
+        assertTrue(dao.listAll(k, NullableIdRow::class).isEmpty())
+    }
+
+    // ---------- deserialization branches ----------
+
+    /** A value stored as a raw JSON string must be parsed through the String branch of parseToEntity. */
+    @Test
+    fun getById_rawJsonStringValue_isParsed() {
+        val k = key("rawJsonString")
+        redisTemplates.defaultRedisTemplate.opsForHash<String, Any>()
+            .put(k, "js1", """{"id":"js1","name":"FromJson","type":7}""")
+        val found = dao().getById(k, "js1", TestRow::class)
+        assertEquals("FromJson", found?.name)
+        assertEquals(7, found?.type)
+    }
+
+    /** A corrupted row only logs a warning and is skipped; it must not break getById or listAll. */
+    @Test
+    fun corruptedRow_isSkippedInsteadOfFailing() {
+        val k = key("corruptedRow")
+        redisTemplates.defaultRedisTemplate.opsForHash<String, Any>().put(k, "bad", "this is not json {")
+        dao().save(k, TestRow(id = "good", name = "G"))
+        assertNull(dao().getById(k, "bad", TestRow::class))
+        val all = dao().listAll(k, TestRow::class)
+        assertEquals(1, all.size)
+        assertEquals("good", all[0].id)
+    }
+
+    // ---------- getPropertyValue branches (field / getter / is-getter / missing) ----------
+
+    /** Property declared on the superclass: getDeclaredField fails on the subclass, falls back to getXxx(). */
+    @Test
+    fun index_onInheritedProperty_resolvesViaGetter() {
+        val dao = dao()
+        val k = key("inheritedProp")
+        val e = CategoryDerived().apply { id = "d1"; category = "books" }
+        dao.save(k, e, setOf("category"))
+        val found = dao.listBySetIndex(k, CategoryDerived::class, "category", "books")
+        assertEquals(1, found.size)
+        assertEquals("d1", found[0].id)
+    }
+
+    /** Value exposed only through an isXxx() method resolves via the boolean-getter fallback. */
+    @Test
+    fun index_onIsGetterOnlyProperty_resolvesViaIsMethod() {
+        val dao = dao()
+        val k = key("isGetterProp")
+        val e = VipRow().apply { id = "v1" }
+        dao.save(k, e, setOf("vip"))
+        val found = dao.listBySetIndex(k, VipRow::class, "vip", true)
+        assertEquals(1, found.size)
+        assertEquals("v1", found[0].id)
+    }
+
+    /** Unknown index property names are silently skipped; the row itself is still saved. */
+    @Test
+    fun index_onMissingProperty_isSkipped() {
+        val dao = dao()
+        val k = key("missingProp")
+        dao.save(k, TestRow(id = "m1", name = "M"), setOf("nonexistent"), setOf("alsoMissing"))
+        assertTrue(dao.listBySetIndex(k, TestRow::class, "nonexistent", "whatever").isEmpty())
+        assertEquals("M", dao.getById(k, "m1", TestRow::class)?.name)
+    }
+
+    /** Null property values produce no index entries. */
+    @Test
+    fun index_nullPropertyValue_isSkipped() {
+        val dao = dao()
+        val k = key("nullPropValue")
+        dao.save(k, TestRow(id = "n1", name = null, type = null), setOf("type"), setOf("type"))
+        assertTrue(dao.listBySetIndex(k, TestRow::class, "type", 1).isEmpty())
+        assertEquals("n1", dao.getById(k, "n1", TestRow::class)?.id)
+    }
+
+    // ---------- toDouble score fallbacks ----------
+
+    /** Non-numeric strings and non-Number/non-String values fall back to -Double.MAX_VALUE as the ZSet score. */
+    @Test
+    fun zsetScore_nonNumericValues_fallBackToMostNegativeScore() {
+        val dao = dao()
+        val k = key("scoreFallback")
+        dao.save(k, MixedScoreRow(id = "a-str", score = "abc"), emptySet(), setOf("score"))
+        dao.save(k, MixedScoreRow(id = "b-bool", score = true), emptySet(), setOf("score"))
+        dao.save(k, MixedScoreRow(id = "c-num", score = 5), emptySet(), setOf("score"))
+        dao.save(k, MixedScoreRow(id = "d-numstr", score = "12.5"), emptySet(), setOf("score"))
+        val asc = dao.listPageByZSetIndex(k, MixedScoreRow::class, "score", 0, 4, desc = false)
+        assertEquals(4, asc.size)
+        // the two fallback scores tie at -Double.MAX_VALUE and come first in either order
+        assertEquals(setOf("a-str", "b-bool"), asc.take(2).map { it.id }.toSet())
+        assertEquals("c-num", asc[2].id)
+        assertEquals("d-numstr", asc[3].id)
+    }
+
+    // ---------- defensive null-return guards (mocked template) ----------
+
+    /**
+     * Spring Data's multiGet / (reverse)range can theoretically return null (e.g. inside a pipeline);
+     * the dao must degrade to empty lists. Uses a Mockito template since a real Redis never returns null here.
+     */
+    @Test
+    fun nullReturnsFromTemplate_degradeToEmptyLists() {
+        @Suppress("UNCHECKED_CAST")
+        val template = Mockito.mock(RedisTemplate::class.java) as RedisTemplate<Any, Any?>
+        @Suppress("UNCHECKED_CAST")
+        val hashOps = Mockito.mock(HashOperations::class.java) as HashOperations<Any, String, Any>
+        Mockito.`when`(template.opsForHash<String, Any>()).thenReturn(hashOps)
+        Mockito.`when`(hashOps.multiGet(Mockito.any(), Mockito.anyList())).thenReturn(null)
+        @Suppress("UNCHECKED_CAST")
+        val zsetOps = Mockito.mock(ZSetOperations::class.java) as ZSetOperations<Any, Any?>
+        Mockito.`when`(template.opsForZSet()).thenReturn(zsetOps)
+        Mockito.`when`(zsetOps.reverseRange(Mockito.any(), Mockito.anyLong(), Mockito.anyLong())).thenReturn(null)
+        Mockito.`when`(zsetOps.range(Mockito.any(), Mockito.anyLong(), Mockito.anyLong())).thenReturn(null)
+
+        val mockedDao = IdEntitiesRedisHashDao(RedisTemplates(mutableMapOf(), template))
+        assertTrue(mockedDao.findByIds("k", listOf("x"), TestRow::class).isEmpty())
+        assertTrue(mockedDao.listPageByZSetIndex("k", TestRow::class, "s", 0, 10, desc = true).isEmpty())
+        assertTrue(mockedDao.listPageByZSetIndex("k", TestRow::class, "s", 0, 10, desc = false).isEmpty())
+    }
 }
 
 /**
@@ -335,4 +586,58 @@ data class TestRowWithTime(
     override var id: String = "",
     var type: Int? = null,
     var sortScore: Double? = null
+) : IIdEntity<String>
+
+/**
+ * Entity with a nullable id, used for null-id branch tests.
+ *
+ * @author K
+ * @since 1.0.0
+ */
+data class NullableIdRow(
+    override var id: String? = null,
+    var name: String? = null
+) : IIdEntity<String?>
+
+/**
+ * Base entity declaring `category`, so that the property lives on the superclass.
+ *
+ * @author K
+ * @since 1.0.0
+ */
+open class CategoryBase : IIdEntity<String> {
+    override var id: String = ""
+    var category: String? = null
+}
+
+/**
+ * Subclass without own fields: getDeclaredField on it fails for `category`, forcing the getter fallback.
+ *
+ * @author K
+ * @since 1.0.0
+ */
+class CategoryDerived : CategoryBase()
+
+/**
+ * Entity exposing a value only through an `isVip()` method (no field, no getVip), for the is-getter fallback.
+ *
+ * @author K
+ * @since 1.0.0
+ */
+class VipRow : IIdEntity<String> {
+    override var id: String = ""
+
+    @Suppress("unused")
+    fun isVip(): Boolean = true
+}
+
+/**
+ * Entity with an `Any?` score property to drive the toDouble fallback branches.
+ *
+ * @author K
+ * @since 1.0.0
+ */
+data class MixedScoreRow(
+    override var id: String = "",
+    var score: Any? = null
 ) : IIdEntity<String>

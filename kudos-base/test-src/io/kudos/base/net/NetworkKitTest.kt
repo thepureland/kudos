@@ -91,6 +91,43 @@ internal class NetworkKitTest {
     }
 
     /**
+     * Test: an out-of-range port makes the underlying Socket constructor throw IllegalArgumentException,
+     * which isPortActive catches and reports as false.
+     */
+    @Test
+    fun testIsPortActive_InvalidPort_ReturnsFalse() {
+        assertFalse(
+            NetworkKit.isPortActive(NetworkKit.LOCALHOST_IP, 99999),
+            "an out-of-range port should be caught (IllegalArgumentException) and return false"
+        )
+        assertFalse(
+            NetworkKit.isPortActive(NetworkKit.LOCALHOST_IP, -1),
+            "a negative port should be caught (IllegalArgumentException) and return false"
+        )
+    }
+
+    /**
+     * Test: forcing os.name to a Unix-like value drives the LINUX/MAC delimiter branch (":") of getMacAddress.
+     * The actual NetworkInterface enumeration still runs against the host, so the format must use colons.
+     */
+    @Test
+    fun testGetMacAddress_UnixLikeOs_UsesColonDelimiter() {
+        val originalOs = System.getProperty("os.name")
+        try {
+            for (osName in listOf("Linux", "Mac OS X")) {
+                System.setProperty("os.name", osName)
+                val macs = NetworkKit.getMacAddress()
+                val regex = Regex("^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$")
+                for (mac in macs) {
+                    assertTrue(regex.matches(mac), "MAC under $osName should use ':' delimiter: $mac")
+                }
+            }
+        } finally {
+            System.setProperty("os.name", originalOs)
+        }
+    }
+
+    /**
      * Test: on non-Linux/Windows systems (e.g. macOS), getMacAddress should throw UnsupportedOperationException.
      */
     @Test

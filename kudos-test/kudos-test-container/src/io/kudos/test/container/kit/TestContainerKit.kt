@@ -170,7 +170,7 @@ object TestContainerKit {
      * Shared containers must avoid Testcontainers/Ryuk's single-JVM session cleanup;
      * otherwise the container would be reaped by Ryuk when the first starter leaves.
      */
-    private fun prepareSharedReusableContainer(container: GenericContainer<*>) {
+    internal fun prepareSharedReusableContainer(container: GenericContainer<*>) {
         if (!isSharedLifecycleEnabled()) return
         enableTestcontainersReuseInMemory()
         container.withReuse(true)
@@ -179,7 +179,7 @@ object TestContainerKit {
     /**
      * Enables reuse only in the current JVM's memory; does not write to the user's home `~/.testcontainers.properties`.
      */
-    private fun enableTestcontainersReuseInMemory() {
+    internal fun enableTestcontainersReuseInMemory() {
         try {
             val configuration = TestcontainersConfiguration.getInstance()
             val userPropertiesField = TestcontainersConfiguration::class.java.getDeclaredField("userProperties")
@@ -194,7 +194,7 @@ object TestContainerKit {
     /**
      * Releases the current JVM's lease, and stops the container for the given label once no other live leases remain.
      */
-    private fun releaseAndStopIfLast(label: String) {
+    internal fun releaseAndStopIfLast(label: String) {
         withLabelLock(label) {
             releaseLease(label)
             val activeLeases = pruneAndCountActiveLeases(label)
@@ -209,7 +209,7 @@ object TestContainerKit {
     /**
      * Finds and stops the container directly by Docker label, avoiding any dependency on whether the current JVM still holds the original [GenericContainer] instance.
      */
-    private fun stopContainerByLabel(label: String) {
+    internal fun stopContainerByLabel(label: String) {
         DockerKit.ensureDockerRunning()
         val dockerClient = DockerClientFactory.lazyClient()
         val containers = dockerClient.listContainersCmd()
@@ -231,7 +231,7 @@ object TestContainerKit {
     /**
      * The lease file name includes the pid and an intra-process unique value, preventing accidental deletion of a new process's lease when the OS reuses the same pid.
      */
-    private fun registerLease(label: String) {
+    internal fun registerLease(label: String) {
         withLabelLock(label) {
             try {
                 Files.createDirectories(leaseDir(label))
@@ -253,7 +253,7 @@ object TestContainerKit {
     /**
      * Deletes the current JVM's lease file for the given container label.
      */
-    private fun releaseLease(label: String) {
+    internal fun releaseLease(label: String) {
         try {
             Files.deleteIfExists(leaseFile(label))
         } catch (e: IOException) {
@@ -264,7 +264,7 @@ object TestContainerKit {
     /**
      * Removes stale lease files and returns the count of still-live JVM leases.
      */
-    private fun pruneAndCountActiveLeases(label: String): Int {
+    internal fun pruneAndCountActiveLeases(label: String): Int {
         val dir = leaseDir(label)
         if (!Files.isDirectory(dir)) return 0
         var active = 0
@@ -288,7 +288,7 @@ object TestContainerKit {
     /**
      * Reads the pid from a lease file; treats corrupted files or invalid contents as stale leases.
      */
-    private fun readLeasePid(file: Path): Long? {
+    internal fun readLeasePid(file: Path): Long? {
         return try {
             val value = Files.readString(file, StandardCharsets.UTF_8).trim()
             if (value.isEmpty()) null else value.toLong()
@@ -302,13 +302,13 @@ object TestContainerKit {
     /**
      * Returns whether a process with the given pid is still alive.
      */
-    private fun isProcessAlive(pid: Long): Boolean =
+    internal fun isProcessAlive(pid: Long): Boolean =
         ProcessHandle.of(pid).map { it.isAlive }.orElse(false)
 
     /**
      * Lease add/remove and the last-stop decision for the same label must be mutually exclusive, preventing two JVMs from concurrently concluding they are the last user.
      */
-    private fun withLabelLock(label: String, action: () -> Unit) {
+    internal fun withLabelLock(label: String, action: () -> Unit) {
         try {
             Files.createDirectories(LEASE_ROOT)
             FileChannel.open(lockFile(label), StandardOpenOption.CREATE, StandardOpenOption.WRITE).use { channel ->
@@ -321,16 +321,16 @@ object TestContainerKit {
         }
     }
 
-    private fun isSharedLifecycleEnabled(): Boolean =
+    internal fun isSharedLifecycleEnabled(): Boolean =
         System.getProperty(SHARED_LIFECYCLE_ENABLED, "true").toBoolean()
 
-    private fun leaseDir(label: String): Path = LEASE_ROOT.resolve(safeLabel(label))
+    internal fun leaseDir(label: String): Path = LEASE_ROOT.resolve(safeLabel(label))
 
-    private fun leaseFile(label: String): Path = leaseDir(label).resolve("$PID-$PROCESS_MARK.lease")
+    internal fun leaseFile(label: String): Path = leaseDir(label).resolve("$PID-$PROCESS_MARK.lease")
 
-    private fun lockFile(label: String): Path = LEASE_ROOT.resolve("${safeLabel(label)}.lock")
+    internal fun lockFile(label: String): Path = LEASE_ROOT.resolve("${safeLabel(label)}.lock")
 
-    private fun safeLabel(label: String): String = label.replace(Regex("[^A-Za-z0-9_.-]"), "_")
+    internal fun safeLabel(label: String): String = label.replace(Regex("[^A-Za-z0-9_.-]"), "_")
 
     /**
      * Executes a command directly inside the container.
@@ -339,7 +339,7 @@ object TestContainerKit {
      * @param command the command and its arguments to execute
      * @return the execution result, containing exit code, stdout, and stderr
      */
-    private fun execInContainer(container: GenericContainer<*>, vararg command: String): ExecResult {
+    internal fun execInContainer(container: GenericContainer<*>, vararg command: String): ExecResult {
         val result = container.execInContainer(*command)
         return ExecResult(
             exitCode = result.exitCode,

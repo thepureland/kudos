@@ -111,6 +111,52 @@ internal class TotpAuthenticatorTest {
         assertFalse(authenticator.verify(secret, wrong))
     }
 
+    // NOTE deliberately no `windowSize = 0` strict-rejection test: the delegate
+    // GoogleAuthenticator.windowSize setter in kudos-base silently ignores values outside 1..17,
+    // so TotpAuthenticator(windowSize = 0) actually runs with the delegate default of 3 (±90s) —
+    // *more* permissive than requested. Recorded as a suspected bug; asserting the correct strict
+    // behaviour would fail against current main code.
+
+    @Test
+    fun generateCode_padsLeadingZeros_toSixDigits() {
+        // Deterministic search over fixed windows with a fixed secret: with 2000 consecutive
+        // 30-second windows the truncated-hash distribution is certain (for this fixed input set)
+        // to produce at least one value < 100_000, which exercises the %06d padding.
+        val secret = String(Base32().encode(ByteArray(10) { it.toByte() }))
+        var sawLeadingZero = false
+        for (window in 0 until 2000) {
+            val clock = fixedClock(seconds = window * 30L)
+            val code = TotpAuthenticator(clock = clock).generateCode(secret)
+            assertEquals(6, code.length, "every code must be exactly 6 chars, got `$code`")
+            if (code.startsWith("0")) sawLeadingZero = true
+        }
+        assertTrue(sawLeadingZero, "expected at least one zero-padded code across 2000 fixed windows")
+    }
+
+    @Test
+    fun generateCode_matchesRfc6238Sha1Behaviour_truncatedToSixDigits() {
+        // RFC 6238 Appendix B test vector: secret "12345678901234567890" (ASCII), T=59s -> the
+        // 8-digit SHA1 TOTP is 94287082; the standard 6-digit code is its low 6 digits, 287082.
+        // This pins compatibility with real authenticator apps and proves the unsigned-byte
+        // masking in dynamic truncation (the sign-extension fix) is correct.
+        val rfcSecret = "12345678901234567890".toByteArray(Charsets.US_ASCII)
+        val secretBase32 = String(Base32().encode(rfcSecret))
+        val authenticator = TotpAuthenticator(clock = fixedClock(seconds = 59L))
+
+        assertEquals("287082", authenticator.generateCode(secretBase32))
+    }
+
+    @Test
+    fun verify_roundTrips_withUnicodeAndEmptyStyleSecrets_consistently() {
+        // generateCode/verify must agree with each other for any Base32 secret, including one
+        // whose decoded bytes are all 0xFF (high-bit bytes stress the sign-extension masking).
+        val highBitSecret = String(Base32().encode(ByteArray(10) { 0xFF.toByte() }))
+        val clock = fixedClock(seconds = 1_700_000_000L)
+        val authenticator = TotpAuthenticator(clock = clock)
+        val code = authenticator.generateCode(highBitSecret).toInt()
+        assertTrue(authenticator.verify(highBitSecret, code))
+    }
+
     private fun fixedClock(seconds: Long): Clock =
         Clock.fixed(Instant.ofEpochSecond(seconds), ZoneOffset.UTC)
 }

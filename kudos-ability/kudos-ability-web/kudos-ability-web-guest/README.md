@@ -179,3 +179,19 @@ testImplementation(libs.spring.boot.starter.webmvc.test)
 testImplementation(libs.spring.boot.starter.jetty)
 testImplementation(libs.spring.boot.starter.data.redis)
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+**安全性**
+- `enabled=true` 且 `cipherKey` 仍为模块默认值时建议启动期打 WARN（甚至 fail-fast 由开关控制），
+  防止开发密钥带上生产——目前只靠 README 提醒（`init/GuestAutoConfiguration.kt`）。
+- Cookie 的 `Secure` 属性建议做成配置项（`GuestCookieProperties.secure`），与 `sameSite=None`
+  组合时强制要求 Secure，而不是完全依赖反向代理层（`init/properties/GuestCookieProperties.kt`、
+  `provider/GuestAccessService.kt`）。
+- 指纹算法默认 MD5（加 salt）；用于非对抗性访客统计可接受，但建议默认实现升级为
+  HMAC-SHA256，避免安全审计工具对 MD5 的固定告警（`provider/GuestAccessUniqueKey.kt`）。
+
+**测试缺口**
+- `sameSite` 配置此前未生效（已于本次修复：`GuestAccessService.setCookie` 通过 Servlet 6
+  `setAttribute("SameSite", ...)` 写入）；建议在 `GuestAccessServiceTest.genToken_setsCookieAndReturnsToken`
+  补一条 SameSite 属性断言，防止回归。

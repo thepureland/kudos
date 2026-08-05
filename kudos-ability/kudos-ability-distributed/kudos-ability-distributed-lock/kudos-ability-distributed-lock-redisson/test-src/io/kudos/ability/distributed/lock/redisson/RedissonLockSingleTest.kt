@@ -55,22 +55,39 @@ open class RedissonLockSingleTest {
     }
 
     @Test
+    fun redissonClientBeanIsAccessibleFromKit() {
+        val client = RedissonLockKit.redissonClient()
+        kotlin.test.assertNotNull(client)
+        kotlin.test.assertFalse(client.isShutdown)
+    }
+
+    @Test
     fun lock() {
-        val countDownLatch = CountDownLatch(10)
+        val countDownLatch = CountDownLatch(threadNum)
 
         for (i in 0 until threadNum) {
             Thread {
-                // Lock-free operation
-                testCount()
-                // Lock-based operation
-                testLockCount()
-                // Lock-based operation (annotation style)
-                testLockByAnnotation.execute(this)
-                countDownLatch.countDown()
+                try {
+                    // Lock-free operation
+                    testCount()
+                    // Lock-based operation
+                    testLockCount()
+                    // Lock-based operation (annotation style)
+                    testLockByAnnotation.execute(this)
+                } finally {
+                    // Always count down so an unexpected failure surfaces via the assertions below instead of hanging await().
+                    countDownLatch.countDown()
+                }
             }.start()
         }
 
-        countDownLatch.await()
+        kotlin.test.assertTrue(
+            countDownLatch.await(60, TimeUnit.SECONDS),
+            "all $threadNum worker threads should finish within the timeout"
+        )
+        // Each lock-protected counter is decremented exactly once per thread, so both must end at 0.
+        kotlin.test.assertEquals(0, lockCount, "lock-API protected counter must reach 0")
+        kotlin.test.assertEquals(0, lockCountByAnnotation, "annotation protected counter must reach 0")
     }
 
     /**
@@ -106,7 +123,9 @@ open class RedissonLockSingleTest {
  */
 open class TestLockByAnnotation {
 
-    @DistributedLock
+    // waitTime > 0 so the 10 contending threads queue deterministically instead of failing on a single
+    // non-blocking attempt (the annotation default waitTime = 0 throws DistributedLockAcquireException on contention).
+    @DistributedLock(waitTime = 30)
     fun execute(test: RedissonLockSingleTest) {
         test.lockCountByAnnotation--
         test.log.info("lockCountByAnnotation: ${test.lockCountByAnnotation}")

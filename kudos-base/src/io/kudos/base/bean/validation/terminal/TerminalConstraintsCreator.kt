@@ -88,13 +88,11 @@ object TerminalConstraintsCreator {
                         }
                     }
                     if (clazz.isSubclassOf(List::class)) {
-                        val paramType = prop.typeParameters
-                        clazz = paramType[0].starProjectedType.classifier as? KClass<*>
+                        clazz = prop.returnType.arguments.getOrNull(0)?.type?.classifier as? KClass<*>
                             ?: error("Unable to resolve generic type of List cascaded property: ${prop.name}")
                     }
                     if (clazz.isSubclassOf(Map::class)) {
-                        val paramType = prop.typeParameters
-                        clazz = paramType[1].starProjectedType.classifier as? KClass<*>
+                        clazz = prop.returnType.arguments.getOrNull(1)?.type?.classifier as? KClass<*>
                             ?: error("Unable to resolve value generic type of Map cascaded property: ${prop.name}")
                     }
                     parseAnnotations(annotations, clazz, parentProp) // recursively parse annotations in all classes

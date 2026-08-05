@@ -45,11 +45,12 @@ class JwtParametersTool(
     /**
      * Build parameters with custom claims merged into the defaults. The custom claims are added
      * via [JwtClaimsSet.Builder.claim], so callers passing a key that already has a default get
-     * the default overridden.
+     * the default overridden. Entries with a null value are skipped — [JwtClaimsSet.Builder.claim]
+     * rejects null values since Spring Security 7.1.
      */
     fun createDefault(customClaims: Map<String, Any?>): JwtEncoderParameters {
         val builder = buildDefaultClaims()
-        customClaims.forEach { (name, value) -> builder.claim(name, value) }
+        customClaims.forEach { (name, value) -> value?.let { builder.claim(name, it) } }
         return JwtEncoderParameters.from(rs256Header(), builder.build())
     }
 
@@ -57,7 +58,7 @@ class JwtParametersTool(
     fun createDefault(subject: String, customClaims: Map<String, Any?>): JwtEncoderParameters {
         require(subject.isNotBlank()) { "subject must not be blank" }
         val builder = buildDefaultClaims().subject(subject)
-        customClaims.forEach { (name, value) -> builder.claim(name, value) }
+        customClaims.forEach { (name, value) -> value?.let { builder.claim(name, it) } }
         return JwtEncoderParameters.from(rs256Header(), builder.build())
     }
 

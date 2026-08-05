@@ -51,9 +51,8 @@ open class RedisAutoConfiguration : IComponentInitializer {
         val redisTemplateMap = mutableMapOf<String, RedisTemplate<Any, Any?>>()
         redisMap.forEach { (key, properties) ->
             val lettuceConnectionFactory = RedisConnectFactory.newLettuceConnectionFactory(properties)
-            val redisTemplate = createRedisTemplate(lettuceConnectionFactory, properties)
-            redisTemplate.afterPropertiesSet()
-            redisTemplateMap[key] = redisTemplate
+            // createRedisTemplate already invokes afterPropertiesSet() on the template.
+            redisTemplateMap[key] = createRedisTemplate(lettuceConnectionFactory, properties)
         }
 
         val defaultKey = requireNotNull(redisProperties.defaultRedis) { "kudos.ability.data.redis.default-redis must be set" }

@@ -1,6 +1,7 @@
 package io.kudos.ability.web.springmvc.init
 
 import io.kudos.ability.web.springmvc.support.enums.ServletServerEnum
+import io.kudos.base.logger.LogFactory
 import org.apache.catalina.connector.Connector
 import org.springframework.boot.tomcat.servlet.TomcatServletWebServerFactory
 import org.springframework.boot.web.server.WebServer
@@ -31,17 +32,18 @@ class SwitchingServletWebServerFactory(
     private val env: Environment
 ) : ServletWebServerFactory {
 
+    private val log = LogFactory.getLog(this::class)
+
     /**
      * Pick the concrete container factory based on yml configuration; unrecognised values fall back to Tomcat. Flow:
      * read config -> build factory -> set contextPath via reflection (factory signatures differ) -> delegate the actual [WebServer] construction.
      */
     override fun getWebServer(vararg initializers: ServletContextInitializer): WebServer {
         val serverTypeStr = env.getProperty("kudos.ability.web.springmvc.server", "TOMCAT")
-        val serverType = try {
-            ServletServerEnum.valueOf(serverTypeStr.uppercase())
-        } catch (ex: IllegalArgumentException) {
-            ServletServerEnum.TOMCAT
-        }
+        val serverType = ServletServerEnum.entries.firstOrNull { it.name == serverTypeStr.uppercase() }
+            ?: ServletServerEnum.TOMCAT.also {
+                log.warn("Unrecognized kudos.ability.web.springmvc.server value [$serverTypeStr]; falling back to TOMCAT")
+            }
         val port = env.getProperty<Int>("server.port", 8080)
         val contextPath = env.getProperty("server.servlet.context-path", "")
 

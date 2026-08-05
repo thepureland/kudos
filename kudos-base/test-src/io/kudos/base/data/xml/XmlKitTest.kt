@@ -63,6 +63,26 @@ internal class XmlKitTest {
     }
 
     @Test
+    fun toXml_blankEncoding_skipsEncodingProperty() {
+        // A blank encoding takes the !isNotBlank() branch (JAXB_ENCODING is not set).
+        val xml = XmlKit.toXml(person, "")
+        assert(xml.contains("<zipcode>410000</zipcode>"))
+    }
+
+    @Test
+    fun toXml_collection_customEncoding() {
+        val xml = XmlKit.toXml(listOf(person), "persons", Person::class, "UTF-8")
+        assertEquals(1, xml.countMatches("<person>"))
+    }
+
+    @Test
+    fun fromXml_ignoreNamespace() {
+        val xml = XmlKit.toXml(person)
+        val p = XmlKit.fromXml(xml, Person::class, ignoreNameSpace = true)
+        assertEquals(person.name, p.name)
+    }
+
+    @Test
     fun fromXml() {
         val xml = XmlKit.toXml(person)
         val p = XmlKit.fromXml(xml, Person::class)
@@ -110,7 +130,9 @@ internal class XmlKitTest {
         private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
 
         override fun unmarshal(date: String): LocalDate {
-            return formatter.parse(date) as LocalDate
+            // Note: `formatter.parse(date) as LocalDate` would throw ClassCastException (JAXB swallows it
+            // and leaves the field null); LocalDate.parse is the correct way to get a LocalDate.
+            return LocalDate.parse(date, formatter)
         }
 
         override fun marshal(date: LocalDate): String {

@@ -2,11 +2,16 @@ package io.kudos.base.bean.validation.constraint
 
 import io.kudos.base.bean.validation.constraint.annotations.Constraints
 import io.kudos.base.bean.validation.constraint.annotations.Each
+import io.kudos.base.bean.validation.constraint.validator.EachValidator
 import io.kudos.base.bean.validation.kit.ValidationKit
+import jakarta.validation.ConstraintValidatorContext
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import org.hibernate.validator.constraints.Length
+import java.lang.reflect.Proxy
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
  * Test cases for Each.
@@ -34,6 +39,34 @@ internal class EachTest {
 
         // String type: equivalent to using Constraints directly
         assert(ValidationKit.validateValue(TestEachBean::class, "name", " ").isNotEmpty())
+    }
+
+    /**
+     * The type dispatch in EachValidator.isValid must handle every primitive array
+     * type as well as Collection and Map (validating map values).
+     */
+    @Test
+    fun typeDispatchCoversPrimitiveArraysCollectionsAndMaps() {
+        // Ensure the HV ValidatorFactory (and its initialization context) is built
+        ValidationKit.getValidator()
+
+        val validator = EachValidator()
+        validator.initialize(Each(Constraints(notNull = NotNull(message = "element must not be null"))))
+        val context = Proxy.newProxyInstance(
+            ConstraintValidatorContext::class.java.classLoader,
+            arrayOf(ConstraintValidatorContext::class.java)
+        ) { _, _, _ -> null } as ConstraintValidatorContext
+
+        assertTrue(validator.isValid(booleanArrayOf(true, false), context))
+        assertTrue(validator.isValid(byteArrayOf(1, 2), context))
+        assertTrue(validator.isValid(charArrayOf('a', 'b'), context))
+        assertTrue(validator.isValid(doubleArrayOf(1.0, 2.0), context))
+        assertTrue(validator.isValid(floatArrayOf(1f, 2f), context))
+        assertTrue(validator.isValid(intArrayOf(1, 2), context))
+        assertTrue(validator.isValid(longArrayOf(1L, 2L), context))
+        assertTrue(validator.isValid(shortArrayOf(1, 2), context))
+        assertTrue(validator.isValid(listOf("a", "b"), context))
+        assertTrue(validator.isValid(mapOf("k1" to "v1", "k2" to "v2"), context))
     }
 
     internal data class TestEachBean(

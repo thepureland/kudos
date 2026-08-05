@@ -2,6 +2,10 @@ package io.kudos.ms.sys.core.system.cache
 
 import io.kudos.ability.cache.common.kit.HashCacheKit
 import io.kudos.ms.sys.core.system.dao.SysSystemDao
+import io.kudos.ms.sys.core.system.event.SysSystemBatchDeleted
+import io.kudos.ms.sys.core.system.event.SysSystemDeleted
+import io.kudos.ms.sys.core.system.event.SysSystemInserted
+import io.kudos.ms.sys.core.system.event.SysSystemUpdated
 import io.kudos.ms.sys.core.system.model.po.SysSystem
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -143,6 +147,74 @@ class SysSystemHashCacheTest : RdbAndRedisCacheTestBase() {
         assertEquals(2, count)
         cacheHandler.syncOnBatchDelete(codes)
         assertNull(cacheHandler.getSystemByCode(code1))
+        assertNull(cacheHandler.getSystemByCode(code2))
+    }
+
+    /** cacheName returns the configured cache name (public accessor). */
+    @Test
+    fun cacheName() {
+        assertEquals(SysSystemHashCache.CACHE_NAME, cacheHandler.cacheName())
+    }
+
+    /** getAllSystems returns the full system list (cache-active path). */
+    @Test
+    fun getAllSystems() {
+        cacheHandler.reloadAll(true)
+        val all = cacheHandler.getAllSystems()
+        assertTrue(all.any { it.code == "SbcCH_7a3f9b2c4e5f6_1" })
+    }
+
+    /**
+     * getAllSystems on an empty (but active) cache triggers the lazy reload-then-re-list branch:
+     * clear the cache without refilling, then the first getAllSystems call must self-heal by
+     * reloading from the DB and still return the seeded rows.
+     */
+    @Test
+    fun getAllSystems_emptyCacheTriggersReload() {
+        HashCacheKit.clear(SysSystemHashCache.CACHE_NAME)
+        val all = cacheHandler.getAllSystems()
+        assertTrue(all.any { it.code == "SbcCH_7a3f9b2c4e5f6_1" }, "empty cache should be reloaded from DB on demand")
+    }
+
+    /** The two-arg syncOnInsert overload behaves identically to the single-arg one. */
+    @Test
+    fun syncOnInsert_overload() {
+        cacheHandler.reloadAll(true)
+        val code = insertNewRecordToDb()
+        cacheHandler.syncOnInsert(Any(), code)
+        assertNotNull(cacheHandler.getSystemByCode(code))
+    }
+
+    /** The two-arg syncOnUpdate overload behaves identically to the single-arg one. */
+    @Test
+    fun syncOnUpdate_overload() {
+        cacheHandler.reloadAll(true)
+        val code = "SbcCH_7a3f9b2c4e5f6_2"
+        sysSystemDao.updateProperties(code, mapOf(SysSystem::name.name to newSystemName))
+        cacheHandler.syncOnUpdate(Any(), code)
+        assertEquals(newSystemName, cacheHandler.getSystemByCode(code)?.name)
+    }
+
+    /** Event listeners delegate to the corresponding sync methods. */
+    @Test
+    fun eventListeners() {
+        cacheHandler.reloadAll(true)
+        val code = insertNewRecordToDb()
+        cacheHandler.on(SysSystemInserted(id = code))
+        assertNotNull(cacheHandler.getSystemByCode(code))
+
+        sysSystemDao.updateProperties(code, mapOf(SysSystem::name.name to newSystemName))
+        cacheHandler.on(SysSystemUpdated(id = code))
+        assertEquals(newSystemName, cacheHandler.getSystemByCode(code)?.name)
+
+        val code2 = insertNewRecordToDb()
+        cacheHandler.on(SysSystemInserted(id = code2))
+        sysSystemDao.batchDelete(listOf(code))
+        cacheHandler.on(SysSystemDeleted(id = code))
+        assertNull(cacheHandler.getSystemByCode(code))
+
+        sysSystemDao.batchDelete(listOf(code2))
+        cacheHandler.on(SysSystemBatchDeleted(ids = listOf(code2)))
         assertNull(cacheHandler.getSystemByCode(code2))
     }
 

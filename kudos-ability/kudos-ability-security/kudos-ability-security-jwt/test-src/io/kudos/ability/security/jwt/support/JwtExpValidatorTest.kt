@@ -50,6 +50,19 @@ internal class JwtExpValidatorTest {
             ex is JwtExpiredException,
             "expired tokens must throw JwtExpiredException so the existing BadJwtException-to-401 mapping fires; got ${ex::class}",
         )
+        assertTrue(
+            ex.message!!.contains("exp is invalid") && ex.message!!.contains(jwt.expiresAt.toString()),
+            "exception message must identify the claim and echo the offending expiry; got: ${ex.message}",
+        )
+    }
+
+    @Test
+    fun validate_expExactlyNow_passesThrough() {
+        // Boundary: now.isAfter(exp) is strict — a token whose exp equals the current instant is
+        // not yet "in the past" and must still validate.
+        val jwt = newJwt(expiresAt = fixedNow)
+        val validator = JwtExpValidator(clock = fixedClock)
+        assertTrue(validator.validate(jwt).errors.isEmpty())
     }
 
     @Test

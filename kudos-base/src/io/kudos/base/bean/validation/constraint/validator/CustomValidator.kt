@@ -36,9 +36,17 @@ class CustomValidator : ConstraintValidator<Custom, Any?> {
                 "CustomValidator requires a bean to be present in ValidationContext"
             }
             val validator = checkClass.java.getDeclaredConstructor().newInstance()
-            val validateMethod = validator.javaClass.methods.firstOrNull {
-                it.name == "validate" && it.parameterCount == 1
-            } ?: error("Validator [${checkClass.qualifiedName}] is missing a validate(bean) method")
+            // Class.methods has no guaranteed ordering, and a generic IBeanValidator<T>
+            // implementation exposes BOTH the real validate(T) and a synthetic bridge
+            // validate(Object). Skip bridge/synthetic methods and deterministically pick
+            // the single real overload whose parameter type accepts the actual bean.
+            val candidates = validator.javaClass.methods.filter {
+                it.name == "validate" && it.parameterCount == 1 && !it.isBridge && !it.isSynthetic
+            }
+            val validateMethod = candidates.firstOrNull {
+                it.parameterTypes[0].isInstance(bean)
+            } ?: candidates.singleOrNull()
+                ?: error("Validator [${checkClass.qualifiedName}] is missing a validate(bean) method")
             val result = validateMethod.invoke(validator, bean)
             return result as? Boolean
                 ?: error("Validator [${checkClass.qualifiedName}] validate return value must be Boolean")

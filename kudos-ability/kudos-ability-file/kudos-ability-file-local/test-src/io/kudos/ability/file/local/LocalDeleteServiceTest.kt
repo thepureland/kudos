@@ -98,4 +98,27 @@ internal class LocalDeleteServiceTest {
         assertTrue(deleteService.delete(model))
     }
 
+    @Test
+    fun delete_refused_when_resolved_path_escapes_base() {
+        // empty basePath: baseDir normalizes to the current working directory while the raw path
+        // resolves to an absolute path under the filesystem root -> strict startsWith guard refuses
+        localProperties.basePath = ""
+
+        val model = DeleteFileModel()
+        model.bucketName = "kudos_traversal_bucket"
+        model.filePath = "kudos_traversal_file.txt"
+        assertFalse(deleteService.delete(model))
+    }
+
+    @Test
+    fun delete_fails_when_basePath_not_set() {
+        localProperties.basePath = null
+
+        val model = DeleteFileModel()
+        model.bucketName = "bucket"
+        model.filePath = "file.txt"
+        val ex = assertFailsWith<IllegalArgumentException> { deleteService.delete(model) }
+        assertTrue(ex.message!!.contains("base-path is not set"))
+    }
+
 }

@@ -43,3 +43,21 @@
   方式引入本模块；不兼容的 VO 改动（删字段、改字段类型）必须全工程编译跑通才能感知
 - ❗ **`CurrentUserKit` 依赖 ThreadLocal** — 在异步线程 / kotlin coroutine 切换上下文时会拿不到当前用户；
   目前未提供 `CoroutineContextElement` 适配，跨线程业务需主动透传
+
+## 改进建议（自动分析 2026-06-11）
+
+- ✅ 已修复（2026-06-11）**响应 VO 携带敏感凭据**（`account/vo/UserAccountCacheEntry.kt`、
+  `account/vo/response/UserAccountDetail.kt` / `UserAccountEdit.kt` / `UserAccountRow.kt`）：
+  新增 `account/support/UserAccountCredentialsErasure.kt` 提供 `eraseCredentials()` 脱敏拷贝扩展函数
+  （置空 `loginPassword` / `securityPassword` / `authenticationKey` / `sessionKey`），api-internal /
+  api-admin 全部出口在返回前统一调用；VO 类结构未变（契约兼容），
+  彻底拆分"鉴权专用 VO 与脱敏资料 VO"仍为后续待办。
+- ❗ **表单缺少必填与格式校验**（`account/vo/request/UserAccountFormCreate.kt` / `IUserAccountFormBase.kt`）：
+  `username` / `tenantId` / `loginPassword` 均可空且无 `@NotBlank`；且 create 表单暴露 `loginErrorTimes` /
+  `sessionKey` / `authenticationKey` / `lastLoginTime` 等内部状态字段，调用方可在创建时直接篡改安全计数器。
+  建议收窄表单字段并补 Bean Validation 注解。
+- ❗ **联系方式无格式校验**（`contact/vo/request/IUserContactWayFormBase.kt`）：`contactWayValue`（手机 / 邮箱）
+  无 `@Email` / 手机号 pattern 校验，脏数据会直接进入 `getActiveContactValuesByUserIds` 下游（如消息服务发送失败）。
+- **登录状态枚举缺"服务不可达"语义**（`passport/enums/PassportLoginStatusEnum.kt`）：client 侧
+  `PassportFallback.login` 目前借用 `LOCKED` 表示 Feign 降级，语义误导（用户会被提示"账号被锁定"）。
+  建议新增 `SERVICE_UNAVAILABLE` 枚举值（注意旧版本客户端反序列化兼容，需随版本发布）。

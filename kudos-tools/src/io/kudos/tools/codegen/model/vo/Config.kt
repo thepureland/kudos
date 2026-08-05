@@ -56,7 +56,7 @@ class Config {
 
     fun setDbPassword(dbPassword: String) = this.dbPassword.set(dbPassword)
 
-    fun getTemplateInfo(): TemplateNameAndRootDir = templateInfo.get().selectedItem
+    fun getTemplateInfo(): TemplateNameAndRootDir? = templateInfo.get()?.selectedItem
 
     fun templateInfoProperty(): SimpleObjectProperty<SingleSelectionModel<TemplateNameAndRootDir>> = templateInfo
 

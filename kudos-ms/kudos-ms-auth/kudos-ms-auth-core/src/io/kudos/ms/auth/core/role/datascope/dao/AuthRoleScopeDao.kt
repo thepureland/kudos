@@ -105,6 +105,20 @@ open class AuthRoleScopeDao : BaseCrudDao<String, AuthRoleScope, AuthRoleScopes>
         return batchDeleteCriteria(criteria)
     }
 
+    /**
+     * Deletes every scope grant of a role, across all dimensions.
+     *
+     * The counterpart to [deleteByRoleId]'s deliberate single-dimension scoping: rebinding one
+     * dimension must not touch the others, but *deleting the role* must leave nothing behind. A
+     * cascade that cleared only the built-in `org` dimension would strand every application-defined
+     * dimension's rows against a role id that no longer exists.
+     *
+     * @param roleId role id
+     * @return number of rows deleted
+     */
+    open fun deleteAllByRoleId(roleId: String): Int =
+        batchDeleteCriteria(Criteria(AuthRoleScope::roleId eq roleId))
+
     companion object {
         /** The built-in dimension; the only one kudos itself resolves. */
         const val DIMENSION_ORG = "org"

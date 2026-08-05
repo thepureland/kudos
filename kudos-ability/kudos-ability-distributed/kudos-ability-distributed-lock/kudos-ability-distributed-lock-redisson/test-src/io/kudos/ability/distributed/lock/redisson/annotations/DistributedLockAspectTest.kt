@@ -2,6 +2,8 @@ package io.kudos.ability.distributed.lock.redisson.annotations
 
 import io.kudos.ability.distributed.lock.common.annotations.DistributedLock
 import io.kudos.ability.distributed.lock.common.exception.DistributedLockAcquireException
+import io.kudos.ability.distributed.lock.common.locker.DistributedLockContext
+import io.kudos.ability.distributed.lock.common.locker.IDistributedLockCallback
 import io.kudos.ability.distributed.lock.redisson.kit.RedissonLockKit
 import io.kudos.ability.distributed.lock.redisson.locker.RedissonLocker
 import io.kudos.context.core.KudosContextHolder
@@ -18,6 +20,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for [DistributedLockAspect] covering lock/unlock and exception propagation.
@@ -33,6 +36,156 @@ internal class DistributedLockAspectTest {
         RedissonLockKit.clearCachedLockers()
         RedissonLockKit.setLockKeyPrefix(RedissonLockKit.DEFAULT_LOCK_KEY_PREFIX)
         KudosContextHolder.clear()
+        DistributedLockContext.clear()
+    }
+
+    @Test
+    fun cut_isPlainPointcutPlaceholder() {
+        // The pointcut method body must do nothing; invoking it directly only marks coverage.
+        DistributedLockAspect().cut()
+    }
+
+    @Test
+    fun around_successReturnsTargetMethodResultAndReleasesLock() {
+        val lock = RecordingRLock()
+        RedissonLockKit.bindLocker(
+            RedissonLocker().apply {
+                setPrivateField("redissonClient", redissonClientReturning(lock.proxy))
+            }
+        )
+
+        val result = DistributedLockAspect().around(
+            joinPoint(Target::class.java.getDeclaredMethod("locked")) { "locked" }
+        )
+
+        assertEquals("locked", result)
+        assertEquals(1, lock.tryLockCalls)
+        assertEquals(1, lock.unlockCalls)
+    }
+
+    @Test
+    fun around_missingAnnotationFailsFastWithExplicitMessage() {
+        val e = assertFailsWith<IllegalArgumentException> {
+            DistributedLockAspect().around(
+                joinPoint(Target::class.java.getDeclaredMethod("plain")) { "plain" }
+            )
+        }
+        assertTrue(e.message!!.contains("@DistributedLock is missing"))
+    }
+
+    @Test
+    fun around_tryLockErrorIsTreatedAsAcquireFailure() {
+        val lock = RecordingRLock(tryLockThrows = true)
+        RedissonLockKit.bindLocker(
+            RedissonLocker().apply {
+                setPrivateField("redissonClient", redissonClientReturning(lock.proxy))
+            }
+        )
+
+        assertFailsWith<DistributedLockAcquireException> {
+            DistributedLockAspect().around(
+                joinPoint(Target::class.java.getDeclaredMethod("locked")) { "should-not-run" }
+            )
+        }
+        assertEquals(0, lock.unlockCalls)
+    }
+
+    @Test
+    fun around_unlockErrorDoesNotMaskMethodResult() {
+        val lock = RecordingRLock(unlockThrows = true)
+        RedissonLockKit.bindLocker(
+            RedissonLocker().apply {
+                setPrivateField("redissonClient", redissonClientReturning(lock.proxy))
+            }
+        )
+
+        val result = DistributedLockAspect().around(
+            joinPoint(Target::class.java.getDeclaredMethod("locked")) { "locked" }
+        )
+
+        assertEquals("locked", result)
+        assertEquals(1, lock.unlockCalls)
+    }
+
+    @Test
+    fun around_invokesSuccessCallbackWithLockKey() {
+        val lock = RecordingRLock()
+        RedissonLockKit.bindLocker(
+            RedissonLocker().apply {
+                setPrivateField("redissonClient", redissonClientReturning(lock.proxy))
+            }
+        )
+        val callback = RecordingCallback()
+        DistributedLockContext.set(callback)
+
+        DistributedLockAspect().around(
+            joinPoint(Target::class.java.getDeclaredMethod("locked")) { "locked" }
+        )
+
+        assertEquals(1, callback.successKeys.size)
+        assertTrue(callback.successKeys.single().endsWith("locked::"))
+        assertEquals(0, callback.failKeys.size)
+    }
+
+    @Test
+    fun around_invokesFailCallbackWithLockKey() {
+        val lock = RecordingRLock(tryLockResult = false)
+        RedissonLockKit.bindLocker(
+            RedissonLocker().apply {
+                setPrivateField("redissonClient", redissonClientReturning(lock.proxy))
+            }
+        )
+        val callback = RecordingCallback()
+        DistributedLockContext.set(callback)
+
+        val result = DistributedLockAspect().around(
+            joinPoint(Target::class.java.getDeclaredMethod("legacyNull")) { "should-not-run" }
+        )
+
+        kotlin.test.assertNull(result)
+        assertEquals(0, callback.successKeys.size)
+        assertEquals(1, callback.failKeys.size)
+    }
+
+    @Test
+    fun around_spelKeyIsEvaluatedWithArgsAndPrefixedByTenantId() {
+        KudosContextHolder.get().tenantId = "1001"
+        val client = NameRecordingRedissonClient()
+        RedissonLockKit.bindLocker(
+            RedissonLocker().apply {
+                setPrivateField("redissonClient", client.proxy)
+            }
+        )
+
+        val result = DistributedLockAspect().around(
+            joinPoint(
+                Target::class.java.getDeclaredMethod("spel", String::class.java),
+                arrayOf("A-001")
+            ) { "spel-ok" }
+        )
+
+        assertEquals("spel-ok", result)
+        assertEquals("REDISSON::1001::order:A-001", client.lockNames.first())
+    }
+
+    @Test
+    fun around_spelKeyWithUnicodeArgument() {
+        KudosContextHolder.get().tenantId = "租户7"
+        val client = NameRecordingRedissonClient()
+        RedissonLockKit.bindLocker(
+            RedissonLocker().apply {
+                setPrivateField("redissonClient", client.proxy)
+            }
+        )
+
+        DistributedLockAspect().around(
+            joinPoint(
+                Target::class.java.getDeclaredMethod("spel", String::class.java),
+                arrayOf("订单：001")
+            ) { "ok" }
+        )
+
+        assertEquals("REDISSON::租户7::order:订单：001", client.lockNames.first())
     }
 
     @Test
@@ -111,6 +264,64 @@ internal class DistributedLockAspectTest {
 
         @DistributedLock(waitTime = 0, leaseTime = 30, throwOnFailure = false)
         fun legacyNull(): String = "legacy"
+
+        @Suppress("unused")
+        fun plain(): String = "plain"
+
+        @Suppress("unused", "UNUSED_PARAMETER")
+        @DistributedLock(key = "'order:' + #p0", waitTime = 0, leaseTime = 30)
+        fun spel(orderId: String): String = "spel"
+    }
+
+    /**
+     * Recording implementation of [IDistributedLockCallback] capturing callback keys.
+     *
+     * @author K
+     * @author AI: Claude
+     * @since 1.0.0
+     */
+    private class RecordingCallback : IDistributedLockCallback {
+        val successKeys = mutableListOf<String>()
+        val failKeys = mutableListOf<String>()
+
+        override fun doLockSuccess(lockKey: String) {
+            successKeys.add(lockKey)
+        }
+
+        override fun doLockFail(lockKey: String) {
+            failKeys.add(lockKey)
+        }
+    }
+
+    /**
+     * RedissonClient stub recording getLock key names; the returned lock always succeeds.
+     *
+     * @author K
+     * @author AI: Claude
+     * @since 1.0.0
+     */
+    private class NameRecordingRedissonClient {
+        val lockNames = mutableListOf<String>()
+
+        private val lock: RLock = proxy(RLock::class.java) { method, _ ->
+            when (method.name) {
+                "tryLock" -> true
+                "isLocked" -> true
+                "isHeldByCurrentThread" -> true
+                else -> defaultValue(method.returnType)
+            }
+        }
+
+        val proxy: RedissonClient = proxy(RedissonClient::class.java) { method, args ->
+            when (method.name) {
+                "getLock" -> {
+                    lockNames.add(args?.get(0) as String)
+                    lock
+                }
+
+                else -> defaultValue(method.returnType)
+            }
+        }
     }
 
     /**
@@ -129,7 +340,11 @@ internal class DistributedLockAspectTest {
      * @author AI: Codex
      * @since 1.0.0
      */
-    private class RecordingRLock(private val tryLockResult: Boolean = true) {
+    private class RecordingRLock(
+        private val tryLockResult: Boolean = true,
+        private val tryLockThrows: Boolean = false,
+        private val unlockThrows: Boolean = false
+    ) {
         var tryLockCalls = 0
         var unlockCalls = 0
 
@@ -137,6 +352,7 @@ internal class DistributedLockAspectTest {
             when (method.name) {
                 "tryLock" -> {
                     tryLockCalls++
+                    if (tryLockThrows) throw IllegalStateException("simulated tryLock error")
                     tryLockResult
                 }
 
@@ -144,6 +360,7 @@ internal class DistributedLockAspectTest {
                 "isHeldByCurrentThread" -> true
                 "unlock" -> {
                     unlockCalls++
+                    if (unlockThrows) throw IllegalStateException("simulated unlock error")
                     null
                 }
 
@@ -161,11 +378,18 @@ internal class DistributedLockAspectTest {
             }
 
         private fun joinPoint(targetMethod: Method, proceed: () -> Any?): ProceedingJoinPoint =
+            joinPoint(targetMethod, emptyArray<Any?>(), proceed)
+
+        private fun joinPoint(
+            targetMethod: Method,
+            args: Array<out Any?>,
+            proceed: () -> Any?
+        ): ProceedingJoinPoint =
             proxy(ProceedingJoinPoint::class.java) { joinPointMethod, _ ->
                 when (joinPointMethod.name) {
                     "getSignature" -> methodSignature(targetMethod)
                     "getTarget" -> target
-                    "getArgs" -> emptyArray<Any>()
+                    "getArgs" -> args
                     "proceed" -> proceed()
                     else -> defaultValue(joinPointMethod.returnType)
                 }

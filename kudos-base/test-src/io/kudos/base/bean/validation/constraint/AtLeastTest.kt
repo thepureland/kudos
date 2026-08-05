@@ -21,6 +21,10 @@ internal class AtLeastTest {
     fun testIllegalArguments() {
         val bean1 = TestIllegalArgumentsBean("")
         assertFailsWith<ValidationException> { ValidationKit.validateBean(bean1) }
+
+        // negative count must be rejected
+        val bean2 = TestNegativeCountBean("")
+        assertFailsWith<ValidationException> { ValidationKit.validateBean(bean2) }
     }
 
     /**
@@ -52,6 +56,11 @@ internal class AtLeastTest {
 
     @AtLeast(properties = ["p1", "p2", "p3"], count = 4, message = "at least four of p1, p2, p3 must be non-null")
     internal data class TestIllegalArgumentsBean(
+        val p: String
+    )
+
+    @AtLeast(properties = ["p"], count = -1, message = "count must not be negative")
+    internal data class TestNegativeCountBean(
         val p: String
     )
 

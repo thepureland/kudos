@@ -186,11 +186,14 @@ kudos:
 
 ## 测试覆盖
 
-**当前无单元测试**——Ktor WebSocket 测试需要 `ktor-server-test-host`，本模块作为最小
-可用抽象先发布。建议端到端测试在业务侧通过 `testApplication { ... }` 模式覆盖：
-- 启用 `WebSockets` 插件
-- 装上本模块的 `kudosWebSocket` 路由
-- 用 `client.webSocket(...)` 客户端发送 frame，断言 registry / broadcaster 的行为
+- `KudosWebSocketRegistryTest`（9 case）—— 三套索引的 register / unregister 行为，纯单测无 Ktor 依赖
+- `KudosWebSocketRoutingTest`（3 case）—— `testApplication { ... }` 端到端：收发回环 /
+  sessionFactory 元数据传递 / connect→text→disconnect 生命周期顺序
+- `DistributedWebSocketBroadcasterTest`（6 case）—— 双节点内存桥接：跨节点投递 /
+  自回声过滤 / handler 异常隔离
+
+`WebSocketBroadcaster` 本身没有独立单测（经由 DistributedWebSocketBroadcasterTest 间接覆盖）；
+`RedisWebSocketBroadcastChannel` 无测试（需要 Redis 容器）。
 
 ## 依赖
 

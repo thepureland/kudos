@@ -1,11 +1,18 @@
 package io.kudos.ability.security.jwt.init
 
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.crypto.MACSigner
+import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.jwt.SignedJWT
+import io.kudos.ability.security.jwt.init.properties.SecurityKeyProperties
 import io.kudos.ability.security.jwt.support.JwtParametersTool
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
+import org.springframework.core.io.DefaultResourceLoader
 import org.springframework.security.oauth2.jwt.JwtDecoder
 import org.springframework.security.oauth2.jwt.JwtEncoder
 import java.io.File
@@ -16,10 +23,14 @@ import java.security.KeyStore
 import java.security.Security
 import java.security.cert.X509Certificate
 import java.time.Duration
+import java.time.Instant
+import java.util.Base64
 import java.util.Date
 import javax.security.auth.x500.X500Principal
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -39,6 +50,9 @@ import kotlin.test.assertTrue
  *    NimbusJwtDecoder + JWKSource chain is exercised end-to-end).
  *  - A custom-provided [JwtEncoder] bean wins over the auto-config's default
  *    (`@ConditionalOnMissingBean` honored).
+ *  - Negative security boundaries: tampered payload (signature no longer covers claims),
+ *    unsigned `alg=none` token, and the HS256 algorithm-confusion forgery (HMAC-signed with the
+ *    RSA public key bytes) are all rejected by the decoder.
  *
  * @author AI: Claude
  * @since 1.0.0
@@ -114,6 +128,170 @@ internal class SecurityJwtAutoConfigurationTest {
                 assertEquals(1, beans.size, "ConditionalOnMissingBean must keep the autoconfig encoder off the bus")
                 assertTrue(beans.values.single() === userEncoder)
             }
+    }
+
+    @Test
+    fun decoder_rejectsTokenWithTamperedPayload() {
+        // Signature-bypass boundary: re-encode the payload with a different subject while keeping
+        // the original RS256 signature. The decoder must reject — accepting it would mean claims
+        // are trusted without the signature actually covering them.
+        val keystoreFile = writeKeystore()
+        runner
+            .withPropertyValues(
+                "kudos.ability.security.jwt.key.key-store=file:${keystoreFile.absolutePath}",
+                "kudos.ability.security.jwt.key.store-pass=$KEYSTORE_PASSWORD",
+                "kudos.ability.security.jwt.key.alias=$KEYSTORE_ALIAS",
+                "kudos.ability.security.jwt.claims.iss=https://kudos-integration-test",
+                "kudos.ability.security.jwt.claims.exp=3600",
+            )
+            .run { ctx ->
+                val encoder = ctx.getBean(JwtEncoder::class.java)
+                val decoder = ctx.getBean(JwtDecoder::class.java)
+                val params = ctx.getBean(JwtParametersTool::class.java)
+
+                val token = encoder.encode(params.createDefault("alice")).tokenValue
+                // Baseline: the untampered token decodes fine.
+                assertEquals("alice", decoder.decode(token).subject)
+
+                val parts = token.split(".")
+                val payloadJson = String(Base64.getUrlDecoder().decode(parts[1]), Charsets.UTF_8)
+                val forgedPayload = Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(payloadJson.replace("alice", "mallory").toByteArray(Charsets.UTF_8))
+                val forged = "${parts[0]}.$forgedPayload.${parts[2]}"
+
+                assertFails("tampered payload with original signature must be rejected") {
+                    decoder.decode(forged)
+                }
+            }
+    }
+
+    @Test
+    fun decoder_rejectsUnsignedAlgNoneToken() {
+        // The classic `alg=none` attack: an unsigned token claiming the "none" algorithm. The
+        // decoder must reject it — "none" is not in the configured JWS algorithm set, and an
+        // unsigned JWT must never be accepted by a verifying decoder.
+        val keystoreFile = writeKeystore()
+        runner
+            .withPropertyValues(
+                "kudos.ability.security.jwt.key.key-store=file:${keystoreFile.absolutePath}",
+                "kudos.ability.security.jwt.key.store-pass=$KEYSTORE_PASSWORD",
+                "kudos.ability.security.jwt.key.alias=$KEYSTORE_ALIAS",
+            )
+            .run { ctx ->
+                val decoder = ctx.getBean(JwtDecoder::class.java)
+                val enc = Base64.getUrlEncoder().withoutPadding()
+                val exp = Instant.now().plusSeconds(3600).epochSecond
+                val header = enc.encodeToString("""{"alg":"none"}""".toByteArray(Charsets.UTF_8))
+                val payload = enc.encodeToString("""{"sub":"mallory","exp":$exp}""".toByteArray(Charsets.UTF_8))
+
+                assertFails("alg=none token must be rejected") {
+                    decoder.decode("$header.$payload.")
+                }
+            }
+    }
+
+    @Test
+    fun decoder_rejectsHs256TokenSignedWithRsaPublicKeyBytes() {
+        // Algorithm-confusion attack: sign an HS256 token using the (public!) RSA key bytes as
+        // the HMAC secret. A vulnerable verifier that feeds the RSA public key into HMAC
+        // verification would accept this attacker-mintable token. Nimbus's
+        // JWSVerificationKeySelector matches keys by type (HS* requires an `oct` key; the
+        // JWKSource only holds an RSA key), so this must fail — lock that property in.
+        val keystoreFile = writeKeystore()
+        val keyStore = KeyStore.getInstance("PKCS12").apply {
+            keystoreFile.inputStream().use { load(it, KEYSTORE_PASSWORD.toCharArray()) }
+        }
+        val publicKeyBytes = keyStore.getCertificate(KEYSTORE_ALIAS).publicKey.encoded
+        val claims = JWTClaimsSet.Builder()
+            .subject("mallory")
+            .expirationTime(Date(System.currentTimeMillis() + 3_600_000))
+            .build()
+        val forged = SignedJWT(JWSHeader(JWSAlgorithm.HS256), claims)
+            .apply { sign(MACSigner(publicKeyBytes)) }
+            .serialize()
+
+        runner
+            .withPropertyValues(
+                "kudos.ability.security.jwt.key.key-store=file:${keystoreFile.absolutePath}",
+                "kudos.ability.security.jwt.key.store-pass=$KEYSTORE_PASSWORD",
+                "kudos.ability.security.jwt.key.alias=$KEYSTORE_ALIAS",
+            )
+            .run { ctx ->
+                val decoder = ctx.getBean(JwtDecoder::class.java)
+                assertFails("HS256 token signed with the RSA public key bytes must be rejected") {
+                    decoder.decode(forged)
+                }
+            }
+    }
+
+    @Test
+    fun loadKeyPair_nullKeyStorePath_throwsIllegalArgumentWithGuidance() {
+        // Unreachable through the Spring path (ConditionalOnProperty guarantees the property is
+        // present before the bean method runs), but loadKeyPair is the single place the contract
+        // lives — lock in the precondition message for direct callers / future refactors.
+        val config = SecurityJwtAutoConfiguration()
+        val ex = assertFailsWith<IllegalArgumentException> {
+            config.loadKeyPair(SecurityKeyProperties(), DefaultResourceLoader())
+        }
+        assertTrue(
+            ex.message!!.contains("kudos.ability.security.jwt.key.key-store must be set"),
+            "precondition message must name the missing property; got: ${ex.message}",
+        )
+    }
+
+    @Test
+    fun loadKeyPair_missingKeystoreFile_throwsIllegalStateWrappingCause() {
+        val config = SecurityJwtAutoConfiguration()
+        val props = SecurityKeyProperties().apply {
+            keyStore = "file:${File(Files.createTempDirectory("kudos-jwt-missing").toFile(), "no-such.p12").absolutePath}"
+            storePass = KEYSTORE_PASSWORD
+            alias = KEYSTORE_ALIAS
+        }
+        val ex = assertFailsWith<IllegalStateException> {
+            config.loadKeyPair(props, DefaultResourceLoader())
+        }
+        assertTrue(
+            ex.message!!.startsWith("Failed to load JWT keystore"),
+            "failure must be wrapped in the keystore-specific IllegalStateException; got: ${ex.message}",
+        )
+        assertNotNull(ex.cause, "original exception must be preserved as cause for diagnosis")
+    }
+
+    @Test
+    fun loadKeyPair_wrongStorePassword_throwsIllegalState() {
+        val keystoreFile = writeKeystore()
+        val config = SecurityJwtAutoConfiguration()
+        val props = SecurityKeyProperties().apply {
+            keyStore = "file:${keystoreFile.absolutePath}"
+            storePass = "definitely-not-the-password"
+            alias = KEYSTORE_ALIAS
+        }
+        val ex = assertFailsWith<IllegalStateException> {
+            config.loadKeyPair(props, DefaultResourceLoader())
+        }
+        assertTrue(ex.message!!.startsWith("Failed to load JWT keystore"))
+    }
+
+    @Test
+    fun loadKeyPair_validKeystore_returnsMatchingRsaKeyPair() {
+        // Direct happy-path check: public key from the certificate must match the private key's
+        // modulus (i.e. loadKeyPair really pairs the cert with ITS private key, not just any).
+        val keystoreFile = writeKeystore()
+        val config = SecurityJwtAutoConfiguration()
+        val props = SecurityKeyProperties().apply {
+            keyStore = "file:${keystoreFile.absolutePath}"
+            storePass = KEYSTORE_PASSWORD
+            alias = KEYSTORE_ALIAS
+        }
+        val keyPair = config.loadKeyPair(props, DefaultResourceLoader())
+        val publicModulus = (keyPair.public as java.security.interfaces.RSAPublicKey).modulus
+        val privateModulus = (keyPair.private as java.security.interfaces.RSAPrivateKey).modulus
+        assertEquals(publicModulus, privateModulus, "certificate and private key must belong to the same RSA key pair")
+    }
+
+    @Test
+    fun getComponentName_returnsModuleArtifactName() {
+        assertEquals("kudos-ability-security-jwt", SecurityJwtAutoConfiguration().getComponentName())
     }
 
     private fun writeKeystore(): File {

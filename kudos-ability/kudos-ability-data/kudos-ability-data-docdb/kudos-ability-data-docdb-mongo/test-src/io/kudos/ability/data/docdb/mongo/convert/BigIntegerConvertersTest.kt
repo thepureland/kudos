@@ -56,6 +56,40 @@ internal class BigIntegerConvertersTest {
     }
 
     @Test
+    fun reading_acceptsExplicitPlusSignAndNormalizesOnWrite() {
+        // BigInteger(String) accepts a leading '+'; the value written back out is normalized
+        // (no sign for positives), so a once-rewritten document converges to canonical form.
+        val read = BigIntegerConverters.StringToBigInteger.convert("+123")
+        assertEquals(BigInteger("123"), read)
+        assertEquals("123", BigIntegerConverters.BigIntegerToString.convert(read))
+    }
+
+    @Test
+    fun reading_normalizesLeadingZeros() {
+        // Leading zeros parse fine but are not preserved on write — value equality is the
+        // contract, not string identity.
+        val read = BigIntegerConverters.StringToBigInteger.convert("000123")
+        assertEquals(BigInteger("123"), read)
+        assertEquals("123", BigIntegerConverters.BigIntegerToString.convert(read))
+    }
+
+    @Test
+    fun reading_failsOnWhitespacePaddedInput() {
+        // BigInteger(String) does not trim — whitespace-padded stored values are malformed data
+        // and must fail loudly, same as any other corruption.
+        assertFails { BigIntegerConverters.StringToBigInteger.convert(" 123") }
+        assertFails { BigIntegerConverters.StringToBigInteger.convert("123 ") }
+        assertFails { BigIntegerConverters.StringToBigInteger.convert("\t123\n") }
+    }
+
+    @Test
+    fun reading_failsOnDecimalAndScientificNotation() {
+        // Values that snuck in as Decimal128/Double renderings must not silently truncate.
+        assertFails { BigIntegerConverters.StringToBigInteger.convert("123.45") }
+        assertFails { BigIntegerConverters.StringToBigInteger.convert("1e10") }
+    }
+
+    @Test
     fun reading_failsLoudlyOnMalformedString() {
         // Deliberate divergence from soul: soul swallowed blank-input as null, which masked data
         // corruption. The kudos port lets NumberFormatException propagate so a stray empty or

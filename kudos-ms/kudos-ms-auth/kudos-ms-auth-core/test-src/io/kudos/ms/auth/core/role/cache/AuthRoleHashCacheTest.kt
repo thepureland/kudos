@@ -1,7 +1,11 @@
 package io.kudos.ms.auth.core.role.cache
 
 import io.kudos.ability.cache.common.kit.HashCacheKit
+import io.kudos.ms.auth.common.role.vo.AuthRoleCacheEntry
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
+import io.kudos.ms.auth.core.role.event.AuthRoleBatchDeleted
+import io.kudos.ms.auth.core.role.event.AuthRoleInserted
+import io.kudos.ms.auth.core.role.event.AuthRoleUpdated
 import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
@@ -140,6 +144,62 @@ class AuthRoleHashCacheTest : RdbAndRedisCacheTestBase() {
         val count = authRoleDao.batchDelete(ids)
         assertEquals(2, count)
         cacheHandler.syncOnBatchDelete(ids)
+        assertNull(cacheHandler.getRoleById(id1))
+        assertNull(cacheHandler.getRoleById(id2))
+    }
+
+    @Test
+    fun reloadAllWithoutClearOverwritesInPlace() {
+        // clear=false path: overwrite in place rather than clear-then-write
+        cacheHandler.reloadAll(true)
+        cacheHandler.reloadAll(false)
+        val item = cacheHandler.getRoleById(roleId1)
+        assertNotNull(item, "role should still be present after an in-place reload")
+        assertEquals("ROLE_ADMIN", item.code)
+    }
+
+    @Test
+    fun handlerMetadataAccessors() {
+        assertEquals(AuthRoleHashCache.CACHE_NAME, cacheHandler.cacheName())
+        assertEquals(
+            setOf(AuthRoleCacheEntry::tenantId.name, AuthRoleCacheEntry::code.name),
+            AuthRoleHashCache.FILTERABLE_PROPERTIES,
+        )
+    }
+
+    @Test
+    fun onInsertedEvent_loadsIntoCache() {
+        cacheHandler.reloadAll(true)
+        val id = insertNewRecordToDb()
+        cacheHandler.on(AuthRoleInserted(id))
+        assertNotNull(cacheHandler.getRoleById(id))
+    }
+
+    @Test
+    fun onUpdatedEvent_refreshesCache() {
+        cacheHandler.reloadAll(true)
+        authRoleDao.updateProperties(roleId2, mapOf(AuthRole::name.name to newRoleName))
+        cacheHandler.on(AuthRoleUpdated(roleId2))
+        assertEquals(newRoleName, cacheHandler.getRoleById(roleId2)?.name)
+    }
+
+    @Test
+    fun onBatchDeletedEvent_removesFromCache() {
+        cacheHandler.reloadAll(true)
+        val id1 = insertNewRecordToDb()
+        val id2 = insertNewRecordToDb()
+        cacheHandler.on(AuthRoleInserted(id1))
+        cacheHandler.on(AuthRoleInserted(id2))
+        assertNotNull(cacheHandler.getRoleById(id1))
+        authRoleDao.batchDelete(listOf(id1, id2))
+        cacheHandler.on(
+            AuthRoleBatchDeleted(
+                listOf(
+                    AuthRoleBatchDeleted.Item(id1, tenant001, "code1"),
+                    AuthRoleBatchDeleted.Item(id2, tenant001, "code2"),
+                )
+            )
+        )
         assertNull(cacheHandler.getRoleById(id1))
         assertNull(cacheHandler.getRoleById(id2))
     }

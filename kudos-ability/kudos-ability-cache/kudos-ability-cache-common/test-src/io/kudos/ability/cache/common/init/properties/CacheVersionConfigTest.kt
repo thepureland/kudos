@@ -58,4 +58,21 @@ internal class CacheVersionConfigTest {
         val cfg = CacheVersionConfig().apply { cacheVersion = "v2" }
         assertEquals("v2:cache:local-remote:channel", cfg.realMsgChannel)
     }
+
+    @Test
+    fun defaultVersion_isDefaultLiteral() {
+        // A freshly constructed config (no @Value injection in a unit test) keeps the field default "default".
+        val cfg = CacheVersionConfig()
+        assertEquals("default", cfg.cacheVersion)
+        assertEquals("default::USER", cfg.getFinalCacheName("USER"))
+        assertEquals("USER", cfg.getRealCacheName("default::USER"))
+    }
+
+    @Test
+    fun getRealCacheName_blankVersion_returnsAsIs() {
+        val cfg = CacheVersionConfig().apply { cacheVersion = "" }
+        // Blank version never strips any prefix (mirrors getFinalCacheName).
+        assertEquals("v2::USER", cfg.getRealCacheName("v2::USER"))
+        assertEquals("USER", cfg.getRealCacheName("USER"))
+    }
 }

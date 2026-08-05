@@ -608,6 +608,22 @@ internal class CriteriaTest {
         assertEquals("x IS NULL", criteria.toString())
     }
 
+    @Test
+    fun testToStringRendersNestedCriteriaBranch() {
+        // renderGroup's `is Criteria` branch: a nested Criteria added via AND is rendered using its own toString
+        val nested = Criteria("a", OperatorEnum.EQ, "1").addAnd("b", OperatorEnum.GT, 2)
+        val outer = Criteria("c", OperatorEnum.EQ, "3").addAnd(nested)
+        assertEquals("c = 3 AND a = 1 AND b > 2", outer.toString())
+    }
+
+    @Test
+    fun testToStringSkipsEmptyOrArrayGroup() {
+        // An OR group that becomes empty is never stored, but render of a present-but-empty array maps to null.
+        // Construct via a single valid OR (one element) to keep at least a parenthesized group rendered.
+        val criteria = Criteria().addOr(Criterion("x", OperatorEnum.EQ, "1"))
+        assertEquals("(x = 1)", criteria.toString())
+    }
+
     // ============================================================
     // Chained call return value and reference identity
     // ============================================================

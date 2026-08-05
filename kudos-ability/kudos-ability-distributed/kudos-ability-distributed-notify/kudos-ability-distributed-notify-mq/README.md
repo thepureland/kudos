@@ -107,3 +107,19 @@ testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-abili
 testImplementation(libs.h2database.h2)
 testImplementation(libs.spring.boot.starter.web)
 ```
+
+## 改进建议（自动分析 2026-06-11）
+
+- 【功能/幂等】`src/io/kudos/ability/distributed/notify/mq/init/NotifyMqAutoConfiguration.kt`：
+  `mqNotify` 消费端没有幂等去重手段——MQ at-least-once 重投时同一通知会被 listener 处理多次；
+  目前只能依赖业务 listener 自行幂等，且 `NotifyMessageVo` 无 messageId 可作幂等键（见
+  notify-common 的建议）。建议在 producer 侧补 messageId，consumer 侧提供可选的去重窗口。
+- 【可观测性】`mqNotify` 消费仅有 `log.info` 文本日志，没有消费量 / 失败量 / 消费延迟指标；
+  每条消息一行 info 在高吞吐下也偏多，可考虑降为 debug + 指标计数。
+- 【可维护性】`NotifyMqAutoConfiguration` 通过 `@Autowired(required=false)` 字段持有
+  `notifyCommonProperties` / `environment`，而父类 `NotifyCommonAutoConfiguration` 的
+  `notifyListenerBeanPostProcessor` 已有同样的 namespace 解析逻辑（fallback 链重复两处）；
+  建议把 namespace 解析抽成共享工具，避免两处逻辑漂移。
+- 【测试】消费链路依赖 RocketMQ Testcontainers 集成测试（`NotifyMqTest`）；`mqNotify` 的
+  分支逻辑（空消息 / 空 data / blank notifyType / listener 异常 rethrow 开关 / namespace
+  fallback 开关）可用纯单测覆盖 Consumer lambda，目前仅部分覆盖。

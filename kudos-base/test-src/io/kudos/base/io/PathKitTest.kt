@@ -149,4 +149,50 @@ internal class PathKitTest {
         // directory
         assert(File(PathKit.getResourcePath("i18n")).exists())
     }
+
+    @Test
+    fun getClasspathIncludePackage_memberAndAnonymousClass() {
+        // member (nested) class -> the while loop walks up to the enclosing top-level file
+        val memberPath = PathKit.getClasspathIncludePackage(Member::class)
+        assertTrue(memberPath.isNotEmpty())
+
+        // anonymous class -> isAnonymousClass branch
+        val anon = object : Runnable { override fun run() {} }
+        val anonPath = PathKit.getClasspathIncludePackage(anon::class)
+        assertTrue(anonPath.isNotEmpty())
+
+        // getClasspath (without package) on the same member class also walks up the enclosing chain
+        val rootPath = PathKit.getClasspath(Member::class)
+        assertTrue(rootPath.isNotEmpty())
+        assertTrue(memberPath.startsWith(rootPath))
+    }
+
+    @Test
+    fun getRelativePath_baseDirIsFilesystemRoot() {
+        // A filesystem root has no parentFile, exercising the parentFile == null branch.
+        val roots = File.listRoots()
+        assertTrue(roots.isNotEmpty())
+        val root = roots[0]
+        val child = File(root, "some-file.txt")
+        val rel = PathKit.getRelativePath(root, child)
+        // substring(baseDir.length) then backslash->slash
+        assertEquals("some-file.txt", rel.trimStart('/'))
+    }
+
+    @Test
+    fun getResourcePath_fromJar_extractsToTempFile() {
+        // kotlin-stdlib ships this resource inside a jar, so getResourcePath must extract it to a temp file.
+        val name = "kotlin/kotlin.kotlin_builtins"
+        val cl = Thread.currentThread().contextClassLoader
+        val url = cl.getResource(name)
+        if (url != null && url.protocol != "file") {
+            val path = PathKit.getResourcePath(name)
+            val f = File(path)
+            assertTrue(f.exists(), "extracted temp file should exist: $path")
+            assertTrue(f.length() > 0)
+        }
+    }
+
+    /** Member (nested) class used to exercise the enclosing-class walk in getClasspath*. */
+    private class Member
 }

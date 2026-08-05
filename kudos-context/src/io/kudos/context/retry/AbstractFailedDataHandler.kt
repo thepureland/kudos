@@ -36,6 +36,13 @@ import io.kudos.base.lang.string.RandomStringKit
 abstract class AbstractFailedDataHandler<T> : IFailedDataHandler<T> {
 
     /**
+     * The concrete type of [T], resolved once via reflection from the subclass's generic declaration.
+     * Cached lazily: the resolution result never changes for a given handler instance, and resolving it on every
+     * [readDataFromFile] call would repeat the same reflective superclass walk for each file in a retry batch.
+     */
+    private val dataType by lazy { GenericKit.getSuperClassGenricClass(this::class) }
+
+    /**
      * Persists failed data to a local file.
      *
      * Serializes failed data to JSON and writes it to the local file system.
@@ -131,7 +138,6 @@ abstract class AbstractFailedDataHandler<T> : IFailedDataHandler<T> {
     @Suppress("UNCHECKED_CAST")
     protected fun readDataFromFile(file: File): T = try {
         val bytes = Files.readAllBytes(file.toPath())
-        val dataType = GenericKit.getSuperClassGenricClass(this::class)
         JsonKit.readValue(bytes, dataType) as T
     } catch (e: IOException) {
         throw RuntimeException("Read failed data error", e)

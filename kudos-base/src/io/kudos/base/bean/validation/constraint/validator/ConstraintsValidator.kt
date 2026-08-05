@@ -164,7 +164,7 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
          * @author K
          * @since 1.0.0
          */
-        private fun getAnnotationMessage(annotation: Annotation): String {
+        internal fun getAnnotationMessage(annotation: Annotation): String {
             val annotationClass = annotation.annotationClass.java
             val method = annotationMessageMethodCache.getOrPut(annotationClass) {
                 annotationClass.getDeclaredMethod("message").apply { isAccessible = true }
@@ -205,13 +205,16 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
         } else {
             value
         }
-        val validators = ValidatorFactory.getValidator(annotation, v)
+        // 用带注解的重载：组合约束（如 Range）会被展开成多个子校验器，
+        // 每个子校验器必须用它自己对应的具体注解（Min/Max）来 initialize，
+        // 而不是原始的组合注解（Range），否则会触发 ClassCastException。
+        val validators = ValidatorFactory.getValidatorsWithAnnotations(annotation, v)
         if (validators.isEmpty()) {
             error("Constraints约束不支持【${annotation.annotationClass}】作为其子约束！")
         } else {
             var pass = true
-            validators.forEach {
-                pass = pass && doValidate(it, annotation, v, context)
+            validators.forEach { (validator, concreteAnnotation) ->
+                pass = pass && doValidate(validator, concreteAnnotation, v, context)
             }
             return pass
         }
@@ -331,7 +334,7 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
      * @author K
      * @since 1.0.0
      */
-    private fun buildConstraintDescriptorProxy(annotation: Annotation): ConstraintDescriptor<*> {
+    internal fun buildConstraintDescriptorProxy(annotation: Annotation): ConstraintDescriptor<*> {
         val attributeMethods = annotationAttributeMethodsCache.getOrPut(annotation.annotationClass.java) {
             annotation.annotationClass.java.declaredMethods
                 .filter { it.parameterCount == 0 && it.name != "annotationType" }
@@ -378,7 +381,7 @@ class ConstraintsValidator : ConstraintValidator<Constraints, Any?> {
      * @author K
      * @since 1.0.0
      */
-    private fun defaultReturn(type: Class<*>): Any? = when {
+    internal fun defaultReturn(type: Class<*>): Any? = when {
         type == java.lang.Boolean.TYPE -> false
         type == Integer.TYPE -> 0
         type == java.lang.Long.TYPE -> 0L
