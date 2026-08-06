@@ -19,3 +19,17 @@ merge into "user_account" ("id", "username", "tenant_id", "login_password", "sup
 merge into "auth_role_user" ("id", "role_id", "user_id", "create_user_id", "create_user_name") values
     ('7e3b9a01-0000-0000-0000-0000000000c0', '7e3b9a01-0000-0000-0000-0000000000a1', '7e3b9a01-0000-0000-0000-0000000000b1', 'system', '系统'),
     ('7e3b9a01-0000-0000-0000-0000000000c1', '7e3b9a01-0000-0000-0000-0000000000a3', '7e3b9a01-0000-0000-0000-0000000000b2', 'system', '系统');
+
+-- A19 用例:闸门必须拦住的三种时效性授权。
+-- role5 需要审批;user3 属于另一个租户;user2 经转授持有 role6(带 granted_by/parent_grant_id)。
+merge into "auth_role" ("id", "code", "name", "tenant_id", "subsys_code", "remark", "active", "built_in", "approval_required", "create_user_id", "create_user_name") values
+    ('7e3b9a01-0000-0000-0000-0000000000a5', 'tmp-role-5-7e3b9a01', 'tmp-role-5', 'tmp-tenant-7e3b9a01', 'ams', 'needs approval', true, false, true, 'system', '系统'),
+    ('7e3b9a01-0000-0000-0000-0000000000a6', 'tmp-role-6-7e3b9a01', 'tmp-role-6', 'tmp-tenant-7e3b9a01', 'ams', 'delegated to user2', true, false, false, 'system', '系统');
+
+merge into "user_account" ("id", "username", "tenant_id", "login_password", "supervisor_id", "remark", "active", "built_in", "create_user_id", "create_user_name") values
+    ('7e3b9a01-0000-0000-0000-0000000000b3', 'tmp-user-3-7e3b9a01', 'tmp-tenant-other-7e3b9a01', 'pwd', '00000000-0000-0000-0000-000000000000', 'other tenant', true, false, 'system', '系统');
+
+-- user2 经转授持有 role6:一条带转授链信息的时间窗授权,时间窗端点不得替换它
+merge into "auth_role_user" ("id", "role_id", "user_id", "granted_by", "parent_grant_id", "delegable_depth", "end_time", "create_user_id", "create_user_name") values
+    ('7e3b9a01-0000-0000-0000-0000000000c2', '7e3b9a01-0000-0000-0000-0000000000a6', '7e3b9a01-0000-0000-0000-0000000000b2', '7e3b9a01-0000-0000-0000-0000000000b1', '7e3b9a01-0000-0000-0000-0000000000c0', 0, TIMESTAMP '2099-01-01 00:00:00', 'system', '系统');
+

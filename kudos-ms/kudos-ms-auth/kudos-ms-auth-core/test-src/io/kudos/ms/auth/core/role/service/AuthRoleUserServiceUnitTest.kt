@@ -1,16 +1,10 @@
 package io.kudos.ms.auth.core.role.service
 
-import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
-import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
-import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
-import io.kudos.ms.auth.core.role.exclusion.model.po.AuthRoleExclusion
-import io.kudos.ms.auth.core.role.exclusion.service.iservice.IAuthRoleExclusionService
-import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.auth.core.role.service.impl.AuthRoleUserService
 import org.mockito.ArgumentCaptor
@@ -63,10 +57,6 @@ internal class AuthRoleUserServiceUnitTest {
     private val roleIdsByUserIdCache = mock(RoleIdsByUserIdCache::class.java)
     private val resourceIdsByUserIdCache = mock(ResourceIdsByUserIdCache::class.java)
     private val eventPublisher = mock(ApplicationEventPublisher::class.java)
-    private val authRoleDao = mock(AuthRoleDao::class.java)
-    private val authGroupUserDao = mock(AuthGroupUserDao::class.java)
-    private val authGroupRoleDao = mock(AuthGroupRoleDao::class.java)
-    private val exclusionService = mock(IAuthRoleExclusionService::class.java)
     private val grantPolicyService = mock(IAuthGrantPolicyService::class.java)
     private val authPrincipalVersionDao = mock(AuthPrincipalVersionDao::class.java)
 
@@ -77,10 +67,6 @@ internal class AuthRoleUserServiceUnitTest {
         inject("grantPolicyService", grantPolicyService)
         inject("authPrincipalVersionDao", authPrincipalVersionDao)
         inject("eventPublisher", eventPublisher)
-        inject("authRoleDao", authRoleDao)
-        inject("authGroupUserDao", authGroupUserDao)
-        inject("authGroupRoleDao", authGroupRoleDao)
-        inject("exclusionService", exclusionService)
     }
 
     private fun AuthRoleUserService.inject(field: String, value: Any) {
@@ -96,24 +82,8 @@ internal class AuthRoleUserServiceUnitTest {
     // dao.searchRoleIdsByUserId has a `now: LocalDateTime = now()` default arg that the service
     // fills implicitly, so an exact-value stub never matches (the two `now()` instants differ).
     // Stub both positions with matchers; the time matcher coalesces the null Mockito returns.
-    private fun anyLdt(): java.time.LocalDateTime =
-        ArgumentMatchers.any(java.time.LocalDateTime::class.java) ?: java.time.LocalDateTime.now()
 
-    private fun stubSearchRoleIdsByUserId(roleIds: List<String>) {
-        whenCalled(dao.searchRoleIdsByUserId(ArgumentMatchers.anyString(), anyLdt())).thenReturn(roleIds)
-    }
 
-    private fun role(id: String, tenant: String?) = AuthRole {
-        this.id = id
-        if (tenant != null) this.tenantId = tenant
-    }
-
-    private fun excl(a: String, b: String, id: String) = AuthRoleExclusion {
-        this.roleAId = a
-        this.roleBId = b
-        this.tenantId = "t1"
-        this.id = id
-    }
 
     // ---------------------------------------------------------------- batchBind guards
 
@@ -140,7 +110,6 @@ internal class AuthRoleUserServiceUnitTest {
 
     @Test
     fun batchBind_allAlreadyBound_returnsZeroNoInsertNoEvent() {
-        whenCalled(authRoleDao.get("role1")).thenReturn(role("role1", "t1"))
         whenCalled(dao.searchUserIdsByRoleId("role1")).thenReturn(listOf("u1", "u2"))
         assertEquals(0, service.batchBind("role1", listOf("u1", "u2")))
         verify(dao, never()).batchInsert(anyRelationCollection(), anyInt())
@@ -184,34 +153,6 @@ internal class AuthRoleUserServiceUnitTest {
         assertTrue(err.message!!.contains("ex1"))
         verify(dao, never()).batchInsert(anyRelationCollection(), anyInt())
         verify(eventPublisher, never()).publishEvent(ArgumentMatchers.any())
-    }
-
-    // ---------------------------------------------------------------- findSodViolationMessage
-
-    @Test
-    fun findSodViolationMessage_allowed_returnsNull() {
-        stubSearchRoleIdsByUserId(emptyList())
-        whenCalled(authGroupUserDao.searchGroupIdsByUserId(ArgumentMatchers.anyString(), anyLdt())).thenReturn(emptySet())
-        // Empty effective set ⇒ findViolation queried with emptySet ⇒ null (allowed).
-        whenCalled(exclusionService.findViolation("t1", "role1", emptySet())).thenReturn(null)
-        assertNull(service.findSodViolationMessage("t1", "role1", "u1"))
-    }
-
-    @Test
-    fun findSodViolationMessage_expandsEffectiveRolesAndFormatsMessage() {
-        // direct={d1}, group g1 → {gr1}; ancestors of {d1,gr1} → {anc1}; expect exact union passed.
-        stubSearchRoleIdsByUserId(listOf("d1"))
-        whenCalled(authGroupUserDao.searchGroupIdsByUserId(ArgumentMatchers.anyString(), anyLdt())).thenReturn(setOf("g1"))
-        whenCalled(authGroupRoleDao.searchRoleIdsByGroupId("g1")).thenReturn(setOf("gr1"))
-        whenCalled(authRoleDao.searchAncestorRoleIds(listOf("d1", "gr1"))).thenReturn(setOf("anc1"))
-        whenCalled(exclusionService.findViolation("t1", "role1", setOf("d1", "gr1", "anc1")))
-            .thenReturn(excl("gr1", "role1", "ex7"))
-
-        val msg = service.findSodViolationMessage("t1", "role1", "u1")
-        assertNotNull(msg)
-        assertTrue(msg!!.contains("User u1"))
-        assertTrue(msg.contains("role1"))
-        assertTrue(msg.contains("ex7"))
     }
 
     // ---------------------------------------------------------------- unbind

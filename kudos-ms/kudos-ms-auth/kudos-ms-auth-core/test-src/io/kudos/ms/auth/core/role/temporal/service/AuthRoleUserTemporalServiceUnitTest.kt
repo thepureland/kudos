@@ -1,11 +1,11 @@
 package io.kudos.ms.auth.core.role.temporal.service
 
-import io.kudos.ms.auth.core.role.dao.AuthRoleDao
+import io.kudos.ms.auth.core.policy.GrantCandidate
+import io.kudos.ms.auth.core.policy.GrantRejection
+import io.kudos.ms.auth.core.policy.iservice.IAuthGrantPolicyService
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
-import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
-import io.kudos.ms.auth.core.role.service.impl.AuthRoleUserService
 import io.kudos.ms.auth.core.role.temporal.service.impl.AuthRoleUserTemporalService
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.anyString
@@ -27,9 +27,10 @@ import kotlin.test.assertTrue
  *
  *  - getGrantsByRoleId: the active-flag computation across every window shape (open/open, past,
  *    future, current, start-only, end-only) and the (userId, startTime nulls-last) ordering;
- *  - bindTemporal: each guard (start-after-end, role-not-found, existing-permanent-grant, SoD), the
- *    happy path (delete-then-insert + relations-changed event), and the NULL-bound branches that
- *    skip the start/end comparison;
+ *  - bindTemporal: the window sanity guard, the policy-gate consultation (admission — tenant,
+ *    existence, approval, SoD — is the gate's job; this class's job is to ask it and honour the
+ *    verdict), the two temporal-only guards (permanent grants are not narrowed, delegation-chain
+ *    rows are not replaced), and the in-place revive of a plain windowed/revoked row;
  *  - purgeExpired: the empty short-circuit (no event), and the group-by-role eviction over a
  *    multi-role expired set.
  *
@@ -40,13 +41,11 @@ import kotlin.test.assertTrue
 internal class AuthRoleUserTemporalServiceUnitTest {
 
     private val dao = mock(AuthRoleUserDao::class.java)
-    private val authRoleDao = mock(AuthRoleDao::class.java)
-    private val authRoleUserService = mock(AuthRoleUserService::class.java)
+    private val grantPolicyService = mock(IAuthGrantPolicyService::class.java)
     private val eventPublisher = mock(org.springframework.context.ApplicationEventPublisher::class.java)
 
     private val service = AuthRoleUserTemporalService(dao).apply {
-        inject("authRoleDao", authRoleDao)
-        inject("authRoleUserService", authRoleUserService)
+        inject("grantPolicyService", grantPolicyService)
         inject("eventPublisher", eventPublisher)
     }
 
@@ -81,10 +80,6 @@ internal class AuthRoleUserTemporalServiceUnitTest {
             this.endTime = end
         }
 
-    private fun role(id: String, tenant: String = "t1") = AuthRole {
-        this.id = id
-        this.tenantId = tenant
-    }
 
     // ---------------------------------------------------------------- getGrantsByRoleId
 
@@ -149,6 +144,14 @@ internal class AuthRoleUserTemporalServiceUnitTest {
 
     // ---------------------------------------------------------------- bindTemporal guards
 
+    @Suppress("UNCHECKED_CAST")
+    private fun anyCandidates(): Collection<GrantCandidate> =
+        (ArgumentMatchers.any(Collection::class.java) as Collection<GrantCandidate>?) ?: emptyList()
+
+    @Suppress("UNCHECKED_CAST")
+    private fun anyRejections(): List<GrantRejection> =
+        (ArgumentMatchers.any(List::class.java) as List<GrantRejection>?) ?: emptyList()
+
     @Test
     fun bindTemporal_startAfterEnd_rejected() {
         val now = LocalDateTime.now()
@@ -156,21 +159,31 @@ internal class AuthRoleUserTemporalServiceUnitTest {
             service.bindTemporal("role1", "u1", now.plusDays(2), now.plusDays(1))
         }
         assertTrue(err.message!!.contains("start_time must not be after end_time"))
-        verify(authRoleDao, never()).get(anyString())
+        verify(grantPolicyService, never()).screenGrants(anyCandidates())
     }
 
+    /**
+     * Admission — role/principal existence, tenant boundary, approval requirement, SoD — is the
+     * policy gate's job, and a windowed grant faces all of it: a temporal grant with a generous
+     * window was, among other things, an approval-workflow bypass while this path carried its own
+     * inline subset of the checks. What this class owns is *consulting* the gate and honouring the
+     * verdict, so that is what is pinned.
+     */
     @Test
-    fun bindTemporal_roleNotFound_rejected() {
-        whenCalled(authRoleDao.get("ghost")).thenReturn(null)
+    fun bindTemporal_rejectedByPolicyGate_abortsBeforeAnyWrite() {
+        whenCalled(grantPolicyService.assertNoRejection(anyRejections()))
+            .thenThrow(IllegalArgumentException("cross-tenant grant"))
         val err = assertFailsWith<IllegalArgumentException> {
-            service.bindTemporal("ghost", "u1", null, null)
+            service.bindTemporal("role1", "u1", null, null)
         }
-        assertTrue(err.message!!.contains("Role not found: ghost"))
+        assertTrue(err.message!!.contains("cross-tenant"))
+        verify(dao, never()).insert(anyRoleUser())
+        verify(dao, never()).update(anyRoleUser())
+        verify(eventPublisher, never()).publishEvent(anyEvent())
     }
 
     @Test
     fun bindTemporal_existingPermanentGrant_rejected() {
-        whenCalled(authRoleDao.get("role1")).thenReturn(role("role1"))
         whenCalled(dao.searchByRoleIdAndUserId("role1", "u1"))
             .thenReturn(listOf(grant("perm", "u1", null, null)))
         val err = assertFailsWith<IllegalArgumentException> {
@@ -178,56 +191,62 @@ internal class AuthRoleUserTemporalServiceUnitTest {
         }
         assertTrue(err.message!!.contains("already holds role"))
         verify(dao, never()).insert(anyRoleUser())
+        verify(dao, never()).update(anyRoleUser())
     }
 
+    /**
+     * A delegation-chain row must never be silently replaced: rewriting it erases
+     * granted_by / parent_grant_id, detaching the grant from the revocation cascade — a delegated
+     * grant laundered into a direct one.
+     */
     @Test
-    fun bindTemporal_sodViolation_rejected() {
-        whenCalled(authRoleDao.get("role1")).thenReturn(role("role1", "tenantA"))
-        whenCalled(dao.searchByRoleIdAndUserId("role1", "u1")).thenReturn(emptyList())
-        whenCalled(authRoleUserService.findSodViolationMessage("tenantA", "role1", "u1"))
-            .thenReturn("conflict with role X")
+    fun bindTemporal_delegatedGrant_isNeverReplaced() {
+        val delegated = grant("dlg", "u1", null, LocalDateTime.now().plusDays(5)).apply {
+            grantedBy = "the-operator"
+            parentGrantId = "parent-grant"
+        }
+        whenCalled(dao.searchByRoleIdAndUserId("role1", "u1")).thenReturn(listOf(delegated))
         val err = assertFailsWith<IllegalArgumentException> {
             service.bindTemporal("role1", "u1", null, null)
         }
-        assertTrue(err.message!!.contains("SoD constraint violation"))
+        assertTrue(err.message!!.contains("delegated"))
         verify(dao, never()).insert(anyRoleUser())
+        verify(dao, never()).update(anyRoleUser())
     }
 
     @Test
-    fun bindTemporal_happyPath_replacesAndPublishesEvent() {
-        whenCalled(authRoleDao.get("role1")).thenReturn(role("role1", "tenantA"))
+    fun bindTemporal_happyPath_insertsAndPublishesEvent() {
         whenCalled(dao.searchByRoleIdAndUserId("role1", "u1")).thenReturn(emptyList())
-        whenCalled(authRoleUserService.findSodViolationMessage("tenantA", "role1", "u1")).thenReturn(null)
-        whenCalled(dao.deleteByRoleIdAndUserId("role1", "u1")).thenReturn(0)
         whenCalled(dao.insert(anyRoleUser())).thenReturn("new-grant")
 
         val now = LocalDateTime.now()
         val id = service.bindTemporal("role1", "u1", now, now.plusDays(1))
         assertEquals("new-grant", id)
-        verify(dao).deleteByRoleIdAndUserId("role1", "u1")
         verify(eventPublisher).publishEvent(AuthRoleUserRelationsChanged("role1", listOf("u1")))
     }
 
+    /**
+     * An existing plain windowed (or revoked) row is updated in place rather than replaced — the
+     * row is the relationship's audit record, same convention as group membership. A revoked row
+     * revives with the new window.
+     */
     @Test
-    fun bindTemporal_bothBoundsNull_skipsComparisonAndBinds() {
-        // start==null OR end==null ⇒ the start/end comparison branch is skipped.
-        whenCalled(authRoleDao.get("role1")).thenReturn(role("role1", "tenantA"))
-        whenCalled(dao.searchByRoleIdAndUserId("role1", "u1")).thenReturn(emptyList())
-        whenCalled(authRoleUserService.findSodViolationMessage(anyString(), anyString(), anyString())).thenReturn(null)
-        whenCalled(dao.insert(anyRoleUser())).thenReturn("g")
-        assertEquals("g", service.bindTemporal("role1", "u1", null, null))
-    }
+    fun bindTemporal_existingTemporalRow_updatedInPlaceAndRevived() {
+        val old = grant("old", "u1", LocalDateTime.now().minusDays(2), LocalDateTime.now().minusDays(1)).apply {
+            revoked = true
+            revokeReason = "expired trial"
+        }
+        whenCalled(dao.searchByRoleIdAndUserId("role1", "u1")).thenReturn(listOf(old))
+        whenCalled(dao.update(anyRoleUser())).thenReturn(true)
 
-    @Test
-    fun bindTemporal_existingTemporalGrant_isReplacedNotBlocked() {
-        // An existing TEMPORAL grant (a bound is non-null) must NOT trigger the permanent-grant guard.
-        whenCalled(authRoleDao.get("role1")).thenReturn(role("role1", "tenantA"))
-        whenCalled(dao.searchByRoleIdAndUserId("role1", "u1"))
-            .thenReturn(listOf(grant("old", "u1", LocalDateTime.now().minusDays(1), LocalDateTime.now())))
-        whenCalled(authRoleUserService.findSodViolationMessage(anyString(), anyString(), anyString())).thenReturn(null)
-        whenCalled(dao.insert(anyRoleUser())).thenReturn("g2")
-        assertEquals("g2", service.bindTemporal("role1", "u1", null, null))
-        verify(dao).deleteByRoleIdAndUserId("role1", "u1")
+        val now = LocalDateTime.now()
+        val id = service.bindTemporal("role1", "u1", now, now.plusDays(3))
+        assertEquals("old", id, "the existing row's id survives — it was updated, not replaced")
+        assertEquals(false, old.revoked)
+        assertEquals(null, old.revokeReason)
+        verify(dao, never()).insert(anyRoleUser())
+        verify(dao, never()).deleteByRoleIdAndUserId(anyString(), anyString())
+        verify(eventPublisher).publishEvent(AuthRoleUserRelationsChanged("role1", listOf("u1")))
     }
 
     // ---------------------------------------------------------------- purgeExpired

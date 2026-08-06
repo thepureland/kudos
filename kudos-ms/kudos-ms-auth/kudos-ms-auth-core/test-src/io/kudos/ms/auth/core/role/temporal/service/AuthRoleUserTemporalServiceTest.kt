@@ -43,6 +43,11 @@ class AuthRoleUserTemporalServiceTest : RdbAndRedisCacheTestBase() {
     private val user1 = "7e3b9a01-0000-0000-0000-0000000000b1"
     private val user2 = "7e3b9a01-0000-0000-0000-0000000000b2"
 
+    // A19 cases: an approval-gated role, a user from another tenant, a delegated grant.
+    private val roleNeedsApproval = "7e3b9a01-0000-0000-0000-0000000000a5"
+    private val roleDelegated = "7e3b9a01-0000-0000-0000-0000000000a6"
+    private val userOtherTenant = "7e3b9a01-0000-0000-0000-0000000000b3"
+
     @Test
     fun permanentGrant_isActive() {
         // Fixture: user1 permanently holds role1 (no window).
@@ -127,6 +132,48 @@ class AuthRoleUserTemporalServiceTest : RdbAndRedisCacheTestBase() {
             service.bindTemporal(role4, user2, now.minusDays(1), now.plusDays(1))
         }
         assertFalse(dao.searchRoleIdsByUserId(user2).contains(role4))
+    }
+
+    // -----------------------------------------------------------------------
+    // A19: the gate the temporal path used to bypass — these three were all possible before.
+    // -----------------------------------------------------------------------
+
+    /** A windowed grant across the tenant boundary — the one rule checked on both sides elsewhere. */
+    @Test
+    fun bindTemporal_crossTenant_rejected() {
+        val err = assertFailsWith<IllegalArgumentException> {
+            service.bindTemporal(role1, userOtherTenant, null, null)
+        }
+        assertTrue(err.message!!.contains("cross-tenant"), "was: ${err.message}")
+        assertFalse(dao.searchRoleIdsByUserId(userOtherTenant).contains(role1))
+    }
+
+    /**
+     * A role marked approval_required must not be grantable through the temporal endpoint — with
+     * its own inline checks this path skipped the approval workflow entirely, and a generous window
+     * made the bypass permanent in everything but name.
+     */
+    @Test
+    fun bindTemporal_approvalRequiredRole_rejected() {
+        val err = assertFailsWith<IllegalArgumentException> {
+            service.bindTemporal(roleNeedsApproval, user1, null, LocalDateTime.now().plusYears(10))
+        }
+        assertTrue(err.message!!.contains("approval"), "was: ${err.message}")
+        assertFalse(dao.searchRoleIdsByUserId(user1).contains(roleNeedsApproval))
+    }
+
+    /**
+     * A delegation-chain row must survive an attempted temporal re-bind untouched: replacing it
+     * would erase granted_by / parent_grant_id and detach the grant from the revocation cascade.
+     */
+    @Test
+    fun bindTemporal_delegatedGrant_isNeverReplaced() {
+        assertFailsWith<IllegalArgumentException> {
+            service.bindTemporal(roleDelegated, user2, null, null)
+        }
+        val row = dao.searchByRoleIdAndUserId(roleDelegated, user2).single()
+        assertEquals(user1, row.grantedBy, "the chain information must be untouched")
+        assertTrue(row.parentGrantId != null)
     }
 
     @Test
