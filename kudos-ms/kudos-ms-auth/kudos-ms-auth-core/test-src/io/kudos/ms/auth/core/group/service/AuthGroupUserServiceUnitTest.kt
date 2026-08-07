@@ -1,9 +1,12 @@
 package io.kudos.ms.auth.core.group.service
 
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
+import io.kudos.ms.auth.core.group.model.po.AuthGroup
 import io.kudos.ms.auth.core.group.model.po.AuthGroupUser
 import io.kudos.ms.auth.core.group.service.impl.AuthGroupUserService
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.anyInt
@@ -32,6 +35,7 @@ import kotlin.test.assertTrue
  *  - unbind(): success (publishes the change event) and not-found (count 0 → false, no event).
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal class AuthGroupUserServiceUnitTest {
@@ -40,6 +44,8 @@ internal class AuthGroupUserServiceUnitTest {
     private val eventPublisher = mock(ApplicationEventPublisher::class.java)
 
     private val authGroupRoleDao = mock(AuthGroupRoleDao::class.java)
+    private val authGroupDao = mock(AuthGroupDao::class.java)
+    private val tenantAdministrationGuard = mock(TenantAdministrationGuard::class.java)
     private val grantPolicyService = mock(IAuthGrantPolicyService::class.java)
 
     private val service = AuthGroupUserService(dao).apply {
@@ -47,7 +53,13 @@ internal class AuthGroupUserServiceUnitTest {
         // Joining a group grants every role it carries, so membership writes are screened by the
         // same policy service as a direct grant (see AuthGroupUserService.batchBind).
         inject("authGroupRoleDao", authGroupRoleDao)
+        inject("authGroupDao", authGroupDao)
+        inject("tenantAdministrationGuard", tenantAdministrationGuard)
         inject("grantPolicyService", grantPolicyService)
+    }
+
+    init {
+        whenCalled(authGroupDao.get(anyString())).thenReturn(group())
     }
 
     private fun AuthGroupUserService.inject(field: String, value: Any) {
@@ -165,5 +177,14 @@ internal class AuthGroupUserServiceUnitTest {
         this.groupId = "g1"
         this.userId = userId
         this.revoked = revoked
+    }
+
+    private fun group() = AuthGroup {
+        id = "g1"
+        tenantId = "t1"
+        subsysCode = "ams"
+        code = "GROUP"
+        active = true
+        builtIn = false
     }
 }

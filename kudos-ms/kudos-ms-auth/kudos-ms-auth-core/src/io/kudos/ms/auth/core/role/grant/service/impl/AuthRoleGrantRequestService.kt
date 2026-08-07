@@ -3,13 +3,15 @@ package io.kudos.ms.auth.core.role.grant.service.impl
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.auth.common.grant.enums.GrantRequestStatus
-import io.kudos.ms.auth.core.platform.authz.init.properties.AuthzProperties
+import io.kudos.ms.auth.core.platform.authz.PlatformAdministratorPolicy
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
 import io.kudos.ms.auth.core.role.grant.dao.AuthRoleGrantRequestDao
 import io.kudos.ms.auth.core.role.grant.model.po.AuthRoleGrantRequest
 import io.kudos.ms.auth.core.role.grant.service.iservice.IAuthRoleGrantRequestService
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleUserService
+import io.kudos.ms.auth.core.version.dao.AuthPrincipalVersionDao
 import io.kudos.ms.user.common.passport.CurrentUserKit
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
@@ -27,6 +29,7 @@ import java.time.LocalDateTime
  * (both identities must be known for the check to apply).
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -47,7 +50,13 @@ open class AuthRoleGrantRequestService(
     private lateinit var authRoleUserDao: AuthRoleUserDao
 
     @Resource
-    private lateinit var authzProperties: AuthzProperties
+    private lateinit var platformAdministratorPolicy: PlatformAdministratorPolicy
+
+    @Resource
+    private lateinit var tenantAdministrationGuard: TenantAdministrationGuard
+
+    @Resource
+    private lateinit var authPrincipalVersionDao: AuthPrincipalVersionDao
 
     private val log = LogFactory.getLog(this::class)
 
@@ -58,6 +67,12 @@ open class AuthRoleGrantRequestService(
 
         val role = authRoleDao.get(roleId)
             ?: throw IllegalArgumentException("Role not found: $roleId")
+        tenantAdministrationGuard.assertCanManage(role.tenantId)
+        require(role.active) { "Role $roleId is inactive." }
+
+        // Serialises duplicate submissions for the same receiver; unlike a check-then-insert alone,
+        // this remains correct when two requests arrive before either transaction commits.
+        authPrincipalVersionDao.lockPrincipal(userId)
 
         // No point requesting a role the user already has.
         require(!authRoleUserService.exists(roleId, userId)) {
@@ -70,6 +85,7 @@ open class AuthRoleGrantRequestService(
 
         val now = LocalDateTime.now()
         val requesterId = CurrentUserKit.currentUserIdOrNull()
+        requireNotNull(requesterId) { "a grant request must be attributable to a logged-in requester." }
         val request = AuthRoleGrantRequest {
             this.roleId = roleId
             this.userId = userId
@@ -87,6 +103,7 @@ open class AuthRoleGrantRequestService(
     @Transactional
     override fun approve(id: String, comment: String?): Boolean {
         val request = loadPendingOrThrow(id)
+        tenantAdministrationGuard.assertCanManage(request.tenantId)
         // Separation of duties on the workflow itself: a requester must not approve their own
         // request. Independent of the authority check below — holding the role delegably (or being
         // a platform admin) makes you *able* to approve, and says nothing about whether you may
@@ -107,7 +124,7 @@ open class AuthRoleGrantRequestService(
         request.approverId = approverId
         request.decisionComment = comment
         request.decisionTime = LocalDateTime.now()
-        val success = dao.update(request)
+        val success = transitionOrThrow(request)
         log.debug("Approved grant request $id (role=${request.roleId} user=${request.userId}); bind performed.")
         return success
     }
@@ -115,11 +132,18 @@ open class AuthRoleGrantRequestService(
     @Transactional
     override fun reject(id: String, comment: String?): Boolean {
         val request = loadPendingOrThrow(id)
+        tenantAdministrationGuard.assertCanManage(request.tenantId)
+        val rejectorId = CurrentUserKit.currentUserIdOrNull()
+        requireNotNull(rejectorId) { "a rejection must be attributable to a logged-in approver." }
+        require(request.requesterId == null || rejectorId != request.requesterId) {
+            "Grant request $id cannot be rejected by its own requester ($rejectorId); use cancel instead."
+        }
+        assertMayApprove(rejectorId, request.roleId)
         request.status = GrantRequestStatus.REJECTED.name
-        request.approverId = CurrentUserKit.currentUserIdOrNull()
+        request.approverId = rejectorId
         request.decisionComment = comment
         request.decisionTime = LocalDateTime.now()
-        val success = dao.update(request)
+        val success = transitionOrThrow(request)
         log.debug("Rejected grant request $id.")
         return success
     }
@@ -127,9 +151,16 @@ open class AuthRoleGrantRequestService(
     @Transactional
     override fun cancel(id: String): Boolean {
         val request = loadPendingOrThrow(id)
+        tenantAdministrationGuard.assertCanManage(request.tenantId)
+        val actorId = CurrentUserKit.currentUserIdOrNull()
+        requireNotNull(actorId) { "a cancellation must be attributable to a logged-in requester." }
+        require(actorId == request.requesterId || platformAdministratorPolicy.isPlatformAdministrator(actorId)) {
+            "only requester ${request.requesterId} may cancel grant request $id."
+        }
         request.status = GrantRequestStatus.CANCELLED.name
+        request.approverId = actorId
         request.decisionTime = LocalDateTime.now()
-        val success = dao.update(request)
+        val success = transitionOrThrow(request)
         log.debug("Cancelled grant request $id.")
         return success
     }
@@ -148,19 +179,12 @@ open class AuthRoleGrantRequestService(
      */
     private fun assertMayApprove(approverId: String?, roleId: String) {
         requireNotNull(approverId) { "an approval must be attributable to a logged-in approver." }
-        if (isPlatformAdmin(approverId)) return
+        if (platformAdministratorPolicy.isPlatformAdministrator(approverId)) return
         val ownGrant = authRoleUserDao.findLiveDirectGrant(roleId, approverId)
         require(ownGrant != null && (ownGrant.delegableDepth ?: 0) >= 1) {
             "approver ${approverId} may not decide requests for role ${roleId}: approving requires " +
                 "being able to grant it, i.e. holding it through a delegable direct grant."
         }
-    }
-
-    private fun isPlatformAdmin(userId: String): Boolean {
-        val adminCodes = authzProperties.platformAdminRoleCodes
-        if (adminCodes.isEmpty()) return false
-        return authRoleUserDao.searchRoleIdsByUserId(userId)
-            .any { roleId -> authRoleDao.get(roleId)?.code in adminCodes }
     }
 
     /** Re-read the row and assert it's still PENDING; the guard against double-decision races. */
@@ -172,5 +196,12 @@ open class AuthRoleGrantRequestService(
             "Grant request $id is already ${request.status}; only PENDING requests can be acted on."
         }
         return request
+    }
+
+    private fun transitionOrThrow(request: AuthRoleGrantRequest): Boolean {
+        check(dao.transitionIfPending(request)) {
+            "Grant request ${request.id} was decided concurrently; no second transition is allowed."
+        }
+        return true
     }
 }

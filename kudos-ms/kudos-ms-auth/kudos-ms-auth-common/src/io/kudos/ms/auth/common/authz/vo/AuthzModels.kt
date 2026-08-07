@@ -12,6 +12,7 @@ import java.io.Serializable
  * principal has an id.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -43,6 +44,7 @@ data class SubjectRef(
  * an attribute never changes this contract.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -80,6 +82,7 @@ data class AuthzRequest(
  * X" endpoint, so an operator never has to reconstruct a decision by reading code.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -105,6 +108,9 @@ data class AuthzDecision(
     /**
      * The closed set of ways a decision can be reached. Closed on purpose: an authorization outcome
      * that cannot be classified is an outcome nobody can audit.
+     *
+     * @author K
+     * @author AI: Codex
      */
     enum class Reason {
 
@@ -117,8 +123,14 @@ data class AuthzDecision(
         /** A grant on this particular instance permitted it — a share, not a role. */
         ALLOWED_BY_INSTANCE_GRANT,
 
+        /** A deployment-provided policy extension permitted the request. */
+        ALLOWED_BY_EXTENSION,
+
         /** A DENY binding matched; it wins over any ALLOW. */
         DENIED_BY_RULE,
+
+        /** A deployment-provided policy extension explicitly denied the request. */
+        DENIED_BY_EXTENSION,
 
         /** Nothing matched. The default, and the reason an unregistered permission is refused. */
         DENIED_BY_DEFAULT,
@@ -146,6 +158,7 @@ data class AuthzDecision(
  * done once per subject rather than once per question.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */

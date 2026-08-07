@@ -21,6 +21,7 @@ import kotlin.test.assertNull
  *   accidental rename in either the PO or the schema is caught.
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal class AuthRoleModelTest {
@@ -78,7 +79,7 @@ internal class AuthRoleModelTest {
             parentId = null
             dataScope = null
             remark = null
-            builtIn = null
+            builtIn = false
             approvalRequired = null
             createTime = null
         }

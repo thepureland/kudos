@@ -2,17 +2,19 @@ package io.kudos.ms.auth.core.role.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
+import io.kudos.base.model.contract.common.IHasBuiltIn
 import java.time.LocalDateTime
 
 /**
  * Role database entity
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Cursor
  * @author AI: Claude
  * @since 1.0.0
  */
-interface AuthRole : IDbEntity<String, AuthRole> {
+interface AuthRole : IDbEntity<String, AuthRole>, IHasBuiltIn {
 
     companion object : DbEntityFactory<AuthRole>()
 
@@ -41,7 +43,7 @@ interface AuthRole : IDbEntity<String, AuthRole> {
     var active: Boolean
 
     /** Whether built-in */
-    var builtIn: Boolean?
+    override var builtIn: Boolean
 
     /** Delegation ceiling: how many hops a grant of this role may ever carry. 0 = no delegation. */
     var delegableMax: Int?

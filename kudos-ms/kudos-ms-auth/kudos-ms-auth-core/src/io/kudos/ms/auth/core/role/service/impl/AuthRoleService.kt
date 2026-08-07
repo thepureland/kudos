@@ -16,6 +16,7 @@ import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupRoleService
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupUserService
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByRoleIdCache
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByUserIdCache
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
 import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
@@ -50,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional
  * Role business
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Cursor
  * @author AI: Claude
  * @since 1.0.0
@@ -130,6 +132,9 @@ open class AuthRoleService(
     @Resource
     private lateinit var authGroupHashCache: AuthGroupHashCache
 
+    @Resource
+    private lateinit var tenantAdministrationGuard: TenantAdministrationGuard
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
@@ -140,7 +145,10 @@ open class AuthRoleService(
         resourceIdsByRoleIdCache.getResourceIds(roleId).toSet()
 
     @Transactional(readOnly = true)
-    override fun getRoleIds(tenantId: String): List<String> = dao.searchActiveRoleIdsByTenantId(tenantId)
+    override fun getRoleIds(tenantId: String): List<String> {
+        tenantAdministrationGuard.assertCanManage(tenantId)
+        return dao.searchActiveRoleIdsByTenantId(tenantId)
+    }
 
     @Transactional(readOnly = true)
     override fun getRoleUsers(roleId: String): List<UserAccountCacheEntry> {
@@ -164,24 +172,36 @@ open class AuthRoleService(
 
     @Transactional(readOnly = true)
     override fun getRoleByTenantIdAndCode(tenantId: String, roleCode: String): AuthRoleCacheEntry? =
-        authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
+        tenantAdministrationGuard.assertCanManage(tenantId).let {
+            authRoleHashCache.getRoleByTenantIdAndRoleCode(tenantId, roleCode)?.id
+        }
             ?.let { authRoleHashCache.getRoleById(it) }
 
     @Transactional(readOnly = true)
-    override fun getRoleRecord(id: String): AuthRoleRow? = dao.getAs<AuthRoleRow>(id)
+    override fun getRoleRecord(id: String): AuthRoleRow? = dao.get(id)?.let { role ->
+        tenantAdministrationGuard.assertCanManage(role.tenantId)
+        dao.getAs<AuthRoleRow>(id)
+    }
 
     @Transactional(readOnly = true)
     override fun getRolesByTenantId(tenantId: String): List<AuthRoleRow> =
         @Suppress("UNCHECKED_CAST")
-        dao.search(AuthRoleQuery(tenantId = tenantId), AuthRoleRow::class)
+        tenantAdministrationGuard.assertCanManage(tenantId).let {
+            dao.search(AuthRoleQuery(tenantId = tenantId), AuthRoleRow::class)
+        }
 
     @Transactional(readOnly = true)
     override fun getRolesBySubsysCode(tenantId: String, subsysCode: String): List<AuthRoleRow> =
         @Suppress("UNCHECKED_CAST")
-        dao.search(AuthRoleQuery(tenantId = tenantId, subsysCode = subsysCode), AuthRoleRow::class)
+        tenantAdministrationGuard.assertCanManage(tenantId).let {
+            dao.search(AuthRoleQuery(tenantId = tenantId, subsysCode = subsysCode), AuthRoleRow::class)
+        }
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
+        val existing = dao.get(id) ?: return false
+        tenantAdministrationGuard.assertCanManage(existing.tenantId)
+        require(!existing.builtIn) { "built-in role $id cannot be modified." }
         val role = AuthRole.Companion {
             this.id = id
             this.active = active
@@ -198,6 +218,12 @@ open class AuthRoleService(
 
     @Transactional
     override fun insert(any: Any): String {
+        val tenantId = BeanKit.getProperty(any, AuthRole::tenantId.name) as String?
+        val code = BeanKit.getProperty(any, AuthRole::code.name) as String?
+        tenantAdministrationGuard.assertRoleCodeManageable(
+            requireNotNull(code) { "role code is required." },
+            requireNotNull(tenantId) { "role tenantId is required." },
+        )
         validateParentId(any, selfId = null)
         val id = super.insert(any)
         log.debug("Added role with id ${id}.")
@@ -208,6 +234,19 @@ open class AuthRoleService(
     @Transactional
     override fun update(any: Any): Boolean {
         val id = BeanKit.getProperty(any, AuthRole::id.name) as String
+        val existing = dao.get(id) ?: throw IllegalArgumentException("Role not found: $id")
+        tenantAdministrationGuard.assertCanManage(existing.tenantId)
+        require(!existing.builtIn) { "built-in role $id cannot be modified." }
+        val requestedTenant = BeanKit.getProperty(any, AuthRole::tenantId.name) as String?
+        val requestedSubsys = BeanKit.getProperty(any, AuthRole::subsysCode.name) as String?
+        val requestedCode = BeanKit.getProperty(any, AuthRole::code.name) as String?
+        require(requestedTenant == null || requestedTenant == existing.tenantId) {
+            "role tenantId is immutable (stored=${existing.tenantId}, requested=$requestedTenant)."
+        }
+        require(requestedSubsys == null || requestedSubsys == existing.subsysCode) {
+            "role subsysCode is immutable (stored=${existing.subsysCode}, requested=$requestedSubsys)."
+        }
+        tenantAdministrationGuard.assertRoleCodeManageable(requestedCode ?: existing.code, existing.tenantId)
         validateParentId(any, selfId = id)
         val success = super.update(any)
         if (success) {
@@ -226,6 +265,7 @@ open class AuthRoleService(
             log.warn("Role with id ${id} no longer exists when attempting to delete!")
             return false
         }
+        tenantAdministrationGuard.assertCanManage(role.tenantId)
         // Snapshot the affected users / resources / groups BEFORE the relation rows are removed —
         // the cache-invalidation events need them, and they are unqueryable afterwards.
         val relations = snapshotRoleRelations(id)
@@ -243,10 +283,12 @@ open class AuthRoleService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
+        if (ids.isEmpty()) return 0
         // Snapshot tenantId/code first; after AFTER_COMMIT the rows are deleted and downstream (tenantId, code) caches
         // can no longer query back. Ditto for the relation snapshots feeding the cleanup events.
-        val snapshots = if (ids.isEmpty()) emptyList()
-            else dao.getByIds(ids).map { AuthRoleBatchDeleted.Item(it.id, it.tenantId, it.code) }
+        val roles = dao.getByIds(ids)
+        roles.forEach { tenantAdministrationGuard.assertCanManage(it.tenantId) }
+        val snapshots = roles.map { AuthRoleBatchDeleted.Item(it.id, it.tenantId, it.code) }
         val relationSnapshots = snapshots.associate { it.id to snapshotRoleRelations(it.id) }
         val count = super.batchDelete(ids)
         snapshots.forEach { cascadeDeleteRoleRelations(it.id) }
@@ -467,6 +509,9 @@ open class AuthRoleService(
         require(name.isNotBlank()) { "Target role name must not be blank" }
         val source = authRoleHashCache.getRoleById(sourceId)
             ?: throw IllegalArgumentException("Source role not found: $sourceId")
+        val sourceTenant = source.tenantId
+            ?: throw IllegalArgumentException("Source role $sourceId has no tenant.")
+        tenantAdministrationGuard.assertRoleCodeManageable(code, sourceTenant)
 
         // Build the new PO from the source's audit-neutral fields. Audit columns (createUserId
         // etc.) are left null so BaseCrudService's audit interceptor stamps the current operator.
@@ -475,7 +520,7 @@ open class AuthRoleService(
             this.name = name
             // Required non-null fields on the PO; the cache entry's tenantId / subsysCode are
             // nullable so we fall back to empty-string when (somehow) absent rather than NPE.
-            this.tenantId = source.tenantId ?: ""
+            this.tenantId = sourceTenant
             this.subsysCode = source.subsysCode ?: ""
             this.remark = source.remark
             this.active = source.active ?: true

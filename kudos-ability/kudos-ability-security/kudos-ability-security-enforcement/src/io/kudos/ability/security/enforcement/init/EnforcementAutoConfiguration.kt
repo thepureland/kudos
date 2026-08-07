@@ -6,6 +6,7 @@ import io.kudos.ability.security.enforcement.init.properties.EnforcementProperti
 import io.kudos.ability.security.enforcement.port.IAuthzDecisionProvider
 import io.kudos.ability.security.enforcement.port.IPermissionPointRegistry
 import io.kudos.ability.security.enforcement.port.ITokenFreshnessValidator
+import io.kudos.ability.security.enforcement.port.ITrustedAuthorizationContextProvider
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.IComponentInitializer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean
@@ -17,6 +18,8 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 import org.springframework.core.Ordered
+import org.springframework.beans.factory.SmartInitializingSingleton
+import org.springframework.core.env.Environment
 
 
 /**
@@ -30,15 +33,11 @@ import org.springframework.core.Ordered
  *    have nothing to ask, and a filter that cannot ask must not be the thing that decides.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
 @Configuration(proxyBeanMethods = false)
-@ConditionalOnProperty(
-    prefix = "kudos.ability.security.enforcement",
-    name = ["enabled"],
-    havingValue = "true",
-)
 @EnableConfigurationProperties(EnforcementProperties::class)
 @PropertySource(
     value = ["classpath:kudos-ability-security-enforcement.yml"],
@@ -52,6 +51,11 @@ open class EnforcementAutoConfiguration : IComponentInitializer {
      * the decision point reads.
      */
     @Bean
+    @ConditionalOnProperty(
+        prefix = "kudos.ability.security.enforcement",
+        name = ["enabled"],
+        havingValue = "true",
+    )
     @ConditionalOnBean(IAuthzDecisionProvider::class, IPermissionPointRegistry::class)
     @ConditionalOnMissingBean(name = ["permissionEnforcementFilterRegistration"])
     open fun permissionEnforcementFilterRegistration(
@@ -62,10 +66,15 @@ open class EnforcementAutoConfiguration : IComponentInitializer {
         // simply without that check. ObjectProvider rather than @Autowired(required=false) so an
         // absent bean is a runtime null instead of a bean-resolution order question.
         tokenFreshnessValidator: org.springframework.beans.factory.ObjectProvider<ITokenFreshnessValidator>,
+        trustedContextProviders: org.springframework.beans.factory.ObjectProvider<ITrustedAuthorizationContextProvider>,
     ): FilterRegistrationBean<PermissionEnforcementFilter> {
         val registration = FilterRegistrationBean(
             PermissionEnforcementFilter(
-                decisionProvider, registry, properties, tokenFreshnessValidator.getIfAvailable(),
+                decisionProvider,
+                registry,
+                properties,
+                tokenFreshnessValidator.getIfAvailable(),
+                trustedContextProviders.orderedStream().toList(),
             ),
         )
         registration.order = Ordered.LOWEST_PRECEDENCE - 100
@@ -74,12 +83,36 @@ open class EnforcementAutoConfiguration : IComponentInitializer {
     }
 
     @Bean
+    @ConditionalOnProperty(
+        prefix = "kudos.ability.security.enforcement",
+        name = ["enabled"],
+        havingValue = "true",
+    )
     @ConditionalOnBean(IAuthzDecisionProvider::class)
     @ConditionalOnMissingBean(RequiresPermissionAspect::class)
     open fun requiresPermissionAspect(
         decisionProvider: IAuthzDecisionProvider,
         properties: EnforcementProperties,
     ): RequiresPermissionAspect = RequiresPermissionAspect(decisionProvider, properties)
+
+    /** Production must never silently run with authorization disabled or in observe-only mode. */
+    @Bean
+    open fun enforcementProductionSafetyCheck(
+        properties: EnforcementProperties,
+        environment: Environment,
+    ): SmartInitializingSingleton = SmartInitializingSingleton {
+        val production = environment.activeProfiles.any { active ->
+            properties.productionProfiles.any { it.equals(active, ignoreCase = true) }
+        }
+        if (production && properties.failOnInsecureProduction) {
+            check(properties.enabled) {
+                "URL/method authorization enforcement is disabled in a production profile."
+            }
+            check(!properties.shadowMode) {
+                "URL/method authorization enforcement is still in shadow mode in a production profile."
+            }
+        }
+    }
 
     override fun getComponentName() = "kudos-ability-security-enforcement"
 }

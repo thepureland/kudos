@@ -17,6 +17,7 @@ import kotlin.test.assertTrue
  * which is the one behaviour a permission system must not have.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -97,5 +98,36 @@ class DefaultConditionEvaluatorTest {
     fun presentButMismatchedEvidenceIsAJudgedFalse() {
         assertFalse(evaluator.evaluate("ip=10.0.0.0/8", mapOf("ip" to "192.168.1.1")))
         assertFalse(evaluator.evaluate("tenant=acme", mapOf("tenant" to "other")))
+    }
+
+    @Test
+    fun clauseExtensionAddsAnOperatorWithoutReplacingBuiltIns() {
+        val amountLimit = object : IConditionClauseEvaluator {
+            override fun supports(clause: String): Boolean = clause.startsWith("amount<=")
+
+            override fun evaluate(clause: String, context: Map<String, Any?>): Boolean {
+                val expected = clause.substringAfter("amount<=").toBigDecimal()
+                val actual = context["amount"]?.toString()?.toBigDecimalOrNull()
+                    ?: throw UndecidableConditionException("amount was not supplied")
+                return actual <= expected
+            }
+        }
+        val extended = DefaultConditionEvaluator(listOf(amountLimit))
+
+        assertTrue(extended.evaluate("amount<=100;tenant=acme", mapOf("amount" to 80, "tenant" to "acme")))
+        assertFalse(extended.evaluate("amount<=100", mapOf("amount" to 120)))
+        assertFailsWith<UndecidableConditionException> { extended.evaluate("amount<=100", emptyMap()) }
+    }
+
+    @Test
+    fun unexpectedClauseExtensionFailureIsUndecidable() {
+        val broken = object : IConditionClauseEvaluator {
+            override fun supports(clause: String): Boolean = clause.startsWith("risk=")
+            override fun evaluate(clause: String, context: Map<String, Any?>): Boolean = error("offline")
+        }
+
+        assertFailsWith<UndecidableConditionException> {
+            DefaultConditionEvaluator(listOf(broken)).evaluate("risk=low", emptyMap())
+        }
     }
 }

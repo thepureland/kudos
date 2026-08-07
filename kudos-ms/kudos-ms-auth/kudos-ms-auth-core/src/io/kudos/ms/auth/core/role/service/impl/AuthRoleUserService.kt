@@ -7,6 +7,8 @@ import io.kudos.ms.auth.common.delegation.vo.RevokeImpactVo
 import io.kudos.ms.auth.common.delegation.vo.RoleGrantRequest
 import io.kudos.ms.auth.core.policy.GrantCandidate
 import io.kudos.ms.auth.core.policy.iservice.IAuthGrantPolicyService
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleUserService
@@ -14,6 +16,7 @@ import io.kudos.ms.auth.core.platform.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
 import io.kudos.ms.auth.core.version.dao.AuthPrincipalVersionDao
+import io.kudos.ms.user.common.passport.CurrentUserKit
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
@@ -35,6 +38,7 @@ import org.springframework.transaction.annotation.Transactional
  * `BatchBindResultVo`.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Cursor
  * @author AI: Claude
  * @since 1.0.0
@@ -65,11 +69,19 @@ open class AuthRoleUserService(
     @Resource
     private lateinit var authPrincipalVersionDao: AuthPrincipalVersionDao
 
+    @Resource
+    private lateinit var authRoleDao: AuthRoleDao
+
+    @Resource
+    private lateinit var tenantAdministrationGuard: TenantAdministrationGuard
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getUserIdsByRoleId(roleId: String): Set<String> =
-        userIdsByRoleIdCache.getUserIds(roleId).toSet()
+    override fun getUserIdsByRoleId(roleId: String): Set<String> {
+        assertCanManageRole(roleId)
+        return userIdsByRoleIdCache.getUserIds(roleId).toSet()
+    }
 
     @Transactional(readOnly = true)
     override fun getRoleIdsByUserId(userId: String): Set<String> =
@@ -110,6 +122,7 @@ open class AuthRoleUserService(
      */
     private fun doBind(roleId: String, userIds: Collection<String>, approvalSatisfied: Boolean): Int {
         if (userIds.isEmpty()) return 0
+        assertCanManageRole(roleId)
 
         val existing = dao.searchUserIdsByRoleId(roleId).toSet()
         val candidates = userIds.toSet() - existing
@@ -130,6 +143,8 @@ open class AuthRoleUserService(
             AuthRoleUser {
                 this.roleId = roleId
                 this.userId = userId
+                this.grantedBy = CurrentUserKit.currentUserIdOrNull()
+                this.revoked = false
             }
         }
         dao.batchInsert(relations)
@@ -142,6 +157,7 @@ open class AuthRoleUserService(
     override fun grant(request: RoleGrantRequest, operatorId: String): List<String> {
         require(operatorId.isNotBlank()) { "a delegated grant must name the operator making it." }
         if (request.userIds.isEmpty()) return emptyList()
+        assertCanManageRole(request.roleId)
 
         val existing = dao.searchUserIdsByRoleId(request.roleId).toSet()
         val recipients = request.userIds.toSet() - existing
@@ -195,6 +211,7 @@ open class AuthRoleUserService(
     @Transactional
     override fun revoke(grantId: String, reason: String?): Int {
         val root = dao.get(grantId) ?: return 0
+        assertCanManageRole(root.roleId)
         val subtree = listOf(root) + lockedDelegatedDescendants(root)
         val live = subtree.filter { it.revoked != true }
         if (live.isEmpty()) return 0
@@ -215,6 +232,7 @@ open class AuthRoleUserService(
     @Transactional(readOnly = true)
     override fun getRevokeImpact(grantId: String): RevokeImpactVo {
         val root = dao.get(grantId) ?: return RevokeImpactVo.none(grantId)
+        assertCanManageRole(root.roleId)
         val descendants = dao.searchDelegatedDescendants(listOf(grantId)).filter { it.revoked != true }
 
         // Depth is computed from the chain rather than stored: it describes a position in the tree,
@@ -249,6 +267,7 @@ open class AuthRoleUserService(
 
     @Transactional
     override fun unbind(roleId: String, userId: String): Boolean {
+        assertCanManageRole(roleId)
         // Whatever this principal delegated from this role goes with it. Cascading *before* the
         // delete matters: once the row is gone the chain below it is unreachable, and the downstream
         // grants would keep working with no traceable source of authority — the exact shape of a
@@ -285,11 +304,19 @@ open class AuthRoleUserService(
     }
 
     @Transactional(readOnly = true)
-    override fun exists(roleId: String, userId: String): Boolean = dao.exists(roleId, userId)
+    override fun exists(roleId: String, userId: String): Boolean {
+        assertCanManageRole(roleId)
+        return dao.exists(roleId, userId)
+    }
+
+    private fun assertCanManageRole(roleId: String) {
+        val role = authRoleDao.get(roleId) ?: throw IllegalArgumentException("Role not found: $roleId")
+        tenantAdministrationGuard.assertCanManage(role.tenantId)
+    }
 
     /** [lockedDescendantsOf] rooted at one grant, with the root's own holder locked first. */
     private fun lockedDelegatedDescendants(root: AuthRoleUser): List<AuthRoleUser> {
-        root.userId?.let { authPrincipalVersionDao.lockPrincipal(it) }
+        authPrincipalVersionDao.lockPrincipal(root.userId)
         return lockedDescendantsOf(listOf(root.id))
     }
 

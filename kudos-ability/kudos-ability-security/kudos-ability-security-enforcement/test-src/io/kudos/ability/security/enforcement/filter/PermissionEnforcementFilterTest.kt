@@ -5,6 +5,7 @@ import io.kudos.ability.security.enforcement.port.IAuthzDecisionProvider
 import io.kudos.ability.security.enforcement.port.IPermissionPointRegistry
 import io.kudos.ability.security.enforcement.port.ITokenFreshnessValidator
 import io.kudos.ability.security.enforcement.port.ITokenFreshnessValidator.Freshness
+import io.kudos.ability.security.enforcement.port.ITrustedAuthorizationContextProvider
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.mock.web.MockFilterChain
 import org.springframework.mock.web.MockHttpServletRequest
@@ -24,6 +25,7 @@ import kotlin.test.assertTrue
  * cases where a filter is tempted to be lenient, and where leniency is the vulnerability.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -52,7 +54,8 @@ class PermissionEnforcementFilterTest {
         provider: IAuthzDecisionProvider,
         properties: EnforcementProperties = EnforcementProperties().apply { shadowMode = false },
         freshness: ITokenFreshnessValidator? = null,
-    ) = PermissionEnforcementFilter(provider, registry, properties, freshness)
+        trustedContextProviders: List<ITrustedAuthorizationContextProvider> = emptyList(),
+    ) = PermissionEnforcementFilter(provider, registry, properties, freshness, trustedContextProviders)
 
     private fun freshnessOf(value: Freshness) = object : ITokenFreshnessValidator {
         override fun assess(): Freshness = value
@@ -160,7 +163,7 @@ class PermissionEnforcementFilterTest {
         assertEquals("10.9.9.9", provider.lastContext["ip"])
 
         // A proxied deployment is the norm; the first hop of X-Forwarded-For is the client.
-        filter(provider).doFilter(
+        filter(provider, enforcing { trustForwardedFor = true }).doFilter(
             request(headers = mapOf("X-Forwarded-For" to "203.0.113.7, 10.0.0.1")),
             MockHttpServletResponse(),
             MockFilterChain(),
@@ -173,6 +176,7 @@ class PermissionEnforcementFilterTest {
         val properties = EnforcementProperties().apply {
             shadowMode = false
             contextHeaders = listOf("X-Tenant")
+            acceptUntrustedContextHeaders = true
         }
         val provider = FakeProvider()
         filter(provider, properties).doFilter(
@@ -181,6 +185,19 @@ class PermissionEnforcementFilterTest {
             MockFilterChain(),
         )
         assertEquals("acme", provider.lastContext["X-Tenant"])
+    }
+
+    @Test
+    fun callerHeadersAreIgnoredByDefaultButTrustedProvidersCanSupplyAttributes() {
+        val provider = FakeProvider()
+        val properties = enforcing { contextHeaders = listOf("department") }
+        val trusted = ITrustedAuthorizationContextProvider { mapOf("department" to "finance") }
+        filter(provider, properties, trustedContextProviders = listOf(trusted)).doFilter(
+            request(headers = mapOf("department" to "attacker-value")),
+            MockHttpServletResponse(),
+            MockFilterChain(),
+        )
+        assertEquals("finance", provider.lastContext["department"])
     }
 
     companion object {

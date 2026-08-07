@@ -195,5 +195,9 @@ open class AuthGroupUserDao : BaseCrudDao<String, AuthGroupUser, AuthGroupUsers>
         return batchDeleteCriteria(criteria)
     }
 
+    /** Deletes every membership of a group during group deletion. */
+    open fun deleteByGroupId(groupId: String): Int =
+        batchDeleteCriteria(Criteria(AuthGroupUser::groupId eq groupId))
+
 
 }

@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.event.ContextRefreshedEvent
 import org.springframework.context.event.EventListener
+import org.springframework.beans.factory.SmartInitializingSingleton
+import org.springframework.core.env.Environment
 
 
 /**
@@ -18,6 +20,7 @@ import org.springframework.context.event.EventListener
  * deployment what *would* be filtered — before anybody switches filtering on.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -42,6 +45,21 @@ open class RowScopeAutoConfiguration : IComponentInitializer {
         recorder: RowScopeShadowRecorder,
     ): RowScopeEnforcer = RowScopeEnforcer(registry, resolver.ifAvailable, properties, recorder)
         .also { RowScopeEnforcer.install(it) }
+
+    /** Production must never silently run with tenant row filtering disabled or observe-only. */
+    @Bean
+    open fun rowScopeProductionSafetyCheck(
+        properties: RowScopeProperties,
+        environment: Environment,
+    ): SmartInitializingSingleton = SmartInitializingSingleton {
+        val production = environment.activeProfiles.any { active ->
+            properties.productionProfiles.any { it.equals(active, ignoreCase = true) }
+        }
+        if (production && properties.failOnInsecureProduction) {
+            check(properties.enabled) { "Row-scope enforcement is disabled in a production profile." }
+            check(!properties.shadowMode) { "Row-scope enforcement is still in shadow mode in a production profile." }
+        }
+    }
 
     /**
      * Reports the configuration on startup, because both halves of it are invisible otherwise:

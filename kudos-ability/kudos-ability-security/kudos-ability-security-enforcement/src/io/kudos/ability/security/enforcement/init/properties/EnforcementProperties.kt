@@ -7,11 +7,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * Configuration for URL-level permission enforcement.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
 @ConfigurationProperties(prefix = "kudos.ability.security.enforcement")
 open class EnforcementProperties {
+
+    /** Refuse application startup when a production profile leaves enforcement insecure. */
+    var failOnInsecureProduction: Boolean = true
+
+    /** Profile names treated as production by the startup safety check. */
+    var productionProfiles: Set<String> = setOf("prod", "production")
 
     /**
      * Whether the filter is installed at all. **Off by default**, and that default is not timidity:
@@ -49,6 +56,12 @@ open class EnforcementProperties {
      */
     var contextHeaders: List<String> = emptyList()
 
+    /** Compatibility escape hatch for legacy header-derived ABAC; caller headers are untrusted. */
+    var acceptUntrustedContextHeaders: Boolean = false
+
+    /** Trust X-Forwarded-For only behind a sanitising trusted proxy. */
+    var trustForwardedFor: Boolean = false
+
     /**
      * Stops the enforcement path re-paying the storage timeout once the decision point is clearly
      * down. On by default, unlike this module's other switches: it does not change *what* is
@@ -57,8 +70,9 @@ open class EnforcementProperties {
     var resilience: ResilienceProperties = ResilienceProperties()
 
     /**
-     * @author K
-     * @author AI: Claude
+ * @author K
+ * @author AI: Codex
+ * @author AI: Claude
      * @since 1.0.0
      */
     open class ResilienceProperties {
@@ -101,8 +115,9 @@ open class EnforcementProperties {
     var tokenFreshness: TokenFreshnessProperties = TokenFreshnessProperties()
 
     /**
-     * @author K
-     * @author AI: Claude
+ * @author K
+ * @author AI: Codex
+ * @author AI: Claude
      * @since 1.0.0
      */
     open class TokenFreshnessProperties {

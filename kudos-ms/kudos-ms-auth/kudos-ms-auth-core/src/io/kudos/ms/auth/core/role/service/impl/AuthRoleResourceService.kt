@@ -10,6 +10,8 @@ import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
 import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 import io.kudos.ms.auth.core.policy.iservice.IAuthGrantPolicyService
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.service.iservice.IAuthRoleResourceService
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional
  * Role-Resource relation business
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Cursor
  * @author AI: Claude
  * @since 1.0.0
@@ -43,11 +46,19 @@ open class AuthRoleResourceService(
     @Resource
     private lateinit var grantPolicyService: IAuthGrantPolicyService
 
+    @Resource
+    private lateinit var authRoleDao: AuthRoleDao
+
+    @Resource
+    private lateinit var tenantAdministrationGuard: TenantAdministrationGuard
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getResourceIdsByRoleId(roleId: String): Set<String> =
-        resourceIdsByRoleIdCache.getResourceIds(roleId).toSet()
+    override fun getResourceIdsByRoleId(roleId: String): Set<String> {
+        assertCanManageRole(roleId)
+        return resourceIdsByRoleIdCache.getResourceIds(roleId).toSet()
+    }
 
     @Transactional(readOnly = true)
     override fun getRoleIdsByResourceId(resourceId: String): Set<String> =
@@ -56,6 +67,7 @@ open class AuthRoleResourceService(
     @Transactional
     override fun batchBind(roleId: String, resourceIds: Collection<String>): Int {
         if (resourceIds.isEmpty()) return 0
+        assertCanManageRole(roleId)
         // SELECT existing relations once (resource_id is character(N); DB may return strings with padding, trim uniformly).
         val existing = dao.searchResourceIdsByRoleIds(listOf(roleId)).mapTo(mutableSetOf()) { it.trim() }
         val boundResourceIds = resourceIds.mapTo(mutableSetOf()) { it.trim() } - existing
@@ -86,6 +98,7 @@ open class AuthRoleResourceService(
 
     @Transactional
     override fun unbind(roleId: String, resourceId: String): Boolean {
+        assertCanManageRole(roleId)
         val trimmed = resourceId.trim()
         val count = dao.deleteByRoleIdAndResourceId(roleId, trimmed)
         val success = count > 0
@@ -100,11 +113,11 @@ open class AuthRoleResourceService(
 
     @Transactional(readOnly = true)
     override fun exists(roleId: String, resourceId: String): Boolean =
-        dao.exists(roleId, resourceId.trim())
+        assertCanManageRole(roleId).let { dao.exists(roleId, resourceId.trim()) }
 
     @Transactional(readOnly = true)
     override fun listPermissionBindings(roleId: String): List<PermissionBindingVo> =
-        dao.searchBindingsByRoleIds(listOf(roleId))
+        assertCanManageRole(roleId).let { dao.searchBindingsByRoleIds(listOf(roleId)) }
             .filter { !it.permissionCode.isNullOrBlank() }
             .map { binding ->
                 PermissionBindingVo(
@@ -119,6 +132,7 @@ open class AuthRoleResourceService(
 
     @Transactional
     override fun savePermissionBinding(request: PermissionBindingRequest): String {
+        assertCanManageRole(request.roleId)
         val code = request.permissionCode.trim()
         require(code.isNotEmpty()) { "a permission binding must name its code." }
         val reasons = grantPolicyService.screenPermissionBindings(request.roleId, permissionCodes = listOf(code))
@@ -159,6 +173,7 @@ open class AuthRoleResourceService(
     @Transactional
     override fun removePermissionBinding(bindingId: String): Boolean {
         val binding = dao.get(bindingId) ?: return false
+        assertCanManageRole(binding.roleId)
         val success = dao.deleteById(bindingId)
         if (success) {
             log.debug("Removed permission binding ${bindingId} from role ${binding.roleId}.")
@@ -167,6 +182,11 @@ open class AuthRoleResourceService(
             )
         }
         return success
+    }
+
+    private fun assertCanManageRole(roleId: String) {
+        val role = authRoleDao.get(roleId) ?: throw IllegalArgumentException("Role not found: $roleId")
+        tenantAdministrationGuard.assertCanManage(role.tenantId)
     }
 
 }

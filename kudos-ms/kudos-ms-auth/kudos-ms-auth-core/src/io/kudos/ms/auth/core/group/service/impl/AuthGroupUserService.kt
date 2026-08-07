@@ -4,13 +4,17 @@ import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.common.group.vo.response.GroupMembershipVo
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
 import io.kudos.ms.auth.core.group.model.po.AuthGroupUser
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupUserService
 import io.kudos.ms.auth.core.policy.GrantCandidate
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
 import io.kudos.ms.auth.core.policy.iservice.IAuthGrantPolicyService
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
+import io.kudos.ms.auth.core.principal.spi.UserAccountPrincipalDirectory.Companion.PRINCIPAL_TYPE_USER
+import io.kudos.ms.user.common.passport.CurrentUserKit
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
@@ -52,11 +56,20 @@ open class AuthGroupUserService(
     @Resource
     private lateinit var userAccountHashCache: UserAccountHashCache
 
+    @Resource
+    private lateinit var authGroupDao: AuthGroupDao
+
+    @Resource
+    private lateinit var tenantAdministrationGuard: TenantAdministrationGuard
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getUserIdsByGroupId(groupId: String): Set<String> =
-        dao.searchUserIdsByGroupId(groupId)
+    override fun getUserIdsByGroupId(groupId: String): Set<String> {
+        val group = requireGroup(groupId)
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
+        return dao.searchUserIdsByGroupId(groupId)
+    }
 
     @Transactional(readOnly = true)
     override fun getGroupIdsByUserId(userId: String): Set<String> =
@@ -65,6 +78,11 @@ open class AuthGroupUserService(
     @Transactional
     override fun batchBind(groupId: String, userIds: Collection<String>): Int {
         if (userIds.isEmpty()) return 0
+        val group = requireGroup(groupId)
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
+        userIds.toSet().forEach { userId ->
+            tenantAdministrationGuard.assertPrincipalBelongsToTenant(userId, PRINCIPAL_TYPE_USER, group.tenantId)
+        }
         // One SELECT for every row, because the (group, user) pair is unique: a member who was
         // removed still has a row, and it has to be *revived* rather than duplicated. Treating a
         // revoked row as "already a member" — which is what a bare id roster does — would silently
@@ -97,12 +115,14 @@ open class AuthGroupUserService(
             )
         }
 
+        val operatorId = CurrentUserKit.currentUserIdOrNull()
         if (brandNew.isNotEmpty()) {
             dao.batchInsert(
                 brandNew.map { userId ->
                     AuthGroupUser {
                         this.groupId = groupId
                         this.userId = userId
+                        this.grantedBy = operatorId
                         this.revoked = false
                     }
                 },
@@ -113,6 +133,7 @@ open class AuthGroupUserService(
         revivable.forEach { row ->
             dao.update(AuthGroupUser {
                 this.id = row.id
+                this.grantedBy = operatorId
                 this.revoked = false
                 this.revokeReason = null
             })
@@ -127,6 +148,8 @@ open class AuthGroupUserService(
 
     @Transactional
     override fun unbind(groupId: String, userId: String, reason: String?): Boolean {
+        val group = requireGroup(groupId)
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
         // Soft, like every other revocation in this module. The `revoked` column had a read-path
         // filter and no writer — meaning removal was a hard delete and the audit trail for "who was
         // in this group, and who took them out" simply did not survive the act. Keeping the row is
@@ -147,10 +170,16 @@ open class AuthGroupUserService(
     }
 
     @Transactional(readOnly = true)
-    override fun exists(groupId: String, userId: String): Boolean = dao.exists(groupId, userId)
+    override fun exists(groupId: String, userId: String): Boolean {
+        val group = authGroupDao.get(groupId) ?: return false
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
+        return dao.exists(groupId, userId)
+    }
 
     @Transactional(readOnly = true)
     override fun listMemberships(groupId: String): List<GroupMembershipVo> {
+        val group = requireGroup(groupId)
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
         val rows = dao.searchMembershipsByGroupId(groupId).filter { it.revoked != true }
         if (rows.isEmpty()) return emptyList()
         val names = userAccountHashCache.getUsersByIds(rows.map { it.userId }.toSet())
@@ -177,6 +206,9 @@ open class AuthGroupUserService(
         startTime: LocalDateTime?,
         endTime: LocalDateTime?,
     ): String {
+        val group = requireGroup(groupId)
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
+        tenantAdministrationGuard.assertPrincipalBelongsToTenant(userId, PRINCIPAL_TYPE_USER, group.tenantId)
         if (startTime != null && endTime != null) {
             require(!startTime.isAfter(endTime)) {
                 "start_time must not be after end_time (group=${groupId}, user=${userId})."
@@ -203,6 +235,7 @@ open class AuthGroupUserService(
                 this.userId = userId
                 this.startTime = startTime
                 this.endTime = endTime
+                this.grantedBy = CurrentUserKit.currentUserIdOrNull()
                 this.revoked = false
             },
         )
@@ -230,5 +263,8 @@ open class AuthGroupUserService(
     /** A membership is in force when now is within [start, end]; NULL bounds are open. */
     private fun isActiveAt(start: LocalDateTime?, end: LocalDateTime?, now: LocalDateTime): Boolean =
         (start == null || !start.isAfter(now)) && (end == null || !end.isBefore(now))
+
+    private fun requireGroup(groupId: String) =
+        authGroupDao.get(groupId) ?: throw IllegalArgumentException("Group not found: $groupId")
 
 }

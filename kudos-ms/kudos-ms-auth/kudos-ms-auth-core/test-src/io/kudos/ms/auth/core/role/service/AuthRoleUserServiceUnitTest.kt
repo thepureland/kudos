@@ -4,9 +4,12 @@ import io.kudos.ms.auth.core.platform.cache.ResourceIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
 import io.kudos.ms.auth.core.role.cache.UserIdsByRoleIdCache
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.event.AuthRoleUserRelationsChanged
+import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import io.kudos.ms.auth.core.role.service.impl.AuthRoleUserService
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.anyInt
@@ -47,6 +50,7 @@ import kotlin.test.assertTrue
  * the `@Autowired`/`@Resource lateinit var` collaborators are injected by reflection.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -59,6 +63,8 @@ internal class AuthRoleUserServiceUnitTest {
     private val eventPublisher = mock(ApplicationEventPublisher::class.java)
     private val grantPolicyService = mock(IAuthGrantPolicyService::class.java)
     private val authPrincipalVersionDao = mock(AuthPrincipalVersionDao::class.java)
+    private val authRoleDao = mock(AuthRoleDao::class.java)
+    private val tenantAdministrationGuard = mock(TenantAdministrationGuard::class.java)
 
     private val service = AuthRoleUserService(dao).apply {
         inject("userIdsByRoleIdCache", userIdsByRoleIdCache)
@@ -66,7 +72,13 @@ internal class AuthRoleUserServiceUnitTest {
         inject("resourceIdsByUserIdCache", resourceIdsByUserIdCache)
         inject("grantPolicyService", grantPolicyService)
         inject("authPrincipalVersionDao", authPrincipalVersionDao)
+        inject("authRoleDao", authRoleDao)
+        inject("tenantAdministrationGuard", tenantAdministrationGuard)
         inject("eventPublisher", eventPublisher)
+    }
+
+    init {
+        whenCalled(authRoleDao.get(ArgumentMatchers.anyString())).thenReturn(role())
     }
 
     private fun AuthRoleUserService.inject(field: String, value: Any) {
@@ -203,4 +215,13 @@ internal class AuthRoleUserServiceUnitTest {
     @Suppress("UNCHECKED_CAST")
     private fun anyRejections(): List<GrantRejection> =
         (ArgumentMatchers.any(List::class.java) as List<GrantRejection>?) ?: emptyList()
+
+    private fun role() = AuthRole {
+        id = "role1"
+        tenantId = "t1"
+        subsysCode = "ams"
+        code = "ROLE"
+        active = true
+        builtIn = false
+    }
 }

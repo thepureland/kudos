@@ -7,11 +7,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties
  * Configuration for row-level data-scope filtering.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
 @ConfigurationProperties(prefix = "kudos.ability.data.rdb.row-scope")
 open class RowScopeProperties {
+
+    /** Refuse application startup when a production profile leaves row scope insecure. */
+    var failOnInsecureProduction: Boolean = true
+
+    /** Profile names treated as production by the startup safety check. */
+    var productionProfiles: Set<String> = setOf("prod", "production")
 
     /**
      * Whether row filtering is applied at all. **Off by default** — and this switch is more

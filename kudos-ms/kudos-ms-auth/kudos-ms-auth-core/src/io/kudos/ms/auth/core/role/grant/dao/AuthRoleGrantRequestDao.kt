@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository
  * DAO for role-grant approval requests.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -29,5 +30,25 @@ open class AuthRoleGrantRequestDao : BaseCrudDao<String, AuthRoleGrantRequest, A
             AuthRoleGrantRequest::status eq GrantRequestStatus.PENDING.name,
         )
         return search(criteria).firstOrNull()
+    }
+
+    /**
+     * Atomically moves a request out of PENDING. The status predicate is the concurrency guard:
+     * exactly one racing decision can affect the row.
+     */
+    open fun transitionIfPending(request: AuthRoleGrantRequest): Boolean {
+        val criteria = Criteria.and(
+            AuthRoleGrantRequest::id eq request.id,
+            AuthRoleGrantRequest::status eq GrantRequestStatus.PENDING.name,
+        )
+        return batchUpdateProperties(
+            criteria,
+            mapOf(
+                AuthRoleGrantRequest::status.name to request.status,
+                AuthRoleGrantRequest::approverId.name to request.approverId,
+                AuthRoleGrantRequest::decisionComment.name to request.decisionComment,
+                AuthRoleGrantRequest::decisionTime.name to request.decisionTime,
+            ),
+        ) == 1
     }
 }

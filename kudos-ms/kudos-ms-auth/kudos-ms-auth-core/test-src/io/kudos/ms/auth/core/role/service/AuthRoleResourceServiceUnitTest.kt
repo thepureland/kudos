@@ -2,9 +2,12 @@ package io.kudos.ms.auth.core.role.service
 
 import io.kudos.ms.auth.core.platform.cache.ResourceIdsByRoleIdCache
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.event.AuthRoleResourceRelationsChanged
+import io.kudos.ms.auth.core.role.model.po.AuthRole
 import io.kudos.ms.auth.core.role.model.po.AuthRoleResource
 import io.kudos.ms.auth.core.role.service.impl.AuthRoleResourceService
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.anyInt
@@ -40,6 +43,7 @@ import kotlin.test.assertTrue
  * existing exclusion/grant unit tests use).
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -49,12 +53,20 @@ internal class AuthRoleResourceServiceUnitTest {
     private val cache = mock(ResourceIdsByRoleIdCache::class.java)
     private val eventPublisher = mock(ApplicationEventPublisher::class.java)
     private val grantPolicyService = mock(IAuthGrantPolicyService::class.java)
+    private val authRoleDao = mock(AuthRoleDao::class.java)
+    private val tenantAdministrationGuard = mock(TenantAdministrationGuard::class.java)
 
     private val service = AuthRoleResourceService(dao).apply {
         inject("resourceIdsByRoleIdCache", cache)
         inject("eventPublisher", eventPublisher)
         // Permission bindings are screened too (resource existence, subsystem boundary).
         inject("grantPolicyService", grantPolicyService)
+        inject("authRoleDao", authRoleDao)
+        inject("tenantAdministrationGuard", tenantAdministrationGuard)
+    }
+
+    init {
+        whenCalled(authRoleDao.get(ArgumentMatchers.anyString())).thenReturn(role())
     }
 
     private fun AuthRoleResourceService.inject(field: String, value: Any) {
@@ -148,5 +160,14 @@ internal class AuthRoleResourceServiceUnitTest {
     fun getRoleIdsByResourceId_delegatesToDao() {
         whenCalled(dao.searchRoleIdsByResourceId("res1")).thenReturn(setOf("r1", "r2"))
         assertEquals(setOf("r1", "r2"), service.getRoleIdsByResourceId("res1"))
+    }
+
+    private fun role() = AuthRole {
+        id = "role1"
+        tenantId = "t1"
+        subsysCode = "ams"
+        code = "ROLE"
+        active = true
+        builtIn = false
     }
 }

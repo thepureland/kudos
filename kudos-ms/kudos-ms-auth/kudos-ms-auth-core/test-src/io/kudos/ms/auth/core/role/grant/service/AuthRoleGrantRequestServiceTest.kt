@@ -22,6 +22,7 @@ import kotlin.test.assertTrue
  * Test data source: `AuthRoleGrantRequestServiceTest.sql`
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -53,9 +54,14 @@ class AuthRoleGrantRequestServiceTest : RdbAndRedisCacheTestBase() {
     @AfterTest
     fun clearContext() = KudosContextHolder.clear()
 
+    private fun submitApprovalRequest(reason: String? = null): String {
+        loginAs(user1)
+        return service.submit(approvalRoleId, user2, reason)
+    }
+
     @Test
     fun submit_createsPendingRequest() {
-        val id = service.submit(approvalRoleId, user2, "need access for project X")
+        val id = submitApprovalRequest("need access for project X")
         val req = service.get(id)
         assertEquals(GrantRequestStatus.PENDING.name, req!!.status)
         assertEquals(approvalRoleId, req.roleId)
@@ -65,20 +71,21 @@ class AuthRoleGrantRequestServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun submit_whenUserAlreadyHoldsRole_rejected() {
+        loginAs(user1)
         val err = assertFailsWith<IllegalArgumentException> { service.submit(normalRoleId, user1, null) }
         assertTrue(err.message!!.contains("already holds"))
     }
 
     @Test
     fun submit_duplicatePending_rejected() {
-        service.submit(approvalRoleId, user2, "first")
+        submitApprovalRequest("first")
         val err = assertFailsWith<IllegalArgumentException> { service.submit(approvalRoleId, user2, "second") }
         assertTrue(err.message!!.contains("pending"))
     }
 
     @Test
     fun approve_bindsUserAndMarksApproved() {
-        val id = service.submit(approvalRoleId, user2, null)
+        val id = submitApprovalRequest()
         loginAs(approver)
         assertFalse(authRoleUserService.exists(approvalRoleId, user2), "not bound before approval")
 
@@ -92,7 +99,8 @@ class AuthRoleGrantRequestServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun reject_doesNotBind() {
-        val id = service.submit(approvalRoleId, user2, null)
+        val id = submitApprovalRequest()
+        loginAs(approver)
         assertTrue(service.reject(id, "denied"))
         assertFalse(authRoleUserService.exists(approvalRoleId, user2), "must NOT be bound after reject")
         assertEquals(GrantRequestStatus.REJECTED.name, service.get(id)!!.status)
@@ -100,14 +108,15 @@ class AuthRoleGrantRequestServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun cancel_marksCancelled() {
-        val id = service.submit(approvalRoleId, user2, null)
+        val id = submitApprovalRequest()
         assertTrue(service.cancel(id))
         assertEquals(GrantRequestStatus.CANCELLED.name, service.get(id)!!.status)
     }
 
     @Test
     fun approve_nonPending_rejected() {
-        val id = service.submit(approvalRoleId, user2, null)
+        val id = submitApprovalRequest()
+        loginAs(approver)
         service.reject(id, "no")
         loginAs(approver)
         val err = assertFailsWith<IllegalArgumentException> { service.approve(id, "too late") }
@@ -120,7 +129,7 @@ class AuthRoleGrantRequestServiceTest : RdbAndRedisCacheTestBase() {
     fun approve_byAUserWhoCouldNotHaveGrantedIt_rejected() {
         // Without this check the workflow is theatre: any authenticated user could sign off, which
         // adds a row to a table and nothing to the security of the system.
-        val id = service.submit(approvalRoleId, user2, null)
+        val id = submitApprovalRequest()
         loginAs(bystander)
         val err = assertFailsWith<IllegalArgumentException> { service.approve(id, "rubber stamp") }
         assertTrue(err.message!!.contains("may not decide requests"), err.message!!)
@@ -130,7 +139,7 @@ class AuthRoleGrantRequestServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun approve_withoutALoggedInApprover_rejected() {
-        val id = service.submit(approvalRoleId, user2, null)
+        val id = submitApprovalRequest()
         KudosContextHolder.clear()
         val err = assertFailsWith<IllegalArgumentException> { service.approve(id, "anonymous") }
         assertTrue(err.message!!.contains("attributable"), err.message!!)
@@ -138,7 +147,7 @@ class AuthRoleGrantRequestServiceTest : RdbAndRedisCacheTestBase() {
 
     @Test
     fun approve_recordsWhoDecided() {
-        val id = service.submit(approvalRoleId, user2, null)
+        val id = submitApprovalRequest()
         loginAs(approver)
         service.approve(id, "ok")
         assertEquals(approver, service.get(id)!!.approverId)

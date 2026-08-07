@@ -27,14 +27,18 @@ import java.time.LocalTime
  * [UndecidableConditionException] instead, so the decision point can keep a DENY in force while
  * dropping an ALLOW. An earlier version returned `false` for both, which read as fail-closed and
  * was: every conditional DENY silently stopped applying the moment its evidence went missing.
- * Applications needing richer rules declare their own [IConditionEvaluator] bean, which takes
- * precedence over this one.
+ * Applications normally add an [IConditionClauseEvaluator] bean for the few clauses they need;
+ * the built-in semantics remain available. Replacing [IConditionEvaluator] is reserved for a
+ * deployment that intentionally wants a completely different policy language.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
-open class DefaultConditionEvaluator : IConditionEvaluator {
+open class DefaultConditionEvaluator(
+    private val clauseEvaluators: List<IConditionClauseEvaluator> = emptyList(),
+) : IConditionEvaluator {
 
     override fun evaluate(condition: String, context: Map<String, Any?>): Boolean =
         condition.split(CLAUSE_SEPARATOR)
@@ -43,6 +47,28 @@ open class DefaultConditionEvaluator : IConditionEvaluator {
             .all { clause -> evaluateClause(clause, context) }
 
     private fun evaluateClause(clause: String, context: Map<String, Any?>): Boolean {
+        val extension = clauseEvaluators.firstOrNull { evaluator ->
+            try {
+                evaluator.supports(clause)
+            } catch (e: Exception) {
+                throw UndecidableConditionException(
+                    "condition extension ${evaluator.javaClass.name} could not inspect clause '$clause'",
+                    e,
+                )
+            }
+        }
+        if (extension != null) {
+            return try {
+                extension.evaluate(clause, context)
+            } catch (e: UndecidableConditionException) {
+                throw e
+            } catch (e: Exception) {
+                throw UndecidableConditionException(
+                    "condition extension ${extension.javaClass.name} could not evaluate clause '$clause'",
+                    e,
+                )
+            }
+        }
         val separatorAt = clause.indexOf('=')
         if (separatorAt <= 0) {
             throw UndecidableConditionException("malformed condition clause '${clause}'")

@@ -3,17 +3,21 @@ package io.kudos.ms.auth.core.group.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupDao
 import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
 import io.kudos.ms.auth.core.group.model.po.AuthGroupRole
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupRoleService
 import io.kudos.ms.auth.core.policy.GrantCandidate
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
 import io.kudos.ms.auth.core.policy.iservice.IAuthGrantPolicyService
+import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import io.kudos.ms.user.common.passport.CurrentUserKit
 
 
 /**
@@ -45,22 +49,52 @@ open class AuthGroupRoleService(
     @Resource
     private lateinit var grantPolicyService: IAuthGrantPolicyService
 
+    @Resource
+    private lateinit var authGroupDao: AuthGroupDao
+
+    @Resource
+    private lateinit var authRoleDao: AuthRoleDao
+
+    @Resource
+    private lateinit var tenantAdministrationGuard: TenantAdministrationGuard
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getRoleIdsByGroupId(groupId: String): Set<String> =
-        dao.searchRoleIdsByGroupId(groupId)
+    override fun getRoleIdsByGroupId(groupId: String): Set<String> {
+        val group = authGroupDao.get(groupId) ?: throw IllegalArgumentException("Group not found: $groupId")
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
+        return dao.searchRoleIdsByGroupId(groupId)
+    }
 
     @Transactional(readOnly = true)
-    override fun getGroupIdsByRoleId(roleId: String): Set<String> =
-        dao.searchGroupIdsByRoleId(roleId)
+    override fun getGroupIdsByRoleId(roleId: String): Set<String> {
+        val role = authRoleDao.get(roleId) ?: throw IllegalArgumentException("Role not found: $roleId")
+        tenantAdministrationGuard.assertCanManage(role.tenantId)
+        return dao.searchGroupIdsByRoleId(roleId)
+    }
 
     @Transactional
     override fun batchBind(groupId: String, roleIds: Collection<String>): Int {
         if (roleIds.isEmpty()) return 0
-        // One SELECT for existing relations, then a single batchInsert for the delta — collapses the original N+1 into 2 SQL calls.
-        val existing = dao.searchRoleIdsByGroupId(groupId)
-        val newRoleIds = roleIds.toSet() - existing
+        val group = authGroupDao.get(groupId) ?: throw IllegalArgumentException("Group not found: $groupId")
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
+        val roles = authRoleDao.getByIds(roleIds.toSet()).associateBy { it.id }
+        roleIds.toSet().forEach { roleId ->
+            val role = roles[roleId] ?: throw IllegalArgumentException("Role not found: $roleId")
+            require(role.active) { "Role $roleId is inactive." }
+            require(role.tenantId == group.tenantId) {
+                "Group $groupId and role $roleId belong to different tenants."
+            }
+            require(role.subsysCode == group.subsysCode) {
+                "Group $groupId and role $roleId belong to different subsystems."
+            }
+        }
+        val rows = dao.searchBindingsByGroupId(groupId)
+        val requested = roleIds.toSet()
+        val revivable = rows.filter { it.revoked == true && it.roleId in requested }
+        val brandNew = requested - rows.map { it.roleId }.toSet()
+        val newRoleIds = brandNew + revivable.map { it.roleId }
         if (newRoleIds.isEmpty()) {
             log.debug("Batch-binding group ${groupId} to ${roleIds.size} roles: all already exist, nothing inserted.")
             return 0
@@ -85,23 +119,45 @@ open class AuthGroupRoleService(
             )
         }
 
-        val relations = newRoleIds.map { roleId ->
+        val operatorId = CurrentUserKit.currentUserIdOrNull()
+        val relations = brandNew.map { roleId ->
             AuthGroupRole {
                 this.groupId = groupId
                 this.roleId = roleId
+                this.grantedBy = operatorId
+                this.revoked = false
             }
         }
-        dao.batchInsert(relations)
-        log.debug("Batch-bound group ${groupId} to ${roleIds.size} roles, ${newRoleIds.size} new bindings inserted.")
+        if (relations.isNotEmpty()) dao.batchInsert(relations)
+        revivable.forEach { row ->
+            dao.update(AuthGroupRole {
+                this.id = row.id
+                this.grantedBy = operatorId
+                this.revoked = false
+                this.revokeReason = null
+            })
+        }
+        log.debug(
+            "Batch-bound group $groupId: ${brandNew.size} new role bindings, " +
+                "${revivable.size} revoked bindings reinstated.",
+        )
         eventPublisher.publishEvent(AuthGroupRoleRelationsChanged(groupId, newRoleIds.toList()))
         return newRoleIds.size
     }
 
     @Transactional
     override fun unbind(groupId: String, roleId: String): Boolean {
-        val count = dao.deleteByGroupIdAndRoleId(groupId, roleId)
-        val success = count > 0
+        val group = authGroupDao.get(groupId) ?: throw IllegalArgumentException("Group not found: $groupId")
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
+        val row = dao.searchBindingsByGroupId(groupId)
+            .firstOrNull { it.roleId == roleId && it.revoked != true }
+        val success = row != null
         if (success) {
+            dao.update(AuthGroupRole {
+                this.id = row.id
+                this.revoked = true
+                this.revokeReason = "unbound from group $groupId"
+            })
             log.debug("Unbound group ${groupId} from role ${roleId}.")
             eventPublisher.publishEvent(AuthGroupRoleRelationsChanged(groupId, listOf(roleId)))
         } else {
@@ -111,7 +167,11 @@ open class AuthGroupRoleService(
     }
 
     @Transactional(readOnly = true)
-    override fun exists(groupId: String, roleId: String): Boolean = dao.exists(groupId, roleId)
+    override fun exists(groupId: String, roleId: String): Boolean {
+        val group = authGroupDao.get(groupId) ?: return false
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
+        return dao.searchRoleIdsByGroupId(groupId).contains(roleId)
+    }
 
 
 }

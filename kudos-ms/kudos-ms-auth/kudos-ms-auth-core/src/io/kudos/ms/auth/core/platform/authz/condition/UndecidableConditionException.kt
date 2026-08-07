@@ -17,7 +17,8 @@ package io.kudos.ms.auth.core.platform.authz.condition
  * Fail-closed on both sides, where "closed" means the opposite thing for each.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
-class UndecidableConditionException(message: String) : RuntimeException(message)
+class UndecidableConditionException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)

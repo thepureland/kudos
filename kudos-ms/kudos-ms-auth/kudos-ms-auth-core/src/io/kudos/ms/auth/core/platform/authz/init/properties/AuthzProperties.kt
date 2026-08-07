@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component
  * Tuning for the authorization decision point.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -26,4 +27,24 @@ open class AuthzProperties {
      * becomes something an administrator can hand out.
      */
     var platformAdminRoleCodes: Set<String> = emptySet()
+
+    /**
+     * Tenant ids in which a platform-administrator role is allowed to exist.
+     *
+     * A role code is tenant-scoped, so matching a code alone lets any tenant create a homonym and
+     * acquire the short circuit. Both this set and [platformAdminRoleCodes] must be configured.
+     */
+    var platformAdminTenantIds: Set<String> = emptySet()
+
+    /** Emit an audit record for every decision; normally DENY and platform bypasses are sufficient. */
+    var auditAllDecisions: Boolean = false
+
+    /** Audit denied decisions by default, without requiring every caller to remember to do it. */
+    var auditDeniedDecisions: Boolean = true
+
+    /** Platform-administrator short circuits are always security-significant. */
+    var auditPlatformAdminDecisions: Boolean = true
+
+    /** When true, an audit sink failure aborts the request instead of degrading to an error log. */
+    var failOnAuditError: Boolean = false
 }

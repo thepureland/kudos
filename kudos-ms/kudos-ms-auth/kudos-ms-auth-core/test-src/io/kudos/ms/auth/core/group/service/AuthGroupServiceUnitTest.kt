@@ -1,6 +1,8 @@
 package io.kudos.ms.auth.core.group.service
 
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.event.AuthGroupBatchDeleted
 import io.kudos.ms.auth.core.group.event.AuthGroupDeleted
 import io.kudos.ms.auth.core.group.event.AuthGroupInserted
@@ -9,6 +11,8 @@ import io.kudos.ms.auth.core.group.model.po.AuthGroup
 import io.kudos.ms.auth.core.group.service.impl.AuthGroupService
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupRoleService
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupUserService
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
+import io.kudos.base.query.Criteria
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.anyString
@@ -26,8 +30,8 @@ import kotlin.test.assertTrue
  * Pure-logic unit test for [AuthGroupService] (DAO, event publisher and the two relation services
  * mocked with Mockito; no Spring container, no DB).
  *
- * AuthGroup does NOT implement IHasBuiltIn, so the BaseCrudService delete paths delegate straight to
- * `dao.deleteById` / `dao.batchDelete`, which keeps these branches mockable. Covers:
+ * AuthGroup implements IHasBuiltIn, so delete paths are exercised through BaseCrudService's
+ * built-in-safe criteria deletes. Covers:
  *  - insert(): delegation to the DAO plus the AuthGroupInserted publication;
  *  - update(): success branch (publishes AuthGroupUpdated) and failure branch (no event, error logged);
  *  - deleteById(): not-found short-circuit (no delete, no event), success (publishes AuthGroupDeleted
@@ -39,6 +43,7 @@ import kotlin.test.assertTrue
  *    one group throws and is surfaced in failures rather than aborting the rest.
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 internal class AuthGroupServiceUnitTest {
@@ -47,11 +52,17 @@ internal class AuthGroupServiceUnitTest {
     private val eventPublisher = mock(ApplicationEventPublisher::class.java)
     private val groupUserService = mock(IAuthGroupUserService::class.java)
     private val groupRoleService = mock(IAuthGroupRoleService::class.java)
+    private val groupUserDao = mock(AuthGroupUserDao::class.java)
+    private val groupRoleDao = mock(AuthGroupRoleDao::class.java)
+    private val tenantAdministrationGuard = mock(TenantAdministrationGuard::class.java)
 
     private val service = AuthGroupService(dao).apply {
         inject("eventPublisher", eventPublisher)
         inject("authGroupUserService", groupUserService)
         inject("authGroupRoleService", groupRoleService)
+        inject("authGroupUserDao", groupUserDao)
+        inject("authGroupRoleDao", groupRoleDao)
+        inject("tenantAdministrationGuard", tenantAdministrationGuard)
     }
 
     private fun AuthGroupService.inject(field: String, value: Any) {
@@ -62,11 +73,19 @@ internal class AuthGroupServiceUnitTest {
 
     private fun anyGroup(): AuthGroup = ArgumentMatchers.any(AuthGroup::class.java) ?: group("x")
 
+    private fun anyCriteria(): Criteria = ArgumentMatchers.any(Criteria::class.java) ?: Criteria()
+
+    private fun anyBuiltInProperty() =
+        ArgumentMatchers.same(AuthGroup::builtIn) ?: AuthGroup::builtIn
+
     private fun group(id: String, tenantId: String = "t1", code: String = "GRP"): AuthGroup =
         AuthGroup {
             this.id = id
             this.tenantId = tenantId
+            this.subsysCode = "ams"
             this.code = code
+            this.active = true
+            this.builtIn = false
         }
 
     // ---------------------------------------------------------------- insert
@@ -86,6 +105,7 @@ internal class AuthGroupServiceUnitTest {
     @Test
     fun update_success_publishesUpdatedEvent() {
         val po = group("g2")
+        whenCalled(dao.get("g2")).thenReturn(po)
         whenCalled(dao.update(po)).thenReturn(true)
         assertTrue(service.update(po))
         verify(eventPublisher).publishEvent(AuthGroupUpdated("g2"))
@@ -94,6 +114,7 @@ internal class AuthGroupServiceUnitTest {
     @Test
     fun update_failure_doesNotPublishEvent() {
         val po = group("g3")
+        whenCalled(dao.get("g3")).thenReturn(po)
         whenCalled(dao.update(po)).thenReturn(false)
         assertFalse(service.update(po))
         verify(eventPublisher, never()).publishEvent(AuthGroupUpdated("g3"))
@@ -112,7 +133,9 @@ internal class AuthGroupServiceUnitTest {
     @Test
     fun deleteById_success_publishesDeletedEventWithSnapshot() {
         whenCalled(dao.get("g4")).thenReturn(group("g4", tenantId = "tenantA", code = "CODE_A"))
-        whenCalled(dao.deleteById("g4")).thenReturn(true)
+        whenCalled(groupUserDao.searchMemberUserIdsByGroupId("g4")).thenReturn(emptySet())
+        whenCalled(groupRoleDao.searchRoleIdsByGroupId("g4")).thenReturn(emptySet())
+        whenCalled(dao.batchDeleteCriteria(anyCriteria())).thenReturn(1)
         assertTrue(service.deleteById("g4"))
         verify(eventPublisher).publishEvent(AuthGroupDeleted("g4", "tenantA", "CODE_A"))
     }
@@ -120,7 +143,10 @@ internal class AuthGroupServiceUnitTest {
     @Test
     fun deleteById_daoReturnsFalse_doesNotPublishEvent() {
         whenCalled(dao.get("g5")).thenReturn(group("g5", tenantId = "tA", code = "C"))
-        whenCalled(dao.deleteById("g5")).thenReturn(false)
+        whenCalled(groupUserDao.searchMemberUserIdsByGroupId("g5")).thenReturn(emptySet())
+        whenCalled(groupRoleDao.searchRoleIdsByGroupId("g5")).thenReturn(emptySet())
+        whenCalled(dao.batchDeleteCriteria(anyCriteria())).thenReturn(0)
+        whenCalled(dao.searchProperty(anyCriteria(), anyBuiltInProperty())).thenReturn(emptyList())
         assertFalse(service.deleteById("g5"))
         verify(eventPublisher, never()).publishEvent(ArgumentMatchers.any())
     }
@@ -128,10 +154,7 @@ internal class AuthGroupServiceUnitTest {
     // ---------------------------------------------------------------- batchDelete
 
     @Test
-    fun batchDelete_empty_skipsSnapshotAndEvent_butStillDelegatesDelete() {
-        // Empty input: the (tenantId,code) snapshot query is skipped and no batch-deleted event is
-        // published, but the base delete is still invoked unconditionally (it is a no-op for []).
-        whenCalled(dao.batchDelete(emptyList())).thenReturn(0)
+    fun batchDelete_empty_skipsSnapshotDeleteAndEvent() {
         val count = service.batchDelete(emptyList())
         assertEquals(0, count)
         verify(dao, never()).getByIds(ArgumentMatchers.anyList(), ArgumentMatchers.anyInt())
@@ -147,7 +170,11 @@ internal class AuthGroupServiceUnitTest {
                 group("g7", tenantId = "t2", code = "C7"),
             )
         )
-        whenCalled(dao.batchDelete(ids)).thenReturn(2)
+        ids.forEach {
+            whenCalled(groupUserDao.searchMemberUserIdsByGroupId(it)).thenReturn(emptySet())
+            whenCalled(groupRoleDao.searchRoleIdsByGroupId(it)).thenReturn(emptySet())
+        }
+        whenCalled(dao.batchDeleteCriteria(anyCriteria())).thenReturn(2)
         val count = service.batchDelete(ids)
         assertEquals(2, count)
         val captor = ArgumentCaptor.forClass(AuthGroupBatchDeleted::class.java)
@@ -163,7 +190,11 @@ internal class AuthGroupServiceUnitTest {
         // ids non-empty but the DB returns no rows (already gone): no batch-deleted event published.
         val ids = listOf("gone")
         whenCalled(dao.getByIds(ids)).thenReturn(emptyList())
-        whenCalled(dao.batchDelete(ids)).thenReturn(0)
+        whenCalled(dao.batchDeleteCriteria(anyCriteria())).thenReturn(0)
+        whenCalled(dao.inSearchPropertiesById(
+            ArgumentMatchers.anyList(),
+            ArgumentMatchers.anyList(),
+        )).thenReturn(emptyList())
         val count = service.batchDelete(ids)
         assertEquals(0, count)
         verify(eventPublisher, never()).publishEvent(ArgumentMatchers.any())

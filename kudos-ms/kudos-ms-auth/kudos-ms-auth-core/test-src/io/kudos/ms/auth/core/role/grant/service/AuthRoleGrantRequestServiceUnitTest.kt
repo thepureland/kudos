@@ -13,7 +13,9 @@ import io.kudos.ms.user.common.passport.vo.SessionUserPrincipal
 import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers.anyString
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
-import io.kudos.ms.auth.core.platform.authz.init.properties.AuthzProperties
+import io.kudos.ms.auth.core.platform.authz.PlatformAdministratorPolicy
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
+import io.kudos.ms.auth.core.version.dao.AuthPrincipalVersionDao
 import io.kudos.ms.auth.core.role.model.po.AuthRoleUser
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
@@ -39,6 +41,7 @@ import kotlin.test.assertTrue
  *  - the loadPendingOrThrow guard for missing / non-PENDING rows on approve/reject/cancel.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -47,7 +50,9 @@ internal class AuthRoleGrantRequestServiceUnitTest {
     private val dao = mock(AuthRoleGrantRequestDao::class.java)
     private val authRoleDao = mock(AuthRoleDao::class.java)
     private val authRoleUserDao = mock(AuthRoleUserDao::class.java)
-    private val authzProperties = AuthzProperties()
+    private val platformAdministratorPolicy = mock(PlatformAdministratorPolicy::class.java)
+    private val tenantAdministrationGuard = mock(TenantAdministrationGuard::class.java)
+    private val authPrincipalVersionDao = mock(AuthPrincipalVersionDao::class.java)
     private val authRoleUserService = mock(IAuthRoleUserService::class.java)
 
     private val service = AuthRoleGrantRequestService(dao).apply {
@@ -55,7 +60,9 @@ internal class AuthRoleGrantRequestServiceUnitTest {
         inject("authRoleUserService", authRoleUserService)
         // Approving requires the authority to grant the role (see assertMayApprove).
         inject("authRoleUserDao", authRoleUserDao)
-        inject("authzProperties", authzProperties)
+        inject("platformAdministratorPolicy", platformAdministratorPolicy)
+        inject("tenantAdministrationGuard", tenantAdministrationGuard)
+        inject("authPrincipalVersionDao", authPrincipalVersionDao)
     }
 
     private fun AuthRoleGrantRequestService.inject(field: String, value: Any) {
@@ -90,6 +97,7 @@ internal class AuthRoleGrantRequestServiceUnitTest {
     private fun role(id: String, tenant: String = "t1") = AuthRole {
         this.id = id
         this.tenantId = tenant
+        this.active = true
     }
 
     private fun pending(id: String, requester: String? = null) = AuthRoleGrantRequest {
@@ -174,7 +182,7 @@ internal class AuthRoleGrantRequestServiceUnitTest {
     fun approve_byDifferentUser_succeeds() {
         login("other-approver")
         whenCalled(dao.get("req2")).thenReturn(pending("req2", requester = "the-requester"))
-        whenCalled(dao.update(anyRequest())).thenReturn(true)
+        whenCalled(dao.transitionIfPending(anyRequest())).thenReturn(true)
         // Approving requires the authority to hand the role out: a live direct grant that is still
         // delegable. Being merely logged in and not the requester is not enough.
         grantsApprovalAuthority("other-approver", "role1")
@@ -182,7 +190,7 @@ internal class AuthRoleGrantRequestServiceUnitTest {
         assertTrue(service.approve("req2", "approved"))
         verify(authRoleUserService).bindApproved("role1", "user1")
         val captor = org.mockito.ArgumentCaptor.forClass(AuthRoleGrantRequest::class.java)
-        verify(dao).update(captureRequest(captor))
+        verify(dao).transitionIfPending(captureRequest(captor))
         assertEquals(GrantRequestStatus.APPROVED.name, captor.value.status)
         assertEquals("other-approver", captor.value.approverId)
         assertEquals("approved", captor.value.decisionComment)
@@ -195,7 +203,7 @@ internal class AuthRoleGrantRequestServiceUnitTest {
         // The only approval entry point is the REST endpoint, which always has a logged-in caller;
         // a batch context that needs to approve should authenticate as a service principal.
         whenCalled(dao.get("req3")).thenReturn(pending("req3", requester = "someone"))
-        whenCalled(dao.update(anyRequest())).thenReturn(true)
+        whenCalled(dao.transitionIfPending(anyRequest())).thenReturn(true)
         assertFailsWith<IllegalArgumentException> { service.approve("req3", null) }
         verify(authRoleUserService, never()).bindApproved(anyString(), anyString())
     }
@@ -206,19 +214,21 @@ internal class AuthRoleGrantRequestServiceUnitTest {
         // authority check, which asks whether this approver may hand out this role at all.
         login("approver")
         whenCalled(dao.get("req4")).thenReturn(pending("req4", requester = null))
-        whenCalled(dao.update(anyRequest())).thenReturn(true)
+        whenCalled(dao.transitionIfPending(anyRequest())).thenReturn(true)
         assertFailsWith<IllegalArgumentException> { service.approve("req4", null) }
         verify(authRoleUserService, never()).bindApproved(anyString(), anyString())
     }
 
     @Test
     fun approve_bindThrows_propagatesAndDoesNotUpdate() {
+        login("approver")
         whenCalled(dao.get("req5")).thenReturn(pending("req5", requester = "someone"))
+        grantsApprovalAuthority("approver", "role1")
         whenCalled(authRoleUserService.bindApproved(anyString(), anyString()))
             .thenThrow(IllegalArgumentException("SoD constraint violation"))
         assertFailsWith<IllegalArgumentException> { service.approve("req5", null) }
         // Status flip happens only after a successful bind, so update must never run.
-        verify(dao, never()).update(anyRequest())
+        verify(dao, never()).transitionIfPending(anyRequest())
     }
 
     // ---------------------------------------------------------------- loadPendingOrThrow guard
@@ -242,23 +252,51 @@ internal class AuthRoleGrantRequestServiceUnitTest {
     fun reject_pending_flipsToRejectedNoBind() {
         login("rejector")
         whenCalled(dao.get("r")).thenReturn(pending("r"))
-        whenCalled(dao.update(anyRequest())).thenReturn(true)
+        grantsApprovalAuthority("rejector", "role1")
+        whenCalled(dao.transitionIfPending(anyRequest())).thenReturn(true)
         assertTrue(service.reject("r", "no good"))
         val captor = org.mockito.ArgumentCaptor.forClass(AuthRoleGrantRequest::class.java)
-        verify(dao).update(captureRequest(captor))
+        verify(dao).transitionIfPending(captureRequest(captor))
         assertEquals(GrantRequestStatus.REJECTED.name, captor.value.status)
         assertEquals("rejector", captor.value.approverId)
         verify(authRoleUserService, never()).bindApproved(anyString(), anyString())
     }
 
     @Test
+    fun reject_byRequester_isRefused() {
+        login("requester")
+        whenCalled(dao.get("self-reject")).thenReturn(pending("self-reject", requester = "requester"))
+        assertFailsWith<IllegalArgumentException> { service.reject("self-reject", "trying to bypass cancel") }
+        verify(dao, never()).transitionIfPending(anyRequest())
+    }
+
+    @Test
     fun cancel_pending_flipsToCancelled() {
-        whenCalled(dao.get("c")).thenReturn(pending("c"))
-        whenCalled(dao.update(anyRequest())).thenReturn(true)
+        login("requester")
+        whenCalled(dao.get("c")).thenReturn(pending("c", requester = "requester"))
+        whenCalled(dao.transitionIfPending(anyRequest())).thenReturn(true)
         assertTrue(service.cancel("c"))
         val captor = org.mockito.ArgumentCaptor.forClass(AuthRoleGrantRequest::class.java)
-        verify(dao).update(captureRequest(captor))
+        verify(dao).transitionIfPending(captureRequest(captor))
         assertEquals(GrantRequestStatus.CANCELLED.name, captor.value.status)
+    }
+
+    @Test
+    fun cancel_bySomeoneOtherThanRequester_isRefused() {
+        login("intruder")
+        whenCalled(dao.get("foreign")).thenReturn(pending("foreign", requester = "requester"))
+        assertFailsWith<IllegalArgumentException> { service.cancel("foreign") }
+        verify(dao, never()).transitionIfPending(anyRequest())
+    }
+
+    @Test
+    fun concurrentDecisionThatLostTheAtomicTransitionRollsBackLoudly() {
+        login("approver")
+        whenCalled(dao.get("race")).thenReturn(pending("race", requester = "requester"))
+        grantsApprovalAuthority("approver", "role1")
+        whenCalled(dao.transitionIfPending(anyRequest())).thenReturn(false)
+
+        assertFailsWith<IllegalStateException> { service.approve("race", "approved") }
     }
 
     @Test

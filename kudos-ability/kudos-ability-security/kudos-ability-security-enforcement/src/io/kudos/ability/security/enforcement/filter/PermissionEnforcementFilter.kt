@@ -4,6 +4,7 @@ import io.kudos.ability.security.enforcement.init.properties.EnforcementProperti
 import io.kudos.ability.security.enforcement.port.IAuthzDecisionProvider
 import io.kudos.ability.security.enforcement.port.IPermissionPointRegistry
 import io.kudos.ability.security.enforcement.port.ITokenFreshnessValidator
+import io.kudos.ability.security.enforcement.port.ITrustedAuthorizationContextProvider
 import io.kudos.ability.security.enforcement.resilience.DecisionGuard
 import io.kudos.base.logger.LogFactory
 import jakarta.servlet.FilterChain
@@ -43,6 +44,7 @@ import org.springframework.web.filter.OncePerRequestFilter
  * instead of from an outage.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -55,6 +57,7 @@ open class PermissionEnforcementFilter(
      * absent rather than the filter failing to start. Nothing else in the filter depends on it.
      */
     private val tokenFreshnessValidator: ITokenFreshnessValidator? = null,
+    private val trustedContextProviders: List<ITrustedAuthorizationContextProvider> = emptyList(),
 ) : OncePerRequestFilter() {
 
     private val guard = DecisionGuard(properties.resilience)
@@ -230,20 +233,25 @@ open class PermissionEnforcementFilter(
     /** Attributes conditional bindings may be evaluated against. */
     private fun buildContext(request: HttpServletRequest): Map<String, Any?> {
         val context = mutableMapOf<String, Any?>("ip" to clientIp(request))
-        properties.contextHeaders.forEach { header ->
-            request.getHeader(header)?.let { context[header] = it }
+        trustedContextProviders.forEach { provider -> context.putAll(provider.attributes(request)) }
+        if (properties.acceptUntrustedContextHeaders) {
+            properties.contextHeaders.forEach { header ->
+                request.getHeader(header)?.let { context[header] = it }
+            }
         }
         return context
     }
 
     /**
-     * Best-effort client address. `X-Forwarded-For` is honoured only because a reverse proxy is the
-     * norm; it is caller-supplied and therefore never suitable as the sole basis for a security
-     * decision — which is why ip conditions are an additional restriction on a grant, never a grant.
+     * Best-effort client address. `X-Forwarded-For` is caller-supplied unless a trusted reverse
+     * proxy strips and rewrites it, so it is ignored by default and honoured only when the
+     * deployment explicitly enables [EnforcementProperties.trustForwardedFor].
      */
     private fun clientIp(request: HttpServletRequest): String {
         val forwarded = request.getHeader("X-Forwarded-For")
-        if (!forwarded.isNullOrBlank()) return forwarded.split(",").first().trim()
+        if (properties.trustForwardedFor && !forwarded.isNullOrBlank()) {
+            return forwarded.split(",").first().trim()
+        }
         return request.remoteAddr ?: ""
     }
 

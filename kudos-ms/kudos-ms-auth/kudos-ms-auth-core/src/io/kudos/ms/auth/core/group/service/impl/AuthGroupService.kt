@@ -6,14 +6,19 @@ import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.auth.common.group.vo.response.GroupDeleteImpactVo
 import io.kudos.ms.auth.common.role.vo.response.BatchBindResultVo
 import io.kudos.ms.auth.core.group.dao.AuthGroupDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupRoleDao
+import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import io.kudos.ms.auth.core.group.event.AuthGroupBatchDeleted
 import io.kudos.ms.auth.core.group.event.AuthGroupDeleted
 import io.kudos.ms.auth.core.group.event.AuthGroupInserted
 import io.kudos.ms.auth.core.group.event.AuthGroupUpdated
+import io.kudos.ms.auth.core.group.event.AuthGroupRoleRelationsChanged
+import io.kudos.ms.auth.core.group.event.AuthGroupUserRelationsChanged
 import io.kudos.ms.auth.core.group.model.po.AuthGroup
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupRoleService
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupService
 import io.kudos.ms.auth.core.group.service.iservice.IAuthGroupUserService
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationEventPublisher
@@ -45,10 +50,21 @@ open class AuthGroupService(
     @Resource
     private lateinit var authGroupRoleService: IAuthGroupRoleService
 
+    @Resource
+    private lateinit var authGroupUserDao: AuthGroupUserDao
+
+    @Resource
+    private lateinit var authGroupRoleDao: AuthGroupRoleDao
+
+    @Resource
+    private lateinit var tenantAdministrationGuard: TenantAdministrationGuard
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional
     override fun insert(any: Any): String {
+        val tenantId = BeanKit.getProperty(any, AuthGroup::tenantId.name) as String?
+        tenantAdministrationGuard.assertCanManage(requireNotNull(tenantId) { "group tenantId is required." })
         val id = super.insert(any)
         log.debug("Inserted user group with id ${id}.")
         eventPublisher.publishEvent(AuthGroupInserted(id))
@@ -57,8 +73,19 @@ open class AuthGroupService(
 
     @Transactional
     override fun update(any: Any): Boolean {
-        val success = super.update(any)
         val id = BeanKit.getProperty(any, AuthGroup::id.name) as String
+        val existing = dao.get(id) ?: throw IllegalArgumentException("Group not found: $id")
+        tenantAdministrationGuard.assertCanManage(existing.tenantId)
+        require(!existing.builtIn) { "built-in group $id cannot be modified." }
+        val requestedTenant = BeanKit.getProperty(any, AuthGroup::tenantId.name) as String?
+        val requestedSubsys = BeanKit.getProperty(any, AuthGroup::subsysCode.name) as String?
+        require(requestedTenant == null || requestedTenant == existing.tenantId) {
+            "group tenantId is immutable (stored=${existing.tenantId}, requested=$requestedTenant)."
+        }
+        require(requestedSubsys == null || requestedSubsys == existing.subsysCode) {
+            "group subsysCode is immutable (stored=${existing.subsysCode}, requested=$requestedSubsys)."
+        }
+        val success = super.update(any)
         if (success) {
             log.debug("Updated user group with id ${id}.")
             eventPublisher.publishEvent(AuthGroupUpdated(id))
@@ -74,10 +101,17 @@ open class AuthGroupService(
             log.warn("Attempted to delete user group with id ${id}, but it no longer exists!")
             false
         }
+        tenantAdministrationGuard.assertCanManage(group.tenantId)
+        val userIds = authGroupUserDao.searchMemberUserIdsByGroupId(id)
+        val roleIds = authGroupRoleDao.searchRoleIdsByGroupId(id)
         val success = super.deleteById(id)
         if (success) {
+            authGroupUserDao.deleteByGroupId(id)
+            authGroupRoleDao.deleteByGroupId(id)
             log.debug("Deleted user group with id ${id}.")
             eventPublisher.publishEvent(AuthGroupDeleted(id, group.tenantId, group.code))
+            if (userIds.isNotEmpty()) eventPublisher.publishEvent(AuthGroupUserRelationsChanged(id, userIds))
+            if (roleIds.isNotEmpty()) eventPublisher.publishEvent(AuthGroupRoleRelationsChanged(id, roleIds))
         } else {
             log.warn("Failed to delete user group with id ${id}!")
         }
@@ -86,13 +120,33 @@ open class AuthGroupService(
 
     @Transactional
     override fun batchDelete(ids: Collection<String>): Int {
+        if (ids.isEmpty()) return 0
         // Snapshot tenantId/code up front; downstream (tenantId, code) caches cannot look these up after AFTER_COMMIT.
-        val snapshots = if (ids.isEmpty()) emptyList()
-            else dao.getByIds(ids).map { AuthGroupBatchDeleted.Item(it.id, it.tenantId, it.code) }
+        val groups = dao.getByIds(ids)
+        groups.forEach { tenantAdministrationGuard.assertCanManage(it.tenantId) }
+        val snapshots = groups.map { AuthGroupBatchDeleted.Item(it.id, it.tenantId, it.code) }
+        val relationSnapshots = groups.associate { group ->
+            group.id to Pair(
+                authGroupUserDao.searchMemberUserIdsByGroupId(group.id),
+                authGroupRoleDao.searchRoleIdsByGroupId(group.id),
+            )
+        }
         val count = super.batchDelete(ids)
+        snapshots.forEach {
+            authGroupUserDao.deleteByGroupId(it.id)
+            authGroupRoleDao.deleteByGroupId(it.id)
+        }
         log.debug("Batch-deleted user groups: expected ${ids.size}, actually deleted ${count}.")
         if (snapshots.isNotEmpty()) {
             eventPublisher.publishEvent(AuthGroupBatchDeleted(snapshots))
+            relationSnapshots.forEach { (groupId, relations) ->
+                if (relations.first.isNotEmpty()) {
+                    eventPublisher.publishEvent(AuthGroupUserRelationsChanged(groupId, relations.first))
+                }
+                if (relations.second.isNotEmpty()) {
+                    eventPublisher.publishEvent(AuthGroupRoleRelationsChanged(groupId, relations.second))
+                }
+            }
         }
         return count
     }

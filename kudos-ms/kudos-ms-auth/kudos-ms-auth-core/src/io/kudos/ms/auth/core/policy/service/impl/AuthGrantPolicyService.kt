@@ -13,6 +13,7 @@ import io.kudos.ms.auth.core.version.dao.AuthPrincipalVersionDao
 import io.kudos.ms.auth.core.policy.GrantCandidate
 import io.kudos.ms.auth.core.policy.GrantRejection
 import io.kudos.ms.auth.core.policy.iservice.IAuthGrantPolicyService
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
 import io.kudos.ms.auth.core.role.dao.AuthRoleDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleResourceDao
 import io.kudos.ms.auth.core.role.dao.AuthRoleUserDao
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional
  * set, SoD) runs per candidate — off caches, not off the database.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -80,6 +82,9 @@ open class AuthGrantPolicyService : IAuthGrantPolicyService {
     @Resource
     private lateinit var affectedUserResolver: AffectedUserResolver
 
+    @Resource
+    private lateinit var tenantAdministrationGuard: TenantAdministrationGuard
+
     private val log = LogFactory.getLog(this::class)
 
     /**
@@ -117,6 +122,8 @@ open class AuthGrantPolicyService : IAuthGrantPolicyService {
         // Role-side facts: one lookup per distinct role, however many principals are involved.
         val roles: Map<String, AuthRole?> = candidates.map { it.roleId }.distinct()
             .associateWith { authRoleDao.get(it) }
+        roles.values.filterNotNull().map { it.tenantId }.distinct()
+            .forEach(tenantAdministrationGuard::assertCanManage)
 
         val rejections = mutableListOf<GrantRejection>()
         // The effective role set is per principal, not per candidate; a group bind hands several
@@ -127,6 +134,10 @@ open class AuthGrantPolicyService : IAuthGrantPolicyService {
             val role = roles[candidate.roleId]
             if (role == null) {
                 rejections += GrantRejection(candidate, "role does not exist")
+                continue
+            }
+            if (!role.active) {
+                rejections += GrantRejection(candidate, "role is inactive")
                 continue
             }
             // Asked of the principal *directory*, not of the account table: reading accounts
@@ -197,6 +208,8 @@ open class AuthGrantPolicyService : IAuthGrantPolicyService {
         permissionCodes: Collection<String>,
     ): List<String> {
         val role = authRoleDao.get(roleId) ?: return listOf("role ${roleId} does not exist")
+        tenantAdministrationGuard.assertCanManage(role.tenantId)
+        if (!role.active) return listOf("role ${roleId} is inactive")
         val reasons = mutableListOf<String>()
 
         if (resourceIds.isNotEmpty()) {

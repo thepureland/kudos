@@ -12,10 +12,11 @@ import io.kudos.ms.auth.core.instance.dao.AuthInstanceGrantDao
 import io.kudos.ms.auth.core.instance.model.po.AuthInstanceGrant
 import io.kudos.ms.auth.core.platform.authz.cache.PermissionGrantsByUserIdCache
 import io.kudos.ms.auth.core.platform.authz.condition.IConditionEvaluator
+import io.kudos.ms.auth.core.platform.authz.audit.AuthzDecisionAuditRecorder
 import io.kudos.ms.auth.core.platform.authz.init.properties.AuthzProperties
 import io.kudos.ms.auth.core.principal.PrincipalDirectoryRegistry
-import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
-import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
+import io.kudos.ms.auth.core.platform.authz.spi.AuthorizationPolicyContribution
+import io.kudos.ms.auth.core.platform.authz.spi.AuthorizationPolicyExtensionEvaluator
 import jakarta.annotation.Resource
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
@@ -34,12 +35,14 @@ import org.springframework.transaction.annotation.Transactional
  * a filter — and none of those are auditable. Here it is one configured set of role codes
  * ([AuthzProperties.platformAdminRoleCodes]), it goes through the same call, and it produces a
  * decision object with [AuthzDecision.Reason.PLATFORM_ADMIN] that the audit trail records like any
- * other.
+ * other. A match is accepted only for a deployment-configured platform tenant, a protected
+ * built-in role, and an explicit zero delegation ceiling.
  *
  * **Default deny is the last step, not an error path.** A permission code nobody granted, a code
  * nobody registered, a subject with no roles — all reach the same answer through the same route.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -51,19 +54,19 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
     private lateinit var permissionGrantsByUserIdCache: PermissionGrantsByUserIdCache
 
     @Resource
-    private lateinit var roleIdsByUserIdCache: RoleIdsByUserIdCache
-
-    @Resource
-    private lateinit var authRoleHashCache: AuthRoleHashCache
-
-    @Resource
     private lateinit var authInstanceGrantDao: AuthInstanceGrantDao
 
     @Resource
     private lateinit var conditionEvaluator: IConditionEvaluator
 
     @Resource
-    private lateinit var authzProperties: AuthzProperties
+    private lateinit var platformAdministratorPolicy: PlatformAdministratorPolicy
+
+    @Resource
+    private lateinit var decisionAuditRecorder: AuthzDecisionAuditRecorder
+
+    @Resource
+    private lateinit var policyExtensionEvaluator: AuthorizationPolicyExtensionEvaluator
 
     @Resource
     private lateinit var principalDirectoryRegistry: PrincipalDirectoryRegistry
@@ -71,7 +74,10 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun decide(request: AuthzRequest): AuthzDecision {
+    override fun decide(request: AuthzRequest): AuthzDecision =
+        decideInternal(request).also { decisionAuditRecorder.record(request, it) }
+
+    private fun decideInternal(request: AuthzRequest): AuthzDecision {
         if (request.permissionCode.isBlank()) {
             return AuthzDecision.deny(
                 AuthzDecision.Reason.DENIED_BY_DEFAULT,
@@ -80,7 +86,7 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
         }
 
         // 1. Platform administrator short circuit.
-        if (isPlatformAdmin(request.subject)) {
+        if (platformAdministratorPolicy.isPlatformAdministrator(request.subject)) {
             return AuthzDecision.permit(
                 AuthzDecision.Reason.PLATFORM_ADMIN,
                 code = request.permissionCode,
@@ -118,6 +124,19 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
                 detail = "denied by an explicit DENY on ${instanceDeny.resourceType}#${instanceDeny.instanceId}",
             )
         }
+        // Extensions run only after the common model found no explicit denial. This keeps the hot
+        // path cheap and avoids loading deployment-specific facts for a request already settled.
+        val extensionResults = policyExtensionEvaluator.evaluate(request)
+        val extensionDeny = extensionResults.firstOrNull {
+            it.effect == AuthorizationPolicyContribution.Effect.DENY
+        }
+        if (extensionDeny != null) {
+            return AuthzDecision.deny(
+                AuthzDecision.Reason.DENIED_BY_EXTENSION,
+                code = extensionDeny.policyCode,
+                detail = extensionDeny.detail ?: "denied by an authorization policy extension",
+            )
+        }
         val allow = applicable.firstOrNull { it.effect == PermissionEffect.ALLOW }
         if (allow != null) {
             return AuthzDecision.permit(
@@ -132,6 +151,16 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
                 AuthzDecision.Reason.ALLOWED_BY_INSTANCE_GRANT,
                 code = instanceAllow.action,
                 detail = "granted on ${instanceAllow.resourceType}#${instanceAllow.instanceId} by ${instanceAllow.grantedBy ?: "unknown"}",
+            )
+        }
+        val extensionAllow = extensionResults.firstOrNull {
+            it.effect == AuthorizationPolicyContribution.Effect.ALLOW
+        }
+        if (extensionAllow != null) {
+            return AuthzDecision.permit(
+                AuthzDecision.Reason.ALLOWED_BY_EXTENSION,
+                code = extensionAllow.policyCode,
+                detail = extensionAllow.detail ?: "allowed by an authorization policy extension",
             )
         }
         return AuthzDecision.deny(
@@ -182,25 +211,6 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
             .searchLiveGrants(request.subject.principalId, resourceType, instanceId)
             .filter { subjectTenant.isNullOrBlank() || it.tenantId == subjectTenant }
             .filter { PermissionCodes.matches(it.action, request.permissionCode) }
-    }
-
-    /**
-     * Whether the subject holds one of the configured platform-administrator roles.
-     *
-     * Matched by role **code** rather than id: ids are per-deployment, codes are what an operator
-     * can put in a config file and reason about.
-     *
-     * Resolved through [AuthRoleHashCache], not the DAO — this is the first step of every single
-     * [decide] call, so a per-role database read here quietly broke the promise the rest of the
-     * decision path keeps (pure cache hits): every request paid it, and a database outage reached
-     * even subjects whose grants were fully cached.
-     */
-    private fun isPlatformAdmin(subject: SubjectRef): Boolean {
-        val adminCodes = authzProperties.platformAdminRoleCodes
-        if (adminCodes.isEmpty()) return false
-        val roleIds = roleIdsByUserIdCache.getRoleIds(subject.principalId)
-        if (roleIds.isEmpty()) return false
-        return authRoleHashCache.getRolesByIds(roleIds).values.any { it.code in adminCodes }
     }
 
     /**

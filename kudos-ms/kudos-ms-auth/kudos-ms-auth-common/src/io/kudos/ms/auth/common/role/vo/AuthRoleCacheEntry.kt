@@ -9,6 +9,7 @@ import java.time.LocalDateTime
  * Cache entry for a role.
  *
  * @author K
+ * @author AI: Codex
  * @since 1.0.0
  */
 data class AuthRoleCacheEntry (
@@ -63,6 +64,9 @@ data class AuthRoleCacheEntry (
 
     /** Last update time. */
     val updateTime: LocalDateTime?,
+
+    /** Delegation ceiling; platform administrator roles must be non-delegable. */
+    val delegableMax: Int? = null,
 
 ) : IIdEntity<String>, Serializable {
 

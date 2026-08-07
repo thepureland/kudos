@@ -31,6 +31,7 @@ import kotlin.test.assertTrue
  * default deny for everything else.
  *
  * @author K
+ * @author AI: Codex
  * @author AI: Claude
  * @since 1.0.0
  */
@@ -66,7 +67,9 @@ class AuthzDecisionApiTest : RdbAndRedisCacheTestBase() {
     @Test
     fun platformAdmin_shortCircuitsButIsStillAttributed() {
         val previous = authzProperties.platformAdminRoleCodes
+        val previousTenants = authzProperties.platformAdminTenantIds
         authzProperties.platformAdminRoleCodes = setOf("KUDOS_PLATFORM_ADMIN_Kq2m")
+        authzProperties.platformAdminTenantIds = setOf("tenant-authz-1-Kq2m")
         try {
             val decision = decide(platform, "anything:at:all")
             assertTrue(decision.permitted)
@@ -75,12 +78,14 @@ class AuthzDecisionApiTest : RdbAndRedisCacheTestBase() {
             assertEquals(AuthzDecision.Reason.PLATFORM_ADMIN, decision.reason)
         } finally {
             authzProperties.platformAdminRoleCodes = previous
+            authzProperties.platformAdminTenantIds = previousTenants
         }
     }
 
     @Test
     fun platformAdminRoles_areNotSpecialWhenNotConfigured() {
         val previous = authzProperties.platformAdminRoleCodes
+        val previousTenants = authzProperties.platformAdminTenantIds
         authzProperties.platformAdminRoleCodes = emptySet()
         try {
             val decision = decide(platform, "anything:at:all")
@@ -88,6 +93,7 @@ class AuthzDecisionApiTest : RdbAndRedisCacheTestBase() {
             assertEquals(AuthzDecision.Reason.DENIED_BY_DEFAULT, decision.reason)
         } finally {
             authzProperties.platformAdminRoleCodes = previous
+            authzProperties.platformAdminTenantIds = previousTenants
         }
     }
 

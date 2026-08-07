@@ -2,6 +2,7 @@ package io.kudos.ms.auth.core.group.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
 import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
+import io.kudos.base.model.contract.common.IHasBuiltIn
 import java.time.LocalDateTime
 
 /**
@@ -11,7 +12,7 @@ import java.time.LocalDateTime
  * @author AI: Codex
  * @since 1.0.0
  */
-interface AuthGroup : IDbEntity<String, AuthGroup> {
+interface AuthGroup : IDbEntity<String, AuthGroup>, IHasBuiltIn {
 
     companion object : DbEntityFactory<AuthGroup>()
 
@@ -34,7 +35,7 @@ interface AuthGroup : IDbEntity<String, AuthGroup> {
     var active: Boolean
 
     /** Whether built-in. */
-    var builtIn: Boolean
+    override var builtIn: Boolean
 
     /** Creator id. */
     var createUserId: String?

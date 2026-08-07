@@ -46,8 +46,7 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      */
     fun searchRoleIdsByGroupId(groupId: String): Set<String> {
         val criteria = Criteria(AuthGroupRole::groupId eq groupId)
-        val roleIds = searchProperty(criteria, AuthGroupRole::roleId)
-        return roleIds.toSet()
+        return search(criteria).filter { it.revoked != true }.map { it.roleId }.toSet()
     }
 
     /**
@@ -60,8 +59,7 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      */
     fun searchGroupIdsByRoleId(roleId: String): Set<String> {
         val criteria = Criteria(AuthGroupRole::roleId eq roleId)
-        val groupIds = searchProperty(criteria, AuthGroupRole::groupId)
-        return groupIds.toSet()
+        return search(criteria).filter { it.revoked != true }.map { it.groupId }.toSet()
     }
 
     /**
@@ -70,9 +68,13 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
      * @return map of group id to its list of role ids
      */
     fun searchAllGroupIdToRoleIdsForCache(): Map<String, List<String>> {
-        val all = allSearch()
+        val all = allSearch().filter { it.revoked != true }
         return all.groupBy { it.groupId }.mapValues { (_, list) -> list.map { it.roleId } }
     }
+
+    /** Every binding row of a group, including revoked rows used for audit and reinstatement. */
+    open fun searchBindingsByGroupId(groupId: String): List<AuthGroupRole> =
+        search(Criteria(AuthGroupRole::groupId eq groupId))
 
     /**
      * Deletes the relation matching the given group and role IDs.
@@ -100,6 +102,10 @@ open class AuthGroupRoleDao : BaseCrudDao<String, AuthGroupRole, AuthGroupRoles>
         val criteria = Criteria(AuthGroupRole::roleId eq roleId)
         return batchDeleteCriteria(criteria)
     }
+
+    /** Deletes every role binding of a group during group deletion. */
+    open fun deleteByGroupId(groupId: String): Int =
+        batchDeleteCriteria(Criteria(AuthGroupRole::groupId eq groupId))
 
 
 }
