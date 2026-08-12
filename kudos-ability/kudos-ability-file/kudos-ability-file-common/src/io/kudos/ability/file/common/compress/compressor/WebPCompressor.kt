@@ -8,6 +8,7 @@ import java.io.IOException
 import java.io.InputStream
 import javax.imageio.IIOImage
 import javax.imageio.ImageIO
+import javax.imageio.ImageWriteParam
 
 /**
  * WebP image compression implementation.
@@ -59,7 +60,9 @@ class WebPCompressor : ImageCompressor {
 
         val writer = ImageIO.getImageWritersByMIMEType("image/webp").next()
         val param = WebPWriteParam(null)
-        param.setCompressionMode(WebPWriteParam.MODE_EXPLICIT)
+        // Qualified through ImageWriteParam, not WebPWriteParam: the usefulness fork rewrote the class
+        // in Kotlin, and Kotlin does not inherit a Java superclass's static members into the subclass.
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT)
         // default Lossy and quality 0.75
 //        param.setCompressionType(param.getCompressionTypes()[WebPWriteParam.LOSSLESS_COMPRESSION]);
 //        param.setCompressionQuality(config.getQuality());
