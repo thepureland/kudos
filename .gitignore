@@ -12,6 +12,11 @@ build/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+# Codegen template fixtures: `out/` here is the template's own output layout, i.e. checked-in test
+# data, not IDEA build output. Without this the fixtures are silently swallowed — which is why
+# CodeGeneratorTest shipped without its templates and could never pass.
+!kudos-tools/test-resources/templates/**/out/
+!kudos-tools/test-resources/templates/**/out/**
 
 ### Kotlin ###
 .kotlin
