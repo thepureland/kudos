@@ -17,6 +17,7 @@ import org.springframework.context.annotation.PropertySource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.Test
+import kotlin.test.fail
 
 @EnableKudosTest
 @EnableFeignClients
@@ -51,7 +52,13 @@ open class NotifyMqTest {
         val key = RandomStringKit.random(8, true, true)
         mainClinet.change(key)
         var countTime = System.currentTimeMillis()
+        // Hard deadline: without it this loop never exits when the notification does not propagate,
+        // so a broken run hangs the build forever instead of reporting a failure.
+        val deadline = System.currentTimeMillis() + SYNC_TIMEOUT_MS
         while (!mainClinet.sync(key)) {
+            if (System.currentTimeMillis() > deadline) {
+                fail("mq notification did not propagate within ${SYNC_TIMEOUT_MS / 1000}s")
+            }
             try {
                 Thread.sleep(1000)
             } catch (e: Exception) {
@@ -66,6 +73,9 @@ open class NotifyMqTest {
     }
 
     companion object {
+        /** Upper bound for waiting on the cross-application notification. */
+        private const val SYNC_TIMEOUT_MS = 120_000L
+
         @JvmStatic
         @DynamicPropertySource
         private fun registerProperties(registry: DynamicPropertyRegistry?) {

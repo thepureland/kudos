@@ -86,7 +86,9 @@ internal class AuthRoleModelTest {
         assertNull(role.parentId)
         assertNull(role.dataScope)
         assertNull(role.remark)
-        assertNull(role.builtIn)
+        // builtIn is a non-null Boolean on the entity, so it cannot take null and is only assigned
+        // above because construction requires it; assert the value that was actually set.
+        assertEquals(false, role.builtIn)
         assertNull(role.approvalRequired)
         assertNull(role.createTime)
     }

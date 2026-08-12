@@ -52,7 +52,14 @@ open class RabbitMqTest {
             "--spring.rabbitmq.password=guest",
             "--spring.rabbitmq.port=${RabbitMqTestContainer.PORT}",
             "--spring.rabbitmq.virtual-host=/",
-            "--spring.rabbitmq.addresses=${IpKit.getLocalIp()}:${RabbitMqTestContainer.PORT}"
+            "--spring.rabbitmq.addresses=${IpKit.getLocalIp()}:${RabbitMqTestContainer.PORT}",
+            // Same Spring Boot 4.1 workaround KafkaTest carries: io.kudos.context.init.
+            // ValidatorAutoConfiguration#defaultValidator clashes with boot's
+            // ValidationAutoConfiguration#defaultValidator, and the producer yml is loaded via
+            // @PropertySource — too late for spring.main.* binding, so it must come in as args.
+            "--spring.main.allow-bean-definition-overriding=true",
+            // Spring Cloud's compatibility verifier does not yet list Boot 4.1 as compatible.
+            "--spring.cloud.compatibility-verifier.enabled=false",
             )
         SpringApplication.run(RabbitMqProducerApplication::class.java, *args)
     }

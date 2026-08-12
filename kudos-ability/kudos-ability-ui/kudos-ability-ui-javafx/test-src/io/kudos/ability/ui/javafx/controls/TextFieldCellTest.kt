@@ -1,14 +1,11 @@
 package io.kudos.ability.ui.javafx.controls
 
 import io.kudos.ability.ui.javafx.FxTestSupport.runFx
-import javafx.scene.Scene
 import javafx.scene.control.Cell
 import javafx.scene.control.ContentDisplay
 import javafx.scene.control.TextField
 import javafx.scene.layout.HBox
-import javafx.scene.layout.VBox
 import javafx.scene.shape.Rectangle
-import javafx.stage.Stage
 import javafx.util.StringConverter
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -185,29 +182,30 @@ internal class TextFieldCellTest {
         m.invoke(node, hover)
     }
 
+    /** Invokes the internal Node.setFocused(boolean) so the focus listener fires deterministically. */
+    private fun setFocused(node: javafx.scene.Node, focused: Boolean) {
+        val m = javafx.scene.Node::class.java.getDeclaredMethod("setFocused", Boolean::class.javaPrimitiveType)
+        m.isAccessible = true
+        m.invoke(node, focused)
+    }
+
     @Test
     fun focusListenerSwitchesBetweenFocusAndDefaultStyle() = runFx {
         val cell = TextFieldCell<Any, String>()
         val tf = cell.graphic as TextField
-        // place the field on a shown stage so requesting focus actually flips focusedProperty
-        val stage = Stage()
-        stage.scene = Scene(VBox(tf))
-        stage.show()
-        try {
-            tf.requestFocus()
-            assertTrue(tf.isFocused, "field must own focus after requestFocus on a shown stage")
-            assertTrue(tf.style.contains("purple"), "focused style applied")
 
-            // move focus away -> falls back to the default style
-            val other = TextField()
-            (tf.scene.root as VBox).children.add(other)
-            other.requestFocus()
-            assertEquals(false, tf.isFocused)
-            assertTrue(tf.style.contains("-fx-control-inner-background"))
-            assertTrue(!tf.style.contains("purple, "), "default style restored after focus lost")
-        } finally {
-            stage.close()
-        }
+        // Driven through the protected setter rather than a shown Stage + requestFocus: a Gradle test
+        // worker is a background process, so its windows never take the system focus and the real
+        // focusedProperty would stay false. This exercises the listener, which is what the test is for.
+        setFocused(tf, true)
+        assertTrue(tf.isFocused, "focused flag must be set")
+        assertTrue(tf.style.contains("purple"), "focused style applied")
+
+        // focus lost -> falls back to the default style
+        setFocused(tf, false)
+        assertEquals(false, tf.isFocused)
+        assertTrue(tf.style.contains("-fx-control-inner-background"))
+        assertTrue(!tf.style.contains("purple, "), "default style restored after focus lost")
     }
 
     @Test
@@ -225,20 +223,14 @@ internal class TextFieldCellTest {
         assertTrue(tf.style.contains("-fx-control-inner-background"))
         assertTrue(!tf.style.contains("derive(purple,90%)"))
 
-        // hover off while focused -> focus style branch
-        val stage = Stage()
-        stage.scene = Scene(VBox(tf))
-        stage.show()
-        try {
-            tf.requestFocus()
-            assertTrue(tf.isFocused)
-            setHover(tf, true)
-            assertTrue(tf.style.contains("derive(purple,90%)"))
-            setHover(tf, false)
-            // focused-and-not-hovered -> the STYLE_HAS_FOCUS branch
-            assertTrue(tf.style.contains("purple, -fx-text-box-border"), "focus style on hover-out while focused")
-        } finally {
-            stage.close()
-        }
+        // hover off while focused -> focus style branch. Same reason as the focus test: a shown Stage
+        // never wins the system focus from a background test worker, so drive the flag directly.
+        setFocused(tf, true)
+        assertTrue(tf.isFocused)
+        setHover(tf, true)
+        assertTrue(tf.style.contains("derive(purple,90%)"))
+        setHover(tf, false)
+        // focused-and-not-hovered -> the STYLE_HAS_FOCUS branch
+        assertTrue(tf.style.contains("purple, -fx-text-box-border"), "focus style on hover-out while focused")
     }
 }

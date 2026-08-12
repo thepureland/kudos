@@ -1,4 +1,9 @@
 spring:
+  main:
+    # Workaround for Spring Boot 4.1: io.kudos.context.init.ValidatorAutoConfiguration#defaultValidator
+    # clashes with org.springframework.boot.validation.autoconfigure.ValidationAutoConfiguration#defaultValidator.
+    # Remove once kudos-context backs off (e.g. @ConditionalOnMissingBean) on the boot-provided bean.
+    allow-bean-definition-overriding: true
   application:
     name: rabbit-ms-p
   datasource:
@@ -23,7 +28,7 @@ spring:
           hikari:
             is-auto-commit: false
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2/ds-master;DATABASE_TO_LOWER=TRUE;
+          url: jdbc:h2:mem:ds-master;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa
   cloud:
@@ -49,7 +54,7 @@ kudos:
             - producer-out-0
     flyway:
       datasource-config:
-        mq: ds-master
+        ds-master: mq
 
 server:
   port: 53122

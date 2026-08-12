@@ -1,5 +1,14 @@
 spring:
+  main:
+    # Workaround for Spring Boot 4.1: io.kudos.context.init.ValidatorAutoConfiguration#defaultValidator
+    # clashes with org.springframework.boot.validation.autoconfigure.ValidationAutoConfiguration#defaultValidator.
+    # Remove once kudos-context backs off (e.g. @ConditionalOnMissingBean) on the boot-provided bean.
+    allow-bean-definition-overriding: true
   cloud:
+    # Workaround for Spring Boot 4.1: the current Spring Cloud release train does not yet list
+    # Boot 4.1 as compatible and CompositeCompatibilityVerifier fails the context.
+    compatibility-verifier:
+      enabled: false
     stream:
       function:
         #配置消费者消费的方法名称，按bindings顺序，多个以英文分号隔开
@@ -29,7 +38,7 @@ spring:
           hikari:
             is-auto-commit: false
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2/ds-master;DATABASE_TO_LOWER=TRUE;
+          url: jdbc:h2:mem:ds-master;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa
 
@@ -40,7 +49,7 @@ kudos:
         save-exception: true
     flyway:
       datasource-config:
-        mq: ds-master
+        ds-master: mq
 
 #logging:
 #  level:

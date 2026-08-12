@@ -43,11 +43,11 @@ class RdbAndRedisCacheTestBaseTest : RdbAndRedisCacheTestBase() {
      */
     @Test
     fun testSqlFileDataLoaded() {
-        val count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM test_table", Int::class.java)
+        val count = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM test_table_cache", Int::class.java)
         assertEquals(1, count, "expected exactly one test data row")
 
         val name = jdbcTemplate.queryForObject(
-            "SELECT name FROM test_table WHERE id = ?",
+            "SELECT name FROM test_table_cache WHERE id = ?",
             String::class.java,
             "rdb-redis-test"
         )
@@ -61,14 +61,14 @@ class RdbAndRedisCacheTestBaseTest : RdbAndRedisCacheTestBase() {
     fun testTransactionRollback() {
         // Insert data within the test method
         jdbcTemplate.update(
-            "INSERT INTO test_table (id, name) VALUES (?, ?)",
+            "INSERT INTO test_table_cache (id, name) VALUES (?, ?)",
             "rollback-test",
             "rollback"
         )
 
         // The inserted data should be visible within the same transaction
         val count = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM test_table WHERE id = ?",
+            "SELECT COUNT(*) FROM test_table_cache WHERE id = ?",
             Int::class.java,
             "rollback-test"
         )

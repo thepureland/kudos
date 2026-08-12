@@ -19,7 +19,7 @@ spring:
       datasource:
         ds1:
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2/ds1;DATABASE_TO_LOWER=TRUE;
+          url: jdbc:h2:mem:ds1;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa
           init:

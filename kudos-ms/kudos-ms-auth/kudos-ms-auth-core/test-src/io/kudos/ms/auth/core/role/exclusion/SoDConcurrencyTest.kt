@@ -15,6 +15,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -60,6 +61,15 @@ class SoDConcurrencyTest : RdbAndRedisCacheTestBase() {
     private val user = "50d00000-0000-0000-0000-0000000000e1"
     private val maker = "50d00000-0000-0000-0000-0000000000a1"
     private val checker = "50d00000-0000-0000-0000-0000000000a2"
+
+    /**
+     * Each test's writes commit for real, so a test that fails midway can leave `user` still holding
+     * maker or checker. JUnit does not fix the method order, so the leftover would land on whichever
+     * test runs next and fail it instead — the flakiness this class showed. Start from a clean slate
+     * rather than relying only on the per-test `finally`.
+     */
+    @BeforeTest
+    fun resetBindings() = cleanUp()
 
     /** Sequential control: the rule itself works when the two writes do not overlap. */
     @Test

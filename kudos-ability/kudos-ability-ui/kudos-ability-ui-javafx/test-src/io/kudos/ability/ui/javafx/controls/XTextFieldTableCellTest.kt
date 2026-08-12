@@ -260,28 +260,27 @@ internal class XTextFieldTableCellTest {
         var committed: String? = null
         col.setOnEditCommit { committed = it.newValue }
 
-        // a shown stage is required so focus actually moves between fields
-        val other = javafx.scene.control.TextField()
-        val stage = javafx.stage.Stage()
-        stage.scene = javafx.scene.Scene(javafx.scene.layout.VBox(cell.graphic ?: javafx.scene.control.TextField(), other))
-        stage.show()
-        try {
-            cell.startEdit()
-            assertTrue(cell.isEditing)
-            val tf = cell.graphic as TextField
-            // re-parent the edit field into the shown scene so focus changes propagate
-            (other.scene.root as javafx.scene.layout.VBox).children.setAll(tf, other)
-            tf.requestFocus()
-            assertTrue(tf.isFocused)
-            tf.text = "edited"
+        // Driven through the protected setter instead of a shown Stage: a Gradle test worker is a
+        // background process, so its windows never take the system focus and requestFocus() would
+        // leave focusedProperty false. The focus-lost listener is what this test is about.
+        cell.startEdit()
+        assertTrue(cell.isEditing)
+        val tf = cell.graphic as TextField
+        setFocused(tf, true)
+        assertTrue(tf.isFocused)
+        tf.text = "edited"
 
-            // moving focus away fires the cell's focus-lost listener -> commitEdit
-            other.requestFocus()
+        // losing focus fires the cell's focus-lost listener -> commitEdit
+        setFocused(tf, false)
 
-            assertEquals("edited", committed)
-            assertFalse(cell.isEditing)
-        } finally {
-            stage.close()
-        }
+        assertEquals("edited", committed)
+        assertFalse(cell.isEditing)
+    }
+
+    /** Invokes the internal Node.setFocused(boolean) so the focus listener fires deterministically. */
+    private fun setFocused(node: Node, focused: Boolean) {
+        val m = Node::class.java.getDeclaredMethod("setFocused", Boolean::class.javaPrimitiveType)
+        m.isAccessible = true
+        m.invoke(node, focused)
     }
 }

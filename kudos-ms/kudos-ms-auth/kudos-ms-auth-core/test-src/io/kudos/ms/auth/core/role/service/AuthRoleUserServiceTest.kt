@@ -106,7 +106,7 @@ class AuthRoleUserServiceTest : RdbAndRedisCacheTestBase() {
             authRoleUserService.batchBind("no-such-role-id", listOf("7817d37f-0000-0000-0000-000000000040"))
         }
         assertTrue(
-            ex.message?.contains("role does not exist") == true,
+            ex.message?.contains("Role not found") == true,
             "the policy gate should reject an unknown role: ${ex.message}",
         )
     }

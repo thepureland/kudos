@@ -18,7 +18,10 @@ kudos:
           acquire-timeout-millis: 0
     flyway:
       datasource-config:
-        mq: ds-master
+        # Direction is <data source> -> <modules> (see FlywayMultiDataSourceProperties). This was
+        # declared inverted (mq: ds-master), which silently skipped every sql/mq/** migration, so
+        # sys_mq_fail_msg only ever existed in the shared on-disk H2 some other module had created.
+        ds-master: mq
 
 spring:
   datasource:
@@ -43,6 +46,6 @@ spring:
           hikari:
             is-auto-commit: false
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2/ds-master;DATABASE_TO_LOWER=TRUE;
+          url: jdbc:h2:mem:ds-master;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;
           username: sa
           password: sa

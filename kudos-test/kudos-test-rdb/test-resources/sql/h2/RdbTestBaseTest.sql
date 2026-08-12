@@ -4,4 +4,6 @@ CREATE TABLE IF NOT EXISTS test_table (
     name VARCHAR(200) NOT NULL
 );
 
-INSERT INTO test_table (id, name) VALUES ('abstract-rdb-test', 'abstract-rdb-test');
+-- MERGE (not INSERT): the in-memory ds-master lives for the whole JVM (DB_CLOSE_DELAY=-1) and this
+-- script is re-run per test, so a plain INSERT hits the primary key on the second run.
+MERGE INTO test_table (id, name) KEY(id) VALUES ('abstract-rdb-test', 'abstract-rdb-test');
