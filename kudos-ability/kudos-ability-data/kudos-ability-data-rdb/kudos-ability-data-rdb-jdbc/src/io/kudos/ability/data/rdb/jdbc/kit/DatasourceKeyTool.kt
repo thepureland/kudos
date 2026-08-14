@@ -19,7 +19,7 @@ import io.kudos.ability.data.rdb.jdbc.consts.DatasourceConst
 object DatasourceKeyTool {
 
     /** Separator between key components (double colon). Chosen as `::` to avoid clashing with typical data-source keys (which often contain dots/dashes). */
-    private const val SEPERATOR = "::"
+    private const val SEPARATOR = "::"
 
     /** Default server code, used to fill in when the original `dsKeyConfig` does not contain a separator. */
     const val SERVER_CODE_DEFAULT: String = "default"
@@ -30,10 +30,10 @@ object DatasourceKeyTool {
      *  - Original `dsKeyConfig` already contains the separator -> `<dsKeyConfig>::<tenantId>::<suffix>` (does not fill in default)
      */
     fun convertCacheMapKey(dsKeyConfig: String, tenantId: String?, suffix: String?): String {
-        if (!dsKeyConfig.contains(SEPERATOR)) {
-            return listOf(dsKeyConfig, SERVER_CODE_DEFAULT, tenantId, suffix).joinToString(SEPERATOR)
+        if (!dsKeyConfig.contains(SEPARATOR)) {
+            return listOf(dsKeyConfig, SERVER_CODE_DEFAULT, tenantId, suffix).joinToString(SEPARATOR)
         }
-        return listOf(dsKeyConfig, tenantId, suffix).joinToString(SEPERATOR)
+        return listOf(dsKeyConfig, tenantId, suffix).joinToString(SEPARATOR)
     }
 
     /**
@@ -47,7 +47,7 @@ object DatasourceKeyTool {
         if (contextMapKey.isNullOrBlank()) {
             return ""
         }
-        val parts = contextMapKey.split(SEPERATOR).dropLastWhile { it.isEmpty() }
+        val parts = contextMapKey.split(SEPARATOR).dropLastWhile { it.isEmpty() }
         return if (parts.size == 1) {
             //Not configured; fall back to the default service.
             null
@@ -66,11 +66,14 @@ object DatasourceKeyTool {
             return ""
         }
         // Return the last element ("" when every segment is empty, e.g. the input is all separators).
-        return cacheMapKey.split(SEPERATOR).dropLastWhile { it.isEmpty() }.lastOrNull() ?: ""
+        return cacheMapKey.split(SEPARATOR).dropLastWhile { it.isEmpty() }.lastOrNull() ?: ""
     }
 
-    /** Determines whether dsKey is a "read-only replica" (suffix [DatasourceConst.MODE_READONLY]). */
-    fun isReadOnly(dsKey: String): Boolean {
-        return dsKey.endsWith(DatasourceConst.MODE_READONLY)
-    }
+    /**
+     * Determines whether a cache map key carries the "read-only replica" mode: its last segment
+     * must **be** [DatasourceConst.MODE_READONLY]. A plain-suffix check would misclassify
+     * ordinary data source keys that merely end with the word (e.g. `my_readonly`).
+     */
+    fun isReadOnly(dsKey: String): Boolean =
+        dsKey == DatasourceConst.MODE_READONLY || dsKey.endsWith(SEPARATOR + DatasourceConst.MODE_READONLY)
 }

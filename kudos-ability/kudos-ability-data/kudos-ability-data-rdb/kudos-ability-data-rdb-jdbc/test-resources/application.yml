@@ -6,6 +6,14 @@ kudos:
   ability:
     cache:
       enabled: false
+    jdbc:
+      # Consumed by JdbcWiringIntegrationTest to prove @ConfigurationProperties binding happens
+      # before the routing advisor reads these values (the advisor is retrieved eagerly by
+      # Spring's AOP infrastructure). The package intentionally matches no test class, so no test
+      # is actually routed away from the primary data source.
+      routingPointcut: "within(com.example.wiringprobe..*)"
+      packageDataSource:
+        com.example.wiringprobe.biz: ds1
 
 spring:
 #  sql:

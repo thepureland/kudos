@@ -32,7 +32,7 @@ object JdbcTypeToKotlinType {
     private val defaultMapping: Map<Int, KClass<*>> = mapOf(
         Types.ARRAY to Array<Any>::class,
         Types.BIGINT to Long::class,
-        Types.BINARY to Array<Byte>::class,
+        Types.BINARY to ByteArray::class,
         Types.BIT to Boolean::class,
         Types.BLOB to Blob::class,
         Types.BOOLEAN to Boolean::class,
@@ -47,12 +47,13 @@ object JdbcTypeToKotlinType {
         Types.INTEGER to Int::class,
         Types.JAVA_OBJECT to Any::class,
         Types.LONGNVARCHAR to String::class,
-        Types.LONGVARBINARY to Array<Byte>::class,
+        Types.LONGVARBINARY to ByteArray::class,
         Types.LONGVARCHAR to String::class,
         Types.NCHAR to String::class,
         Types.NCLOB to Clob::class,
         Types.NULL to Nothing::class,
-        Types.NUMERIC to Double::class,
+        // NUMERIC carries arbitrary precision, same as DECIMAL — a Double mapping would silently lose digits.
+        Types.NUMERIC to BigDecimal::class,
         Types.NVARCHAR to String::class,
         Types.OTHER to Any::class,
         Types.REAL to Float::class,
@@ -65,11 +66,12 @@ object JdbcTypeToKotlinType {
         Types.STRUCT to Any::class,
         Types.TIME to LocalTime::class,
         Types.TIMESTAMP to LocalDateTime::class,
-        Types.TIMESTAMP_WITH_TIMEZONE to LocalDateTime::class,
-        Types.TIME_WITH_TIMEZONE to LocalDateTime::class,
+        // The *_WITH_TIMEZONE types keep their offset — mapping them to Local* would drop it.
+        Types.TIMESTAMP_WITH_TIMEZONE to OffsetDateTime::class,
+        Types.TIME_WITH_TIMEZONE to OffsetTime::class,
 //        Types.TINYINT to Byte::class,
         Types.TINYINT to Int::class,
-        Types.VARBINARY to Array<Byte>::class,
+        Types.VARBINARY to ByteArray::class,
         Types.VARCHAR to String::class
     )
 
@@ -101,7 +103,7 @@ object JdbcTypeToKotlinType {
                     "DATE" -> LocalDate::class
                     "TIME" -> LocalTime::class
                     "TIMESTAMP", "DATETIME", "SMALLDATETIME" -> LocalDateTime::class
-                    "BINARY", "VARBINARY", "LONGVARBINARY", "RAW", "BYTEA" -> Array<Byte>::class
+                    "BINARY", "VARBINARY", "LONGVARBINARY", "RAW", "BYTEA" -> ByteArray::class
                     "UUID" -> UUID::class
                     "ARRAY" -> Array<Any>::class
                     "JSON", "JSONB" -> String::class
@@ -110,19 +112,23 @@ object JdbcTypeToKotlinType {
                     else -> Any::class
                 }
             }
-            RdbTypeEnum.MYSQL -> {
+            // MariaDB is protocol- and type-name-compatible with MySQL; both share one mapping.
+            RdbTypeEnum.MYSQL, RdbTypeEnum.MARIA -> {
                 when (jdbcType) {
                     "BIT" -> when (column.length) {
                         1    -> Boolean::class
                         else -> ByteArray::class
                     }
-                    "TINYINT", "SMALLINT", "MEDIUMINT", "BOOLEAN" -> Int::class
-                    "INTEGER", "ID" -> Long::class
+                    "TINYINT", "SMALLINT", "MEDIUMINT", "BOOLEAN", "YEAR" -> Int::class
+                    // signed INT is 32-bit; only the UNSIGNED variants outgrow Int
+                    "INT", "INTEGER" -> Int::class
+                    "TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED" -> Int::class
+                    "INT UNSIGNED", "INTEGER UNSIGNED" -> Long::class
                     "FLOAT" -> Float::class
                     "DOUBLE" -> Double::class
-                    "BIGINT" -> BigInteger::class
+                    "BIGINT" -> Long::class
+                    "BIGINT UNSIGNED" -> BigInteger::class
                     "DECIMAL" -> BigDecimal::class
-                    "YEAR" -> Int::class
                     "VARCHAR", "CHAR", "TEXT", "ENUM", "SET", "JSON" -> String::class
                     "BLOB", "GEOMETRY", "POINT", "LINESTRING", "POLYGON" -> ByteArray::class
                     "DATE" -> LocalDate::class
@@ -174,7 +180,7 @@ object JdbcTypeToKotlinType {
                     "TIMESTAMP", "TIMESTAMP WITHOUT TIMEZONE" -> LocalDateTime::class
                     "TIMESTAMP WITH TIMEZONE" -> OffsetDateTime::class
                     "INTERVAL" -> Duration::class
-                    "BYTEA" -> Array<Byte>::class
+                    "BYTEA" -> ByteArray::class
                     "CIDR", "INET", "MACADDR", "BOX", "CIRCLE", "LINE", "LSEG", "PATH", "POINT", "POLYGON", "VARBIT" -> Any::class
                     else -> Any::class
                 }

@@ -8,8 +8,8 @@ import com.baomidou.dynamic.datasource.enums.SeataMode
 import com.baomidou.dynamic.datasource.event.DataSourceInitEvent
 import com.baomidou.dynamic.datasource.support.ScriptRunner
 import com.baomidou.dynamic.datasource.toolkit.CryptoUtils
+import io.kudos.ability.data.rdb.jdbc.kit.JdbcUrlValidator
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.stereotype.Component
 import org.springframework.util.StringUtils
 import javax.sql.DataSource
 
@@ -20,14 +20,14 @@ import javax.sql.DataSource
  *  - **Forces autoCommit to true everywhere** when the proxy is in Seata mode
  *    (see the in-method comment in [createDataSource]).
  *
- * Bound as a Spring singleton (`@Component`); baomidou injects the per-type
- * downstream creators (Hikari / Druid / DBCP2 / BeeCP) via `setCreators`.
+ * Created by [io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration.dataSourceCreator] (the
+ * `@Primary` bean); the per-type downstream creators (Hikari / Druid / DBCP2 / BeeCP) are
+ * injected via `setCreators`.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
-@Component
 class DsDataSourceCreator : DefaultDataSourceCreator() {
 
     private var creators: List<DataSourceCreator>? = null
@@ -49,6 +49,10 @@ class DsDataSourceCreator : DefaultDataSourceCreator() {
 
     /**
      * Creates a data source. Flow:
+     *  0. Screen the url with [io.kudos.ability.data.rdb.jdbc.kit.JdbcUrlValidator]. This is the
+     *     single choke point every dynamic data source passes through — including urls loaded from
+     *     `sys_datasource` rows via [IDynamicDataSourceLoad] — so refusing here covers the console
+     *     path, not just the ad-hoc [io.kudos.ability.data.rdb.jdbc.kit.DataSourceKit] helpers.
      *  1. Pick from the registered creators the one whose `support` matches the
      *     current [DataSourceProperty] (Hikari/Druid/...).
      *  2. **Seata compatibility**: if the proxy is in Seata mode, force autoCommit
@@ -64,6 +68,7 @@ class DsDataSourceCreator : DefaultDataSourceCreator() {
      *  6. Wrap the proxy and attach ItemDataSource metadata.
      */
     override fun createDataSource(dataSourceProperty: DataSourceProperty): DataSource {
+        dataSourceProperty.url?.let { JdbcUrlValidator.validate(it) }
         val dataSourceCreator = checkNotNull(
             checkNotNull(creators) { "creators must be set" }
                 .firstOrNull { it.support(dataSourceProperty) }

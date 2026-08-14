@@ -1,6 +1,7 @@
 package io.kudos.ability.data.rdb.jdbc.init
 
 import com.baomidou.dynamic.datasource.spring.boot.autoconfigure.DynamicDataSourceProperties
+import io.kudos.ability.data.rdb.jdbc.aop.DynamicDataSourceInterceptor
 import io.kudos.ability.data.rdb.jdbc.datasource.DefaultDynamicDataSourceLoad
 import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
 import io.kudos.ability.data.rdb.jdbc.datasource.DsDataSourceCreator
@@ -9,6 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 
 /**
  * Unit tests for [JdbcAutoConfiguration]'s bean factory methods, invoked directly (the Spring
@@ -25,12 +27,32 @@ internal class JdbcAutoConfigurationTest {
     fun simpleBeans_areCreated() {
         assertNotNull(config.dynamicDataSourceProperties())
         assertNotNull(config.multipleDataSourceProperties())
-        assertNotNull(config.dynamicDataSourceAspect())
+        assertNotNull(config.routingCache())
+        assertNotNull(config.dynamicDataSourceInterceptor())
+        assertNotNull(config.dsChangeAspect())
+        assertNotNull(config.tenantDsChangeAspect())
         assertNotNull(config.dsContextProcessor())
         assertIs<DefaultDynamicDataSourceLoad>(
             config.dynamicDataSourceLoad(),
             "without a custom implementation the placeholder loader is used"
         )
+    }
+
+    @Test
+    fun routingAdvisor_bindsConfigurablePointcutAndOrder() {
+        val props = MultipleDataSourceProperties()
+        val interceptor = DynamicDataSourceInterceptor()
+        val advisor = config.dynamicDataSourceRoutingAdvisor(props, interceptor)
+        assertEquals("within(*..biz..*)", advisor.expression, "default pointcut targets biz packages")
+        assertEquals(-99, advisor.order, "inner to the annotation aspects (-100)")
+        assertSame(interceptor, advisor.advice)
+    }
+
+    @Test
+    fun routingAdvisor_honorsCustomPointcutExpression() {
+        val props = MultipleDataSourceProperties().apply { routingPointcut = "within(com.acme.service..*)" }
+        val advisor = config.dynamicDataSourceRoutingAdvisor(props, DynamicDataSourceInterceptor())
+        assertEquals("within(com.acme.service..*)", advisor.expression)
     }
 
     @Test

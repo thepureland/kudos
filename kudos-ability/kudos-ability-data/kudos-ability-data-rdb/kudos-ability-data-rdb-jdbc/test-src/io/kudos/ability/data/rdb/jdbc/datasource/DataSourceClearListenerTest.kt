@@ -21,7 +21,7 @@ internal class DataSourceClearListenerTest {
 
         listener.cleanCache("any", key = null)
 
-        assertEquals(listOf<Int?>(null), processor.calls, "null key means region cleared → refresh all")
+        assertEquals(listOf<String?>(null), processor.calls, "null key means region cleared → refresh all")
     }
 
     @Test
@@ -36,25 +36,17 @@ internal class DataSourceClearListenerTest {
     }
 
     @Test
-    fun numericKey_refreshesThatDataSource() {
+    fun regularKey_refreshesThatDataSource() {
         val processor = RecordingProcessor()
         val listener = DataSourceClearListener(processor, cacheName = "any")
 
         listener.cleanCache("any", key = "42")
+        listener.cleanCache("any", key = "tenant-7-ds")
 
-        assertEquals(listOf<Int?>(42), processor.calls)
-    }
-
-    @Test
-    fun unparseableKey_isSilentlyIgnored() {
-        val processor = RecordingProcessor()
-        val listener = DataSourceClearListener(processor, cacheName = "any")
-
-        listener.cleanCache("any", key = "not-an-int")
-        listener.cleanCache("any", key = java.util.UUID.randomUUID())
-
-        assertEquals(emptyList(), processor.calls,
-            "non-int keys aren't valid datasource ids in DsContextProcessor's contract today; silent skip avoids noisy logs and accidental refreshes")
+        assertEquals(
+            listOf<String?>("42", "tenant-7-ds"), processor.calls,
+            "any non-broadcast key IS the datasource id; ids not in the routing table no-op downstream"
+        )
     }
 
     @Test
@@ -81,8 +73,8 @@ internal class DataSourceClearListenerTest {
 
     /** Captures refresh calls; subclasses [DsContextProcessor] to avoid mocking framework. */
     private class RecordingProcessor : DsContextProcessor() {
-        val calls: MutableList<Int?> = CopyOnWriteArrayList()
-        override fun refreshDatasource(dsId: Int?) {
+        val calls: MutableList<String?> = CopyOnWriteArrayList()
+        override fun refreshDatasource(dsId: String?) {
             calls += dsId
         }
     }

@@ -8,28 +8,26 @@ import org.aspectj.lang.annotation.Around
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Pointcut
 import org.aspectj.lang.reflect.MethodSignature
-import org.springframework.context.annotation.Lazy
+import org.springframework.core.annotation.AnnotatedElementUtils
 import org.springframework.core.annotation.Order
-import org.springframework.stereotype.Component
 
 
 /**
  * Aspect that handles the [DsChange] annotation: before method execution it writes the annotation
- * parameters into [DbContext]'s `DbParam`, and after execution it clears `DbParam` entirely.
+ * parameters into [DbContext]'s `DbParam`, and after execution it restores the [DbParam] snapshot
+ * captured before entering the aspect.
  *
- * The aspect `@Order(-100)` is outer than [DynamicDataSourceAspect] (-99) — `forcedDs` must be
- * written into the ThreadLocal first so the routing aspect can see it.
+ * The aspect `@Order(-100)` is outer than the routing advisor (-99) — `forcedDs` must be
+ * written into the ThreadLocal first so the routing advice can see it.
  *
- * `@Lazy` defers bean initialization until first needed to avoid circular dependencies with
- * early-loaded beans.
+ * Registered by [io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration] (lazily, to avoid
+ * circular dependencies with early-loaded beans).
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
-@Component
 @Aspect
-@Lazy
 @Order(-100)
 class DsChangeAspect {
 
@@ -50,7 +48,9 @@ class DsChangeAspect {
     @Around("cut()")
     fun around(joinPoint: ProceedingJoinPoint): Any? {
         val signature = joinPoint.signature as MethodSignature
-        val dsChange: DsChange = signature.method.getAnnotation(DsChange::class.java)
+        // findMergedAnnotation also sees annotations declared on interface / bridge methods.
+        val dsChange = AnnotatedElementUtils.findMergedAnnotation(signature.method, DsChange::class.java)
+            ?: return joinPoint.proceed()
         val previous = DbContext.getOrNull()?.copy()
         val current = previous?.copy() ?: DbParam()
         if (dsChange.value.isNotBlank()) {

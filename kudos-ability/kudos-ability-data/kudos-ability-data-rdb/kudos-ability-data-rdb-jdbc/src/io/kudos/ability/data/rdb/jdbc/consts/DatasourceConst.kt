@@ -22,5 +22,8 @@ interface DatasourceConst {
 
         /** Conventional "console tenant" id. Represents the global administrator identity and bypasses normal tenant-level data source routing (goes directly to the master). */
         const val CONSOLE_TENANT_ID: String = "-99"
+
+        /** Prefix marking a "resolve dynamically by context" routing config (`_context` / `_context::<serverCode>`), shared by the routing interceptor and the annotation aspects. */
+        const val CONTEXT_DS_PREFIX: String = "_context"
     }
 }

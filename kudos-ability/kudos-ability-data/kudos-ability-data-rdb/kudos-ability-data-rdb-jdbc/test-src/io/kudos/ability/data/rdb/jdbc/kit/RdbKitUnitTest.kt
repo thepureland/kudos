@@ -8,6 +8,7 @@ import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -91,15 +92,18 @@ internal class RdbKitUnitTest {
     }
 
     @Test
-    fun getOrderSql_filtersPropertyWithSingleQuote() {
-        // single quotes are rejected to keep the clause injection-safe
-        assertEquals("ORDER BY age ASC", RdbKit.getOrderSql(Order.asc("na'me"), Order.asc("age")))
+    fun getOrderSql_rejectsSuspiciousPropertiesLoudly() {
+        // ORDER BY cannot be parameterized: anything outside [A-Za-z0-9_.] throws instead of
+        // being silently dropped (quotes are not required for ORDER BY injection)
+        assertFailsWith<IllegalArgumentException> { RdbKit.getOrderSql(Order.asc("na'me")) }
+        assertFailsWith<IllegalArgumentException> { RdbKit.getOrderSql(Order.asc("name; DROP TABLE x")) }
+        assertFailsWith<IllegalArgumentException> { RdbKit.getOrderSql(Order.asc("(CASE WHEN 1=1 THEN a END)")) }
     }
 
     @Test
     fun getOrderSql_returnsEmptyWhenNothingSurvives() {
         assertEquals("", RdbKit.getOrderSql())
-        assertEquals("", RdbKit.getOrderSql(Order(""), Order.asc("a'b")))
+        assertEquals("", RdbKit.getOrderSql(Order(""), Order("   ")))
     }
 
     // ----- getDataSource / testConnection via context -----
@@ -132,5 +136,12 @@ internal class RdbKitUnitTest {
         RdbKit.newConnection("jdbc:h2:mem:rdbkit_unit3;DB_CLOSE_DELAY=-1", "sa", null).use { conn ->
             assertTrue(RdbKit.testConnection(conn))
         }
+    }
+
+    @Test
+    fun testConnection_deadConnectionReturnsFalse() {
+        val conn = RdbKit.newConnection("jdbc:h2:mem:rdbkit_unit4", "sa", null)
+        conn.close()
+        assertFalse(RdbKit.testConnection(conn), "a dead connection must yield false, not an exception")
     }
 }

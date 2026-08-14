@@ -17,9 +17,8 @@ import io.kudos.base.logger.LogFactory
  *  - `null` → cache region fully cleared → refresh **every** dynamic data source.
  *  - `"ALL"` → broadcast "everyone re-warm" signal seen at startup; intentionally ignored so a
  *    fresh-booting node does not stampede every other node into a refresh.
- *  - Otherwise → parse the key as `Int` and refresh just that data source. Unparseable keys
- *    (UUIDs, composite keys, etc.) are silently ignored — the [DsContextProcessor.refreshDatasource]
- *    contract uses an integer id today.
+ *  - Otherwise → the key **is** the data source id ([DsContextProcessor.refreshDatasource] takes
+ *    string ids); an id not present in the routing table is a warn-logged no-op there.
  *
  * Wiring: registered against [cacheName] from [afterPropertiesSet]; [io.kudos.ability.data.rdb.jdbc.init.JdbcAutoConfiguration]
  * only creates the bean when `kudos-ability-cache-common` is present (the only path to
@@ -49,14 +48,7 @@ class DataSourceClearListener(
                 // Startup broadcast — every node receives it, so a refresh here would stampede.
                 log.debug("Ignoring broadcast cache clean key=ALL cacheName={0}", cacheName)
             }
-            else -> {
-                val dsId = key.toString().toIntOrNull()
-                if (dsId == null) {
-                    log.debug("Datasource cache clean key not parseable as int; skipping refresh key={0}", key)
-                    return
-                }
-                processor.refreshDatasource(dsId)
-            }
+            else -> processor.refreshDatasource(key.toString())
         }
     }
 

@@ -80,7 +80,7 @@ internal class JdbcTypeToKotlinTypeTest {
             assertType(RdbTypeEnum.H2, it, LocalDateTime::class)
         }
         listOf("BINARY", "VARBINARY", "LONGVARBINARY", "RAW", "BYTEA").forEach {
-            assertType(RdbTypeEnum.H2, it, Array<Byte>::class)
+            assertType(RdbTypeEnum.H2, it, ByteArray::class)
         }
         assertType(RdbTypeEnum.H2, "UUID", UUID::class)
         assertType(RdbTypeEnum.H2, "ARRAY", Array<Any>::class)
@@ -96,22 +96,28 @@ internal class JdbcTypeToKotlinTypeTest {
         assertType(RdbTypeEnum.H2, "Boolean", Boolean::class)
     }
 
-    // ----- MySQL -----
+    // ----- MySQL / MariaDB (shared branch) -----
 
     @Test
     fun mysql_mappings() {
         assertType(RdbTypeEnum.MYSQL, "BIT", Boolean::class, length = 1)
         assertType(RdbTypeEnum.MYSQL, "BIT", ByteArray::class, length = 8)
         assertType(RdbTypeEnum.MYSQL, "BIT", ByteArray::class, length = null)
-        listOf("TINYINT", "SMALLINT", "MEDIUMINT", "BOOLEAN").forEach {
+        listOf("TINYINT", "SMALLINT", "MEDIUMINT", "BOOLEAN", "YEAR").forEach {
             assertType(RdbTypeEnum.MYSQL, it, Int::class)
         }
-        listOf("INTEGER", "ID").forEach { assertType(RdbTypeEnum.MYSQL, it, Long::class) }
+        // signed INT is 32-bit
+        listOf("INT", "INTEGER").forEach { assertType(RdbTypeEnum.MYSQL, it, Int::class) }
+        // only the UNSIGNED variants outgrow their signed Kotlin type
+        listOf("TINYINT UNSIGNED", "SMALLINT UNSIGNED", "MEDIUMINT UNSIGNED").forEach {
+            assertType(RdbTypeEnum.MYSQL, it, Int::class)
+        }
+        listOf("INT UNSIGNED", "INTEGER UNSIGNED").forEach { assertType(RdbTypeEnum.MYSQL, it, Long::class) }
         assertType(RdbTypeEnum.MYSQL, "FLOAT", Float::class)
         assertType(RdbTypeEnum.MYSQL, "DOUBLE", Double::class)
-        assertType(RdbTypeEnum.MYSQL, "BIGINT", BigInteger::class)
+        assertType(RdbTypeEnum.MYSQL, "BIGINT", Long::class)
+        assertType(RdbTypeEnum.MYSQL, "BIGINT UNSIGNED", BigInteger::class)
         assertType(RdbTypeEnum.MYSQL, "DECIMAL", BigDecimal::class)
-        assertType(RdbTypeEnum.MYSQL, "YEAR", Int::class)
         listOf("VARCHAR", "CHAR", "TEXT", "ENUM", "SET", "JSON").forEach {
             assertType(RdbTypeEnum.MYSQL, it, String::class)
         }
@@ -122,6 +128,14 @@ internal class JdbcTypeToKotlinTypeTest {
         assertType(RdbTypeEnum.MYSQL, "TIME", LocalTime::class)
         listOf("DATETIME", "TIMESTAMP").forEach { assertType(RdbTypeEnum.MYSQL, it, LocalDateTime::class) }
         assertType(RdbTypeEnum.MYSQL, "UNKNOWN_TYPE", Any::class)
+    }
+
+    @Test
+    fun maria_sharesTheMysqlBranch() {
+        assertType(RdbTypeEnum.MARIA, "BIGINT", Long::class)
+        assertType(RdbTypeEnum.MARIA, "INT", Int::class)
+        assertType(RdbTypeEnum.MARIA, "DATETIME", LocalDateTime::class)
+        assertType(RdbTypeEnum.MARIA, "JSON", String::class)
     }
 
     // ----- Oracle -----
@@ -190,7 +204,7 @@ internal class JdbcTypeToKotlinTypeTest {
         }
         assertType(RdbTypeEnum.POSTGRESQL, "TIMESTAMP WITH TIMEZONE", OffsetDateTime::class)
         assertType(RdbTypeEnum.POSTGRESQL, "INTERVAL", Duration::class)
-        assertType(RdbTypeEnum.POSTGRESQL, "BYTEA", Array<Byte>::class)
+        assertType(RdbTypeEnum.POSTGRESQL, "BYTEA", ByteArray::class)
         listOf("CIDR", "INET", "MACADDR", "BOX", "CIRCLE", "LINE", "LSEG", "PATH", "POINT", "POLYGON", "VARBIT")
             .forEach { assertType(RdbTypeEnum.POSTGRESQL, it, Any::class) }
         assertType(RdbTypeEnum.POSTGRESQL, "GEOGRAPHY", Any::class)
@@ -229,7 +243,7 @@ internal class JdbcTypeToKotlinTypeTest {
         val expectations = mapOf(
             Types.ARRAY to Array<Any>::class,
             Types.BIGINT to Long::class,
-            Types.BINARY to Array<Byte>::class,
+            Types.BINARY to ByteArray::class,
             Types.BIT to Boolean::class,
             Types.BLOB to Blob::class,
             Types.BOOLEAN to Boolean::class,
@@ -244,12 +258,13 @@ internal class JdbcTypeToKotlinTypeTest {
             Types.INTEGER to Int::class,
             Types.JAVA_OBJECT to Any::class,
             Types.LONGNVARCHAR to String::class,
-            Types.LONGVARBINARY to Array<Byte>::class,
+            Types.LONGVARBINARY to ByteArray::class,
             Types.LONGVARCHAR to String::class,
             Types.NCHAR to String::class,
             Types.NCLOB to Clob::class,
             Types.NULL to Nothing::class,
-            Types.NUMERIC to Double::class,
+            // NUMERIC keeps arbitrary precision, same as DECIMAL
+            Types.NUMERIC to BigDecimal::class,
             Types.NVARCHAR to String::class,
             Types.OTHER to Any::class,
             Types.REAL to Float::class,
@@ -261,24 +276,21 @@ internal class JdbcTypeToKotlinTypeTest {
             Types.STRUCT to Any::class,
             Types.TIME to LocalTime::class,
             Types.TIMESTAMP to LocalDateTime::class,
-            Types.TIMESTAMP_WITH_TIMEZONE to LocalDateTime::class,
-            Types.TIME_WITH_TIMEZONE to LocalDateTime::class,
+            // the *_WITH_TIMEZONE types keep their offset
+            Types.TIMESTAMP_WITH_TIMEZONE to OffsetDateTime::class,
+            Types.TIME_WITH_TIMEZONE to OffsetTime::class,
             Types.TINYINT to Int::class,
-            Types.VARBINARY to Array<Byte>::class,
+            Types.VARBINARY to ByteArray::class,
             Types.VARCHAR to String::class,
         )
         expectations.forEach { (jdbcType, expected) ->
             assertEquals(
                 expected,
-                JdbcTypeToKotlinType.getKotlinType(RdbTypeEnum.MARIA, col("ANY_NAME", jdbcType = jdbcType)),
+                JdbcTypeToKotlinType.getKotlinType(RdbTypeEnum.DB2, col("ANY_NAME", jdbcType = jdbcType)),
                 "default mapping for jdbcType=$jdbcType"
             )
         }
         // the other non-branch vendors take the same path
-        assertEquals(
-            String::class,
-            JdbcTypeToKotlinType.getKotlinType(RdbTypeEnum.DB2, col("VARCHAR", jdbcType = Types.VARCHAR))
-        )
         assertEquals(
             Int::class,
             JdbcTypeToKotlinType.getKotlinType(RdbTypeEnum.CLICKHOUSE, col("INT", jdbcType = Types.INTEGER))
@@ -292,7 +304,7 @@ internal class JdbcTypeToKotlinTypeTest {
     @Test
     fun otherVendors_unsupportedJdbcTypeThrows() {
         val e = assertFailsWith<IllegalStateException> {
-            JdbcTypeToKotlinType.getKotlinType(RdbTypeEnum.MARIA, col("FANCY", jdbcType = 987654))
+            JdbcTypeToKotlinType.getKotlinType(RdbTypeEnum.CLICKHOUSE, col("FANCY", jdbcType = 987654))
         }
         assertTrue(e.message!!.contains("Unsupported JdbcType"), "message should name the unsupported type")
         assertTrue(e.message!!.contains("987654"))

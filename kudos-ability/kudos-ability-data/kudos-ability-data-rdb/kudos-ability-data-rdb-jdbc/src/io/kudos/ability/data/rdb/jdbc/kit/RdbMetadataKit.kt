@@ -137,27 +137,28 @@ object RdbMetadataKit {
                     defaultValue = columnRs.getString("COLUMN_DEF")
                     nullable = columnRs.getInt("NULLABLE") == DatabaseMetaData.columnNullable
                     dictCode = name.uppercase(Locale.getDefault()).endsWith("__CODE")
-                    autoIncrement = columnRs.getString("IS_AUTOINCREMENT")
+                    autoIncrement = "YES".equals(columnRs.getString("IS_AUTOINCREMENT"), ignoreCase = true)
                 }
                 linkedMap[column.name] = column
             }
         }
 
-        // Primary keys.
+        // Primary keys. Tolerate keys whose column is absent from the column map (case-mangling
+        // drivers) instead of crashing — same policy as the index loops below.
         val primaryKeyRs = dbMetaData.getPrimaryKeys(conn.catalog, conn.schema, tableName)
         primaryKeyRs.use {
             while (primaryKeyRs.next()) {
                 val columnName = primaryKeyRs.getString("COLUMN_NAME")
-                linkedMap.getValue(columnName).primaryKey = true
+                linkedMap[columnName]?.primaryKey = true
             }
         }
 
-        // Foreign keys.
+        // Foreign keys. Same absence tolerance as the primary-key loop.
         val foreignKeyRs = dbMetaData.getImportedKeys(conn.catalog, conn.schema, tableName)
         foreignKeyRs.use {
             while (foreignKeyRs.next()) {
                 val columnName = foreignKeyRs.getString("FKCOLUMN_NAME")
-                linkedMap.getValue(columnName).foreignKey = true
+                linkedMap[columnName]?.foreignKey = true
             }
         }
 

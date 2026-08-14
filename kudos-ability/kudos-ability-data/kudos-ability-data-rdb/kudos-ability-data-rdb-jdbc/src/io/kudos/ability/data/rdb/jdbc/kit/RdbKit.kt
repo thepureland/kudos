@@ -52,14 +52,20 @@ object RdbKit {
     /**
      * Creates a new data source connection.
      *
+     * The url is screened by [JdbcUrlValidator] first: connecting is itself the dangerous act for
+     * parameters like MySQL's `allowLoadLocalInfile` or H2's `INIT`, so urls carrying them are
+     * refused rather than dialled.
+     *
      * @param url connection url
      * @param username connection username
      * @param password connection password
      * @return the newly created connection
+     * @throws IllegalArgumentException if the url carries a denied connection parameter
      * @author K
      * @since 1.0.0
      */
     fun newConnection(url: String, username: String, password: String?): Connection {
+        JdbcUrlValidator.validate(url)
         val rdbType = determinRdbTypeByUrl(url)
         Class.forName(rdbType.jdbcDriverName)
         return DriverManager.getConnection(url, username, password)
@@ -67,6 +73,10 @@ object RdbKit {
 
     /**
      * Tests whether the connection is usable.
+     *
+     * A dead connection / unreachable database yields `false` (the underlying
+     * [java.sql.SQLException] is swallowed) — the method never throws for connectivity problems,
+     * matching the documented boolean contract.
      *
      * @param conn database connection. When null, a new connection is created from
      *   the current context data source and closed after use. When non-null, the
@@ -76,8 +86,12 @@ object RdbKit {
      * @since 1.0.0
      */
     fun testConnection(conn: Connection? = null): Boolean =
-        if (conn != null) _testConnection(conn)
-        else getDataSource().connection.use { _testConnection(it) }
+        try {
+            if (conn != null) _testConnection(conn)
+            else getDataSource().connection.use { _testConnection(it) }
+        } catch (_: java.sql.SQLException) {
+            false
+        }
 
     /**
      * Internal implementation: infers RDB type from connection metadata -> selects the
@@ -87,7 +101,8 @@ object RdbKit {
     private fun _testConnection(conn: Connection): Boolean {
         val dbMetaData = conn.metaData
         val rdbType = RdbTypeEnum.ofProductName(dbMetaData.databaseProductName)
-        return conn.createStatement().use { it.execute(getTestStatement(rdbType)) }
+        conn.createStatement().use { it.execute(getTestStatement(rdbType)) }
+        return true
     }
 
     /**
@@ -100,7 +115,12 @@ object RdbKit {
      */
     fun determinRdbTypeByUrl(url: String): RdbTypeEnum {
         if (":sqlserver:" in url.deleteWhitespace().lowercase()) return RdbTypeEnum.SQLSERVER
-        return RdbTypeEnum.valueOf(url.substringBetween("jdbc:", ":").uppercase())
+        val scheme = url.substringBetween("jdbc:", ":")
+        return try {
+            RdbTypeEnum.valueOf(scheme.uppercase())
+        } catch (e: IllegalArgumentException) {
+            throw IllegalArgumentException("Unsupported JDBC url: $url (unknown scheme '$scheme')", e)
+        }
     }
 
     /**
@@ -153,16 +173,28 @@ object RdbKit {
         }
 
     /**
-     * Returns the SQL for the given sort orders.
+     * Returns the SQL for the given sort orders. Blank properties are skipped; a property
+     * containing anything but letters, digits, `_` or `.` is rejected with an
+     * [IllegalArgumentException] — ORDER BY clauses cannot be parameterized, so failing loudly
+     * beats silently dropping (or worse, concatenating) an attacker-controlled sort field.
      *
      * @param orders sort orders
-     * @return SQL for the sort orders
+     * @return SQL for the sort orders; empty string when no order survives
+     * @throws IllegalArgumentException when a non-blank property contains characters outside `[A-Za-z0-9_.]`
      * @author K
      * @since 1.0.0
      */
-    fun getOrderSql(vararg orders: Order): String =
-        orders.filter { it.property.isNotBlank() && '\'' !in it.property }
-            .joinToString(",", prefix = "ORDER BY ") { "${it.property} ${it.direction.name}" }
-            .takeIf { it != "ORDER BY " } ?: ""
+    fun getOrderSql(vararg orders: Order): String {
+        val effective = orders.filter { it.property.isNotBlank() }
+        effective.forEach {
+            require(ORDER_PROPERTY_REGEX.matches(it.property)) {
+                "Illegal sort property '${it.property}': only letters, digits, '_' and '.' are allowed"
+            }
+        }
+        if (effective.isEmpty()) return ""
+        return effective.joinToString(",", prefix = "ORDER BY ") { "${it.property} ${it.direction.name}" }
+    }
+
+    private val ORDER_PROPERTY_REGEX = Regex("[A-Za-z_][A-Za-z0-9_.]*")
 
 }

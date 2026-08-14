@@ -8,7 +8,7 @@ JDBC 层基础设施模块。负责三件事：
 
 底层用 baomidou `dynamic-datasource-spring-boot4-starter` 做路由能力，本模块在它之上加：
 - 注解驱动的强制切换（`@DsChange` / `@TenantDsChange`）
-- `_context::*` 模式的"上下文动态解析"路由
+- `_context::*` 模式的"上下文动态解析"路由（`DynamicDataSourceInterceptor` + 可配置 pointcut 的 advisor）
 - DataSource 创建期的 Seata 兼容处理（autoCommit 修正）
 - 几个扩展点（`IDataSourceFinder` / `IDataSourceProxy` / `IDynamicDataSourceLoad`）
 
@@ -37,21 +37,21 @@ JDBC 层基础设施模块。负责三件事：
 
 ### 线程局部上下文管理
 
-`DbContext` 用 `InheritableThreadLocal`，但 `childValue` 返回 null —— **子线程不继承父线程的路由意图**，防止线程池里的子任务串台。
+`DbContext` 用普通 `ThreadLocal` —— **子线程天然不继承父线程的路由意图**，防止线程池里的子任务串台。
 
 **线程池场景必须在请求/任务结束时调 `DbContext.clear()`**，否则线程被复用时会带着旧 `DbParam` 跑下个任务。切面（`DsChangeAspect` / `TenantDsChangeAspect`）进入时会快照旧上下文，finally 恢复外层快照；进入时无线程上下文则调用 `DbContext.clear()`。手写代码场景调用方自负。
 
-`DbContext.get()` 取出为 null 时**会自动塞一个空 `DbParam` 进去**（历史 API 语义，方便链式赋值）—— 只读侦测请用新增的 `DbContext.getOrNull()`。
+`DbContext.get()` 取出为 null 时**会自动塞一个空 `DbParam` 进去**（历史 API 语义，方便链式赋值）—— 框架内部已全部改用无副作用的 `DbContext.getOrNull()`，新代码请勿再用 `get()` 做只读侦测。
 
 ## 模块入口
 
 | 路径 | 角色 |
 |---|---|
-| `aop/` | `@DsChange` / `@TenantDsChange` 注解 + 对应的 3 个 Aspect（`DsChangeAspect`、`TenantDsChangeAspect`、`DynamicDataSourceAspect`） |
-| `context/` | `DbContext`（ThreadLocal 持有者）+ `DbParam`（路由参数） |
-| `consts/` | `DatasourceConst`（`master` / `readonly` / `CONSOLE_TENANT_ID` 等字面常量） |
-| `datasource/` | 路由核心 + 3 个 SPI 接口 + 默认实现 |
-| `init/` | `JdbcAutoConfiguration` 装配入口 + `MultipleDataSourceProperties` 配置 |
+| `aop/` | `@DsChange` / `@TenantDsChange` 注解 + 2 个注解 Aspect + 路由通知 `DynamicDataSourceInterceptor`（经可配置 pointcut 的 advisor 生效） |
+| `context/` | `DbContext`（ThreadLocal 持有者）+ `DbParam`（路由参数，data class） |
+| `consts/` | `DatasourceConst`（`master` / `readonly` / `CONSOLE_TENANT_ID` / `_context` 前缀等字面常量） |
+| `datasource/` | 路由核心 + `RoutingCache`（解析缓存）+ 3 个 SPI 接口 + 默认实现 |
+| `init/` | `JdbcAutoConfiguration` 装配入口（本模块所有 bean 均在此显式声明）+ `MultipleDataSourceProperties` 配置 |
 | `kit/` | 4 个工具类（`RdbKit`、`RdbMetadataKit`、`DataSourceKit`、`DatasourceKeyTool`） |
 | `metadata/` | DB 元数据 POJO（`Table`、`Column`、`RdbTypeEnum`、`TableTypeEnum`、`JdbcTypeToKotlinType`） |
 
@@ -86,10 +86,39 @@ spring:
 kudos:
   ability:
     jdbc:
+      routingPointcut: "within(*..biz..*)"    # 路由通知的 AspectJ pointcut,业务代码不在 biz 包时改这里
+      dataSourceCreateWaitSeconds: 30         # 等待他人建同一个数据源连接池的上限,超时快速失败
       packageDataSource:
         com.example.audit.biz: master_audit   # 该包下所有 service 走 master_audit
         com.example.tenant.biz: _context      # 该包下走"按当前租户上下文解析"
 ```
+
+包前缀匹配按**包段边界 + 最长前缀优先**：`com.example.audit` 匹配 `com.example.audit(.x)` 但不匹配
+`com.example.auditor`；`com.example` 与 `com.example.audit` 同时配置时后者赢。
+
+## JDBC url 安全校验
+
+数据源 url 并不总是运维手写的 —— 它也可能来自 sys 控制台(`sys_datasource` 行、连通性测试)。而 JDBC url
+**本身就是可执行载荷**:某些驱动参数会让"客户端"(也就是应用服务器)去做危险的事:
+
+| 参数 | 驱动 | 后果 |
+|---|---|---|
+| `allowLoadLocalInfile` 等 | MySQL/MariaDB | 恶意服务器索要文件,驱动交出 → **读取应用服务器任意文件** |
+| `autoDeserialize`、`queryInterceptors`、`propertiesTransform` | MySQL | 反序列化 / 任意类加载 → **RCE** |
+| `socketFactory`、`sslfactory`(及 `*Arg`) | PostgreSQL | 以攻击者指定参数实例化任意类 → **RCE** |
+| `loggerFile` | PostgreSQL | 任意路径写文件 |
+| `INIT`、`RUNSCRIPT` | H2 | 连接时执行任意 SQL → **RCE** |
+
+`JdbcUrlValidator` 在三个入口拦截这些参数:`DataSourceKit.createDataSource`、`RdbKit.newConnection`、
+以及**所有动态数据源的必经之路** `DsDataSourceCreator.createDataSource`(覆盖 `IDynamicDataSourceLoad`
+从元数据表读来的 url)。
+
+采用**黑名单而非白名单**:连接参数是开放集合且各厂商不同,白名单会误伤 `characterEncoding`、
+`currentSchema` 等正常调优参数。只拦"在服务端连接串里没有正当用途"的参数;仅放大既有风险、
+不新增能力的参数(如 `allowMultiQueries`)**故意不拦**,以免打断正在运行的部署。
+
+> 注意:这不等于 url 就安全了 —— 它仍然指向作者选定的主机。限制**可达主机范围**属于部署层的
+> 网络策略,不由本模块负责。
 
 ## Seata 兼容关键
 
@@ -102,14 +131,16 @@ kudos:
 
 ## 已知限制 / 后续工作
 
-- ❗ `DynamicDataSourceAspect` 的 pointcut 写死 `within(*..biz..*)`，不可配置 —— 项目结构强约束
+- ✅ 路由 pointcut 已可配置（`kudos.ability.jdbc.routingPointcut`，默认 `within(*..biz..*)`）
 - ✅ `DsChangeAspect` / `TenantDsChangeAspect` 已支持嵌套保留：内层调用结束后恢复外层 `DbParam`
-- ❗ `MultipleDataSourceProperties.lookDataSourceKey` 同时用 `ConcurrentHashMap.computeIfAbsent` + readLock，后者实际保护不了什么 —— 仅与 [forceChangeDataSource] 的 writeLock 形成"对仗"
-- ❗ `DataSourceKit.createDataSource` 不做 url 注入校验 —— 调用方应自行白名单
-- ❗ `DsContextProcessor` 紧耦合 baomidou `DynamicRoutingDataSource`；单数据源场景部分方法（`refreshDatasource`）会直接抛 ClassCastException
-- ❗ `JdbcTypeToKotlinType.getKotlinType` 200 行嵌套 `when`，每个 RDB 类型一段，可拆分成独立函数提升可读性
-- ❗ 测试覆盖：已有 `RdbKit` / `RdbMetadataKit` 单测和数据源注解切面的嵌套恢复测试；
-  `DynamicDataSourceAspect`、DataSource 路由、`DatasourceKeyTool`、`JdbcTypeToKotlinType` 仍缺测试
+- ✅ 解析缓存已抽为 `RoutingCache` 组件（lock-free），读写锁/`@Synchronized` 历史残留已移除
+- ✅ `DsContextProcessor` 单数据源场景全方法优雅退化（不再抛 ClassCastException）
+- ✅ `_context` 解析缓存键的租户维度使用 `_datasourceTenantId`（无租户时回退 `dataSourceId`），
+  不再出现"两个租户共享 dataSourceId 时串缓存"的问题
+- ✅ JDBC url 危险参数已拦截(`JdbcUrlValidator`,见下节)
+- ❗ `JdbcTypeToKotlinType.getKotlinType` 仍是按 RDB 分支的大段 `when`，可进一步数据驱动化
+- ❗ readonly 意图只在 `_context` 路由下生效，命中普通 key/未配置包时会打一次 warn 后忽略 ——
+  静态数据源的 readonly 约定（如 `<ds>_readonly` 回退）待设计
 
 ## 依赖
 

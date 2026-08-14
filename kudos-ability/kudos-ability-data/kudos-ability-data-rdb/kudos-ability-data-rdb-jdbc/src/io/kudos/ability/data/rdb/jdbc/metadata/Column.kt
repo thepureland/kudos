@@ -55,8 +55,8 @@ class Column {
     /** Whether the column is a dictionary code. */
     var dictCode: Boolean = false
 
-    /** Whether the column is auto-incrementing. */
-    var autoIncrement: String? = null
+    /** Whether the column is auto-incrementing (JDBC's `IS_AUTOINCREMENT` "YES" answer). */
+    var autoIncrement: Boolean = false
 
     /**
      * Returns the simpleName of [kotlinType]. The simpleName of anonymous / local classes is null,

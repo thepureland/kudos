@@ -28,11 +28,21 @@ internal class RdbTypeEnumTest {
     }
 
     @Test
-    fun ofProductName_unknownThrows() {
-        assertFailsWith<NoSuchElementException> { RdbTypeEnum.ofProductName("NoSuchDb") }
+    fun ofProductName_relaxedMatching() {
+        // case-insensitive: JDBC metadata casing quirks must not break the lookup
+        assertEquals(RdbTypeEnum.H2, RdbTypeEnum.ofProductName("h2"))
+        // real-world product names: SQL Server reports "Microsoft SQL Server"
+        assertEquals(RdbTypeEnum.SQLSERVER, RdbTypeEnum.ofProductName("Microsoft SQL Server"))
+        // contains fallback: edition suffixes / protocol-compatible servers still resolve
+        assertEquals(RdbTypeEnum.MYSQL, RdbTypeEnum.ofProductName("MySQL Community Server"))
+        assertEquals(RdbTypeEnum.MARIA, RdbTypeEnum.ofProductName("MariaDB"))
+    }
+
+    @Test
+    fun ofProductName_unknownThrowsWithName() {
+        val e = assertFailsWith<NoSuchElementException> { RdbTypeEnum.ofProductName("NoSuchDb") }
+        assertEquals(true, e.message!!.contains("NoSuchDb"), "error must name the unmatched product")
         assertFailsWith<NoSuchElementException> { RdbTypeEnum.ofProductName(null) }
-        // lookup is case-sensitive on purpose: JDBC product names are returned verbatim
-        assertFailsWith<NoSuchElementException> { RdbTypeEnum.ofProductName("h2") }
     }
 
     @Test
@@ -46,6 +56,7 @@ internal class RdbTypeEnumTest {
         assertEquals("org.h2.Driver", RdbTypeEnum.H2.jdbcDriverName)
         assertEquals("MySQL", RdbTypeEnum.MYSQL.productName)
         assertEquals("PostgreSQL", RdbTypeEnum.POSTGRESQL.productName)
+        assertEquals("Microsoft SQL Server", RdbTypeEnum.SQLSERVER.productName)
         assertEquals("com.microsoft.sqlserver.jdbc.SQLServerDriver", RdbTypeEnum.SQLSERVER.jdbcDriverName)
         assertEquals(9, RdbTypeEnum.entries.size)
     }

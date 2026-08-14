@@ -55,7 +55,7 @@
 9. **Redis 二级索引查询无慢查询日志** —— `IdEntitiesRedisHashDao` / `CriteriaRedisResolver` 的交并集
    在应用层完成，一次 `list()` 可能产生 N 次 Redis 往返，但无任何耗时埋点。建议加"超过阈值打 WARN"
    的耗时日志或 Micrometer Timer。
-10. **数据源路由无指标** —— `kudos-ability-data-rdb-jdbc/.../aop/DynamicDataSourceAspect.kt` 仅 debug
+10. **数据源路由无指标** —— `kudos-ability-data-rdb-jdbc/.../aop/DynamicDataSourceInterceptor.kt` 仅 debug
     日志。建议发布 Micrometer counter（路由命中缓存、动态创建数据源次数、失败次数），与已有的
     Hikari 连接池指标（`HikariDataSourceMeterInitEvent`）配套。
 

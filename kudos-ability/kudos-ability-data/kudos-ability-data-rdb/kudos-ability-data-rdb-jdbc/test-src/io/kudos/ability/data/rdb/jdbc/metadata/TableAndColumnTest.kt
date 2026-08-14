@@ -60,7 +60,7 @@ internal class TableAndColumnTest {
         assertFalse(c.indexed)
         assertFalse(c.unique)
         assertFalse(c.dictCode)
-        assertNull(c.autoIncrement)
+        assertFalse(c.autoIncrement)
     }
 
     @Test

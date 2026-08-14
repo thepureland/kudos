@@ -12,11 +12,10 @@ import javax.sql.DataSource
  *  - [createDataSource]: constructs a HikariCP DataSource on the fly from
  *    (url, user, pass).
  *
- * **Security note**: [createDataSource] does not validate / escape input. In
- * production, if the url comes from untrusted input, beware of JDBC
- * connection-string parameter injection (a classic example is MySQL's
- * `?allowLoadLocalInfile=true`, which can lead to file-read vulnerabilities).
- * This utility assumes by default that callers have already allowlisted the url.
+ * **Security note**: [createDataSource] runs the url through [JdbcUrlValidator], which refuses
+ * connection parameters that would let a connection string read local files or execute code on
+ * this host (MySQL `allowLoadLocalInfile`, PostgreSQL `socketFactory`, H2 `INIT`, …). It does
+ * **not** restrict which hosts are reachable — that remains a deployment-level concern.
  *
  * @author K
  * @author AI: Codex
@@ -35,12 +34,13 @@ object DataSourceKit {
      * Does no connection-pool tuning — uses Hikari defaults. Callers that need
      * custom pool sizes etc. should wire those themselves.
      *
-     * @param url connection URL (**caller must ensure trustworthiness**; this method does not validate against injection)
+     * @param url connection URL; rejected by [JdbcUrlValidator] if it carries an unsafe connection parameter
      * @param username username
      * @param password password (may be null; some databases permit empty passwords)
      * @param catalog optional catalog
      * @param schema optional schema
      * @return a [HikariDataSource] with driver class name and testQuery configured
+     * @throws IllegalArgumentException if the url carries a denied connection parameter
      */
     fun createDataSource(
         url: String,
@@ -49,6 +49,7 @@ object DataSourceKit {
         catalog: String? = null,
         schema: String? = null
     ): DataSource {
+        JdbcUrlValidator.validate(url)
         val rdbType = RdbKit.determinRdbTypeByUrl(url)
         return HikariDataSource().apply {
             jdbcUrl = url

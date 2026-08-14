@@ -86,11 +86,14 @@ internal class DatasourceKeyToolTest {
     }
 
     @Test
-    fun isReadOnly_checksSuffix() {
+    fun isReadOnly_checksLastSegmentNotStringSuffix() {
         assertTrue(DatasourceKeyTool.isReadOnly("ds1::default::t1::readonly"))
         assertTrue(DatasourceKeyTool.isReadOnly("readonly"))
         assertFalse(DatasourceKeyTool.isReadOnly("ds1::default::t1::master"))
         assertFalse(DatasourceKeyTool.isReadOnly(""))
+        // keys merely *ending with the word* readonly are ordinary data source keys
+        assertFalse(DatasourceKeyTool.isReadOnly("my_readonly"))
+        assertFalse(DatasourceKeyTool.isReadOnly("ds1::default::t1::my_readonly"))
     }
 
     @Test

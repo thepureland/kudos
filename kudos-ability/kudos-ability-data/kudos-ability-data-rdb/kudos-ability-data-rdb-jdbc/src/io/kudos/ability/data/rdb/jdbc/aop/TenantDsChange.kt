@@ -6,7 +6,7 @@ package io.kudos.ability.data.rdb.jdbc.aop
  *
  * Differs from [DsChange]: [value] is not used directly as a data source key; instead it is
  * treated as a "service code", wrapped by the aspect into the form `_context::<value>` and
- * written into `DbParam.forcedDs`, after which `DynamicDataSourceAspect` resolves the actual
+ * written into `DbParam.forcedDs`, after which `DynamicDataSourceInterceptor` resolves the actual
  * data source key dynamically based on the current tenant + service code.
  *
  * Use case: in multi-tenant apps, semantics like "this business method should hit the data source

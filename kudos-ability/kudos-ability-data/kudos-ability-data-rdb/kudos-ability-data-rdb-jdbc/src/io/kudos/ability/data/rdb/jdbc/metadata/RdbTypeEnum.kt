@@ -22,29 +22,39 @@ enum class RdbTypeEnum(val productName: String, val jdbcDriverName: String) {
     SQLITE("SQLite", "org.sqlite.JDBC"),
     DB2("DB2", "com.ibm.db2.jcc.DB2Driver"),
     CLICKHOUSE("ClickHouse", "com.clickhouse.jdbc.ClickHouseDriver"),
-    SQLSERVER("SqlServer", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
+    SQLSERVER("Microsoft SQL Server", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
     companion object {
         /**
-         * Returns the relational database type enum corresponding to the given product name.
+         * Returns the relational database type enum corresponding to the given product name
+         * (as reported by `DatabaseMetaData.getDatabaseProductName()`).
+         *
+         * Matching is case-insensitive exact first, then contains — a MariaDB server reporting
+         * "MySQL" or a vendor appending edition suffixes still resolves. Iteration follows enum
+         * declaration order, so exact entries always win over substring hits.
          *
          * @param productName the product name
          * @return the relational database type enum
+         * @throws NoSuchElementException naming the unmatched product when no entry fits
          * @author K
          * @since 1.0.0
          */
         fun ofProductName(productName: String?): RdbTypeEnum =
-            entries.first { it.productName == productName }
+            entries.firstOrNull { it.productName.equals(productName, ignoreCase = true) }
+                ?: entries.firstOrNull { productName?.contains(it.productName, ignoreCase = true) == true }
+                ?: throw NoSuchElementException("Unsupported database product name: $productName")
 
         /**
          * Returns the relational database type enum corresponding to the given JDBC driver name.
          *
          * @param jdbcDriverName the JDBC driver name
          * @return the relational database type enum
+         * @throws NoSuchElementException naming the unmatched driver when no entry fits
          * @author K
          * @since 1.0.0
          */
         fun ofJdbcDriverName(jdbcDriverName: String?): RdbTypeEnum =
-            entries.first { it.jdbcDriverName == jdbcDriverName }
+            entries.firstOrNull { it.jdbcDriverName == jdbcDriverName }
+                ?: throw NoSuchElementException("Unsupported JDBC driver: $jdbcDriverName")
     }
 }

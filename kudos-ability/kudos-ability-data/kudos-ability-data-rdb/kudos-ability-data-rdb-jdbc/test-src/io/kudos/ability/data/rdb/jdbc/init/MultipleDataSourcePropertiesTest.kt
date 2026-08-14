@@ -26,8 +26,7 @@ internal class MultipleDataSourcePropertiesTest {
         assertEquals("ds1", props.lookUpKey("com.example.biz"))
         assertNull(props.lookUpKey("com.example.biz.sub"), "lookUpKey does no prefix matching")
         assertNull(props.lookUpKey("other"))
-        // NOTE: lookUpKey(null) currently throws NPE (ConcurrentHashMap.containsKey(null))
-        // despite the nullable signature — recorded as a suspected main-code bug, not asserted here.
+        assertNull(props.lookUpKey(null), "null key is a null result, not an NPE")
     }
 
     @Test
@@ -37,6 +36,24 @@ internal class MultipleDataSourcePropertiesTest {
         assertEquals("dsA", props.lookDataSourceKey(this::class.java))
         // second lookup is served from the serviceDataSource cache (same result)
         assertEquals("dsA", props.lookDataSourceKey(this::class.java))
+    }
+
+    @Test
+    fun lookDataSourceKey_longestPrefixWins() {
+        // both prefixes match this test class's package; resolution must be deterministic
+        val props = newProps(
+            "io.kudos" to "dsShort",
+            "io.kudos.ability.data" to "dsLong",
+        )
+        assertEquals("dsLong", props.lookDataSourceKey(this::class.java))
+    }
+
+    @Test
+    fun lookDataSourceKey_matchesOnlyAtPackageSegmentBoundary() {
+        // a *string* prefix that is not a *package-segment* prefix must not match:
+        // "...jdbc.ini" is a string prefix of "...jdbc.init" but not a package boundary
+        val props = newProps(this::class.java.packageName.dropLast(1) to "dsX")
+        assertEquals("", props.lookDataSourceKey(this::class.java))
     }
 
     @Test
