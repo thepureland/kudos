@@ -38,7 +38,7 @@ class KudosWebSocketSession(
     override val userId: String? = null,
     override val tenantId: String? = null,
 ) : KudosWebSocketSessionRef {
-    override val attributes: MutableMap<String, Any?> = ConcurrentHashMap()
+    override val attributes: MutableMap<String, Any> = ConcurrentHashMap()
 
     /** Sends a text frame. Thin wrapper over `raw.send(...)`. */
     override suspend fun sendText(text: String) {

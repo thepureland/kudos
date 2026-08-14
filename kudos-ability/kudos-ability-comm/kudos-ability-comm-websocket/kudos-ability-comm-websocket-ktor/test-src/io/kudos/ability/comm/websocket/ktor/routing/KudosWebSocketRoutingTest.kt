@@ -1,11 +1,12 @@
 package io.kudos.ability.comm.websocket.ktor.routing
 
+import io.kudos.ability.comm.websocket.ktor.broadcast.WebSocketBroadcaster
 import io.kudos.ability.comm.websocket.ktor.handler.IKudosWebSocketHandler
 import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketRegistry
 import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSession
+import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSessionRef
 import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 import io.ktor.client.plugins.websocket.webSocket
-import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
@@ -18,6 +19,7 @@ import io.ktor.websocket.send
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import java.util.Collections
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.test.Test
 import kotlin.test.assertContentEquals
@@ -37,6 +39,7 @@ import kotlin.test.assertTrue
  *  - **Message send/receive**: client sends text → handler.onText receives it.
  *  - **Server-initiated send**: handler calls `session.sendText` → client incoming receives it.
  *  - **sessionFactory carries business metadata**: userId / tenantId are propagated to the registry.
+ *  - **sessionFactory rejection**: a null return closes the connection and never registers it.
  *  - **Graceful close**: the registry count returns to zero after the connection is closed.
  *
  * @author K
@@ -50,7 +53,7 @@ internal class KudosWebSocketRoutingTest {
         val registry = KudosWebSocketRegistry()
         val received = Channel<String>(capacity = 16)
         val handler = object : IKudosWebSocketHandler {
-            override suspend fun onText(session: KudosWebSocketSession, text: String) {
+            override suspend fun onText(session: KudosWebSocketSessionRef, text: String) {
                 received.send(text)
                 session.sendText("echo:$text")
             }
@@ -81,7 +84,7 @@ internal class KudosWebSocketRoutingTest {
         val registry = KudosWebSocketRegistry()
         val captured = Channel<Triple<String, String?, String?>>(capacity = 1)
         val handler = object : IKudosWebSocketHandler {
-            override suspend fun onConnect(session: KudosWebSocketSession) {
+            override suspend fun onConnect(session: KudosWebSocketSessionRef) {
                 captured.send(Triple(session.sessionId, session.userId, session.tenantId))
                 session.close()
             }
@@ -122,13 +125,174 @@ internal class KudosWebSocketRoutingTest {
     }
 
     @Test
+    fun sessionFactoryReturningNull_rejectsWithoutRegisteringOrInvokingHooks() = testApplication {
+        val registry = KudosWebSocketRegistry()
+        val hookCalls = AtomicInteger()
+        val maxRegistrySize = AtomicInteger()
+        val handler = object : IKudosWebSocketHandler {
+            override suspend fun onConnect(session: KudosWebSocketSessionRef) { hookCalls.incrementAndGet() }
+            override suspend fun onDisconnect(session: KudosWebSocketSessionRef, cause: Throwable?) { hookCalls.incrementAndGet() }
+        }
+
+        application {
+            install(WebSockets)
+            routing {
+                kudosWebSocket("/ws", registry, handler) { raw ->
+                    maxRegistrySize.updateAndGet { maxOf(it, registry.size) }
+                    // Authentication failed: reject before the session can join a tenant's broadcast group.
+                    if (raw.call.request.headers["X-User-Id"] == null) null else KudosWebSocketSession(raw)
+                }
+            }
+        }
+
+        val client = createClient { install(ClientWebSockets) { contentConverter = null } }
+        val closeCode = AtomicReference<Short?>()
+        client.webSocket("/ws") {
+            try { incoming.receive() } catch (_: Throwable) { /* expected close */ }
+            closeCode.set(closeReason.await()?.code)
+        }
+
+        assertEquals(CloseReason.Codes.VIOLATED_POLICY.code, closeCode.get(),
+            "A rejected connection should be closed with a policy-violation reason")
+        assertEquals(0, hookCalls.get(), "No handler hook may run for a connection that was never admitted")
+        assertEquals(0, maxRegistrySize.get(), "A rejected connection must never appear in the registry")
+        assertEquals(0, registry.size)
+    }
+
+    @Test
+    fun connectInterceptors_runInOrder_andFirstRejectionWins() = testApplication {
+        val registry = KudosWebSocketRegistry()
+        val order = Collections.synchronizedList(mutableListOf<String>())
+        val hookCalls = AtomicInteger()
+        val handler = object : IKudosWebSocketHandler {
+            override suspend fun onConnect(session: KudosWebSocketSessionRef) { hookCalls.incrementAndGet() }
+        }
+
+        application {
+            install(WebSockets)
+            routing {
+                kudosWebSocket(
+                    "/ws", registry, handler,
+                    connectInterceptors = listOf(
+                        IWebSocketConnectInterceptor { order.add("first"); WebSocketConnectDecision.Proceed },
+                        IWebSocketConnectInterceptor {
+                            order.add("second")
+                            WebSocketConnectDecision.Reject(CloseReason.Codes.TRY_AGAIN_LATER, "full")
+                        },
+                        IWebSocketConnectInterceptor { order.add("third"); WebSocketConnectDecision.Proceed },
+                    ),
+                )
+            }
+        }
+
+        val client = createClient { install(ClientWebSockets) { contentConverter = null } }
+        val closeCode = AtomicReference<Short?>()
+        client.webSocket("/ws") {
+            try { incoming.receive() } catch (_: Throwable) { /* expected close */ }
+            closeCode.set(closeReason.await()?.code)
+        }
+
+        assertEquals(listOf("first", "second"), order.toList(),
+            "Interceptors run in order and stop at the first rejection")
+        assertEquals(CloseReason.Codes.TRY_AGAIN_LATER.code, closeCode.get(),
+            "The rejecting interceptor's own CloseReason must reach the client")
+        assertEquals(0, hookCalls.get(), "A rejected connection must not reach any handler hook")
+        waitFor { registry.size == 0 }
+        assertEquals(0, registry.size, "A rejected connection must never enter the registry")
+    }
+
+    @Test
+    fun rejectedConnection_isNeverReachableByBroadcast() = testApplication {
+        val registry = KudosWebSocketRegistry()
+        val broadcaster = WebSocketBroadcaster(registry)
+        val reachedDuringAdmission = AtomicInteger(-1)
+
+        application {
+            install(WebSockets)
+            routing {
+                kudosWebSocket(
+                    "/ws", registry, object : IKudosWebSocketHandler {},
+                    connectInterceptors = listOf(
+                        IWebSocketConnectInterceptor {
+                            // The whole point of rejecting here rather than inside onConnect: at this
+                            // moment the session claims tenant "acme" but must not yet be a member of it.
+                            reachedDuringAdmission.set(broadcaster.broadcastToTenant("acme", "secret"))
+                            WebSocketConnectDecision.Reject(CloseReason.Codes.VIOLATED_POLICY, "not allowed")
+                        },
+                    ),
+                ) { raw -> KudosWebSocketSession(raw, userId = "mallory", tenantId = "acme") }
+            }
+        }
+
+        val client = createClient { install(ClientWebSockets) { contentConverter = null } }
+        client.webSocket("/ws") {
+            try { incoming.receive() } catch (_: Throwable) { /* expected close */ }
+        }
+
+        assertEquals(0, reachedDuringAdmission.get(),
+            "A tenant broadcast during admission must not reach the not-yet-admitted session")
+        waitFor { registry.size == 0 }
+        assertEquals(0, registry.size)
+    }
+
+    @Test
+    fun throwingConnectInterceptor_failsClosed() = testApplication {
+        val registry = KudosWebSocketRegistry()
+        val hookCalls = AtomicInteger()
+        val handler = object : IKudosWebSocketHandler {
+            override suspend fun onConnect(session: KudosWebSocketSessionRef) { hookCalls.incrementAndGet() }
+        }
+
+        application {
+            install(WebSockets)
+            routing {
+                kudosWebSocket(
+                    "/ws", registry, handler,
+                    connectInterceptors = listOf(
+                        IWebSocketConnectInterceptor { error("quota backend unreachable") },
+                    ),
+                )
+            }
+        }
+
+        val client = createClient { install(ClientWebSockets) { contentConverter = null } }
+        client.webSocket("/ws") {
+            try { incoming.receive() } catch (_: Throwable) { /* expected close */ }
+        }
+
+        assertEquals(0, hookCalls.get(),
+            "An admission check that blew up must not be read as 'allowed' — it fails closed")
+        waitFor { registry.size == 0 }
+        assertEquals(0, registry.size)
+    }
+
+    @Test
+    fun noConnectInterceptors_admitsAsBefore() = testApplication {
+        val registry = KudosWebSocketRegistry()
+        val connected = Channel<Unit>(capacity = 1)
+        val handler = object : IKudosWebSocketHandler {
+            override suspend fun onConnect(session: KudosWebSocketSessionRef) { connected.send(Unit) }
+        }
+
+        application {
+            install(WebSockets)
+            routing { kudosWebSocket("/ws", registry, handler) }
+        }
+
+        val client = createClient { install(ClientWebSockets) { contentConverter = null } }
+        client.webSocket("/ws") { connected.receive() }
+
+        waitFor { registry.size == 0 }
+    }
+
+    @Test
     fun onConnect_thenOnText_thenOnDisconnect_lifecycleOrder() = testApplication {
         val registry = KudosWebSocketRegistry()
         val order = Collections.synchronizedList(mutableListOf<String>())
         val handler = object : IKudosWebSocketHandler {
-            override suspend fun onConnect(session: KudosWebSocketSession) { order.add("connect:${session.sessionId}") }
-            override suspend fun onText(session: KudosWebSocketSession, text: String) { order.add("text:$text") }
-            override suspend fun onDisconnect(session: KudosWebSocketSession, cause: Throwable?) {
+            override suspend fun onConnect(session: KudosWebSocketSessionRef) { order.add("connect:${session.sessionId}") }
+            override suspend fun onText(session: KudosWebSocketSessionRef, text: String) { order.add("text:$text") }
+            override suspend fun onDisconnect(session: KudosWebSocketSessionRef, cause: Throwable?) {
                 // At this point the registry still holds the session (finally order: onDisconnect first, then unregister).
                 order.add("disconnect:sizeBeforeUnregister=${registry.size}")
             }
@@ -164,7 +328,7 @@ internal class KudosWebSocketRoutingTest {
         val registry = KudosWebSocketRegistry()
         val receivedOnServer = Channel<ByteArray>(capacity = 1)
         val handler = object : IKudosWebSocketHandler {
-            override suspend fun onBinary(session: KudosWebSocketSession, bytes: ByteArray) {
+            override suspend fun onBinary(session: KudosWebSocketSessionRef, bytes: ByteArray) {
                 receivedOnServer.send(bytes)
                 session.sendBinary(bytes.reversedArray())
             }
@@ -194,10 +358,10 @@ internal class KudosWebSocketRoutingTest {
         val disconnectCause = AtomicReference<Throwable?>()
         val disconnected = Channel<Unit>(capacity = 1)
         val handler = object : IKudosWebSocketHandler {
-            override suspend fun onText(session: KudosWebSocketSession, text: String) {
+            override suspend fun onText(session: KudosWebSocketSessionRef, text: String) {
                 throw IllegalStateException("business handler blew up on: $text")
             }
-            override suspend fun onDisconnect(session: KudosWebSocketSession, cause: Throwable?) {
+            override suspend fun onDisconnect(session: KudosWebSocketSessionRef, cause: Throwable?) {
                 disconnectCause.set(cause)
                 disconnected.send(Unit)
             }
@@ -227,7 +391,7 @@ internal class KudosWebSocketRoutingTest {
     fun onDisconnectThrowing_doesNotPreventUnregister() = testApplication {
         val registry = KudosWebSocketRegistry()
         val handler = object : IKudosWebSocketHandler {
-            override suspend fun onDisconnect(session: KudosWebSocketSession, cause: Throwable?) {
+            override suspend fun onDisconnect(session: KudosWebSocketSessionRef, cause: Throwable?) {
                 error("cleanup failed")
             }
         }
@@ -245,12 +409,45 @@ internal class KudosWebSocketRoutingTest {
     }
 
     @Test
+    fun onDisconnectSuspending_completesEvenWhenTheRouteCoroutineIsCancelled() = testApplication {
+        val registry = KudosWebSocketRegistry()
+        val cleanupFinished = Channel<Boolean>(capacity = 1)
+        val handler = object : IKudosWebSocketHandler {
+            override suspend fun onConnect(session: KudosWebSocketSessionRef) {
+                // Cancelling from inside the route models what a graceful shutdown does to the
+                // session coroutine: everything after the first suspension point in cleanup would
+                // be skipped without the NonCancellable guard.
+                throw kotlinx.coroutines.CancellationException("server going away")
+            }
+            override suspend fun onDisconnect(session: KudosWebSocketSessionRef, cause: Throwable?) {
+                delay(20) // a suspending cleanup step: clearing a presence key, writing an audit row
+                cleanupFinished.send(true)
+            }
+        }
+
+        application {
+            install(WebSockets)
+            routing { kudosWebSocket("/ws", registry, handler) }
+        }
+
+        val client = createClient { install(ClientWebSockets) { contentConverter = null } }
+        client.webSocket("/ws") {
+            try { incoming.receive() } catch (_: Throwable) { /* expected close */ }
+        }
+
+        assertEquals(true, cleanupFinished.receive(),
+            "Suspending cleanup must run to completion under cancellation, not abort at its first delay")
+        waitFor { registry.size == 0 }
+        assertEquals(0, registry.size)
+    }
+
+    @Test
     fun explicitClientCloseFrame_endsLoopWithNullCause() = testApplication {
         val registry = KudosWebSocketRegistry()
         val disconnectCause = AtomicReference<Throwable?>(RuntimeException("sentinel: not yet called"))
         val disconnected = Channel<Unit>(capacity = 1)
         val handler = object : IKudosWebSocketHandler {
-            override suspend fun onDisconnect(session: KudosWebSocketSession, cause: Throwable?) {
+            override suspend fun onDisconnect(session: KudosWebSocketSessionRef, cause: Throwable?) {
                 disconnectCause.set(cause)
                 disconnected.send(Unit)
             }

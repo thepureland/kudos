@@ -7,7 +7,7 @@
 | [`kudos-ability-comm-common`](kudos-ability-comm-common/README.md) | 共享 base（占位） |
 | [`kudos-ability-comm-email`](kudos-ability-comm-email/README.md) | SMTP 邮件发送（基于 spring-boot-starter-mail） |
 | [`kudos-ability-comm-sms`](kudos-ability-comm-sms/README.md) | 短信发送（阿里云 / AWS） |
-| [`kudos-ability-comm-websocket`](kudos-ability-comm-websocket/README.md) | WebSocket 业务封装（会话注册 / 广播 / 分布式投递，基于 Ktor） |
+| [`kudos-ability-comm-websocket`](kudos-ability-comm-websocket/README.md) | WebSocket 业务封装（会话注册 / 广播 / 分布式投递 / 自动装配，基于 Ktor） |
 
 所有通信类模块都走"虚拟线程 + 回调"模式：业务调 `handler.send(req) { result -> ... }`，
 立即返回，结果通过 callback 异步通知。
@@ -17,6 +17,10 @@
 以下为本次深度审查中**不宜直接修改**（涉及 public API 变更 / 新功能 / 设计决策）的发现，
 按维度分类。已直接修复的问题（阿里云 endpoint 解析 bug、邮件头注入校验、路由日志归属、
 若干 README 过时陈述）不在此列。
+
+> 更新（2026-08-14）：WebSocket 相关条目已在一次专项改造中处理，下文以 ~~删除线~~ 标注并
+> 附上现状；未加删除线的条目仍然有效。改造细节见
+> [`kudos-ability-comm-websocket-ktor/README.md`](kudos-ability-comm-websocket/kudos-ability-comm-websocket-ktor/README.md)。
 
 ### 对外接口（public API）
 
@@ -58,11 +62,17 @@
   `AwsSmsRequest.accessKeySecret` 均为明文 String 且类实现 `Serializable`，对象一旦被序列化到
   日志/缓存即泄密（KDoc 已警告）。建议长期改为 `CharArray` 或引入 `CredentialsProvider` SPI，
   调用时临时取值。
-- **WebSocket 无内置鉴权拦截**：`kudos-ability-comm-websocket-ktor/.../routing/KudosWebSocketRouting.kt`
-  只能靠业务在 `sessionFactory` / `onConnect` 里手工鉴权，容易遗漏。建议抽出
-  `WebSocketInterceptor` 链（README 已注明，归档为待办）。
-- **广播无 backpressure**：`WebSocketBroadcaster` 对慢 session 的发送队列无容量上限，极端情况
-  会堆积至 OOM（README 已注明）。
+- ~~**WebSocket 无内置鉴权拦截**~~（已解决）：拆成三层各归其位——握手前鉴权走 Ktor 自带的
+  `authenticate("jwt") { kudosWebSocket(...) }`（`kudosWebSocket` 是普通 `Route` 扩展）；
+  连接准入用可组合的 `IWebSocketConnectInterceptor`（注册前执行、首个拒绝生效、抛异常按拒绝
+  处理，自带 `MaxConnectionsInterceptor`）；消息级横切用 `WebSocketHandlerDecorator` 装饰
+  `IKudosWebSocketHandler`（自带 `RateLimitingWebSocketHandler`）。未再引入独立的消息拦截器
+  SPI——handler 装饰器本身就是拦截器，且比 `HandlerInterceptor` 的 pre/post 更强（可 around、
+  可短路）。
+- ~~**广播无 backpressure**~~（已解决）：`WebSocketBroadcaster` 现有 `maxConcurrentSends`
+  （默认 512）限制在飞发送数、`sendTimeout`（默认 10s）限制单 session 阻塞时长，超时后按
+  `closeOnSendTimeout`（默认 true）回收不读 socket 的连接。严格的 per-session outbox 容量
+  上限仍未实现。
 
 ### 可观测性
 
@@ -71,8 +81,9 @@
 - **日志缺关联上下文**：`EmailHandler` 的 `log.info("Starting to send email...")`、
   `AliyunSmsHandler` 的 `[aliyun] Starting to send SMS...` 均无关联 ID / 目标计数（脱敏后），
   并发场景下日志无法对上请求。
-- **Redis 通道无生命周期管理**：`RedisWebSocketBroadcastChannel` 内部的 `CoroutineScope` 永不
-  cancel、监听器不注销，Spring 容器刷新/关闭时泄漏。建议实现 `DisposableBean` 或暴露 `close()`。
+- ~~**Redis 通道无生命周期管理**~~（已解决）：`RedisWebSocketBroadcastChannel` 与
+  `DistributedWebSocketBroadcaster` 均实现 `AutoCloseable`（Spring 关闭容器时自动调用），
+  `close()` 会注销监听器并 cancel 内部 scope；`subscribe` 也改为返回可关闭的订阅句柄。
 
 ### 测试覆盖
 
@@ -83,15 +94,16 @@
   缺单测而长期存在；解析逻辑可抽为 internal 纯函数后补参数化单测。
 - **AWS 代理模式无测试**：`SmsAwsProxyProperties.enable=true` 分支（`initApacheHttpClient`）
   无任何测试。
-- **WebSocketBroadcaster 无独立单测**：仅经由 `DistributedWebSocketBroadcasterTest` 间接覆盖；
-  单 session 失败返回计数、空列表短路等语义值得直接固化。
+- ~~**WebSocketBroadcaster 无独立单测**~~（已解决）：`WebSocketBroadcasterTest` 现有 16 个用例，
+  覆盖扇出计数、单 session 失败隔离、空列表短路、二进制路径、发送超时与并发上限。
 
 ### 可维护性
 
 - **魔法值 `"local-test"`**：`AliyunSmsHandler.doSend` 异常兜底响应体的
   `requestId("local-test")` 在生产异常路径同样出现，字面义误导（像测试残留）；建议改为
   `"n/a"` 之类中性值（回调方可能依赖该值，故未直接改）。
-- **重复 sessionId 注册残留旧索引**：`KudosWebSocketRegistry.register` 对同 sessionId 重复注册
-  时旧 userId/tenantId 桶不清理（已有测试固化此行为）；建议 register 内先 unregister 同 id。
+- ~~**重复 sessionId 注册残留旧索引**~~（已解决）：`KudosWebSocketRegistry.register` 现在会清理
+  被顶替 session 的 userId/tenantId 桶，避免旧用户的索引解析到新用户的连接；同时二级索引的
+  增删全部收进 `compute` lambda，修复了并发注册/注销会让活跃 session 从索引中永久消失的竞态。
 - **comm-common 空置决策**：`CommThreadPoolProperties` 无人装配（README 已注明）；若采纳上文
   "统一短信 SPI"建议，可顺势把公共抽象落到该模块，否则应删除。

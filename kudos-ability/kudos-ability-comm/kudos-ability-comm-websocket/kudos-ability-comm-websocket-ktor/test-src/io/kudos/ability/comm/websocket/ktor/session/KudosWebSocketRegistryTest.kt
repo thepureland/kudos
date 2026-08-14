@@ -2,6 +2,9 @@ package io.kudos.ability.comm.websocket.ktor.session
 
 import io.ktor.websocket.CloseReason
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -106,7 +109,7 @@ internal class KudosWebSocketRegistryTest {
 
         r.unregister("s1")
 
-        // After the last one is removed, the user / tenant bucket should be dropped entirely (the "if isNullOrEmpty -> null" rule stated in the README).
+        // After the last one is removed, the user / tenant bucket should be dropped entirely.
         assertEquals(emptyList(), r.findByUserId("u1"))
     }
 
@@ -124,19 +127,120 @@ internal class KudosWebSocketRegistryTest {
     }
 
     @Test
-    fun register_sameSessionIdTwice_replaces() {
+    fun register_sameSessionIdTwice_replacesAndClearsTheReplacedSessionsIndexes() {
         val r = KudosWebSocketRegistry()
-        val first = StubSessionRef("s1", userId = "u1")
-        val second = StubSessionRef("s1", userId = "u2")
+        val first = StubSessionRef("s1", userId = "u1", tenantId = "t1")
+        val second = StubSessionRef("s1", userId = "u2", tenantId = "t2")
 
         r.register(first)
         r.register(second)
 
-        // Primary index is overwritten
         assertSame(second, r.findById("s1"))
-        // Secondary indexes: the original u1 bucket is not cleared — the README states "sessionId uniqueness is not enforced, the business side is responsible for it"
-        assertTrue(r.findByUserId("u1").any { it.sessionId == "s1" })
-        assertTrue(r.findByUserId("u2").any { it.sessionId == "s1" })
+        // The replaced session's buckets must not keep resolving s1: findByUserId("u1") would
+        // otherwise hand u1 a connection that now belongs to u2.
+        assertEquals(emptyList(), r.findByUserId("u1"), "The replaced session's user bucket must be cleared")
+        assertEquals(emptyList(), r.findByTenantId("t1"), "The replaced session's tenant bucket must be cleared")
+        assertEquals(listOf("s1"), r.findByUserId("u2").map { it.sessionId })
+        assertEquals(listOf("s1"), r.findByTenantId("t2").map { it.sessionId })
+    }
+
+    @Test
+    fun register_sameSessionIdAndSameUser_keepsTheSessionIndexed() {
+        val r = KudosWebSocketRegistry()
+        r.register(StubSessionRef("s1", userId = "u1"))
+        val second = StubSessionRef("s1", userId = "u1")
+
+        r.register(second)
+
+        // The cleanup of the replaced entry must not remove the bucket entry the new session needs.
+        assertEquals(listOf(second), r.findByUserId("u1"))
+    }
+
+    @Test
+    fun unregisterBySession_doesNotEvictASuccessorHoldingTheSameId() {
+        val r = KudosWebSocketRegistry()
+        val stale = StubSessionRef("s1", userId = "u1")
+        val successor = StubSessionRef("s1", userId = "u1")
+        r.register(stale)
+        r.register(successor)
+
+        // The stale connection's route finally-block fires late; it must not take the live one down.
+        r.unregister(stale)
+
+        assertSame(successor, r.findById("s1"), "Only the still-registered instance may be removed")
+        assertEquals(listOf(successor), r.findByUserId("u1"))
+    }
+
+    @Test
+    fun unregisterBySession_removesWhenStillRegistered() {
+        val r = KudosWebSocketRegistry()
+        val s = StubSessionRef("s1", userId = "u1", tenantId = "t1")
+        r.register(s)
+
+        r.unregister(s)
+
+        assertEquals(0, r.size)
+        assertEquals(emptyList(), r.findByUserId("u1"))
+        assertEquals(emptyList(), r.findByTenantId("t1"))
+    }
+
+    /**
+     * Regression test for the register/unregister race on a secondary index.
+     *
+     * Churn threads repeatedly register and unregister sessions of user "u", which makes the
+     * `byUserId["u"]` bucket empty (and therefore removed) over and over. Meanwhile a registrar
+     * thread adds long-lived sessions for the same user. If the "add to bucket" step ran outside the
+     * map's per-key compute lock, a registrar could add its sessionId to a bucket that a churn
+     * thread had just detached from the map — leaving a live, connected session permanently
+     * invisible to [KudosWebSocketRegistry.findByUserId], i.e. silently unreachable by broadcasts.
+     *
+     * The assertion is exact (all survivors visible) whichever way the threads interleave, so a
+     * correct implementation cannot fail this test intermittently.
+     */
+    @Test
+    fun concurrentRegisterAndUnregister_neverLosesALiveSessionFromTheUserIndex() {
+        val r = KudosWebSocketRegistry()
+        val user = "u"
+        val churnThreads = 6
+        val churnIterations = 400
+        val survivors = 150
+
+        val pool = Executors.newFixedThreadPool(churnThreads + 1)
+        val start = CountDownLatch(1)
+        val done = CountDownLatch(churnThreads + 1)
+        try {
+            repeat(churnThreads) { t ->
+                pool.execute {
+                    start.await()
+                    repeat(churnIterations) { i ->
+                        val s = StubSessionRef("churn-$t-$i", userId = user)
+                        r.register(s)
+                        r.unregister(s)
+                    }
+                    done.countDown()
+                }
+            }
+            pool.execute {
+                start.await()
+                repeat(survivors) { i ->
+                    r.register(StubSessionRef("survivor-$i", userId = user))
+                    Thread.yield()
+                }
+                done.countDown()
+            }
+            start.countDown()
+            assertTrue(done.await(60, TimeUnit.SECONDS), "Concurrency workload did not finish in time")
+        } finally {
+            pool.shutdownNow()
+        }
+
+        val visible = r.findByUserId(user).map { it.sessionId }.toSet()
+        assertEquals(
+            (0 until survivors).map { "survivor-$it" }.toSet(),
+            visible,
+            "Every still-registered session must remain reachable through the user index",
+        )
+        assertEquals(survivors, r.size, "Only the survivors may remain in the primary index")
     }
 
     /** Plain-data ref with no Ktor dependency, used for testing. */
@@ -145,7 +249,7 @@ internal class KudosWebSocketRegistryTest {
         override val userId: String? = null,
         override val tenantId: String? = null,
     ) : KudosWebSocketSessionRef {
-        override val attributes: MutableMap<String, Any?> = ConcurrentHashMap()
+        override val attributes: MutableMap<String, Any> = ConcurrentHashMap()
         override suspend fun sendText(text: String) {}
         override suspend fun sendBinary(bytes: ByteArray) {}
         override suspend fun close(reason: CloseReason) {}

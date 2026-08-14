@@ -11,6 +11,11 @@ package io.kudos.ability.comm.websocket.ktor.codec
  * The name is "encoder" for symmetry, but it also handles decoding — brevity is preferred over
  * pure descriptiveness.
  *
+ * The inbound side has a ready-made consumer:
+ * [io.kudos.ability.comm.websocket.ktor.handler.TypedWebSocketHandler] decodes every text message
+ * into a business type before invoking the handler. Outbound needs none — pass `encoder.encode(msg)`
+ * to any broadcast method.
+ *
  * Typical implementation (lives on the business side, not in this module):
  *
  * ```kotlin
@@ -31,3 +36,10 @@ interface IWebSocketMessageEncoder {
     /** Decodes received text frame content into the given type. */
     fun <T : Any> decode(text: String, type: Class<T>): T
 }
+
+/**
+ * Kotlin-friendly [IWebSocketMessageEncoder.decode]: `encoder.decode<ChatMessage>(text)` instead of
+ * passing a `Class` literal. The `Class`-based method stays the SPI so Java implementations remain
+ * straightforward.
+ */
+inline fun <reified T : Any> IWebSocketMessageEncoder.decode(text: String): T = decode(text, T::class.java)

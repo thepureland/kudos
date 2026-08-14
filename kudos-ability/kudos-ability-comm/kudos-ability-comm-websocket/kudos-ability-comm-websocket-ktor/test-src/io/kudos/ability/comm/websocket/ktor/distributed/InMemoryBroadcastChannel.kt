@@ -19,13 +19,17 @@ internal class InMemoryBroadcastChannel : IWebSocketBroadcastChannel {
 
     private val subscribers = CopyOnWriteArrayList<suspend (WebSocketBroadcastEnvelope) -> Unit>()
 
+    /** Number of currently attached handlers — lets tests assert that closing a subscription detaches. */
+    val subscriberCount: Int get() = subscribers.size
+
     override suspend fun publish(envelope: WebSocketBroadcastEnvelope) {
         for (handler in subscribers) {
             handler(envelope)
         }
     }
 
-    override fun subscribe(handler: suspend (WebSocketBroadcastEnvelope) -> Unit) {
+    override fun subscribe(handler: suspend (WebSocketBroadcastEnvelope) -> Unit): WebSocketBroadcastSubscription {
         subscribers += handler
+        return WebSocketBroadcastSubscription { subscribers.remove(handler) }
     }
 }

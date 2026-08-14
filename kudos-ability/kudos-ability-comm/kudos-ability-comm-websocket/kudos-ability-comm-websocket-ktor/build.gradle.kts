@@ -6,6 +6,12 @@ dependencies {
     api(project(":kudos-context"))
     api(libs.ktor.server.websockets)
 
+    // Declared explicitly rather than relied on transitively (kudos-base exposes it via `api`):
+    // this module's public API includes a kotlinx.coroutines type — KudosContextThreadElement
+    // implements ThreadContextElement — so the dependency is part of its contract, not an accident
+    // of what an upstream module happens to re-export today.
+    api(libs.kotlinxCoroutines)
+
     // Optional Redis-backed distributed broadcasting (see distributed/redis/). compileOnly so
     // single-instance deployments do not pull Spring Data Redis through this module; apps that
     // want cross-process broadcasting add Spring Data Redis themselves.

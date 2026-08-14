@@ -159,6 +159,63 @@ internal class RedisWebSocketBroadcastChannelTest {
     }
 
     @Test
+    fun onMessage_deliversInPublishOrder() {
+        val container = mock(RedisMessageListenerContainer::class.java)
+        val channel = RedisWebSocketBroadcastChannel(jdkTemplate(), container, channelName)
+        val texts = ConcurrentLinkedQueue<String>()
+        val count = 50
+        val latch = CountDownLatch(count)
+        channel.subscribe { env ->
+            texts += env.text
+            latch.countDown()
+        }
+
+        // Redis hands the listener messages in publish order; dispatching each on its own coroutine
+        // would shuffle them, which is visible to users in any chat-like feature.
+        repeat(count) { i ->
+            channel.onMessage(DefaultMessage(channelName.toByteArray(), jdkBytes(envelope("msg-$i"))), null)
+        }
+
+        assertTrue(latch.await(5, TimeUnit.SECONDS), "All envelopes must be delivered")
+        assertEquals((0 until count).map { "msg-$it" }, texts.toList(), "Delivery order must match publish order")
+    }
+
+    @Test
+    fun close_removesTheListenerAndStopsDelivery() {
+        val container = mock(RedisMessageListenerContainer::class.java)
+        val channel = RedisWebSocketBroadcastChannel(jdkTemplate(), container, channelName)
+        val latch = CountDownLatch(1)
+        channel.subscribe { latch.countDown() }
+
+        channel.close()
+
+        val listenerCaptor = ArgumentCaptor.forClass(org.springframework.data.redis.connection.MessageListener::class.java)
+        val topicCaptor = ArgumentCaptor.forClass(Topic::class.java)
+        verify(container).removeMessageListener(listenerCaptor.capture(), topicCaptor.capture())
+        assertSame(channel, listenerCaptor.value, "The channel must detach the same listener it registered")
+        assertEquals(channelName, topicCaptor.value.topic)
+
+        channel.onMessage(DefaultMessage(channelName.toByteArray(), jdkBytes(envelope())), null)
+        assertFalse(latch.await(150, TimeUnit.MILLISECONDS), "A closed channel must not keep dispatching")
+    }
+
+    @Test
+    fun subscription_close_detachesOnlyThatHandler() {
+        val container = mock(RedisMessageListenerContainer::class.java)
+        val channel = RedisWebSocketBroadcastChannel(jdkTemplate(), container, channelName)
+        val detached = CountDownLatch(1)
+        val kept = CountDownLatch(1)
+        val subscription = channel.subscribe { detached.countDown() }
+        channel.subscribe { kept.countDown() }
+
+        subscription.close()
+        channel.onMessage(DefaultMessage(channelName.toByteArray(), jdkBytes(envelope())), null)
+
+        assertTrue(kept.await(5, TimeUnit.SECONDS), "The remaining handler must still receive envelopes")
+        assertFalse(detached.await(150, TimeUnit.MILLISECONDS), "A closed subscription must stop receiving")
+    }
+
+    @Test
     fun onMessage_afterHandlerCrash_subsequentMessagesStillDispatch() {
         val container = mock(RedisMessageListenerContainer::class.java)
         val channel = RedisWebSocketBroadcastChannel(jdkTemplate(), container, channelName)

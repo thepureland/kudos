@@ -1,20 +1,25 @@
 package io.kudos.ability.comm.websocket.ktor.handler
 
-import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSession
+import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSessionRef
 
 /**
  * Business-side WebSocket handling SPI.
  *
  * Classes implementing this interface are responsible for:
- *  - Accepting new connections ([onConnect]) — typically used for authentication, attaching
- *    context, pushing a welcome message, etc.
- *  - Handling each text / binary frame ([onText] / [onBinary]).
+ *  - Accepting new connections ([onConnect]) — typically used for attaching context, pushing a
+ *    welcome message, etc.
+ *  - Handling each text / binary message ([onText] / [onBinary]).
  *  - Cleanup ([onDisconnect]) — releasing resources held on the business side.
  *
- * Implementations **do not** need to explicitly manage [KudosWebSocketSession] registration
- * in [io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketRegistry] — the upstream
- * route extension function (see the `kudosWebSocket` implementation) already drives this
- * interface in a "register → handle → unregister" template.
+ * Hooks receive a [KudosWebSocketSessionRef], not the concrete Ktor-backed session: an
+ * implementation can then be unit-tested against a plain stub, and survives a future non-Ktor
+ * engine unchanged. Handlers that genuinely need the raw Ktor session can cast to
+ * [io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSession].
+ *
+ * Implementations **do not** need to explicitly manage registration in
+ * [io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketRegistry] — the upstream route
+ * extension function (see the `kudosWebSocket` implementation) already drives this interface in
+ * a "register → handle → unregister" template.
  *
  * All interface default implementations are no-ops; the business side overrides as needed.
  *
@@ -23,22 +28,31 @@ import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSession
  */
 interface IKudosWebSocketHandler {
 
-    /** Invoked after the connection is established and before the first business frame. */
-    suspend fun onConnect(session: KudosWebSocketSession) {}
+    /** Invoked after the connection is established and before the first business message. */
+    suspend fun onConnect(session: KudosWebSocketSessionRef) {}
 
-    /** Called when a text frame is received. `text` is the already UTF-8-decoded content. */
-    suspend fun onText(session: KudosWebSocketSession, text: String) {}
+    /**
+     * Called for each complete text message. `text` is the already UTF-8-decoded content, with
+     * WebSocket fragmentation already reassembled — one call per application message, never per
+     * wire frame.
+     */
+    suspend fun onText(session: KudosWebSocketSessionRef, text: String) {}
 
-    /** Called when a binary frame is received. */
-    suspend fun onBinary(session: KudosWebSocketSession, bytes: ByteArray) {}
+    /** Called for each complete binary message (fragmentation already reassembled). */
+    suspend fun onBinary(session: KudosWebSocketSessionRef, bytes: ByteArray) {}
 
     /**
      * Connection closed (normally or abnormally). A non-null `cause` indicates an abnormal
      * disconnect — the business side may use it to decide whether to clear a persisted
-     * "online status" flag. **Before** this method returns the registry still holds the
-     * session; afterwards it is automatically unregistered, so `session.sendXxx` may still be
-     * called here but will very likely fail (the connection is unreachable). The business
-     * side should not rely on it.
+     * "online status" flag. A `cause` of [kotlinx.coroutines.CancellationException] specifically
+     * means the server is shutting down or the route coroutine was cancelled.
+     *
+     * **Before** this method returns the registry still holds the session; afterwards it is
+     * automatically unregistered, so `session.sendXxx` may still be called here but will very
+     * likely fail (the connection is unreachable). The business side should not rely on it.
+     *
+     * Runs inside [kotlinx.coroutines.NonCancellable], so cleanup that suspends (clearing a Redis
+     * presence key, writing an audit row) still completes during a graceful shutdown.
      */
-    suspend fun onDisconnect(session: KudosWebSocketSession, cause: Throwable? = null) {}
+    suspend fun onDisconnect(session: KudosWebSocketSessionRef, cause: Throwable? = null) {}
 }

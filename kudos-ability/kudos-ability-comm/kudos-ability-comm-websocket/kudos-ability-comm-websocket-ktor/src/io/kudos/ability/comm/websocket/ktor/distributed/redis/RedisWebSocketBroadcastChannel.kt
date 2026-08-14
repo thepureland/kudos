@@ -2,10 +2,13 @@ package io.kudos.ability.comm.websocket.ktor.distributed.redis
 
 import io.kudos.ability.comm.websocket.ktor.distributed.IWebSocketBroadcastChannel
 import io.kudos.ability.comm.websocket.ktor.distributed.WebSocketBroadcastEnvelope
+import io.kudos.ability.comm.websocket.ktor.distributed.WebSocketBroadcastSubscription
 import io.kudos.base.logger.LogFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.springframework.data.redis.connection.Message
@@ -35,9 +38,18 @@ import java.util.concurrent.CopyOnWriteArrayList
  * propagate, otherwise Spring's listener thread would die and silently drop every subsequent message
  * on this node. The same is true for handler exceptions — they are isolated per-handler.
  *
- * Handler dispatch runs on a private [SupervisorJob] + [Dispatchers.Default] scope so the listener
- * thread is released as soon as it has scheduled the work; a slow / suspending handler does not
- * block the next Redis delivery.
+ * ## Ordering
+ *
+ * Inbound envelopes are handed to a bounded [Channel] drained by a single consumer coroutine, rather
+ * than each being dispatched on its own coroutine. Redis delivers messages to a listener in publish
+ * order, and spawning a coroutine per message throws that order away — two chat messages published a
+ * millisecond apart could be handed to the handler in either order, which users notice. The single
+ * consumer preserves order while still releasing Spring's listener thread immediately.
+ *
+ * The tradeoff is that a slow handler delays the messages behind it; that is inherent to ordered
+ * delivery. If the buffer fills (a handler stuck for [inboundBufferCapacity] messages), further
+ * envelopes are dropped with a WARN — dropping loudly beats blocking the Redis listener thread,
+ * which would stall every other listener sharing the container.
  *
  * Wiring example:
  * ```kotlin
@@ -60,10 +72,12 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 class RedisWebSocketBroadcastChannel(
     private val redisTemplate: RedisTemplate<*, *>,
-    container: RedisMessageListenerContainer,
+    private val container: RedisMessageListenerContainer,
     /** Redis pub/sub channel name. Different deployments must agree on the same name. */
     private val redisChannel: String,
-) : IWebSocketBroadcastChannel, MessageListener {
+    /** How many inbound envelopes may queue while handlers are busy before delivery starts dropping. */
+    private val inboundBufferCapacity: Int = DEFAULT_INBOUND_BUFFER_CAPACITY,
+) : IWebSocketBroadcastChannel, MessageListener, AutoCloseable {
 
     private val log = LogFactory.getLog(this::class)
 
@@ -72,8 +86,21 @@ class RedisWebSocketBroadcastChannel(
 
     private val handlers = CopyOnWriteArrayList<suspend (WebSocketBroadcastEnvelope) -> Unit>()
 
+    private val topic = ChannelTopic(redisChannel)
+
+    /** Hand-off from Spring's listener thread to the ordered consumer below. */
+    private val inbound = Channel<WebSocketBroadcastEnvelope>(capacity = inboundBufferCapacity)
+
     init {
-        container.addMessageListener(this, ChannelTopic(redisChannel))
+        scope.launch {
+            for (envelope in inbound) {
+                for (handler in handlers) {
+                    runCatching { handler(envelope) }
+                        .onFailure { log.error(it, "Redis WebSocket broadcast handler failed nodeId={0} targetType={1}", envelope.nodeId, envelope.targetType) }
+                }
+            }
+        }
+        container.addMessageListener(this, topic)
     }
 
     /**
@@ -87,13 +114,15 @@ class RedisWebSocketBroadcastChannel(
         }
     }
 
-    override fun subscribe(handler: suspend (WebSocketBroadcastEnvelope) -> Unit) {
+    override fun subscribe(handler: suspend (WebSocketBroadcastEnvelope) -> Unit): WebSocketBroadcastSubscription {
         handlers += handler
+        return WebSocketBroadcastSubscription { handlers.remove(handler) }
     }
 
     /**
      * Spring [MessageListener] entry point. Deserializes via [redisTemplate]'s value serializer and
-     * dispatches every registered handler on the internal coroutine scope. Failures stay local.
+     * queues the envelope for the ordered consumer. Failures stay local; the listener thread is
+     * never blocked and never allowed to die.
      */
     override fun onMessage(message: Message, pattern: ByteArray?) {
         val envelope: WebSocketBroadcastEnvelope = try {
@@ -110,11 +139,26 @@ class RedisWebSocketBroadcastChannel(
             return
         }
 
-        for (handler in handlers) {
-            scope.launch {
-                runCatching { handler(envelope) }
-                    .onFailure { log.error(it, "Redis WebSocket broadcast handler failed nodeId={0} targetType={1}", envelope.nodeId, envelope.targetType) }
-            }
+        if (inbound.trySend(envelope).isFailure) {
+            log.warn("Redis WebSocket inbound buffer full (capacity={0}); dropping envelope from nodeId={1} targetType={2}. A handler is too slow or stuck.",
+                inboundBufferCapacity, envelope.nodeId, envelope.targetType)
         }
+    }
+
+    /**
+     * Detaches from the listener container and stops the consumer. Spring calls this automatically
+     * for beans implementing [AutoCloseable]; tests and manual wiring must call it themselves, or the
+     * container keeps a reference to a dead channel and its consumer coroutine leaks.
+     */
+    override fun close() {
+        runCatching { container.removeMessageListener(this, topic) }
+            .onFailure { log.warn("Removing Redis WebSocket listener failed channel={0} cause={1}", redisChannel, it.message) }
+        inbound.close()
+        scope.cancel()
+    }
+
+    companion object {
+        /** Deep enough to ride out a GC pause or a slow handler, shallow enough to fail loudly instead of hoarding memory. */
+        const val DEFAULT_INBOUND_BUFFER_CAPACITY: Int = 1024
     }
 }
