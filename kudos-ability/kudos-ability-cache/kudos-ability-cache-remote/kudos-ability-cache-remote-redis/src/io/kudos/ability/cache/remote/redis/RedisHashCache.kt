@@ -4,9 +4,11 @@ import io.kudos.ability.cache.common.core.hash.IHashCache
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.data.memdb.redis.RedisTemplates
 import io.kudos.ability.data.memdb.redis.dao.IdEntitiesRedisHashDao
+import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.sort.Order
 import io.kudos.base.model.contract.entity.IIdEntity
+import java.time.Duration
 import kotlin.reflect.KClass
 
 /**
@@ -33,7 +35,13 @@ import kotlin.reflect.KClass
  */
 class RedisHashCache(
     private val redisTemplates: RedisTemplates,
-    private val versionConfig: CacheVersionConfig
+    private val versionConfig: CacheVersionConfig,
+    /**
+     * Resolves the configured `ttl` (seconds) for a logical cache name, or null for "never expires".
+     * Consulted per write rather than captured once, so it works regardless of when the cache configuration
+     * becomes available relative to this bean.
+     */
+    private val ttlSecondsOf: (cacheName: String) -> Int? = { null }
 ) : IHashCache {
 
     /** Delegated Redis hash DAO; all reads/writes go through it via RedisTemplate. */
@@ -64,6 +72,7 @@ class RedisHashCache(
         sortableProperties: Set<String>
     ) {
         dao.save(dataKeyPrefix(cacheName), entity, filterableProperties, sortableProperties)
+        applyTtl(cacheName)
     }
 
     override fun <PK, E : IIdEntity<PK>> saveBatch(
@@ -73,6 +82,39 @@ class RedisHashCache(
         sortableProperties: Set<String>
     ) {
         dao.saveBatch(dataKeyPrefix(cacheName), entities, filterableProperties, sortableProperties)
+        applyTtl(cacheName)
+    }
+
+    /**
+     * Re-applies the cache item's configured `ttl` to every key of this hash region after a write.
+     *
+     * Remote hash caches had no expiry at all, which made `CacheConfig.ttl` silently inert for `hash = true`
+     * items and left nothing to converge them: cross-node invalidation is fire-and-forget pub/sub, so a single
+     * dropped message meant stale data resident forever.
+     *
+     * The TTL covers the main key *and* every index key together (see
+     * [io.kudos.ability.data.memdb.redis.dao.IdEntitiesRedisHashDao.expireAll]) — expiring only some of them
+     * would leave indexes pointing at entities that no longer exist. Because it is re-applied on each write, the
+     * region lives for `ttl` measured from the **last write**, not from when it was first populated.
+     *
+     * Two consequences worth knowing before configuring a ttl on a hash cache:
+     *  - it costs a SCAN over this region's index keys per write, so it stays entirely out of the way when no
+     *    ttl is configured (the common case) and should be sized with write frequency in mind;
+     *  - a hash cache has no load-on-miss path, so once the region expires, queries return empty until
+     *    something repopulates it (`writeOnBoot` preloading, an explicit `reloadAll`, or ordinary writes).
+     *    A ttl here bounds staleness; it does not arrange for a refresh.
+     */
+    private fun applyTtl(cacheName: String) {
+        val ttlSeconds = runCatching { ttlSecondsOf(cacheName) }.getOrNull() ?: return
+        if (ttlSeconds <= 0) return
+        runCatching { dao.expireAll(dataKeyPrefix(cacheName), Duration.ofSeconds(ttlSeconds.toLong())) }
+            .onFailure {
+                // A failed expiry must not fail the write that already succeeded; the next write retries it.
+                log.warn(
+                    "Failed to apply ttl to hash cache [{0}]; entries keep their previous expiry. cause={1}",
+                    cacheName, it.message
+                )
+            }
     }
 
     override fun <PK, E : IIdEntity<PK>> deleteById(
@@ -134,9 +176,12 @@ class RedisHashCache(
         sortableProperties: Set<String>
     ) {
         dao.refreshAll(dataKeyPrefix(cacheName), entities, filterableProperties, sortableProperties)
+        applyTtl(cacheName)
     }
 
     override fun clear(cacheName: String) {
         dao.clear(dataKeyPrefix(cacheName))
     }
+
+    private val log = LogFactory.getLog(this::class)
 }

@@ -1,6 +1,7 @@
 package io.kudos.ability.cache.remote.redis.init
 
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
+import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.ability.cache.remote.redis.RedisHashCache
 import io.kudos.ability.cache.remote.redis.RedisKeyValueCacheManager
 import io.kudos.ability.cache.remote.redis.notice.RedisCacheMessageHandler
@@ -9,6 +10,8 @@ import io.kudos.ability.data.memdb.redis.init.properties.RedisExtProperties
 import io.kudos.ability.data.memdb.redis.init.properties.RedisProperties
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
+import org.springframework.beans.factory.NoSuchBeanDefinitionException
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.data.redis.connection.RedisConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.listener.RedisMessageListenerContainer
@@ -227,7 +230,19 @@ internal class RedisCacheAutoConfigurationTest {
     @Test
     fun redisIdEntitiesHashCache_buildsRedisHashCache() {
         val cache = RedisCacheAutoConfiguration()
-            .redisIdEntitiesHashCache(mock(RedisTemplates::class.java), CacheVersionConfig())
+            .redisIdEntitiesHashCache(
+                mock(RedisTemplates::class.java),
+                CacheVersionConfig(),
+                // Resolves to nothing, mirroring startup order: this configuration is wired before
+                // LinkableCacheAutoConfiguration has contributed the cache-config provider.
+                object : ObjectProvider<ICacheConfigProvider> {
+                    override fun getObject(): ICacheConfigProvider =
+                        throw NoSuchBeanDefinitionException(ICacheConfigProvider::class.java)
+                    override fun getObject(vararg args: Any?): ICacheConfigProvider = getObject()
+                    override fun getIfAvailable(): ICacheConfigProvider? = null
+                    override fun getIfUnique(): ICacheConfigProvider? = null
+                }
+            )
         assertIs<RedisHashCache>(cache)
     }
 

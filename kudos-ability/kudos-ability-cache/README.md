@@ -62,7 +62,11 @@ LOCAL_REMOTE 二级缓存）。
 
 ### Hash 缓存
 
-- **本地 hash 缓存支持 TTL 了**：`CacheConfig.ttl` 此前对 `hash = true` 的缓存项完全不起作用——只有容量上限、没有过期，一旦某次失效广播丢失（pub/sub 是 fire-and-forget），脏数据会永久驻留。现在 `CaffeineHashCache` 按缓存项配置应用 `expireAfterWrite`（未配 ttl 时维持原先的不过期行为）。**远端 hash 仍无 TTL**：它委托给 `IdEntitiesRedisHashDao`，加过期需要改 memdb-redis 模块，未纳入本次范围。
+- **hash 缓存支持 TTL 了（本地 + 远端）**：`CacheConfig.ttl` 此前对 `hash = true` 的缓存项完全不起作用——只有容量上限、没有过期，一旦某次失效广播丢失（pub/sub 是 fire-and-forget），脏数据就永久驻留、没有任何东西能让它收敛。本地由 `CaffeineHashCache` 应用 `expireAfterWrite`；远端在 `IdEntitiesRedisHashDao` 上新增 `expireAll(dataKeyPrefix, ttl)`，由 `RedisHashCache` 在 save / saveBatch / refreshAll 之后调用。未配 ttl 时两侧都维持原先的不过期行为，零开销。
+
+  远端这一项的关键是**必须覆盖该区域的全部 key**：一个 hash 缓存对应主数据 key 加上每个可筛选/可排序属性的 Set/ZSet 索引 key，而只有 DAO 知道这套布局。只给主 key 设过期会更糟——索引会活得更久并继续吐出实体已消失的 id，`listBySetIndex` 于是返回幻影成员。因此接口加在 DAO 层（它用 SCAN 枚举自己的索引 key），而不是让缓存模块去猜 key 格式；这与 Redis `MGET` 复用 `RedisCache.createCacheKey` 是同一个原则。
+
+  配置 hash 缓存的 ttl 前需知道两点：TTL 在每次写入后重新施加，所以区域存活时间是"自**最后一次写入**起 ttl"，而非自首次填充起；且 hash 缓存**没有 load-on-miss 路径**，区域一旦过期，查询会返回空直到有东西重新填充（`writeOnBoot` 预热、显式 `reloadAll` 或普通写入）——ttl 限定的是陈旧上界，它不负责安排刷新。
 - **二级索引的并发一致性**：`removeFromIndexes` 原先用 `entries.removeIf { ids.remove(id); ids.isEmpty() }`，谓词执行期间不持锁，另一线程刚重建并加入的 id 会随整个桶一起被删掉——实体还在主存里却从索引消失。改为逐桶 `computeIfPresent`，与 `compute` 形式的写入在同一把桶锁上互斥。另外给"清索引→写主存→重建索引"这组三步操作加了按 id 分条带的锁（64 条带），避免同一 id 的并发写交错后把实体同时挂在新旧两个属性值下。均有并发回归测试。
 - **`clearLocal` 不再让并发写入凭空消失**：原先 `mainData.remove(cacheName)` 会摘掉实例，此刻已持有旧引用的写线程继续往一个没人再读的对象里写，随后 `main()` 重建空实例，这些写入无声消失。改为原地清空。
 - **`entityClass` 参数真正生效了**：`findByIds` / `listAll` 里的 `as? E` / `as E` 因泛型擦除**完全不做运行时检查**，类型不符的值会被原样返回、在调用方某处炸成 `ClassCastException`；而 Redis 实现是按 `entityClass` 反序列化的，两级行为不一致。现在按类型校验，不符则记 WARN 并视为未命中（LOCAL_REMOTE 下会落到权威的远端）。

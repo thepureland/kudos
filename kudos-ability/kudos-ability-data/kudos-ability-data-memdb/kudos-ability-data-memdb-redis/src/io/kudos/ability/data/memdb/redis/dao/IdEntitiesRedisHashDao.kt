@@ -15,6 +15,7 @@ import org.springframework.data.redis.core.ScanOptions
 import org.springframework.data.redis.serializer.RedisSerializer
 import java.lang.reflect.Method
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import kotlin.reflect.KClass
 
 /**
@@ -329,6 +330,46 @@ open class IdEntitiesRedisHashDao(
             null
         }
         deleteAllIndexKeys(dataKeyPrefix)
+    }
+
+    /**
+     * Applies [ttl] to **every** key this Hash owns under [dataKeyPrefix] — the main data key and all of its
+     * secondary index keys.
+     *
+     * Exists because only this class knows the key layout. A caller that wanted to bound staleness could
+     * otherwise only guess at it, and expiring the main key alone is actively harmful: the Set/ZSet indexes
+     * would outlive it and keep handing out ids whose entities are gone, so `listBySetIndex` would return
+     * phantom members. All keys therefore get the same TTL in one pass, which also keeps them aligned when this
+     * is re-invoked after each write.
+     *
+     * Note that the expiry is not transactional across keys — Redis applies the commands one after another, so
+     * a crash midway can leave a subset with the old TTL. The next write re-applies it, and the failure mode is
+     * a shorter-than-configured lifetime rather than a partially expired region.
+     *
+     * Index keys are enumerated with SCAN (same reason as [deleteAllIndexKeys]: it avoids blocking and is
+     * compatible with Lettuce 7.x), so the cost is proportional to the number of index keys for this prefix.
+     * Callers with no TTL configured should simply not call this.
+     *
+     * @param dataKeyPrefix main data key prefix
+     * @param ttl time-to-live to apply; must be positive
+     * @author K
+     * @since 1.0.0
+     */
+    open fun expireAll(dataKeyPrefix: String, ttl: Duration) {
+        require(!ttl.isNegative && !ttl.isZero) { "ttl must be positive, got $ttl" }
+        val template = getRedisTemplate()
+        template.expire(dataKeyPrefix, ttl)
+        val pattern = "${getIndexKeyPrefix(dataKeyPrefix)}*"
+        val seconds = ttl.seconds
+        template.execute { connection ->
+            val keyCmds = connection.keyCommands()
+            keyCmds.scan(ScanOptions.scanOptions().match(pattern).build()).use { cursor ->
+                while (cursor.hasNext()) {
+                    keyCmds.expire(cursor.next(), seconds)
+                }
+            }
+            null
+        }
     }
 
     /**

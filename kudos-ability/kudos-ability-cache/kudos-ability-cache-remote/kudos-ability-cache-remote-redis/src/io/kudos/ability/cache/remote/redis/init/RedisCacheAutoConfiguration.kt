@@ -13,6 +13,8 @@ import io.kudos.ability.data.memdb.redis.init.RedisAutoConfiguration
 import io.kudos.ability.data.memdb.redis.init.properties.RedisProperties
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.init.IComponentInitializer
+import io.kudos.ability.cache.common.support.ICacheConfigProvider
+import org.springframework.beans.factory.ObjectProvider
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
@@ -226,9 +228,14 @@ open class RedisCacheAutoConfiguration : IComponentInitializer {
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     open fun redisIdEntitiesHashCache(
         redisTemplates: RedisTemplates,
-        versionConfig: CacheVersionConfig
+        versionConfig: CacheVersionConfig,
+        cacheConfigProvider: ObjectProvider<ICacheConfigProvider>
     ): RedisHashCache {
-        return RedisHashCache(redisTemplates, versionConfig)
+        // Resolved lazily and per cache name: this configuration loads before LinkableCacheAutoConfiguration,
+        // which owns ICacheConfigProvider, so the bean does not exist yet at wiring time.
+        return RedisHashCache(redisTemplates, versionConfig) { cacheName ->
+            cacheConfigProvider.getIfAvailable()?.getHashCacheConfigs()?.get(cacheName)?.ttl
+        }
     }
 
     override fun getComponentName() = "kudos-ability-cache-remote-redis"

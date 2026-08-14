@@ -15,6 +15,7 @@ import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.ZSetOperations
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
+import java.time.Duration
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -396,6 +397,57 @@ internal class IdEntitiesRedisHashDaoTest {
         assertTrue(dao.listAll(k, TestRowWithTime::class).isEmpty())
         assertTrue(dao.listBySetIndex(k, TestRowWithTime::class, "type", 1).isEmpty())
         assertTrue(dao.listPageByZSetIndex(k, TestRowWithTime::class, "sortScore", 0, 10).isEmpty())
+    }
+
+    // ---------- expireAll ----------
+
+    @Test
+    fun expireAll_setsTtlOnMainKeyAndEveryIndexKey() {
+        // 只给主 key 设过期是有害的：Set/ZSet 索引会活得更久，继续吐出实体已消失的 id，
+        // listBySetIndex 于是返回幻影成员。所以这个方法必须覆盖它拥有的全部 key。
+        val dao = dao()
+        val k = key("expireAllCoversAllKeys")
+        dao.save(k, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
+        dao.save(k, TestRowWithTime(id = "2", type = 2, sortScore = 200.0), setIdx, zsetIdx)
+
+        val template = redisTemplates.defaultRedisTemplate
+        val indexKeys = template.keys("$k:idx*")
+        assertTrue(indexKeys.isNotEmpty(), "前置条件：应已建出索引 key")
+
+        dao.expireAll(k, Duration.ofSeconds(600))
+
+        val mainTtl = template.getExpire(k)
+        assertTrue(mainTtl > 0, "主 key 应已设置 TTL，实际=$mainTtl")
+        indexKeys.forEach { idxKey ->
+            val ttl = template.getExpire(idxKey)
+            assertTrue(ttl > 0, "索引 key [$idxKey] 也必须设置 TTL，否则会残留指向已消失实体的 id，实际=$ttl")
+        }
+    }
+
+    @Test
+    fun expireAll_rejectsNonPositiveTtl() {
+        val dao = dao()
+        assertFailsWith<IllegalArgumentException> { dao.expireAll(key("expireAllZero"), Duration.ZERO) }
+        assertFailsWith<IllegalArgumentException> {
+            dao.expireAll(key("expireAllNegative"), Duration.ofSeconds(-1))
+        }
+    }
+
+    @Test
+    fun expireAll_reappliedByLaterWrites_keepsRegionAlive() {
+        // TTL 由每次写入重新施加，因此区域的存活时间是"自最后一次写入起 ttl"。
+        val dao = dao()
+        val k = key("expireAllRefresh")
+        dao.save(k, TestRowWithTime(id = "1", type = 1, sortScore = 1.0), setIdx, zsetIdx)
+        dao.expireAll(k, Duration.ofSeconds(2))
+
+        val template = redisTemplates.defaultRedisTemplate
+        val shortTtl = template.getExpire(k)
+        assertTrue(shortTtl in 1..2, "应为短 TTL，实际=$shortTtl")
+
+        dao.expireAll(k, Duration.ofSeconds(600))
+        assertTrue(template.getExpire(k) > 2, "重新施加后 TTL 应被延长")
+        assertEquals(1, dao.listAll(k, TestRowWithTime::class).size, "延长 TTL 不应影响数据本身")
     }
 
     @Test
