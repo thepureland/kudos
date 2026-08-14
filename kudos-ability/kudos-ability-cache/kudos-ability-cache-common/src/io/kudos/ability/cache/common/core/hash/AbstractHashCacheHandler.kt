@@ -34,6 +34,21 @@ abstract class AbstractHashCacheHandler<T : IIdEntity<*>> : AbstractCacheHandler
     protected open fun sortableProperties(): Set<String> = emptySet()
 
     /**
+     * Exposes [filterableProperties] to the framework, in the same spirit as [exposedEntityClass].
+     *
+     * `MixHashCacheManager` reads this at startup so a two-tier hash cache knows which secondary indexes to
+     * build when it mirrors an entity from the remote tier into the local one. Without it that knowledge only
+     * existed as a side effect of writes — whatever set the most recent write happened to pass — so a process
+     * that had only ever read backfilled with no indexes at all.
+     *
+     * Declared `open` so Spring's CGLIB proxies can override it (see [exposedEntityClass] for the same reason).
+     */
+    open fun exposedFilterableProperties(): Set<String> = filterableProperties()
+
+    /** Exposes [sortableProperties]; see [exposedFilterableProperties]. */
+    open fun exposedSortableProperties(): Set<String> = sortableProperties()
+
+    /**
      * Reloads a single cache entry by id: first removes the id from the hash, then writes it back if [doReload]
      * returns a non-null value. Subclasses can override [doReload] to load from a database/source; the default
      * only deletes without writing back.

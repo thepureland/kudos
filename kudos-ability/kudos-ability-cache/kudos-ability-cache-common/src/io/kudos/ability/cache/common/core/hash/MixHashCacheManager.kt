@@ -5,6 +5,7 @@ import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
+import io.kudos.context.kit.SpringKit
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
@@ -65,13 +66,52 @@ class MixHashCacheManager {
             return
         }
         val version = versionConfig ?: return
+        val declaredIndexProps = declaredIndexPropsByCacheName()
         configs.forEach { (name, config) ->
             val strategy = parseStrategy(config)
-            val wrapper = MixHashCache(name, strategy, local, remote, effectiveNodeId)
+            val declared = declaredIndexProps[name]
+            val wrapper = MixHashCache(
+                name, strategy, local, remote, effectiveNodeId,
+                declared?.first.orEmpty(), declared?.second.orEmpty()
+            )
             val realKey = version.getFinalCacheName(name)
             hashCaches[realKey] = wrapper
-            log.debug("Initialized Hash cache [{0}] strategy={1}", name, strategy)
+            log.debug(
+                "Initialized Hash cache [{0}] strategy={1} filterable={2} sortable={3}",
+                name, strategy, declared?.first.orEmpty(), declared?.second.orEmpty()
+            )
         }
+    }
+
+    /**
+     * Collects each cache's declared secondary-property sets from its [AbstractHashCacheHandler] beans.
+     *
+     * This is what makes the index layout a property of the declaration rather than of whichever write happened
+     * to run first — see the index-set field in [MixHashCache]. Handlers are read once here, at which point all
+     * singletons exist (this method runs from `MixCacheInitializing.afterSingletonsInstantiated`).
+     *
+     * Several handlers may share a cache name, so their sets are unioned. Caches driven purely by the
+     * `@HashCacheableBy*` annotations have no handler and simply get empty sets, falling back to the previous
+     * behaviour of learning the properties from the first write.
+     *
+     * A failure to reach the container is not fatal: the sets stay empty and the cache still works, just
+     * without the head start.
+     */
+    private fun declaredIndexPropsByCacheName(): Map<String, Pair<Set<String>, Set<String>>> {
+        val handlers = runCatching { SpringKit.getBeansOfType<AbstractHashCacheHandler<*>>().values }
+            .getOrElse {
+                log.warn("Unable to read hash cache handlers; secondary indexes will be learned from writes. cause={0}", it.message)
+                return emptyMap()
+            }
+        return handlers
+            .groupBy { runCatching { it.cacheName() }.getOrNull() }
+            .mapNotNull { (cacheName, group) ->
+                if (cacheName == null) return@mapNotNull null
+                val filterable = group.flatMapTo(mutableSetOf()) { it.exposedFilterableProperties() }
+                val sortable = group.flatMapTo(mutableSetOf()) { it.exposedSortableProperties() }
+                cacheName to (filterable.toSet() to sortable.toSet())
+            }
+            .toMap()
     }
 
     /**

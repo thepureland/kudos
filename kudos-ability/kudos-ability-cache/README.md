@@ -72,6 +72,8 @@ LOCAL_REMOTE 二级缓存）。
 - **`entityClass` 参数真正生效了**：`findByIds` / `listAll` 里的 `as? E` / `as E` 因泛型擦除**完全不做运行时检查**，类型不符的值会被原样返回、在调用方某处炸成 `ClassCastException`；而 Redis 实现是按 `entityClass` 反序列化的，两级行为不一致。现在按类型校验，不符则记 WARN 并视为未命中（LOCAL_REMOTE 下会落到权威的远端）。
 - **注解 KDoc 补充了写回门槛**：`@HashCacheableByPrimary` / `@HashCacheableBySecondary` 的 miss 写回被默认 `false` 的 `writeInTime` 闸住，与 Spring `@Cacheable` 的直觉相悖——"标了注解却每次都回源"通常就是漏配了这一项。
 
-**索引属性仍是运行期捕获而非声明式**（`MixHashCache.indexedFilterable/indexedSortable`）。声明式的数据源已经存在（`AbstractHashCacheHandler.filterableProperties()`），接过来即可确定化；未做是因为集合读改走远端后（见上文），索引不完整的后果已收敛为"多一次远端往返"而非错误结果，不值得为此扩大公开 API。详见该字段的 KDoc。
+- **二级索引属性改为声明式**：`MixHashCache` 的索引属性集此前初始为空、由"最近一次写入"覆盖，索引结构因而成了调用时序的函数——只读过没写过的进程，回填出来的是没有二级索引的实体。现在由 `AbstractHashCacheHandler` 新增的 `exposedFilterableProperties()` / `exposedSortableProperties()`（与既有的 `exposedEntityClass()` 同一模式）在启动时提供基线，`MixHashCacheManager` 按 cacheName 汇总注入。
+
+  运行期捕获保留为补充，但语义从"覆盖"改为"取并集"：`IHashCache` 的多个方法对这两个参数都默认空集，覆盖语义下一次窄集合的写入就会让缓存忘掉其他调用方仍在查询的索引。纯注解用法（无 handler）不受影响，退化为原先的从首次写入学习。
 
 以下 interservice 问题**尚未处理**，均属设计取舍而非缺陷修复：`@Primary` 全局替换 Feign decoder 的强耦合、热路径使用 apr1 慢哈希（1000 轮 MD5 × 完整请求体）、provider 侧每请求多一次完整 JSON 序列化的净开销、缺少 per-client/per-method 开关（会把指纹头发给外部第三方 API）、外部调用者可用 `cache-uid` 头把 provider 当内容猜测 oracle、以及 `decoderEnabled` 属性是死代码。

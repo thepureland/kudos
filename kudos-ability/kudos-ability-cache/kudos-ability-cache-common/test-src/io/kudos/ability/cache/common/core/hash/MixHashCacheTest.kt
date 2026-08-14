@@ -83,6 +83,45 @@ internal class MixHashCacheTest {
     }
 
     @Test
+    fun declaredIndexProps_areUsedForBackfillBeforeAnyWrite() {
+        // 声明式的意义就在这个场景：进程只读过、从没写过，回填仍要建出二级索引。
+        // 旧实现里这两个集合初始为空、由"最近一次写入"覆盖，因此纯读进程回填出的是没有索引的实体，
+        // 索引结构变成了调用时序的函数。
+        val local = RecordingHashCache()
+        val remote = RecordingHashCache().apply { put(E("1", "A")) }
+        val cache = MixHashCache(
+            "c", CacheStrategy.LOCAL_REMOTE, local, remote, "n",
+            declaredFilterable = setOf("type"), declaredSortable = setOf("score")
+        )
+
+        cache.getById<String, E>("c", "1", E::class)
+
+        assertEquals(setOf("type"), local.lastFilterable, "回填应使用 handler 声明的可筛选属性")
+        assertEquals(setOf("score"), local.lastSortable, "回填应使用 handler 声明的可排序属性")
+    }
+
+    @Test
+    fun writesWidenDeclaredIndexProps_ratherThanReplacingThem() {
+        // 写入传来的属性集只应扩大索引范围，不应把声明的属性挤掉。
+        // IHashCache 的多个方法对这两个参数都默认空集，若采用"覆盖"语义，
+        // 一次窄集合（甚至空集合）的写入就会让缓存忘掉其他调用方仍在查询的索引。
+        val local = RecordingHashCache()
+        val remote = RecordingHashCache().apply { put(E("1", "A")) }
+        val cache = MixHashCache(
+            "c", CacheStrategy.LOCAL_REMOTE, local, remote, "n",
+            declaredFilterable = setOf("type"), declaredSortable = emptySet()
+        )
+
+        cache.save("c", E("2", "B"), setOf("status"), emptySet())
+        cache.getById<String, E>("c", "1", E::class)
+
+        assertEquals(
+            setOf("type", "status"), local.lastFilterable,
+            "声明的属性与写入带来的属性应取并集"
+        )
+    }
+
+    @Test
     fun getById_localRemote_missBackfillsLocal() {
         val local = RecordingHashCache()
         val remote = RecordingHashCache().apply { put(E("1", "R")) }
@@ -525,11 +564,19 @@ internal class MixHashCacheTest {
         override fun <PK, E : IIdEntity<PK>> getById(cacheName: String, id: PK, entityClass: KClass<E>): E? =
             entities[id] as E?
         override fun existsById(cacheName: String, id: Any): Boolean = entities.containsKey(id)
+        /** Index property sets seen on the most recent write, so tests can assert what a backfill asked for. */
+        var lastFilterable: Set<String> = emptySet()
+        var lastSortable: Set<String> = emptySet()
+
         override fun <PK, E : IIdEntity<PK>> save(cacheName: String, entity: E, filterableProperties: Set<String>, sortableProperties: Set<String>) {
             entities[entity.id] = entity
+            lastFilterable = filterableProperties
+            lastSortable = sortableProperties
         }
         override fun <PK, E : IIdEntity<PK>> saveBatch(cacheName: String, entities: List<E>, filterableProperties: Set<String>, sortableProperties: Set<String>) {
             entities.forEach { this.entities[it.id] = it }
+            lastFilterable = filterableProperties
+            lastSortable = sortableProperties
         }
         override fun <PK, E : IIdEntity<PK>> deleteById(cacheName: String, id: PK, entityClass: KClass<E>, filterableProperties: Set<String>, sortableProperties: Set<String>) {
             entities.remove(id)

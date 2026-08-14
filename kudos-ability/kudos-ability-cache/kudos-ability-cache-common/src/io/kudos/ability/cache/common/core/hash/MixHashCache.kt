@@ -49,7 +49,14 @@ internal class MixHashCache(
     private val strategy: CacheStrategy,
     private val local: IHashCache?,
     private val remote: IHashCache?,
-    private val nodeId: String
+    private val nodeId: String,
+    /**
+     * Secondary-property sets declared up front by this cache's handler (see
+     * [io.kudos.ability.cache.common.core.hash.AbstractHashCacheHandler.exposedFilterableProperties]).
+     * They seed the index sets so backfilling works before any write has passed through this instance.
+     */
+    declaredFilterable: Set<String> = emptySet(),
+    declaredSortable: Set<String> = emptySet()
 ) : IHashCache {
 
     /**
@@ -67,30 +74,31 @@ internal class MixHashCache(
     private val name: String = cacheName
 
     /**
-     * Records the filterable/sortable secondary-property sets passed into the most recent write, so that the
-     * read path can rebuild secondary indexes when backfilling local from remote. Without them, a backfill
-     * would store the primary data with no secondary indexes at all.
+     * The secondary-property sets used to rebuild indexes when backfilling local from remote. Without them a
+     * backfill would store the primary data with no secondary indexes at all.
      *
-     * **This is observed state, not configuration, and it is deliberately left that way for now.** The sets are
-     * empty until something writes through this instance, so a process that has only ever read backfills
-     * without indexes; and whichever write happened last decides what gets indexed. The declarative source
-     * already exists — `AbstractHashCacheHandler.filterableProperties()` / `sortableProperties()` — and wiring
-     * it through [io.kudos.ability.cache.common.core.hash.MixHashCacheManager] at construction would make this
-     * deterministic.
+     * Seeded from the handler's **declaration** at construction, then only ever widened by what writes and
+     * queries actually use. Previously these started empty and were overwritten by each write, which made the
+     * index layout a function of call order: a process that had only ever read backfilled with no indexes, and
+     * whichever write happened last decided what got indexed.
      *
-     * It is not urgent because the consequence is now confined to performance: collection reads go to the
-     * remote tier regardless (see the collection-read note on this class), so an incomplete local index costs
-     * an extra remote round trip rather than returning a wrong answer. Before that change it could shadow the
-     * full result set, which is what made it worth flagging.
+     * Widening rather than replacing matters for the same reason: a write that passes a narrower set (or none —
+     * several `IHashCache` methods default both sets to empty) must not make the cache forget indexes other
+     * callers still query. The cost of keeping a stale name here is an unused local index bucket; the cost of
+     * dropping a live one is a local index that silently stops being maintained. `listBySetIndex` and
+     * `listPageByZSetIndex` already widened these sets on demand, so accumulate is also what the rest of the
+     * class assumed.
      */
-    @Volatile private var indexedFilterable: Set<String> = emptySet()
-    @Volatile private var indexedSortable: Set<String> = emptySet()
+    @Volatile private var indexedFilterable: Set<String> = declaredFilterable
+    @Volatile private var indexedSortable: Set<String> = declaredSortable
 
     private fun captureIndexProps(filterable: Set<String>, sortable: Set<String>) {
-        // Update only if non-empty ("replace if non-empty"): avoids wiping the record when a write
-        // operation accidentally passes an empty set.
-        if (filterable.isNotEmpty()) indexedFilterable = filterable
-        if (sortable.isNotEmpty()) indexedSortable = sortable
+        if (filterable.isNotEmpty() && !indexedFilterable.containsAll(filterable)) {
+            indexedFilterable = indexedFilterable + filterable
+        }
+        if (sortable.isNotEmpty() && !indexedSortable.containsAll(sortable)) {
+            indexedSortable = indexedSortable + sortable
+        }
     }
 
     /**
