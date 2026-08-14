@@ -5,6 +5,7 @@ import io.kudos.ability.cache.common.core.keyvalue.AbstractKeyValueCacheManager
 import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.base.logger.LogFactory
 import org.springframework.cache.caffeine.CaffeineCache
+import org.springframework.cache.support.NullValue
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
@@ -68,22 +69,25 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
     /**
      * Evict cache entries by a wildcard `*` pattern.
      *
-     * The argument may be a logical pattern (`user:*`) or an actual pattern that already carries a
-     * version prefix (`v2:user:*`) — uniformly strip the version and re-add it to avoid duplicated
-     * prefixes. Convert `*` into a regex `.*`, scan the entire nativeMap, and call
-     * `cache.evict(key)` on every hit so the eviction takes effect immediately
-     * ([DrainingCaffeineCache] performs a synchronous cleanUp).
+     * The pattern is matched against keys **as given**. It used to be run through
+     * `getFinalCacheName(getRealCacheName(pattern))`, which prepends the *cache name* version prefix — but the
+     * version lives in the registered cache name (see [createCache]), never in the keys held by that cache's
+     * native map. With any non-blank `kudos.ability.cache.version`, a pattern like `1001::*` became
+     * `v2::1001::*` and matched nothing: pattern eviction silently turned into a no-op. It went unnoticed only
+     * because the shipped yml leaves the version blank, which makes the prefixing a no-op too.
+     *
+     * Convert `*` into a regex `.*`, scan the entire nativeMap, and call `cache.evict(key)` on every hit so the
+     * eviction takes effect immediately ([DrainingCaffeineCache] performs a synchronous cleanUp).
      *
      * **Performance note**: full scan plus per-key evict; not cheap when the cache holds many
      * entries. Evaluate hot spots before using in production.
      */
     override fun evictByPattern(cacheName: String, pattern: String) {
-        val cache = getCache(cacheName) ?: return
-        val realPattern: String = versionConfig.getFinalCacheName(versionConfig.getRealCacheName(pattern))
-        val nativeCache = (cache as CaffeineCache).nativeCache.asMap()
+        val cache = resolveCache(cacheName) ?: return
+        val nativeCache = cache.nativeCache.asMap()
         // Quote the literal fragments between wildcards: keys may legally contain regex metacharacters
         // (".", "[", "(", "+", ...) — splicing them unescaped over-matches or breaks Pattern.compile.
-        val regex = "^" + realPattern.split("*").joinToString(".*") { Pattern.quote(it) } + "$"
+        val regex = "^" + pattern.split("*").joinToString(".*") { Pattern.quote(it) } + "$"
         val p = Pattern.compile(regex)
         for (key in nativeCache.keys) {
             if (p.matcher(key.toString()).matches()) {
@@ -96,10 +100,51 @@ class CaffeineKeyValueCacheManager : AbstractKeyValueCacheManager<CaffeineCache>
      * Whether the given key exists — checked directly via `nativeCache.asMap().containsKey`,
      * without triggering Caffeine's LoadingCache load logic (distinct from [CaffeineCache.get]
      * semantics).
+     *
+     * Caveat: Caffeine expires entries lazily, so an entry that is past its TTL but not yet evicted still
+     * reports as present here; a `get` immediately afterwards can return null.
      */
     override fun existsKey(cacheName: String, key: Any): Boolean {
-        val cache = getCache(cacheName) ?: return false
-        return (cache as CaffeineCache).nativeCache.asMap().containsKey(key)
+        val cache = resolveCache(cacheName) ?: return false
+        return cache.nativeCache.asMap().containsKey(key)
+    }
+
+    /**
+     * Bulk lookup via Caffeine's native `getAllPresent`, which walks the map once instead of doing one
+     * lookup per key.
+     *
+     * Caffeine stores a cached null as Spring's `NullValue` sentinel (that is how [CaffeineCache] represents
+     * "present but null"), so it is translated back here: the key stays in the result map — it *was* a hit —
+     * with a null value.
+     */
+    override fun multiGet(cacheName: String, keys: Collection<Any>): Map<Any, Any?> {
+        if (keys.isEmpty()) return emptyMap()
+        val cache = resolveCache(cacheName) ?: return emptyMap()
+        val present = cache.nativeCache.getAllPresent(keys)
+        if (present.isEmpty()) return emptyMap()
+        val result = LinkedHashMap<Any, Any?>(present.size)
+        // Preserve the caller's key order; getAllPresent returns its own map ordering.
+        keys.forEach { key ->
+            if (present.containsKey(key)) {
+                val stored = present[key]
+                result[key] = if (stored is NullValue) null else stored
+            }
+        }
+        return result
+    }
+
+    /**
+     * Resolves a cache from the **logical** name required by [IKeyValueCacheManager], applying the version
+     * prefix that [createCache] registers under.
+     *
+     * Falls back to the raw name so two other cases keep working: caches configured with `ignoreVersion=true`
+     * are registered unprefixed, and callers still passing an already-prefixed name (the pre-contract
+     * behaviour) resolve rather than silently missing.
+     */
+    private fun resolveCache(cacheName: String): CaffeineCache? {
+        val prefixed = versionConfig.getFinalCacheName(cacheName)
+        val cache = getCache(prefixed) ?: getCache(cacheName)
+        return cache as? CaffeineCache
     }
 
     private val log = LogFactory.getLog(this::class)

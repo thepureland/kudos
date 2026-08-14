@@ -1,6 +1,5 @@
 package io.kudos.ability.cache.remote.redis.init
 
-import io.kudos.ability.cache.common.init.BaseCacheConfiguration
 import io.kudos.ability.cache.common.init.LinkableCacheAutoConfiguration
 import io.kudos.ability.cache.common.init.properties.CacheVersionConfig
 import io.kudos.ability.cache.common.notify.ICacheMessageHandler
@@ -35,6 +34,7 @@ import org.springframework.core.env.Environment
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.data.redis.cache.RedisCacheConfiguration
 import org.springframework.data.redis.cache.RedisCacheWriter
+import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.listener.ChannelTopic
 import org.springframework.data.redis.listener.RedisMessageListenerContainer
 import org.springframework.data.redis.serializer.RedisSerializationContext
@@ -49,6 +49,11 @@ import io.kudos.base.lang.string.RandomStringKit
  * [AutoConfigureAfter] to ensure it loads after that, so runtime injection works. IDEs may flag false positives
  * because cross-module references are unresolved.
  *
+ * This class deliberately does **not** extend `BaseCacheConfiguration`: the shared cache beans have a single
+ * owner in [LinkableCacheAutoConfiguration]. See `CaffeineCacheAutoConfiguration` for the full rationale — in
+ * short, three configuration classes declaring the same six beans left the winner to classpath-scan order, and
+ * the losing variant silently left `cache-items` unbound.
+ *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -61,7 +66,7 @@ import io.kudos.base.lang.string.RandomStringKit
 // See ContextAutoConfiguration: IComponentInitializer configuration classes must be instantiated before
 // business BPPs; ROLE_INFRASTRUCTURE avoids false positives from Spring's BeanPostProcessorChecker.
 @Role(BeanDefinition.ROLE_INFRASTRUCTURE)
-open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentInitializer {
+open class RedisCacheAutoConfiguration : IComponentInitializer {
 
     private val log = LogFactory.getLog(this::class)
 
@@ -116,9 +121,15 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
             )
         val valueSerializationPair =
             RedisSerializationContext.SerializationPair.fromSerializer(extProps.valueSerializer())
+        // Null values are cached on purpose (Spring's default), because the rest of the stack is built around
+        // negative caching: MixCache treats a locally cached null as a hit precisely so a key the source has
+        // nothing for stops being looked up again. `disableCachingNullValues()` used to be set here, which made
+        // the two tiers disagree — the local tier stored nulls while the remote tier *threw*
+        // IllegalArgumentException on `put(key, null)`. That exception surfaced in business code, since
+        // MixCache.writeThrough deliberately lets remote-write failures propagate.
+        // To keep a specific method from caching its nulls, use `@Cacheable(unless = "#result == null")`.
         val defaultRedisCacheConfiguration = RedisCacheConfiguration
             .defaultCacheConfig()
-            .disableCachingNullValues()
             .entryTtl(Duration.ofSeconds(900)) // default 15 minutes
             .serializeKeysWith(keySerializationPair)
             .serializeValuesWith(valueSerializationPair)
@@ -128,7 +139,16 @@ open class RedisCacheAutoConfiguration : BaseCacheConfiguration(), IComponentIni
             .withConversionService(RedisCacheKeyConversionService.create())
         val connectionFactory = redisTemplate.connectionFactory!!
         val redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory)
-        return RedisKeyValueCacheManager(redisCacheWriter, defaultRedisCacheConfiguration)
+        // Hand down the template for the *selected* store. The eviction paths used to look one up statically
+        // (first `stringRedisTemplate`, else any bean), ignoring `remoteStore` entirely — with several redis
+        // instances configured that could delete from the wrong instance, or serialize the match pattern with a
+        // different key serializer and match nothing at all.
+        @Suppress("UNCHECKED_CAST")
+        return RedisKeyValueCacheManager(
+            redisCacheWriter,
+            defaultRedisCacheConfiguration,
+            redisTemplate as? RedisTemplate<String, Any>
+        )
     }
 
     /**

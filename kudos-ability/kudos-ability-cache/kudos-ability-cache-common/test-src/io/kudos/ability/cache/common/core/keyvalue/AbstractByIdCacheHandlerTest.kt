@@ -77,8 +77,11 @@ internal class AbstractByIdCacheHandlerTest {
     }
 
     @Test
-    fun reloadAll_nonStringId_usedAsIs() {
-        // covers toUsableId's `else -> id` branch for a non-CharSequence (Long) id.
+    fun reloadAll_nonStringId_isCachedUnderStringKey() {
+        // 非 String 主键（这里是 Long）也必须以 String 形式作缓存键。
+        // 缓存按相等性匹配，1L 与 "1" 是两个不同条目：预热若写 Long 键，而 doReload(key: String)
+        // / getByIds / @BatchCacheable 这几条 String 路径写的是 "1"，同一条数据会出现两份，
+        // 失效也会漏掉其中一份。PK=String 时两种形式恰好重合，所以这个问题一直被掩盖。
         provider.register(cacheName, active = true)
         val dao = Mockito.mock(LongDao::class.java, Mockito.withSettings().defaultAnswer { inv ->
             if (inv.method.name == "search") listOf(LongEntity(1L), LongEntity(2L)) else null
@@ -88,8 +91,26 @@ internal class AbstractByIdCacheHandlerTest {
         f.isAccessible = true
         f.set(handler, dao)
         handler.reloadAll(true)
-        assertEquals(LongEntity(1L), cacheManager.underlying(cacheName).get(1L)?.get())
-        assertEquals(LongEntity(2L), cacheManager.underlying(cacheName).get(2L)?.get())
+        assertEquals(LongEntity(1L), cacheManager.underlying(cacheName).get("1")?.get())
+        assertEquals(LongEntity(2L), cacheManager.underlying(cacheName).get("2")?.get())
+        assertNull(cacheManager.underlying(cacheName).get(1L), "不应再以原始 Long 类型作为键")
+    }
+
+    @Test
+    fun syncOnUpdate_nonStringId_evictsStringKey() {
+        // 与 reloadAll 配对：写入用 String 键，失效也必须用 String 键，否则删不掉预热写入的条目。
+        provider.register(cacheName, active = true)
+        cacheManager.underlying(cacheName).put("7", LongEntity(7L))
+
+        val dao = Mockito.mock(LongDao::class.java, Mockito.withSettings().defaultAnswer { null })
+        val handler = LongHandler(cacheName)
+        val f = AbstractByIdCacheHandler::class.java.getDeclaredField("dao")
+        f.isAccessible = true
+        f.set(handler, dao)
+
+        handler.syncOnDelete(7L)
+
+        assertNull(cacheManager.underlying(cacheName).get("7"), "删除同步应能命中 String 形式的键")
     }
 
     @Test

@@ -156,8 +156,11 @@ class MixCache(
                 try {
                     action(requireLocal())
                 } catch (t: Throwable) {
+                    // Keep the message free of apostrophes: ILog formats through MessageFormat, where a lone
+                    // "'" opens a quoted section that swallows every {n} placeholder after it — the log then
+                    // prints a literal "op={0} key={1}" and the diagnostic values are lost.
                     log.warn(
-                        "Local cache write failed (remote already succeeded); will continue broadcasting to invalidate local copies on other nodes; this node's local copy will self-heal on next miss / TTL op={0} key={1} cause={2}",
+                        "Local cache write failed (remote already succeeded); will continue broadcasting to invalidate local copies on other nodes; the local copy on this node will self-heal on next miss / TTL op={0} key={1} cause={2}",
                         opName, notifyKey, t.message
                     )
                 }
@@ -214,6 +217,14 @@ class MixCache(
     override fun clear() = writeThrough("clear", null) { it.clear() }
 
     /**
+     * The local tier, or null when this cache has none.
+     *
+     * Exposed for [io.kudos.ability.cache.common.core.keyvalue.MixCacheManager.multiGet], which backfills the
+     * local tier after a bulk remote read — the same thing [mixGet] does for a single key, just batched.
+     */
+    fun localCacheOrNull(): Cache? = localCache
+
+    /**
      * Clears local cache.
      *
      * @param key key
@@ -257,7 +268,7 @@ class MixCache(
                 } catch (t: Throwable) {
                     log.error(
                         t,
-                        "Cache invalidation broadcast failed [handler={0}, cache={1}, key={2}] — other nodes' local copies may retain stale values until the next TTL or explicit evict converges them",
+                        "Cache invalidation broadcast failed [handler={0}, cache={1}, key={2}] — local copies on other nodes may retain stale values until the next TTL or explicit evict converges them",
                         beanName, name, key
                     )
                 }

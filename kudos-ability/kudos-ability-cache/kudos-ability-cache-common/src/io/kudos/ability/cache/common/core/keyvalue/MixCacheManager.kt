@@ -292,22 +292,19 @@ open class MixCacheManager : AbstractCacheManager() {
      * @param key
      */
     fun clearLocal(cacheName: String, key: Any?) {
-        // Callers may pass either a logical name (e.g., "test") or a name that already has the version prefix
-        // (e.g., MixCache.getName() / names in distributed messages). The previous implementation called `getCache`
-        // once (which auto-applies the prefix), `super.getCache` once (which does not), and then `evictByPattern(cacheName,...)`
-        // with the un-normalized name. The three sites handled the prefix inconsistently: when called with a logical name,
-        // evictByPattern could not find the prefixed Caffeine cache, turning pattern-eviction into a no-op. Normalize once
-        // here and use realName everywhere downstream.
-        val realName = requireVersionConfig().run {
-            getFinalCacheName(getRealCacheName(cacheName))
-        }
+        // Callers pass either a logical name ("test") or one that already carries the version prefix
+        // (MixCache.getName(), names arriving in distributed messages). Normalize to both forms once: the
+        // MixCache instances of this manager are registered under the real name, while the underlying managers
+        // take the logical name per the IKeyValueCacheManager contract.
+        val logicalName = requireVersionConfig().getRealCacheName(cacheName)
+        val realName = requireVersionConfig().getFinalCacheName(logicalName)
         val cache = super.getCache(realName) ?: return
         val mixCache = cache as MixCache
         if (key is String
             && key.endsWith("*")
             && hasLocalCacheManager()
         ) {
-            (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(realName, key)
+            (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(logicalName, key)
         } else {
             mixCache.clearLocal(key)
         }
@@ -352,14 +349,12 @@ open class MixCacheManager : AbstractCacheManager() {
             patternKey = "$patternKey*"
         }
         val mixCache = (cache as MixCache)
-        // Naming contract differs between the two managers (see clearLocal): the local (Caffeine) manager
-        // registers caches under the version-prefixed real name and expects it as-is, while the remote (Redis)
-        // manager applies the version prefix internally and expects the logical name. Passing the logical name
-        // to the local manager made pattern eviction a silent no-op whenever a cache version was configured.
-        val localRealName = requireVersionConfig().getFinalCacheName(cacheName)
+        // Both managers take the logical name and apply their own version prefix internally
+        // (see the naming contract on IKeyValueCacheManager). This used to differ per implementation and was
+        // compensated for here, which is what let the local tier be handed a prefixed pattern and match nothing.
         when (mixCache.strategy) {
             CacheStrategy.SINGLE_LOCAL ->
-                (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(localRealName, patternKey)
+                (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(cacheName, patternKey)
             CacheStrategy.REMOTE ->
                 (remoteCacheManager as IKeyValueCacheManager<*>).evictByPattern(cacheName, patternKey)
             CacheStrategy.LOCAL_REMOTE -> {
@@ -369,7 +364,7 @@ open class MixCacheManager : AbstractCacheManager() {
                 // evicting node would stay stale until TTL — inconsistent with the write-path contract
                 // ("remote first, then local, then broadcast", see MixCache.writeThrough).
                 if (hasLocalCacheManager()) {
-                    (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(localRealName, patternKey)
+                    (localCacheManager as IKeyValueCacheManager<*>).evictByPattern(cacheName, patternKey)
                 }
                 mixCache.pushMsgRedis(cache.getName(), patternKey)
             }
@@ -385,14 +380,87 @@ open class MixCacheManager : AbstractCacheManager() {
      * @return true if present; false if absent or the cache is not configured
      */
     fun existsKey(cacheName: String, key: Any): Boolean {
+        // The MixCache instances of this manager are registered under the real (version-prefixed) name, while
+        // the underlying managers take the logical name — see the naming contract on IKeyValueCacheManager.
         val realName = requireVersionConfig().getFinalCacheName(cacheName)
         val cache = super.getCache(realName) as? MixCache ?: return false
         return when (cache.strategy) {
-            CacheStrategy.SINGLE_LOCAL -> (localCacheManager as IKeyValueCacheManager<*>).existsKey(realName, key)
-            CacheStrategy.REMOTE -> (remoteCacheManager as IKeyValueCacheManager<*>).existsKey(realName, key)
-            CacheStrategy.LOCAL_REMOTE -> (localCacheManager as IKeyValueCacheManager<*>).existsKey(realName, key) ||
-                (remoteCacheManager as IKeyValueCacheManager<*>).existsKey(realName, key)
+            CacheStrategy.SINGLE_LOCAL -> (localCacheManager as IKeyValueCacheManager<*>).existsKey(cacheName, key)
+            CacheStrategy.REMOTE -> (remoteCacheManager as IKeyValueCacheManager<*>).existsKey(cacheName, key)
+            CacheStrategy.LOCAL_REMOTE -> (localCacheManager as IKeyValueCacheManager<*>).existsKey(cacheName, key) ||
+                (remoteCacheManager as IKeyValueCacheManager<*>).existsKey(cacheName, key)
         }
+    }
+
+    /**
+     * Looks up many keys in one go, honouring the cache strategy.
+     *
+     * Under LOCAL_REMOTE the local tier is asked first and only the keys it missed are fetched from remote,
+     * which are then backfilled locally — mirroring [MixCache.mixGet]'s single-key behaviour, but collapsing
+     * what used to be one remote round trip per key into one per batch.
+     *
+     * **A key present in the result was a cache hit, even if its value is null**; see
+     * [IKeyValueCacheManager.multiGet]. Callers must branch on `containsKey`.
+     *
+     * @param cacheName logical cache name
+     * @param keys      keys to look up
+     * @return found keys mapped to their (possibly null) values, in the order given
+     */
+    fun multiGet(cacheName: String, keys: Collection<Any>): Map<Any, Any?> {
+        if (keys.isEmpty()) return emptyMap()
+        // getCache (this class's override) applies the version prefix itself, same as evictByPattern does.
+        val cache = getCache(cacheName) ?: return emptyMap()
+        // Anything that is not a MixCache (or a MixCache whose tier managers cannot batch) is still read
+        // correctly, one key at a time, through the plain Cache API. Bulk lookup is an optimisation; failing
+        // to apply it must not turn every key into a miss and send the whole batch back to the source.
+        val mixCache = cache as? MixCache ?: return readEachThroughCache(cache, keys)
+        val local = localCacheManagerOrNull()
+        val remote = remoteCacheManager as? IKeyValueCacheManager<*>
+        return when (mixCache.strategy) {
+            CacheStrategy.SINGLE_LOCAL -> local?.multiGet(cacheName, keys) ?: readEachThroughCache(cache, keys)
+            CacheStrategy.REMOTE -> remote?.multiGet(cacheName, keys) ?: readEachThroughCache(cache, keys)
+            CacheStrategy.LOCAL_REMOTE -> {
+                if (local == null || remote == null) return readEachThroughCache(cache, keys)
+                val fromLocal = local.multiGet(cacheName, keys)
+                val missing = keys.filterNot { fromLocal.containsKey(it) }
+                if (missing.isEmpty()) return fromLocal
+                val fromRemote = remote.multiGet(cacheName, missing)
+                // Backfill so the next batch is served locally, preserving cached nulls.
+                val localCache = mixCache.localCacheOrNull()
+                if (localCache != null) {
+                    fromRemote.forEach { (k, v) ->
+                        runCatching { localCache.put(k, v) }.onFailure {
+                            log.warn("Backfilling local cache failed cacheName={0} key={1} cause={2}", cacheName, k, it.message)
+                        }
+                    }
+                }
+                // Rebuild in the caller's key order rather than concatenating the two maps.
+                val merged = LinkedHashMap<Any, Any?>(fromLocal.size + fromRemote.size)
+                keys.forEach { key ->
+                    when {
+                        fromLocal.containsKey(key) -> merged[key] = fromLocal[key]
+                        fromRemote.containsKey(key) -> merged[key] = fromRemote[key]
+                    }
+                }
+                merged
+            }
+        }
+    }
+
+    /** The local manager as an [IKeyValueCacheManager], or null when no local tier is wired. */
+    private fun localCacheManagerOrNull(): IKeyValueCacheManager<*>? =
+        if (hasLocalCacheManager()) localCacheManager as? IKeyValueCacheManager<*> else null
+
+    /**
+     * Correct-but-unbatched fallback for [multiGet]: reads each key through the plain `Cache` API.
+     *
+     * Keeps the "present key = hit" contract, cached nulls included, so callers cannot tell the difference
+     * apart from the number of round trips.
+     */
+    private fun readEachThroughCache(cache: Cache, keys: Collection<Any>): Map<Any, Any?> {
+        val result = LinkedHashMap<Any, Any?>()
+        keys.forEach { key -> cache.get(key)?.let { result[key] = it.get() } }
+        return result
     }
 
     /** Logger. */

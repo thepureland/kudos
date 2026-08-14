@@ -17,6 +17,11 @@ import org.springframework.cache.caffeine.CaffeineCache
  * An explicit `cleanUp()` forces Caffeine to process pending maintenance work immediately so
  * invalidates take effect right away.
  *
+ * All four mutating entry points on Spring's `Cache` are covered. [evictIfPresent] and [invalidate] are
+ * separate methods that reach the same asynchronous Caffeine paths as [evict] / [clear]; overriding only the
+ * latter pair left the staleness window open for any caller using the boolean-returning variants — including
+ * parts of Spring itself.
+ *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
@@ -34,8 +39,20 @@ internal class DrainingCaffeineCache(
         native.cleanUp()
     }
 
+    override fun evictIfPresent(key: Any): Boolean {
+        val evicted = super.evictIfPresent(key)
+        native.cleanUp()
+        return evicted
+    }
+
     override fun clear() {
         super.clear()
         native.cleanUp()
+    }
+
+    override fun invalidate(): Boolean {
+        val hadEntries = super.invalidate()
+        native.cleanUp()
+        return hadEntries
     }
 }

@@ -195,6 +195,12 @@ internal class ClientCacheHelperTest {
 
         override fun existsKey(cacheName: String, key: Any): Boolean = cache.get(key) != null
 
+        override fun multiGet(cacheName: String, keys: Collection<Any>): Map<Any, Any?> {
+            val result = LinkedHashMap<Any, Any?>()
+            keys.forEach { key -> cache.get(key)?.let { result[key] = it.get() } }
+            return result
+        }
+
         override fun initCacheAfterSystemInit(cacheConfigMap: Map<String, CacheConfig>) {
             initializedConfigs = cacheConfigMap
         }

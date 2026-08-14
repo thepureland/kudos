@@ -53,6 +53,7 @@ internal class AbstractKeyValueCacheManagerTest {
             ConcurrentMapCache(cacheConfig.name ?: "?", true)
         override fun evictByPattern(cacheName: String, pattern: String) {}
         override fun existsKey(cacheName: String, key: Any): Boolean = false
+        override fun multiGet(cacheName: String, keys: Collection<Any>): Map<Any, Any?> = emptyMap()
         fun exposeLoadCaches(): MutableCollection<out Cache> = loadCaches()
     }
 }

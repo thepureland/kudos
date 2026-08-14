@@ -30,6 +30,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -165,6 +166,21 @@ internal class DistributedCacheGuardAspectTest {
     }
 
     @Test
+    fun preLockCachedNullIsAHit_doesNotLockOrProceed() {
+        // 负缓存：源端确实没有这条数据时缓存 null。判定命中必须看"条目是否存在"，而不是"值是否非空"——
+        // 后者会让每次调用都重新加锁回源，正好是防穿透要挡住的场景。
+        kitCacheManager.getOrCreate("test-cache").put("nullkey", null)
+        val service = ctx.getBean(GuardedService::class.java)
+        val counter = ctx.getBean(AtomicInteger::class.java)
+
+        val result = service.loadOnce("nullkey")
+
+        assertNull(result, "命中的 null 应原样返回")
+        assertEquals(0, counter.get(), "命中 null 后不应再执行业务方法")
+        assertEquals(0, lockProvider.tryLockCount.get(), "命中 null 后不应竞争分布式锁")
+    }
+
+    @Test
     fun lockFailed_cacheFilledDuringBackoff_returnsCachedWithoutProceed() {
         // tryLock 返回 false 的同时往缓存写值，模拟“别的线程在退避期间完成了装载”
         lockProvider.alwaysTryLockReturns(false)
@@ -219,9 +235,10 @@ internal class DistributedCacheGuardAspectTest {
     }
 
     // ---- @TenantCacheable 路径 ----------------------------------------------
-    // 注意：@TenantCacheable 不能放在 Spring bean 方法上（其 @AliasFor 指向未元标注的 @Cacheable，
-    // Spring 注解内省会抛 AnnotationConfigurationException，见 suspectedBugs 记录），
-    // 因此这里全部通过假 pjp 直接调用 around 来覆盖租户分支。
+    // 这里用假 pjp 直接调 around 来覆盖租户分支：本测试只关心 DistributedCacheGuardAspect 自身如何从注解
+    // 解析出 (cacheName, cacheKey)，绕开代理可以不必搭一整套 Spring Cache 基础设施。
+    // （历史原因已消失：@TenantCacheable 曾因缺少 @Cacheable 元标注而在 Spring 内省时抛
+    //   AnnotationConfigurationException，现已修复，契约由 TenantCacheAnnotationsTest 保证。）
 
     @Test
     fun tenantCacheable_buildsLockKeyWithTenantPrefix() {

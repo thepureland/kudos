@@ -14,6 +14,18 @@ import kotlin.reflect.KClass
 /**
  * Abstract cache handler whose key is an id.
  *
+ * ## Cache keys are Strings
+ *
+ * Every key this class writes or evicts goes through [cacheKeyOf], i.e. `id.toString()`. The rest of the
+ * contract is already String-only — [doReload] takes a `String`, [getByIds] returns a `Map<String, T>`, and
+ * `@BatchCacheable` requires String keys — but [reloadAll] and the `syncOnXxx` methods used to pass the raw
+ * `PK`. Caches match keys by equality, so for any non-String primary key (`Long`, `Int`, …) `1L` and `"1"` are
+ * two different entries: the preload wrote under one and the reload path evicted the other, leaving duplicate
+ * or unreachable entries. With `PK = String` the two forms coincide, which is why this stayed invisible.
+ *
+ * Subclasses must therefore key their `@Cacheable` methods by the String form as well — take the id as a
+ * `String` parameter (as `doReload` forces anyway) rather than writing `key = "#id"` over a numeric argument.
+ *
  * @param T value type
  * @author K
  * @since 1.0.0
@@ -95,7 +107,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         results.forEach {
             val usableId = toUsableId(it.id)
             if (usableId != null) {
-                KeyValueCacheKit.put(cacheName(), usableId, it)
+                KeyValueCacheKit.put(cacheName(), cacheKeyOf(usableId), it)
             } else {
                 log.warn("Skipping caching of ${itemDesc()} record with blank id: $it")
             }
@@ -125,7 +137,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
     open fun syncOnUpdate(id: PK) {
         if (KeyValueCacheKit.isCacheActive(cacheName())) {
             log.debug("After updating ${itemDesc()} with id ${id}, syncing cache ${cacheName()}...")
-            KeyValueCacheKit.evict(cacheName(), id) // evict from cache
+            KeyValueCacheKit.evict(cacheName(), cacheKeyOf(id)) // evict from cache
             if (KeyValueCacheKit.isWriteInTime(cacheName())) {
                 doReload(id.toString()) // cache
             }
@@ -141,7 +153,7 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
     open fun syncOnDelete(id: PK) {
         if (KeyValueCacheKit.isCacheActive(cacheName())) {
             log.debug("After deleting ${itemDesc()} with id ${id}, syncing cache ${cacheName()}...")
-            KeyValueCacheKit.evict(cacheName(), id) // evict from cache
+            KeyValueCacheKit.evict(cacheName(), cacheKeyOf(id)) // evict from cache
             log.debug("Cache ${cacheName()} sync completed.")
         }
     }
@@ -183,6 +195,12 @@ abstract class AbstractByIdCacheHandler<PK : Any, T : IIdEntity<*>, DAO : IBaseR
         is CharSequence -> if (id.isNotBlank()) id else null
         else -> id
     }
+
+    /**
+     * Normalizes an id to the String form used for every cache key in this class; see the class KDoc for why
+     * the raw `PK` must not be used directly.
+     */
+    private fun cacheKeyOf(id: Any): String = id.toString()
 
     private val log = LogFactory.getLog(this::class)
 

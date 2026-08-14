@@ -14,8 +14,8 @@ import kotlin.test.*
  *   版本前缀拼接；返回 [DrainingCaffeineCache] 包装
  * - ensureSizeBound：spec 已含 maximumSize（不追加）、空白 spec（整体替换）、非空白无上界（追加）
  * - evictByPattern：cache 不存在提前返回；'*' 通配符；键中含正则元字符时按字面量匹配；
- *   带版本前缀的 pattern 先剥再加不重复
- * - existsKey：cache 不存在返回 false；键存在 / 不存在
+ *   配置了缓存版本时按裸键匹配（pattern 不加版本前缀）；兼容传入已带前缀的缓存名
+ * - existsKey：cache 不存在返回 false；键存在 / 不存在；按逻辑名解析
  *
  * @author K
  * @since 1.0.0
@@ -161,19 +161,41 @@ internal class CaffeineKeyValueCacheManagerTest {
     }
 
     @Test
-    fun evictByPattern_stripsAndReappliesVersionPrefix() {
+    fun evictByPattern_stillWorksWhenCacheVersionConfigured() {
+        // 版本前缀只出现在缓存名上（v2::test），键本身是裸的业务键。
+        // 旧实现把 getFinalCacheName（加的是"缓存名"前缀）作用在 pattern 上：一旦配了版本，
+        // pattern 变成 v2::user:*，与真实键 user:1 永不匹配 —— pattern 清除静默变成 no-op。
+        // 之所以一直没暴露，只是因为发行 yml 里 version 为空，加前缀本身也成了 no-op。
         val manager = managerWithCache(version = "v2")
-        val cacheName = "v2::test"
-        val cache = manager.getCache(cacheName)!!
-        cache.put("v2::user:1", "a")
-        cache.put("v2::order:1", "b")
-        // pattern 已带版本前缀：先剥离再统一加回，不会出现 v2::v2:: 双前缀
-        manager.evictByPattern(cacheName, "v2::user:*")
-        assertFalse(manager.existsKey(cacheName, "v2::user:1"))
-        assertTrue(manager.existsKey(cacheName, "v2::order:1"))
-        // 逻辑 pattern（不带前缀）同样可用
-        manager.evictByPattern(cacheName, "order:*")
-        assertFalse(manager.existsKey(cacheName, "v2::order:1"))
+        val cache = manager.getCache("v2::test")!!
+        cache.put("user:1", "a")
+        cache.put("user:2", "b")
+        cache.put("order:1", "c")
+
+        manager.evictByPattern("test", "user:*") // 按契约传逻辑名
+
+        assertFalse(manager.existsKey("test", "user:1"), "配置缓存版本后 pattern 清除必须依然生效")
+        assertFalse(manager.existsKey("test", "user:2"))
+        assertTrue(manager.existsKey("test", "order:1"), "不匹配的键不应被误删")
+    }
+
+    @Test
+    fun evictByPattern_acceptsAlreadyPrefixedCacheNameForBackCompat() {
+        // 契约要求传逻辑名，但历史调用方传的是真实名；两者都应能解析到同一个缓存。
+        val manager = managerWithCache(version = "v2")
+        manager.getCache("v2::test")!!.put("user:1", "a")
+
+        manager.evictByPattern("v2::test", "user:*")
+
+        assertFalse(manager.existsKey("test", "user:1"))
+    }
+
+    @Test
+    fun existsKey_resolvesByLogicalName() {
+        val manager = managerWithCache(version = "v2")
+        manager.getCache("v2::test")!!.put("k1", "v1")
+        assertTrue(manager.existsKey("test", "k1"), "existsKey 应接受逻辑名，内部补版本前缀")
+        assertTrue(manager.existsKey("v2::test", "k1"), "同时兼容已带前缀的名字")
     }
 
     @Test

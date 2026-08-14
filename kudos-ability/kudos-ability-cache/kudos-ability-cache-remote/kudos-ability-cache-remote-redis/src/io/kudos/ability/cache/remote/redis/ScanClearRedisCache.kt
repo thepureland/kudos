@@ -7,12 +7,17 @@ import org.springframework.data.redis.cache.RedisCacheWriter
 import org.springframework.data.redis.core.RedisTemplate
 
 /**
- * Grabs an available [RedisTemplate] from the Spring context, shared by [ScanClearRedisCache] and
- * [RedisKeyValueCacheManager.evictByPattern] — both need to bypass the Spring `cacheWriter.clear`
- * bug that fails to delete keys, and instead use `keys + delete` directly. Prefers `stringRedisTemplate`,
- * falls back to any other.
+ * Last-resort lookup of a [RedisTemplate] from the Spring context, for the `keys + delete` paths that work
+ * around the Spring `cacheWriter.clean` bug.
  *
- * Returns null only when no [RedisTemplate] bean exists in the context (rare cases such as pure unit-test mocks).
+ * **Prefer the injected template.** This picks `stringRedisTemplate`, or else an arbitrary first bean, without
+ * consulting `kudos.ability.cache.remoteStore`: with several redis instances configured it can land on the
+ * wrong one (deleting nothing, or the wrong keys), and a template whose key serializer differs from the cache's
+ * serializes the match pattern into bytes that match nothing. `RedisCacheAutoConfiguration` resolves the
+ * correct template and hands it to [RedisKeyValueCacheManager], which passes it down; this function only
+ * covers callers constructed without one.
+ *
+ * Returns null when no [RedisTemplate] bean exists in the context (rare cases such as pure unit-test mocks).
  */
 @Suppress("UNCHECKED_CAST")
 internal fun findRedisTemplate(): RedisTemplate<String, Any>? =
@@ -47,14 +52,21 @@ internal fun findRedisTemplate(): RedisTemplate<String, Any>? =
  *
  * This is the standard "delete the keys you already know about" pattern recommended in Spring's docs;
  * behavior is predictable and follows the same path as the test infrastructure's existing `RedisTemplate`.
- * `RedisTemplate` is resolved lazily via [SpringKit] (looked up every clear; cost is negligible since clear
- * is a low-frequency operation).
+ *
+ * Both [clear] and [invalidate] are overridden. `invalidate()` is a separate entry point on Spring's `Cache`
+ * that routes to the same broken `cacheWriter` path, so overriding only `clear()` left the bug reachable by
+ * anything calling `invalidate()`.
  *
  * ## Limitations
  *
  * [RedisTemplate.keys] blocks Redis on large datasets; cache key counts in this project are tiny (hundreds),
  * so this is acceptable. If cache volume grows, switch to `SCAN`-based iterative deletion (see how
- * [RedisKeyValueCacheManager.evictByPattern] does it).
+ * [RedisKeyValueCacheManager.evictByPattern] does it). Note that despite this class's name, `KEYS` is what is
+ * actually issued.
+ *
+ * @param redisTemplate the template for the redis instance holding this cache. Supplied by
+ *   [RedisKeyValueCacheManager]; falls back to [findRedisTemplate] only when absent, since a statically looked
+ *   up template may point at a different instance or use a different key serializer.
  *
  * @author K
  * @author AI: Codex
@@ -64,18 +76,47 @@ internal class ScanClearRedisCache(
     name: String,
     cacheWriter: RedisCacheWriter,
     cacheConfiguration: RedisCacheConfiguration,
+    private val redisTemplate: RedisTemplate<String, Any>? = null,
 ) : RedisCache(name, cacheWriter, cacheConfiguration) {
 
     override fun clear() {
-        val template = findRedisTemplate() ?: run {
-            // No RedisTemplate in the context (rare, e.g. pure unit-test mocks) — fall back to Spring's default logic
-            super.clear()
-            return
+        deleteAllKeys()
+    }
+
+    /**
+     * Spring's `Cache.invalidate()` reports whether anything was actually removed. It reaches the same
+     * `cacheWriter` path as [clear], so it needs the same workaround.
+     */
+    override fun invalidate(): Boolean = deleteAllKeys()
+
+    /**
+     * The full Redis key this cache would use for [key] — prefix included.
+     *
+     * Delegates to `RedisCache.createCacheKey`, which is `protected` and therefore reachable from this
+     * subclass. Reusing Spring's own derivation matters: a hand-rolled "prefix + conversionService.convert"
+     * copy would silently drift from whatever `put` actually wrote, and every bulk read would miss. (An older
+     * attempt reached the equivalent method reflectively and broke under JPMS; plain inheritance has neither
+     * problem.)
+     *
+     * @param key logical cache key
+     * @return the Redis key, e.g. `"v1::user::42"`
+     */
+    internal fun redisKeyOf(key: Any): String = createCacheKey(key)
+
+    /**
+     * Deletes every key under this cache's prefix.
+     *
+     * @return true when at least one key was removed
+     */
+    private fun deleteAllKeys(): Boolean {
+        val template = redisTemplate ?: findRedisTemplate() ?: run {
+            // No RedisTemplate available (rare, e.g. pure unit-test mocks) — fall back to Spring's default logic
+            return super.invalidate()
         }
         val pattern = "${cacheConfiguration.getKeyPrefixFor(name)}*"
         val matched = template.keys(pattern)
-        if (matched.isNotEmpty()) {
-            template.delete(matched)
-        }
+        if (matched.isEmpty()) return false
+        template.delete(matched)
+        return true
     }
 }

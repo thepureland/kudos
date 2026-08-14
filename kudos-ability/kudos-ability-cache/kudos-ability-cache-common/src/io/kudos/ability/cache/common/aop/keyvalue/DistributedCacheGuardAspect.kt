@@ -63,7 +63,11 @@ class DistributedCacheGuardAspect {
         val lockKey = "lock:$cacheName:$cacheKey"
 
         // 1. Query the cache once without a lock; return on hit.
-        KeyValueCacheKit.getValue(cacheName, cacheKey)?.let { return it }
+        //    Presence is what counts, not non-nullness: a cached null is a hit. Testing `getValue(...) != null`
+        //    instead — as this did — meant every legitimately-null result took the distributed lock and went
+        //    back to the source on every call, i.e. the exact penetration that negative caching exists to stop.
+        val cached = KeyValueCacheKit.getWrapper(cacheName, cacheKey)
+        if (cached.isPresent) return cached.value
 
         // 2. Miss: compete for the distributed lock. Use a lease-based tryLock:
         //    The previous implementation called lockProvider.lock(key), which under the Redisson path is `RLock.lock()`,
@@ -86,11 +90,15 @@ class DistributedCacheGuardAspect {
                 Thread.currentThread().interrupt()
                 log.debug("Interrupted while waiting for distributed cache lock lockKey={0}", lockKey)
             }
-            return KeyValueCacheKit.getValue(cacheName, cacheKey) ?: pjp.proceed()
+            return KeyValueCacheKit.getWrapper(cacheName, cacheKey).let {
+                if (it.isPresent) it.value else pjp.proceed()
+            }
         }
         return try {
             // Double-check inside the lock.
-            KeyValueCacheKit.getValue(cacheName, cacheKey) ?: pjp.proceed()
+            KeyValueCacheKit.getWrapper(cacheName, cacheKey).let {
+                if (it.isPresent) it.value else pjp.proceed()
+            }
         } finally {
             try {
                 lockProvider.unLock(lockKey)
@@ -143,8 +151,16 @@ class DistributedCacheGuardAspect {
     }
 
     companion object {
-        /** Reuse the global [LockTool.lockProvider] to avoid fetching the bean from the container on every advice. */
-        private val lockProvider = LockTool.lockProvider
+        /**
+         * Reuse the global [LockTool.lockProvider] to avoid fetching the bean from the container on every advice.
+         *
+         * Resolved lazily rather than during class initialization: [LockTool.lockProvider] reaches into the Spring
+         * container, so binding it to a companion `val` meant merely *loading* this class — which a classpath scan,
+         * an AOT/reflection pass, or a test can do long before refresh completes — threw
+         * `IllegalStateException: Spring applicationContext is not initialized yet!`. Deferring to first advice keeps
+         * the single-lookup optimisation while making the class safe to load on its own.
+         */
+        private val lockProvider by lazy { LockTool.lockProvider }
         /** Logger. */
         private val log = LogFactory.getLog(DistributedCacheGuardAspect::class)
 

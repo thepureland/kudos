@@ -112,6 +112,7 @@ internal class InterServiceCacheClientAutoConfigurationTest {
         override fun createCache(cacheConfig: CacheConfig) = ConcurrentMapCache("noop")
         override fun evictByPattern(cacheName: String, pattern: String) = Unit
         override fun existsKey(cacheName: String, key: Any): Boolean = false
+        override fun multiGet(cacheName: String, keys: Collection<Any>): Map<Any, Any?> = emptyMap()
         override fun initCacheAfterSystemInit(cacheConfigMap: Map<String, CacheConfig>) = Unit
         override fun getCache(name: String): Cache? = null
         override fun getCacheNames(): MutableCollection<String> = mutableListOf()

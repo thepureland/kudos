@@ -6,21 +6,25 @@ import io.kudos.ability.cache.common.core.keyvalue.MixCacheManager
 import io.kudos.ability.cache.common.enums.CacheStrategy
 import io.kudos.ability.cache.common.notify.CacheOperatorVo
 import io.kudos.ability.cache.common.support.CacheConfig
+import io.kudos.ability.cache.common.support.CacheValueWrapper
 import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.kit.SpringKit
 import org.springframework.cache.Cache
-import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
 
 
 /**
  * Cache utility.
  *
+ * Deliberately **not** a Spring bean: it is a Kotlin `object` reached statically from business code, and it
+ * resolves its collaborators lazily through [SpringKit]. It previously carried `@Component`, which never had
+ * any effect (kudos does not scan `io.kudos.ability.**`, and a Kotlin `object` has no public constructor for
+ * the scanner to call anyway) but implied a lifecycle that does not exist.
+ *
  * @author K
  * @since 1.0.0
  */
-@Component
 object KeyValueCacheKit {
 
     private val log = LogFactory.getLog(this::class)
@@ -69,6 +73,9 @@ object KeyValueCacheKit {
     /**
      * Returns the value of the given key in the specified cache.
      *
+     * Returns `null` both for "no such entry" and for "entry exists and its value is null". Use [getWrapper]
+     * when those two need telling apart — most notably on any path that decides whether to hit the source.
+     *
      * @param cacheName cache name
      * @param key       cache key
      * @return the value associated with the cache key
@@ -76,6 +83,47 @@ object KeyValueCacheKit {
      * @since 1.0.0
      */
     fun getValue(cacheName: String, key: Any): Any? = getCache(cacheName)?.get(key)?.get()
+
+    /**
+     * Looks the key up and reports **whether an entry existed**, separately from its value.
+     *
+     * This is what makes negative caching usable from business code: with [getValue] alone, a deliberately
+     * cached null is indistinguishable from a miss, so callers keep going back to the source for exactly the
+     * keys the cache is trying to protect them from.
+     *
+     * @param cacheName cache name
+     * @param key       cache key
+     * @return a present wrapper (whose value may be null) on hit, or [CacheValueWrapper.empty] on miss
+     * @author K
+     * @since 1.0.0
+     */
+    fun getWrapper(cacheName: String, key: Any): CacheValueWrapper<Any?> {
+        val cache = getCache(cacheName) ?: return CacheValueWrapper.empty()
+        val wrapper = cache.get(key) ?: return CacheValueWrapper.empty()
+        return CacheValueWrapper.of(wrapper.get())
+    }
+
+    /**
+     * Looks up many keys in one call instead of one [getValue] per key.
+     *
+     * Reading a batch key-by-key costs one remote round trip each, which is most of what batching was supposed
+     * to save; this pushes the whole set down to the cache manager so the local tier does a single pass and
+     * Redis does a single `MGET`.
+     *
+     * **A key present in the returned map was a hit even when its value is null** (negative caching), so branch
+     * on `containsKey` rather than on a null value.
+     *
+     * @param cacheName cache name
+     * @param keys      keys to look up
+     * @return found keys mapped to their (possibly null) values; missing keys are absent from the map
+     * @author K
+     * @since 1.0.0
+     */
+    fun multiGet(cacheName: String, keys: Collection<Any>): Map<Any, Any?> {
+        if (keys.isEmpty()) return emptyMap()
+        if (!isCacheActive(cacheName)) return emptyMap()
+        return getCacheManager()?.multiGet(cacheName, keys) ?: emptyMap()
+    }
 
     /**
      * Writes a value to the cache.

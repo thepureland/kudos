@@ -24,6 +24,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -54,8 +55,8 @@ internal class RedisKeyValueCacheManagerTest {
     fun setUp() {
         previousContext = runCatching { SpringKit.applicationContext }.getOrNull()
         cacheWriter = mock(RedisCacheWriter::class.java)
+        // Mirrors the production configuration built in RedisCacheAutoConfiguration, null caching included.
         val defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-            .disableCachingNullValues()
             .entryTtl(Duration.ofSeconds(900))
             .withConversionService(RedisCacheKeyConversionService.create())
         manager = RedisKeyValueCacheManager(cacheWriter, defaultConfig)
@@ -96,14 +97,26 @@ internal class RedisKeyValueCacheManagerTest {
             cache.cacheConfiguration.ttlFunction.getTimeToLive("k", "v"),
             "configured ttl (seconds) must be applied to the cache entry ttl"
         )
-        assertFalse(cache.cacheConfiguration.allowCacheNullValues, "null-value caching must stay disabled")
+        assertTrue(
+            cache.cacheConfiguration.allowCacheNullValues,
+            "远端必须允许缓存 null：本地层把命中的 null 当作命中（防穿透），两级语义必须一致。" +
+                "禁用后 @Cacheable 方法返回 null 会让 RedisCache.put 抛 IllegalArgumentException，" +
+                "并经 MixCache.writeThrough 冒到业务代码"
+        )
     }
 
     @Test
-    fun createCache_withoutTtl_usesDefaultConfig() {
+    fun createCache_withoutTtl_inheritsInjectedDefaultTtl() {
         val cache = manager.createCache(CacheConfig().apply { name = "noTtl" })
-        // entryTtl never applied -> defaultCacheConfig's zero ttl ("no expiry")
-        assertEquals(Duration.ZERO, cache.cacheConfiguration.ttlFunction.getTimeToLive("k", "v"))
+        // 未配 ttl 的缓存项应继承注入的默认配置（此处 900s），而不是 Duration.ZERO（永不过期）。
+        // 旧实现以 RedisCacheConfiguration.defaultCacheConfig() 为基底重建配置，把注入的默认 TTL
+        // 连同 keyPrefix 一起丢掉了 —— 与该方法 KDoc 声称的"未指定时回退到默认值"相悖，
+        // 结果是这类 key 在 Redis 里永久驻留。
+        assertEquals(
+            Duration.ofSeconds(900),
+            cache.cacheConfiguration.ttlFunction.getTimeToLive("k", "v"),
+            "未显式配置 ttl 时必须继承默认 TTL，否则 key 永不过期"
+        )
     }
 
     @Test
@@ -112,6 +125,19 @@ internal class RedisKeyValueCacheManagerTest {
         val cs = cache.cacheConfiguration.conversionService
         assertEquals("k", cs.convert(SimpleKey("k"), String::class.java),
             "per-cache instances must inherit the SimpleKey->String fix from the outer configuration")
+    }
+
+    @Test
+    fun getCache_unconfiguredName_returnsNullInsteadOfMintingWildCache() {
+        // RedisCacheManager 的两参构造会打开 allowRuntimeCacheCreation：getCache("任意名") 会当场造一个
+        // 原生 RedisCache —— 不是 ScanClearRedisCache（clear 修复失效）、不带版本前缀、用默认 TTL 而非该
+        // 缓存项自己的配置。而 existsKey 正是经 getCache 取缓存，探测一个未配置的名字就会顺手种下这样一个
+        // "野生缓存"。现在改为返回 null，让配置缺失显式暴露。
+        manager.initCacheAfterSystemInit(mapOf("configured" to CacheConfig().apply { name = "configured" }))
+
+        assertNull(manager.getCache("neverConfigured"), "未配置的缓存名不应被自动创建")
+        assertFalse(manager.existsKey("neverConfigured", "k"), "对未配置缓存的存在性探测应返回 false")
+        assertNull(manager.getCache("neverConfigured"), "探测之后仍不应残留自动创建的缓存")
     }
 
     @Test

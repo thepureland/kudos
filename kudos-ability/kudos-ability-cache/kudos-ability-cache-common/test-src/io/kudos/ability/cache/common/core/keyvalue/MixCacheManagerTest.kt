@@ -187,13 +187,14 @@ internal class MixCacheManagerTest {
     }
 
     @Test
-    fun evictByPattern_singleLocal_appendsStarAndUsesRealName() {
+    fun evictByPattern_singleLocal_appendsStarAndUsesLogicalName() {
         val local = FakeKvCacheManager()
         val mgr = newManager(enabled = true, local = local, provider = StubProvider(local = mapOf("l1" to config("l1"))),
             version = "v1")
         mgr.initCacheAfterSystemInit()
         mgr.evictByPattern("l1", "user")
-        assertEquals(listOf("v1::l1" to "user*"), local.evictPatternCalls)
+        // 逻辑名下传，版本前缀由实现内部处理（见 IKeyValueCacheManager 的命名契约）
+        assertEquals(listOf("l1" to "user*"), local.evictPatternCalls)
     }
 
     @Test
@@ -217,8 +218,9 @@ internal class MixCacheManagerTest {
 
         mgr.evictByPattern("m1", "user")
 
+        // 两级都收到逻辑名：契约统一后不再需要按实现分别记忆前缀形式
         assertEquals(listOf("m1" to "user*"), remote.evictPatternCalls)
-        assertEquals(listOf("v1::m1" to "user*"), local.evictPatternCalls)
+        assertEquals(listOf("m1" to "user*"), local.evictPatternCalls)
         assertTrue(handler.await(2, TimeUnit.SECONDS), "LOCAL_REMOTE pattern eviction should broadcast")
         assertEquals("user*", handler.messages().single().key)
     }
@@ -241,7 +243,7 @@ internal class MixCacheManagerTest {
             version = "v1")
         mgr.initCacheAfterSystemInit()
         mgr.clearLocal("l1", "user:*")
-        assertEquals(listOf("v1::l1" to "user:*"), local.evictPatternCalls)
+        assertEquals(listOf("l1" to "user:*"), local.evictPatternCalls)
     }
 
     @Test
@@ -328,11 +330,21 @@ internal class MixCacheManagerTest {
     }
 
     /** Fake key-value cache manager implementing the kit interfaces for delegation assertions. */
-    private open class FakeKvCacheManager : IKeyValueCacheManager<Cache>, CacheItemInitializing {
+    /**
+     * Stands in for a real [IKeyValueCacheManager]. Per the interface's naming contract it is handed the
+     * **logical** cache name and applies the version prefix itself, exactly as the Caffeine and Redis
+     * implementations do — so [existing] stays keyed by the real, prefixed name.
+     */
+    private open class FakeKvCacheManager(private val version: String = "v1") :
+        IKeyValueCacheManager<Cache>, CacheItemInitializing {
         var initialized = false
         val existing = mutableSetOf<String>() // "<realName>::<key>"
         val evictPatternCalls = mutableListOf<Pair<String, String>>()
         private val caches = mutableMapOf<String, Cache>()
+
+        /** Mirrors the implementations: logical name in, version prefix applied internally. */
+        private fun realName(cacheName: String): String =
+            if (version.isBlank() || cacheName.startsWith("$version::")) cacheName else "$version::$cacheName"
 
         override fun initCacheAfterSystemInit(cacheConfigMap: Map<String, CacheConfig>) {
             initialized = true
@@ -343,7 +355,21 @@ internal class MixCacheManagerTest {
             evictPatternCalls.add(cacheName to pattern)
         }
         override fun existsKey(cacheName: String, key: Any): Boolean =
-            existing.contains("$cacheName::$key")
+            existing.contains("${realName(cacheName)}::$key")
+
+        /** Backed by the same [existing] set; [values] lets a test seed a cached null for a present key. */
+        val values = mutableMapOf<String, Any?>()
+        val multiGetCalls = mutableListOf<Pair<String, List<Any>>>()
+
+        override fun multiGet(cacheName: String, keys: Collection<Any>): Map<Any, Any?> {
+            multiGetCalls.add(cacheName to keys.toList())
+            val result = LinkedHashMap<Any, Any?>()
+            keys.forEach { key ->
+                val full = "${realName(cacheName)}::$key"
+                if (existing.contains(full)) result[key] = values[full]
+            }
+            return result
+        }
         override fun getCache(name: String): Cache = caches.getOrPut(name) { ConcurrentMapCache(name, true) }
         override fun getCacheNames(): MutableCollection<String> = caches.keys
     }
