@@ -140,7 +140,22 @@ open class RedisCacheAutoConfiguration : IComponentInitializer {
             // [RedisCacheKeyConversionService] for the rationale.
             .withConversionService(RedisCacheKeyConversionService.create())
         val connectionFactory = redisTemplate.connectionFactory!!
-        val redisCacheWriter = RedisCacheWriter.nonLockingRedisCacheWriter(connectionFactory)
+        // Spring Data Redis 4.1 makes cache writes *asynchronous* by default: `DefaultRedisCacheWriter.put`
+        // calls `AsyncCacheWriter.store(...)` and returns without ever joining the returned future
+        // (it only attaches `thenRun` for statistics). Two contracts this stack is built on break as a result:
+        //
+        //  - Read-your-writes is lost. `cache.put(k, v)` followed by `cache.get(k)` can miss, because the SET
+        //    may not have reached Redis when `put` returns. Measured on the test container: the key was still
+        //    absent right after `put` returned in ~43% of iterations. This is what made a whole set of redis
+        //    cache tests fail intermittently, and it equally affects `@CachePut` (whose contract is that the
+        //    value is cached once the method returns) and the local->remote backfill paths.
+        //  - Write failures disappear. Nothing joins the future, so a failed remote write is silently dropped,
+        //    defeating the propagation that `MixCache.writeThrough` deliberately relies on (see the note above
+        //    about null-value handling, which depends on remote-write exceptions surfacing).
+        //
+        // `immediateWrites()` restores the synchronous write path those contracts require. Revisit only if the
+        // whole stack is reworked to tolerate eventually-visible writes.
+        val redisCacheWriter = RedisCacheWriter.create(connectionFactory) { it.immediateWrites() }
         // Hand down the template for the *selected* store. The eviction paths used to look one up statically
         // (first `stringRedisTemplate`, else any bean), ignoring `remoteStore` entirely — with several redis
         // instances configured that could delete from the wrong instance, or serialize the match pattern with a
