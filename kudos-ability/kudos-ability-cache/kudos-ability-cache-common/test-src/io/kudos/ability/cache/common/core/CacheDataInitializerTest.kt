@@ -44,7 +44,7 @@ internal class CacheDataInitializerTest {
         val initializer = CacheDataInitializer()
         initializer.postProcessAfterInitialization("not a handler", "s")
         // afterSingletonsInstantiated must not throw / reload anything
-        initializer.afterSingletonsInstantiated()
+        initializer.loadBootCaches()
     }
 
     @Test
@@ -62,7 +62,7 @@ internal class CacheDataInitializerTest {
         initializer.postProcessAfterInitialization(noBootHandler, "n")
         initializer.postProcessAfterInitialization(noConfigHandler, "m")
 
-        initializer.afterSingletonsInstantiated()
+        initializer.loadBootCaches()
 
         assertEquals(listOf(false), bootHandler.reloadCalls, "writeOnBoot=true -> reloadAll(false)")
         assertEquals(emptyList(), noBootHandler.reloadCalls, "writeOnBoot=false -> no reload")

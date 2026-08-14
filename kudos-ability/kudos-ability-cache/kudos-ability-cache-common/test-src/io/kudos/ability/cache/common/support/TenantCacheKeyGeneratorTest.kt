@@ -25,11 +25,12 @@ import kotlin.test.assertFailsWith
  *  - null tenantId on the concat path throws a SpEL evaluation exception (documented limitation: the
  *    "#tenantId.concat(...)" expression cannot operate on a null target).
  *
- * NOTE: The custom @TenantCacheable / @TenantCacheEvict / @TenantCachePut annotations declare `@AliasFor`
- * targets on Cacheable/CacheEvict/CachePut without being meta-annotated with them, so
- * AnnotationUtils.findAnnotation throws AnnotationConfigurationException when they are read here. Production
- * code never reaches that path (TenantCachingAspect passes the nested annotation's `suffix` straight into
- * generalNormalKey). This is recorded as a suspected bug rather than asserted against.
+ * NOTE: the custom @TenantCacheable / @TenantCacheEvict / @TenantCachePut annotations used to declare
+ * `@AliasFor` targets on Cacheable/CacheEvict/CachePut without being meta-annotated with them, which made
+ * AnnotationUtils.findAnnotation throw AnnotationConfigurationException when reading them here. Those
+ * meta-annotations have since been restored, so [TenantCacheKeyGenerator.generate] can now read `suffix` off
+ * the custom annotations as originally intended. The composed-annotation contract itself is asserted in
+ * `TenantCacheAnnotationsTest`.
  *
  * @author K
  * @since 1.0.0

@@ -11,7 +11,6 @@ import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.context.kit.SpringKit
-import org.springframework.stereotype.Component
 import kotlin.reflect.KClass
 
 /**
@@ -21,11 +20,14 @@ import kotlin.reflect.KClass
  * (SINGLE_LOCAL / REMOTE / LOCAL_REMOTE). Throws [IllegalStateException] if [cacheName] is not registered
  * in the configuration.
  *
+ * Deliberately **not** a Spring bean, for the same reason as [KeyValueCacheKit]: it is a statically reached
+ * Kotlin `object` that resolves its collaborators lazily through [SpringKit]. The `@Component` it used to
+ * carry was inert.
+ *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
-@Component
 object HashCacheKit {
 
     private val log = LogFactory.getLog(this::class)

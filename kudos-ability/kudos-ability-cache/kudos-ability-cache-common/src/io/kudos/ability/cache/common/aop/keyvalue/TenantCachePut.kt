@@ -4,8 +4,11 @@ import org.springframework.cache.annotation.CachePut
 import org.springframework.core.annotation.AliasFor
 
 /**
- * Tenant-isolated version of [CachePut] — directly aliased to the Spring annotation via `@AliasFor`, simply presetting
- * the default value of `keyGenerator` to `tenantCacheKeyGenerator` so that the put key carries the tenant dimension.
+ * Tenant-isolated version of [CachePut] — a composed annotation that presets `keyGenerator` to
+ * `tenantCacheKeyGenerator` so that the put key carries the tenant dimension.
+ *
+ * The `@CachePut` meta-annotation is load-bearing; see
+ * [io.kudos.ability.cache.common.aop.keyvalue.TenantCacheable] for why removing it breaks the annotation twice over.
  *
  * @author K
  * @since 1.0.0
@@ -18,12 +21,12 @@ import org.springframework.core.annotation.AliasFor
 )
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-//@CachePut
+@CachePut
 annotation class TenantCachePut(
-    @get:AliasFor(annotation = CachePut::class, attribute = "cacheNames")
+    @get:AliasFor(annotation = CachePut::class, attribute = "value")
     vararg val value: String = [],
 
-    @get:AliasFor(annotation = CachePut::class, attribute = "value")
+    @get:AliasFor(annotation = CachePut::class, attribute = "cacheNames")
     val cacheNames: Array<String> = [], val suffix: String = "",
 
     @get:AliasFor(annotation = CachePut::class, attribute = "keyGenerator")

@@ -4,11 +4,14 @@ import org.springframework.cache.annotation.CacheEvict
 import org.springframework.core.annotation.AliasFor
 
 /**
- * Tenant-isolated version of [CacheEvict] — directly aliased to the Spring annotation via `@AliasFor`, simply presetting
- * the default value of `keyGenerator` to `tenantCacheKeyGenerator` so that the key carries the tenant dimension by default.
+ * Tenant-isolated version of [CacheEvict] — a composed annotation that presets `keyGenerator` to
+ * `tenantCacheKeyGenerator` so that the key carries the tenant dimension by default.
  *
  * In most cases business code only needs to write the annotation name plus cacheNames and does not need to specify
  * keyGenerator again.
+ *
+ * The `@CacheEvict` meta-annotation is load-bearing; see
+ * [io.kudos.ability.cache.common.aop.keyvalue.TenantCacheable] for why removing it breaks the annotation twice over.
  *
  * @author K
  * @since 1.0.0
@@ -21,12 +24,12 @@ import org.springframework.core.annotation.AliasFor
 )
 @Retention(AnnotationRetention.RUNTIME)
 @MustBeDocumented
-//@CacheEvict(cacheNames = [])
+@CacheEvict
 annotation class TenantCacheEvict(
-    @get:AliasFor(annotation = CacheEvict::class, attribute = "cacheNames")
+    @get:AliasFor(annotation = CacheEvict::class, attribute = "value")
     vararg val value: String = [],
 
-    @get:AliasFor(annotation = CacheEvict::class, attribute = "value")
+    @get:AliasFor(annotation = CacheEvict::class, attribute = "cacheNames")
     val cacheNames: Array<String> = [], val suffix: String = "",
 
     @get:AliasFor(annotation = CacheEvict::class, attribute = "keyGenerator")

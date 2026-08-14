@@ -51,6 +51,46 @@ internal class MixCacheInitializingTest {
     }
 
     @Test
+    fun bootPreloadRunsAfterCachesAreInitialized() {
+        // Regression guard: preloading used to live in CacheDataInitializer's own SmartInitializingSingleton
+        // callback, which Spring invokes in bean-registration order without honouring Ordered. When it won that
+        // race the caches did not exist yet, every write was dropped, and nothing was logged. Ordering is now
+        // explicit, so assert the preload happens and happens last.
+        val order = mutableListOf<String>()
+        val kvProvider = object : CountingProvider() {
+            override fun getLocalCacheConfigs(): Map<String, CacheConfig> {
+                order.add("cache-init")
+                return super.getLocalCacheConfigs()
+            }
+        }
+        val kv = buildKvManager(kvProvider)
+
+        val preloadHandler = object : AbstractCacheHandler<String>() {
+            override fun cacheName(): String = "boot"
+            override fun reloadAll(clear: Boolean) { order.add("preload") }
+        }
+        val dataInitializer = CacheDataInitializer()
+        dataInitializer.postProcessAfterInitialization(preloadHandler, "boot")
+
+        val provider = TestConfigProvider().apply { register("boot", active = true, writeOnBoot = true) }
+        io.kudos.ability.cache.common.kit.KeyValueCacheKit.overrideForTesting(configProvider = provider)
+        try {
+            val initializing = MixCacheInitializing()
+            setField(initializing, "cacheManager", kv)
+            setField(initializing, "cacheDataInitializer", dataInitializer)
+
+            initializing.afterSingletonsInstantiated()
+        } finally {
+            io.kudos.ability.cache.common.kit.KeyValueCacheKit.resetForTesting()
+        }
+
+        assertEquals(
+            listOf("cache-init", "preload"), order,
+            "预热必须发生在缓存实例创建之后；顺序反了会静默丢掉所有预热写入"
+        )
+    }
+
+    @Test
     fun hashManagerNull_onlyKvInitRuns() {
         val kvProvider = CountingProvider()
         val kv = buildKvManager(kvProvider)
@@ -96,7 +136,8 @@ internal class MixCacheInitializingTest {
         f.set(target, value)
     }
 
-    private class CountingProvider : ICacheConfigProvider {
+    /** Config provider that records which cache-configuration groups were queried. */
+    private open class CountingProvider : ICacheConfigProvider {
         val localQueries = AtomicInteger(0)
         val hashQueries = AtomicInteger(0)
         override fun getCacheConfig(name: String): CacheConfig? = null
@@ -109,5 +150,20 @@ internal class MixCacheInitializingTest {
         override fun getHashCacheConfigs(): Map<String, CacheConfig> {
             hashQueries.incrementAndGet(); return emptyMap()
         }
+    }
+
+    /** Minimal provider that can be seeded with cache configs, used to drive the boot-preload path. */
+    private class TestConfigProvider : ICacheConfigProvider {
+        private val configs = mutableMapOf<String, CacheConfig>()
+        fun register(name: String, active: Boolean, writeOnBoot: Boolean) {
+            configs[name] = CacheConfig().apply {
+                this.name = name; this.active = active; this.writeOnBoot = writeOnBoot
+            }
+        }
+        override fun getCacheConfig(name: String): CacheConfig? = configs[name]
+        override fun getAllCacheConfigs(): Map<String, CacheConfig> = configs
+        override fun getLocalCacheConfigs(): Map<String, CacheConfig> = emptyMap()
+        override fun getRemoteCacheConfigs(): Map<String, CacheConfig> = emptyMap()
+        override fun getLocalRemoteCacheConfigs(): Map<String, CacheConfig> = emptyMap()
     }
 }

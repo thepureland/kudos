@@ -1,8 +1,9 @@
 package io.kudos.ability.cache.common.core
 
 import io.kudos.ability.cache.common.kit.KeyValueCacheKit
-import org.springframework.beans.factory.SmartInitializingSingleton
+import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.config.BeanPostProcessor
+import java.util.concurrent.CopyOnWriteArrayList
 
 
 /**
@@ -12,13 +13,15 @@ import org.springframework.beans.factory.config.BeanPostProcessor
  *
  * Core capabilities:
  * 1. Collect cache handlers: gathers all AbstractCacheHandler instances after bean initialization.
- * 2. Deferred cache loading: loads the boot-loaded caches after all singleton beans have been initialized.
+ * 2. Deferred cache loading: [loadBootCaches] populates the boot-loaded caches, driven by [MixCacheInitializing].
  *
- * Workflow:
- * 1. Bean post-processing: collects all cache handlers in postProcessAfterInitialization.
- * 2. Deferred init: implements SmartInitializingSingleton, executed once all singleton beans are initialized.
- * 3. Check configuration: iterates the handlers and checks whether writeOnBoot=true is configured.
- * 4. Load caches: for caches with boot-load enabled, calls reloadAll(false) to load the data.
+ * **Who triggers the load.** This class used to implement `SmartInitializingSingleton` and preload from
+ * `afterSingletonsInstantiated`, exactly like [MixCacheInitializing] — but preloading can only work *after*
+ * that class has created the cache instances. Spring invokes `SmartInitializingSingleton` callbacks in bean
+ * registration order and does not sort them by `Ordered`, so the two ran in whichever order the definitions
+ * happened to be registered. Losing that race was silent: `getCache` returned null, every
+ * `KeyValueCacheKit.put` became a no-op, and the caches simply stayed empty with nothing logged. The ordering
+ * is now explicit — [MixCacheInitializing] calls [loadBootCaches] once the cache managers are ready.
  *
  * Load conditions:
  * - The cache configuration exists (cacheConfig != null).
@@ -37,9 +40,13 @@ import org.springframework.beans.factory.config.BeanPostProcessor
  * @author K
  * @since 1.0.0
  */
-class CacheDataInitializer : BeanPostProcessor, SmartInitializingSingleton {
+class CacheDataInitializer : BeanPostProcessor {
 
-    private var cacheHandlers = mutableListOf<AbstractCacheHandler<*>>()
+    /**
+     * Copy-on-write because [postProcessAfterInitialization] can be reached from more than one thread: singleton
+     * pre-instantiation is single-threaded, but lazy or prototype handlers created later are not.
+     */
+    private val cacheHandlers = CopyOnWriteArrayList<AbstractCacheHandler<*>>()
 
     /**
      * Post-initialization processing for beans.
@@ -58,9 +65,11 @@ class CacheDataInitializer : BeanPostProcessor, SmartInitializingSingleton {
     }
 
     /**
-     * Loads cache data once all singleton beans are initialized.
+     * Populates every cache configured with `writeOnBoot=true`.
      *
-     * Iterates the collected handlers and, for caches with boot-load configured, performs the data load.
+     * Must be called **after** the cache instances exist — [MixCacheInitializing] does so once
+     * `MixCacheManager` / `MixHashCacheManager` have finished initializing. Calling it earlier is not an error
+     * that surfaces: the writes would land on a missing cache and be dropped silently.
      *
      * Workflow:
      * 1. Iterate handlers: check each collected AbstractCacheHandler.
@@ -68,29 +77,31 @@ class CacheDataInitializer : BeanPostProcessor, SmartInitializingSingleton {
      * 3. Check the boot-load flag: if writeOnBoot is true, perform the load.
      * 4. Load cache data: call reloadAll(false) to load (without clearing existing data).
      *
-     * Why deferred:
-     * - Ensures dependencies such as the database are initialized.
-     * - Avoids loading the cache before tools such as Flyway have initialized the database.
-     * - Ensures all beans are ready.
-     *
-     * Loading strategy:
-     * - reloadAll(false): does not clear existing data; loads new data directly.
-     * - Existing cache entries are overwritten by the new data.
+     * A handler that throws is logged and skipped rather than aborting startup: one unreachable data source
+     * should degrade to a cold cache, not take the whole application down — the entries it would have held are
+     * loaded on demand instead.
      *
      * Caveats:
      * - Only caches configured with writeOnBoot=true are loaded.
      * - Handlers whose cache config is missing are skipped.
      * - Loading can be time-consuming; configure boot-loaded caches with that in mind.
      */
-    // Load cache data only after all non-lazy singleton beans have been instantiated. This prevents,
-    // for example, code from querying the database for cache data before Flyway has initialized the database.
-    override fun afterSingletonsInstantiated() {
-        cacheHandlers.forEach {
-            val cacheConfig = KeyValueCacheKit.getCacheConfig(it.cacheName())
-            if (cacheConfig?.isWriteOnBoot == true) {
-                it.reloadAll(false)
+    fun loadBootCaches() {
+        cacheHandlers.forEach { handler ->
+            val cacheConfig = runCatching { KeyValueCacheKit.getCacheConfig(handler.cacheName()) }.getOrNull()
+            if (cacheConfig?.isWriteOnBoot != true) return@forEach
+            try {
+                handler.reloadAll(false)
+            } catch (t: Throwable) {
+                log.error(
+                    t,
+                    "Preloading cache on boot failed; this cache stays cold and will fill in on demand. cache={0} handler={1}",
+                    handler.cacheName(), handler::class.java.name
+                )
             }
         }
     }
+
+    private val log = LogFactory.getLog(this::class)
 
 }
