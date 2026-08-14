@@ -15,6 +15,25 @@ import kotlin.reflect.KClass
  * LOCAL_REMOTE writes remote first, then synchronously writes local (so the next read on this node
  * hits the latest value), and finally publishes a notification so other nodes invalidate their local copies.
  *
+ * ## Collection reads go to remote
+ *
+ * <a name="collectionReadNote"></a>
+ * Under LOCAL_REMOTE, single-entity reads ([getById]) serve from the local tier, but the collection reads
+ * ([listAll], [list], [listBySetIndex], [listPageByZSetIndex]) always ask remote and use local only as a
+ * mirror. They used to return the local result whenever it was non-empty, which is unsound: the local tier
+ * holds an arbitrary *subset*, because [getById] backfills one entity at a time. A single `getById(1)` was
+ * enough to make a following `listAll()` return exactly that one entity and call it the whole set — a wrong
+ * answer, not a stale one.
+ *
+ * [findByIds] is the exception and still reads local first: it asks for a known set of ids and can verify it
+ * got all of them (`fromLocal.size == ids.size`), so a partial local hit is detectable there.
+ *
+ * A "local tier is known to be complete" flag would restore local serving for these queries, but it cannot
+ * live here: cross-node invalidations arrive through [io.kudos.ability.cache.common.support.IHashCacheSync]
+ * and mutate the local store directly, bypassing this wrapper entirely, so a flag held here would silently go
+ * stale on every receiving node. Tracking completeness inside the local implementation — which owns both the
+ * data and the sync entry points — is the way to do it, and is left as future work.
+ *
  * @param cacheName logical cache name (without version prefix)
  * @param strategy strategy
  * @param local local implementation, may be null
@@ -48,10 +67,21 @@ internal class MixHashCache(
     private val name: String = cacheName
 
     /**
-     * Records the filterable/sortable secondary-property sets passed into the most recent write,
-     * so that the read path can rebuild secondary indexes when backfilling local from remote.
-     * Without this, backfilling local from remote would only write the primary data with empty
-     * secondary-property indexes, and subsequent secondary-property queries would always miss locally.
+     * Records the filterable/sortable secondary-property sets passed into the most recent write, so that the
+     * read path can rebuild secondary indexes when backfilling local from remote. Without them, a backfill
+     * would store the primary data with no secondary indexes at all.
+     *
+     * **This is observed state, not configuration, and it is deliberately left that way for now.** The sets are
+     * empty until something writes through this instance, so a process that has only ever read backfills
+     * without indexes; and whichever write happened last decides what gets indexed. The declarative source
+     * already exists — `AbstractHashCacheHandler.filterableProperties()` / `sortableProperties()` — and wiring
+     * it through [io.kudos.ability.cache.common.core.hash.MixHashCacheManager] at construction would make this
+     * deterministic.
+     *
+     * It is not urgent because the consequence is now confined to performance: collection reads go to the
+     * remote tier regardless (see the collection-read note on this class), so an incomplete local index costs
+     * an extra remote round trip rather than returning a wrong answer. Before that change it could shadow the
+     * full result set, which is what made it worth flagging.
      */
     @Volatile private var indexedFilterable: Set<String> = emptySet()
     @Volatile private var indexedSortable: Set<String> = emptySet()
@@ -233,8 +263,7 @@ internal class MixHashCache(
 
     override fun <PK, E : IIdEntity<PK>> listAll(cacheName: String, entityClass: KClass<E>): List<E> {
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
-            val fromLocal = readFromLocalFirst { it.listAll(name, entityClass) }
-            if (!fromLocal.isNullOrEmpty()) return fromLocal
+            // Deliberately *not* "return the local result if it is non-empty": see [collectionReadNote].
             val fromRemote = remote?.listAll(name, entityClass) ?: return emptyList()
             saveManyLocal(fromRemote)
             return local?.listAll(name, entityClass) ?: fromRemote
@@ -249,8 +278,7 @@ internal class MixHashCache(
         value: Any
     ): List<E> {
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
-            val fromLocal = readFromLocalFirst { it.listBySetIndex(name, entityClass, property, value) }
-            if (!fromLocal.isNullOrEmpty()) return fromLocal
+            // Remote is authoritative for collection reads; see [collectionReadNote].
             val fromRemote = remote?.listBySetIndex(name, entityClass, property, value) ?: return emptyList()
             // Ensure the queried property is in the filterable index set; otherwise the local layer can never hit on this property.
             if (property !in indexedFilterable) {
@@ -271,8 +299,7 @@ internal class MixHashCache(
         desc: Boolean
     ): List<E> {
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
-            val fromLocal = readFromLocalFirst { it.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) }
-            if (!fromLocal.isNullOrEmpty()) return fromLocal
+            // Remote is authoritative for collection reads; see [collectionReadNote].
             val fromRemote = remote?.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) ?: return emptyList()
             if (zsetIndexName !in indexedSortable) {
                 indexedSortable = indexedSortable + zsetIndexName
@@ -292,8 +319,7 @@ internal class MixHashCache(
         vararg orders: Order
     ): List<E> {
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
-            val fromLocal = readFromLocalFirst { it.list(name, entityClass, criteria, pageNo, pageSize, *orders) }
-            if (!fromLocal.isNullOrEmpty()) return fromLocal
+            // Remote is authoritative for collection reads; see [collectionReadNote].
             val fromRemote = remote?.list(name, entityClass, criteria, pageNo, pageSize, *orders) ?: return emptyList()
             saveManyLocal(fromRemote)
             return local?.list(name, entityClass, criteria, pageNo, pageSize, *orders) ?: fromRemote

@@ -290,13 +290,24 @@ internal class CaffeineHashCacheTest {
     }
 
     @Test
-    fun list_otherOperatorFallsBackToEquality() {
+    fun list_unlistedOperatorsDelegateToOperatorEnum() {
         val cache = cacheWithRows()
-        // LIKE 不在分流之列，退化为 toString 相等
+        // LIKE 不在显式分流之列，交由 OperatorEnum.compare 处理，得到真正的"包含"语义。
+        // 旧实现的兜底分支是 toString 相等，会把 LIKE 静默降级成全等匹配。
         val match = cache.list(cacheName, Row::class, Criteria.of("name", OperatorEnum.LIKE, "Alice"), 1, 10)
         assertEquals(listOf("1"), match.map { it.id })
-        val noMatch = cache.list(cacheName, Row::class, Criteria.of("name", OperatorEnum.LIKE, "Ali"), 1, 10)
-        assertTrue(noMatch.isEmpty())
+        val prefixMatch = cache.list(cacheName, Row::class, Criteria.of("name", OperatorEnum.LIKE, "Ali"), 1, 10)
+        assertEquals(listOf("1"), prefixMatch.map { it.id }, "LIKE 应是包含匹配，而非全等")
+    }
+
+    @Test
+    fun list_negationOperatorsAreNotInverted() {
+        // 最危险的一类：NE / LG 落到旧的兜底分支后返回的是"相等"，
+        // 即查"不等于 Alice"反而只返回 Alice —— 结果与语义完全相反，且无异常、无日志。
+        val cache = cacheWithRows()
+        val ne = cache.list(cacheName, Row::class, Criteria.of("name", OperatorEnum.NE, "Alice"), 1, 10)
+        assertTrue(ne.none { it.id == "1" }, "NE 不应返回等于该值的记录，实际: ${ne.map { it.id }}")
+        assertTrue(ne.isNotEmpty(), "NE 应返回其余记录")
     }
 
     @Test

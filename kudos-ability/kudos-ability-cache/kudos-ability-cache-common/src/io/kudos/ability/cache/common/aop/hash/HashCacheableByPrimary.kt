@@ -16,6 +16,12 @@ import kotlin.reflect.KClass
  *
  * Before use, configure `hash = true` for the given [cacheNames] in the cache configuration.
  *
+ * **Write-back is gated on `writeInTime`, which defaults to `false`.** Unlike Spring's `@Cacheable`, a miss
+ * here does *not* populate the cache unless the cache item is configured with `writeInTime = true`; with the
+ * default the annotation only ever reads, and the cache is expected to be filled by `writeOnBoot` preloading
+ * or by explicit `HashCacheKit` writes. Annotating a method and seeing every call reach the data source is the
+ * usual symptom of missing this setting.
+ *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0

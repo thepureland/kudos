@@ -27,6 +27,10 @@ import kotlin.reflect.KClass
  * String? (returns the first id on hit; on miss, write-back is handled by the method body), List&lt;String&gt; (returns
  * the id list on hit; on miss, write-back is handled by the method body).
  *
+ * **Write-back is gated on `writeInTime`, which defaults to `false`.** Unlike Spring's `@Cacheable`, a miss
+ * does *not* populate the cache unless the cache item sets `writeInTime = true`; with the default the
+ * annotation only reads, and the cache is filled by `writeOnBoot` preloading or explicit `HashCacheKit` writes.
+ *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0

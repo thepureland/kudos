@@ -1,7 +1,10 @@
 package io.kudos.ability.cache.local.caffeine.init
 
+import io.kudos.ability.cache.common.support.ICacheConfigProvider
 import io.kudos.ability.cache.local.caffeine.CaffeineHashCache
 import io.kudos.ability.cache.local.caffeine.CaffeineKeyValueCacheManager
+import org.springframework.beans.factory.NoSuchBeanDefinitionException
+import org.springframework.beans.factory.ObjectProvider
 import kotlin.test.*
 
 /**
@@ -31,7 +34,7 @@ internal class CaffeineCacheAutoConfigurationTest {
     @Test
     fun caffeineIdEntitiesHashCache_usesConfiguredMaximumSize() {
         val properties = CaffeineHashCacheProperties().apply { maximumSize = 5 }
-        val hashCache = configuration.caffeineIdEntitiesHashCache(properties)
+        val hashCache = configuration.caffeineIdEntitiesHashCache(properties, emptyConfigProvider())
         assertNotNull(hashCache)
         // maximumSize=5 生效：能正常保存读取
         hashCache.clear("autoConfig")
@@ -41,13 +44,25 @@ internal class CaffeineCacheAutoConfigurationTest {
     @Test
     fun caffeineIdEntitiesHashCache_rejectsNonPositiveMaximumSize() {
         val properties = CaffeineHashCacheProperties().apply { maximumSize = 0 }
-        assertFailsWith<IllegalArgumentException> { configuration.caffeineIdEntitiesHashCache(properties) }
+        assertFailsWith<IllegalArgumentException> { configuration.caffeineIdEntitiesHashCache(properties, emptyConfigProvider()) }
     }
 
     @Test
     fun getComponentName() {
         assertEquals("kudos-ability-cache-local-caffeine", configuration.getComponentName())
     }
+
+    /**
+     * An [ObjectProvider] that resolves to nothing — mirrors the real startup order, where this configuration
+     * is wired before `LinkableCacheAutoConfiguration` has contributed the config provider.
+     */
+    private fun emptyConfigProvider(): ObjectProvider<ICacheConfigProvider> =
+        object : ObjectProvider<ICacheConfigProvider> {
+            override fun getObject(): ICacheConfigProvider = throw NoSuchBeanDefinitionException(ICacheConfigProvider::class.java)
+            override fun getObject(vararg args: Any?): ICacheConfigProvider = getObject()
+            override fun getIfAvailable(): ICacheConfigProvider? = null
+            override fun getIfUnique(): ICacheConfigProvider? = null
+        }
 
     @Test
     fun caffeineHashCacheProperties_isMutable() {

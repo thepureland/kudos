@@ -312,10 +312,13 @@ internal class MixHashCacheTest {
     }
 
     @Test
-    fun listAll_localRemote_localHit() {
+    fun listAll_localRemote_partialLocalMustNotShadowRemote() {
+        // 本地层只是远端的一个任意子集（getById 每次只回填一条），因此集合查询不能"本地非空就返回"。
+        // 旧实现下，先 getById(1) 回填一条之后再 listAll()，会把这一条当成全集返回 —— 这是错误结果而非陈旧结果。
         val local = RecordingHashCache().apply { put(E("1")) }
-        val cache = MixHashCache("c", CacheStrategy.LOCAL_REMOTE, local, ThrowingHashCache(), "n")
-        assertEquals(1, cache.listAll<String, E>("c", E::class).size)
+        val remote = RecordingHashCache().apply { put(E("1")); put(E("2")) }
+        val cache = MixHashCache("c", CacheStrategy.LOCAL_REMOTE, local, remote, "n")
+        assertEquals(2, cache.listAll<String, E>("c", E::class).size, "应以远端为准返回全集")
     }
 
     @Test
@@ -340,10 +343,11 @@ internal class MixHashCacheTest {
     }
 
     @Test
-    fun listBySetIndex_localRemote_localHit() {
+    fun listBySetIndex_localRemote_partialLocalMustNotShadowRemote() {
         val local = RecordingHashCache().apply { putSetIndex("type", "A", listOf(E("1", "A"))) }
-        val cache = MixHashCache("c", CacheStrategy.LOCAL_REMOTE, local, ThrowingHashCache(), "n")
-        assertEquals(1, cache.listBySetIndex<String, E>("c", E::class, "type", "A").size)
+        val remote = RecordingHashCache().apply { putSetIndex("type", "A", listOf(E("1", "A"), E("2", "A"))) }
+        val cache = MixHashCache("c", CacheStrategy.LOCAL_REMOTE, local, remote, "n")
+        assertEquals(2, cache.listBySetIndex<String, E>("c", E::class, "type", "A").size, "应以远端为准")
     }
 
     @Test
@@ -368,10 +372,11 @@ internal class MixHashCacheTest {
     }
 
     @Test
-    fun listPageByZSetIndex_localRemote_localHit() {
+    fun listPageByZSetIndex_localRemote_partialLocalMustNotShadowRemote() {
         val local = RecordingHashCache().apply { putZSet("score", listOf(E("1"))) }
-        val cache = MixHashCache("c", CacheStrategy.LOCAL_REMOTE, local, ThrowingHashCache(), "n")
-        assertEquals(1, cache.listPageByZSetIndex<String, E>("c", E::class, "score", 0, 10, true).size)
+        val remote = RecordingHashCache().apply { putZSet("score", listOf(E("1"), E("2"))) }
+        val cache = MixHashCache("c", CacheStrategy.LOCAL_REMOTE, local, remote, "n")
+        assertEquals(2, cache.listPageByZSetIndex<String, E>("c", E::class, "score", 0, 10, true).size, "应以远端为准")
     }
 
     @Test
@@ -397,10 +402,11 @@ internal class MixHashCacheTest {
     }
 
     @Test
-    fun list_localRemote_localHit() {
+    fun list_localRemote_partialLocalMustNotShadowRemote() {
         val local = RecordingHashCache().apply { put(E("1")) }
-        val cache = MixHashCache("c", CacheStrategy.LOCAL_REMOTE, local, ThrowingHashCache(), "n")
-        assertEquals(1, cache.list<String, E>("c", E::class, null, 1, 10).size)
+        val remote = RecordingHashCache().apply { put(E("1")); put(E("2")) }
+        val cache = MixHashCache("c", CacheStrategy.LOCAL_REMOTE, local, remote, "n")
+        assertEquals(2, cache.list<String, E>("c", E::class, null, 1, 10).size, "应以远端为准")
     }
 
     @Test
