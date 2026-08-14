@@ -17,7 +17,7 @@ LOCAL_REMOTE 二级缓存）。
 以下为本次深度审查中发现、但不宜直接修改（涉及行为/接口/设计决策）的事项，按维度分类。
 
 ### 功能缺陷 / 待补功能
-- **TTL 随机化（雪崩防护）缺失**：`kudos-ability-cache-remote-redis/src/io/kudos/ability/cache/remote/redis/RedisKeyValueCacheManager.kt` 的 `createCache` 按配置固定 TTL；大量同时写入的 key 会同时过期。建议增加 `ttl-jitter`（如 ±10%）配置项。
+- ✅ **TTL 随机化（雪崩防护）**（已补）：`createCache` 原先按配置固定 TTL，同一批写入的 key 会同时过期、回源流量拧成一个尖峰。现新增 `kudos.ability.cache.redis.ttl-jitter-percent`，每个**条目**的 TTL 从 `ttl * (1 ± p/100)` 均匀取值（包装 `RedisCacheConfiguration.ttlFunction`，所以显式配置的 TTL 和模块默认 900s 都覆盖到）。默认 `0` 即关闭、保持精确 TTL 不变；建议值 10，合法区间 0..50，越界启动期即失败。按条目而非按缓存抖动是关键——后者同缓存内的键仍会一起过期。
 - **读路径无单飞（击穿防护）**：`kudos-ability-cache-common/src/io/kudos/ability/cache/common/core/keyvalue/MixCache.kt` 的 `mixGetOrLoad` 与 `batch/keyvalue/BatchCacheableAspect.kt` 的 `readCachedData`（源码中已有 TODO）在两级都未命中时直接回源，无 per-key 互斥；目前需业务自觉叠加 `@DistributedCacheGuard`。建议在 `mixGetOrLoad` 内提供可选的本地单飞（per-key `CompletableFuture` 合并）。
   注意 `Cache.get(key, valueLoader)` 的"loader 只调一次"契约因此**随策略配置而变**：SINGLE_LOCAL / REMOTE 委托原生实现（有 per-key 同步）成立，LOCAL_REMOTE 走 `mixGetOrLoad` 则不成立，调用方无从感知。
 - ✅ **缓存 null 无法与未命中区分**（已修复）：`CacheValueWrapper` 改为真三态（`of(null)` 表示"命中且值为 null"，`empty()` 表示未命中），新增 `KeyValueCacheKit.getWrapper(...)`，`DistributedCacheGuardAspect` 改用它判定命中——命中的 null 不再每次加分布式锁回源。同时移除了 Redis 侧的 `disableCachingNullValues()`：它与 common 侧的负缓存设计冲突，会让 `@Cacheable` 方法返回 null 时 `RedisCache.put` 抛 `IllegalArgumentException` 并经 `MixCache.writeThrough` 冒进业务代码。
@@ -85,8 +85,11 @@ LOCAL_REMOTE 二级缓存）。
 
   注意本 bean 仍是**抑制**而非包装 Spring Cloud 的 decoder bean——两者按构造就是互斥的（`@ConditionalOnMissingBean` 会搜索祖先上下文），所以只能在这里搭出等价的链。另外 `SpringDecoder` 依赖的 `FeignHttpMessageConverters` 只声明在 Feign client 的子上下文里、父上下文取不到，因此本模块自行声明了该 bean（它从 customizer 自行构建转换器集，不是包装既有 bean，故结果等价）。这一点是被 provider 侧的端到端测试抓出来的。
 
-以下 interservice 问题**仍未处理**，均需产品/发布决策而非单纯改代码：
+interservice 侧的两项已处理：
 
-- **热路径的 apr1 慢哈希**：`Md5Crypt.apr1Crypt` 是为抗口令爆破设计的慢哈希，固定 1000 轮 MD5，且每轮参与哈希的明文包含完整请求体（1MB 的 POST 约等于 GB 量级哈希运算）。换成一次性 MD5/SHA-256 是一行代码，但会改变 cacheKey 取值，**全集群既有本地缓存条目同时失效**、集体冷启动一次，需挑发布窗口。
-- **缺少 per-client / per-method 开关**：拦截器注册为全局 `RequestInterceptor`，Spring Cloud 会应用到**每一个** Feign client，包括调用第三方外部 API 的那些——既泄漏内部指纹，也可能触怒对签名严格的外部网关。加白/黑名单不难，但要决定默认值。
+- ✅ **热路径的 apr1 慢哈希**（已修复）：`Md5Crypt.apr1Crypt` 是为抗口令爆破设计的慢哈希，固定 1000 轮 MD5，且每轮参与哈希的明文包含完整请求体（1MB 的 POST 约等于 GB 量级哈希运算）。已改为 `DigestKit.getMD5` 一次性摘要、并按原始字节而非 `joinToString()` 拼装。注意这**改变了 cacheKey 取值**，升级后全集群既有本地协商缓存会同时失效、集体冷启动一次。
+- ✅ **缺少 per-client 开关**（已修复）：拦截器注册为全局 `RequestInterceptor`，Spring Cloud 会应用到**每一个** Feign client，包括调用第三方外部 API 的那些。现在可用 `kudos.ability.cache.interservice.client.include-clients` / `exclude-clients` 按 `@FeignClient` 名筛选，`exclude` 优先；两者都为空时维持全量生效的旧行为。
+
+以下一项**仍未处理**，属用法权衡而非代码缺陷：
+
 - **provider 侧是净增开销**：每个 `@ClientCacheable` 请求都要把返回对象完整 JSON 序列化一次算指纹，未命中时 MVC 再序列化一次，且 Controller 方法始终完整执行（不像 ETag 能配合 `@Cacheable` 短路）。净收益只有回程 body 字节与客户端反序列化，服务端 CPU 纯增加——不适合用在计算昂贵但响应体很小的接口上。

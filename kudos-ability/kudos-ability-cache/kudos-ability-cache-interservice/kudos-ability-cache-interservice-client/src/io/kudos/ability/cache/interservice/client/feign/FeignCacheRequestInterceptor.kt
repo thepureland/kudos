@@ -98,7 +98,7 @@ class FeignCacheRequestInterceptor(
      * 1. Read request information: extract URL, HTTP method, and request body.
      * 2. Read the tenant id from KudosContext.
      * 3. Build the key string: concatenate delimiter, tenant id, application name, and request information.
-     * 4. MD5 hash: use Md5Crypt.apr1Crypt to derive a fixed-length hash.
+     * 4. Digest: a single salted MD5 pass over the key material, producing a fixed-length hash.
      *
      * Key composition:
      * - delimiter + tenant id + delimiter + application name + request information
