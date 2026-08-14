@@ -12,8 +12,10 @@ import java.time.Duration
  * host / port / database / password / cluster / ssl, etc.) and layers on top:
  *  - Four serializer choices ([keySerializer] / [hashkeySerializer] / [valueSerializer] / [hashvalueSerializer]).
  *  - Apache commons-pool2 connection pool parameters ([maxIdle] / [minIdle] / [maxActive] / [maxWait]).
+ *  - The Lettuce read preference ([readFrom]).
  *
- * Serializer field values must match [RedisSerializerEnum.type] literals; unmatched values throw at startup.
+ * Serializer field values are either [RedisSerializerEnum.type] literals or the fully-qualified class name of a
+ * `RedisSerializer` implementation with a public no-arg constructor; anything else throws at startup.
  *
  * @author K
  * @author AI: Codex
@@ -55,6 +57,14 @@ class RedisExtProperties : DataRedisProperties() {
      */
     var maxWait: Duration? = Duration.ofMillis(-1)
 
+    /**
+     * Lettuce read preference, as understood by `io.lettuce.core.ReadFrom.valueOf` ("master",
+     * "masterPreferred", "replica", "replicaPreferred", "nearest", "any", ...). Only meaningful for
+     * cluster / replicated setups. Defaults to "replicaPreferred"; set "master" when reads must
+     * never observe replication lag.
+     */
+    var readFrom: String = "replicaPreferred"
+
     /** Resolves the [valueSerializer] configuration into an instance ready to attach to a RedisTemplate. */
     fun valueSerializer(): RedisSerializer<*> {
         return getSerializerByType(this.valueSerializer)
@@ -78,18 +88,35 @@ class RedisExtProperties : DataRedisProperties() {
     /**
      * Instantiates the corresponding serializer by the literal [type].
      * Special handling: [StringRedisSerializer] does not go through `instantiateClass`; the singleton `UTF_8` instance is reused.
+     * A [type] that is not an enum literal is treated as a fully-qualified `RedisSerializer` class name, so new
+     * serializers (Kryo, custom JSON, ...) can be plugged in via configuration without touching the enum.
      * Unrecognized types throw immediately (failing at startup is preferable to an unexpected runtime error).
      */
     private fun getSerializerByType(type: String?): RedisSerializer<*> {
-        val redisSerializerEnum = RedisSerializerEnum.ofEnum(type)
-            ?: throw RuntimeException(
-                "The specified redisSerializer [$type] does not exist in the RedisSerializerEnum enum! " +
-                        "Valid values: ${RedisSerializerEnum.entries.joinToString { it.type }}"
-            )
-        val serializerClazz = redisSerializerEnum.serializerClazz
-        if (serializerClazz.isAssignableFrom(StringRedisSerializer::class.java)) {
+        val serializerClazz = RedisSerializerEnum.ofEnum(type)?.serializerClazz ?: resolveSerializerClass(type)
+        if (serializerClazz == StringRedisSerializer::class.java) {
             return StringRedisSerializer.UTF_8
         }
         return BeanUtils.instantiateClass(serializerClazz)
+    }
+
+    /** Resolves [type] as a fully-qualified class name; throws with the valid enum literals when that fails too. */
+    private fun resolveSerializerClass(type: String?): Class<out RedisSerializer<*>> {
+        val clazz = type?.let {
+            try {
+                Class.forName(it)
+            } catch (_: ClassNotFoundException) {
+                null
+            }
+        } ?: throw RuntimeException(
+            "The specified redisSerializer [$type] is neither a RedisSerializerEnum literal " +
+                    "(valid values: ${RedisSerializerEnum.entries.joinToString { it.type }}) " +
+                    "nor a loadable fully-qualified RedisSerializer class name!"
+        )
+        if (!RedisSerializer::class.java.isAssignableFrom(clazz)) {
+            throw RuntimeException("The specified redisSerializer class [$type] does not implement RedisSerializer!")
+        }
+        @Suppress("UNCHECKED_CAST")
+        return clazz as Class<out RedisSerializer<*>>
     }
 }

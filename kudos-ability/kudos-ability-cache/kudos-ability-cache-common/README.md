@@ -223,9 +223,12 @@ testImplementation(project(":kudos-test:kudos-test-container"))
 以下为不宜直接修改的遗留项：
 
 ### 安全性
-- **租户 ID 缺失时的命名空间合并**：`kit/TenantCacheTool.kt` 的 `getTenantKey` 在 `tenantId == null`
-  时生成 `"null::key"` 前缀——所有无租户上下文的调用方共享同一命名空间，存在互相读到对方数据的隐患。
-  建议 null 时 fail-fast 或使用独立保留命名空间。
+- ✅ **租户 ID 缺失时的命名空间合并**（已修复）：`kit/TenantCacheTool.kt` 的 `getTenantKey` 原先在
+  `tenantId == null` 时生成 `"null::key"` 前缀。`"null"` 并非保留值——名字真叫 `null` 的租户会和所有无租户
+  上下文的调用方共享同一命名空间、互相读到对方数据。现改用保留命名空间 `__kudos_no_tenant__`，并拒绝
+  取值等于该保留字、或**包含分隔符 `::`** 的租户 ID（后者可伪造任意其他租户的前缀：租户 `a::b` 写 key `k`
+  与租户 `a` 写 key `b::k` 会撞到同一个真实键）。
+  注意这改变了无租户条目的键布局（`null::k` → `__kudos_no_tenant__::k`），旧条目不迁移，靠 TTL 自然老化。
 - **SpEL 字符串拼接**：`support/TenantCacheKeyGenerator.kt` 用
   `"#tenantId.concat('::').concat($key)"` 字符串拼接构造 SpEL。`key`/`suffix` 来自注解（开发者可控），
   风险有限，但仍是表达式注入面；建议改为"先求值 suffix 表达式、再在 Kotlin 侧拼接前缀"的程序化方式。

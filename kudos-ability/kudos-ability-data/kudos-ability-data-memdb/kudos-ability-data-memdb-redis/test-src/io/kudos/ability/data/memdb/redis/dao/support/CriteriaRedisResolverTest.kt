@@ -122,6 +122,29 @@ internal class CriteriaRedisResolverTest {
         assertEquals(setOf("u"), resolver().resolveToIds(Criteria.of("名稱", OperatorEnum.EQ, "張三")))
     }
 
+    /**
+     * A numeric value must not be routed to the ZSet index just because it looks numeric: an enum-like column
+     * declared filterable-only (Set index, no ZSet index) would then silently match nothing.
+     */
+    @Test
+    fun eq_onNumericValue_usesSetIndexWhenTheSetKeyExists() {
+        val template = redisTemplates.defaultRedisTemplate
+        // "type" is filterable-only: a Set index exists, no zset:type is ever written
+        template.opsForSet().add("$prefix:set:type:1", "x", "y")
+        template.opsForSet().add("$prefix:set:type:2", "z")
+
+        assertEquals(setOf("x", "y"), resolver().resolveToIds(Criteria.of("type", OperatorEnum.EQ, 1)))
+        assertEquals(setOf("z"), resolver().resolveToIds(Criteria.of("type", OperatorEnum.EQ, 2)))
+        assertEquals(setOf("x", "y", "z"), resolver().resolveToIds(Criteria.of("type", OperatorEnum.IN, listOf(1, 2))))
+    }
+
+    /** With no Set index for the property, a numeric equality still falls back to the ZSet index. */
+    @Test
+    fun eq_onNumericValue_fallsBackToZSetWhenNoSetIndexExists() {
+        // "score" is sortable-only: only zset:score exists
+        assertEquals(setOf("b"), resolver().resolveToIds(Criteria.of("score", OperatorEnum.EQ, 2.5)))
+    }
+
     @Test
     fun eq_withNullValue_isFilteredOutByCriteriaItself_meansAll() {
         // Criteria refuses null values for non-null-accepting operators -> the criteria stays empty

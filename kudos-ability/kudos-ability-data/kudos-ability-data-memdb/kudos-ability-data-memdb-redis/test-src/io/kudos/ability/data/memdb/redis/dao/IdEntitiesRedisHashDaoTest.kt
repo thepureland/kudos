@@ -354,6 +354,65 @@ internal class IdEntitiesRedisHashDaoTest {
         assertEquals("a", page[0].id)
     }
 
+    /**
+     * Sorted paging with criteria goes through a temporary Set + ZINTERSTORE. The scores must come from the
+     * sort index alone (weight 0 on the candidate set), and every temporary key must be cleaned up.
+     */
+    @Test
+    fun list_sortedWithCriteria_ordersCorrectly_andLeavesNoTempKeys() {
+        val dao = dao()
+        val k = key("listIntersect")
+        dao.save(k, TestRowWithTime(id = "1", type = 1, sortScore = 300.0), setIdx, zsetIdx)
+        dao.save(k, TestRowWithTime(id = "2", type = 1, sortScore = 100.0), setIdx, zsetIdx)
+        dao.save(k, TestRowWithTime(id = "3", type = 2, sortScore = 400.0), setIdx, zsetIdx)
+        dao.save(k, TestRowWithTime(id = "4", type = 1, sortScore = 200.0), setIdx, zsetIdx)
+        val criteria = Criteria.of("type", OperatorEnum.EQ, 1)
+
+        val desc = dao.list(k, TestRowWithTime::class, criteria, 1, 10, Order.desc("sortScore"))
+        assertEquals(listOf("1", "4", "2"), desc.map { it.id })
+        val asc = dao.list(k, TestRowWithTime::class, criteria, 1, 10, Order.asc("sortScore"))
+        assertEquals(listOf("2", "4", "1"), asc.map { it.id })
+        // paging happens inside Redis: page 2 of size 2 is the tail of the ordered candidate set
+        val page2 = dao.list(k, TestRowWithTime::class, criteria, 2, 2, Order.desc("sortScore"))
+        assertEquals(listOf("2"), page2.map { it.id })
+
+        val leftovers = redisTemplates.defaultRedisTemplate.keys("$k:idx:tmp*")
+        assertTrue(leftovers.isEmpty(), "temporary intersection keys must be deleted, found: $leftovers")
+    }
+
+    /** Without criteria the sort index is paged directly; the result must match the criteria-less semantics. */
+    @Test
+    fun list_sortedWithoutCriteria_pagesTheSortIndexDirectly() {
+        val dao = dao()
+        val k = key("listDirectRange")
+        dao.save(k, TestRowWithTime(id = "a", type = 0, sortScore = 10.0), setIdx, zsetIdx)
+        dao.save(k, TestRowWithTime(id = "b", type = 0, sortScore = 30.0), setIdx, zsetIdx)
+        dao.save(k, TestRowWithTime(id = "c", type = 0, sortScore = 20.0), setIdx, zsetIdx)
+        // desc: b(30), c(20), a(10) -> page 1 of size 2
+        assertEquals(
+            listOf("b", "c"),
+            dao.list(k, TestRowWithTime::class, null, 1, 2, Order.desc("sortScore")).map { it.id }
+        )
+        // asc: a(10), c(20), b(30) -> page 2 of size 2 is the tail
+        assertEquals(
+            listOf("b"),
+            dao.list(k, TestRowWithTime::class, null, 2, 2, Order.asc("sortScore")).map { it.id }
+        )
+    }
+
+    /** Rows excluded from the sort index (non-numeric value) must not surface in a sorted query. */
+    @Test
+    fun list_sorted_skipsRowsMissingFromTheSortIndex() {
+        val dao = dao()
+        val k = key("listSortedMissingIndex")
+        dao.save(k, MixedScoreRow(id = "num", score = 5), emptySet(), setOf("score"))
+        dao.save(k, MixedScoreRow(id = "text", score = "abc"), emptySet(), setOf("score"))
+        val sorted = dao.list(k, MixedScoreRow::class, null, 1, 10, Order.desc("score"))
+        assertEquals(listOf("num"), sorted.map { it.id })
+        // ...while an unsorted query still sees both
+        assertEquals(2, dao.list(k, MixedScoreRow::class, null, 1, 10).size)
+    }
+
     @Test
     fun list_criteriaMatchingNothing_returnsEmpty() {
         val dao = dao()
@@ -568,11 +627,14 @@ internal class IdEntitiesRedisHashDaoTest {
         assertEquals("n1", dao.getById(k, "n1", TestRow::class)?.id)
     }
 
-    // ---------- toDouble score fallbacks ----------
+    // ---------- non-numeric sortable values ----------
 
-    /** Non-numeric strings and non-Number/non-String values fall back to -Double.MAX_VALUE as the ZSet score. */
+    /**
+     * Non-numeric values are NOT written into the ZSet index (a sentinel score would silently corrupt the
+     * sort order); the row itself is still saved and only numeric rows appear in the sorted index.
+     */
     @Test
-    fun zsetScore_nonNumericValues_fallBackToMostNegativeScore() {
+    fun zsetScore_nonNumericValues_areSkippedInsteadOfIndexed() {
         val dao = dao()
         val k = key("scoreFallback")
         dao.save(k, MixedScoreRow(id = "a-str", score = "abc"), emptySet(), setOf("score"))
@@ -580,11 +642,59 @@ internal class IdEntitiesRedisHashDaoTest {
         dao.save(k, MixedScoreRow(id = "c-num", score = 5), emptySet(), setOf("score"))
         dao.save(k, MixedScoreRow(id = "d-numstr", score = "12.5"), emptySet(), setOf("score"))
         val asc = dao.listPageByZSetIndex(k, MixedScoreRow::class, "score", 0, 4, desc = false)
-        assertEquals(4, asc.size)
-        // the two fallback scores tie at -Double.MAX_VALUE and come first in either order
-        assertEquals(setOf("a-str", "b-bool"), asc.take(2).map { it.id }.toSet())
-        assertEquals("c-num", asc[2].id)
-        assertEquals("d-numstr", asc[3].id)
+        assertEquals(listOf("c-num", "d-numstr"), asc.map { it.id })
+        // the skipped rows are still readable through the main data
+        assertEquals(4, dao.listAll(k, MixedScoreRow::class).size)
+    }
+
+    // ---------- stale index cleanup on update ----------
+
+    /** Updating an indexed property must remove the id from the index entry of the previous value. */
+    @Test
+    fun save_updateChangingIndexedValue_removesStaleSetIndexEntry() {
+        val dao = dao()
+        val k = key("staleIndexOnUpdate")
+        dao.save(k, TestRowWithTime(id = "1", type = 1, sortScore = 100.0), setIdx, zsetIdx)
+        dao.save(k, TestRowWithTime(id = "1", type = 2, sortScore = 100.0), setIdx, zsetIdx)
+        // the id must have moved from set:type:1 to set:type:2, not be present in both
+        assertTrue(dao.listBySetIndex(k, TestRowWithTime::class, "type", 1).isEmpty())
+        assertEquals(listOf("1"), dao.listBySetIndex(k, TestRowWithTime::class, "type", 2).map { it.id })
+    }
+
+    /** Same guarantee for saveBatch, whose previous versions are fetched in one HMGET. */
+    @Test
+    fun saveBatch_updateChangingIndexedValue_removesStaleSetIndexEntries() {
+        val dao = dao()
+        val k = key("staleIndexOnBatchUpdate")
+        dao.saveBatch(
+            k,
+            listOf(
+                TestRowWithTime(id = "1", type = 1, sortScore = 100.0),
+                TestRowWithTime(id = "2", type = 1, sortScore = 200.0)
+            ),
+            setIdx, zsetIdx
+        )
+        dao.saveBatch(
+            k,
+            listOf(
+                TestRowWithTime(id = "1", type = 3, sortScore = 100.0),
+                TestRowWithTime(id = "2", type = 1, sortScore = 250.0)
+            ),
+            setIdx, zsetIdx
+        )
+        assertEquals(listOf("2"), dao.listBySetIndex(k, TestRowWithTime::class, "type", 1).map { it.id })
+        assertEquals(listOf("1"), dao.listBySetIndex(k, TestRowWithTime::class, "type", 3).map { it.id })
+    }
+
+    /** When the new value no longer yields a score (null / non-numeric), the old ZSet member must be removed. */
+    @Test
+    fun save_updateDroppingSortableValue_removesStaleZSetMember() {
+        val dao = dao()
+        val k = key("staleZSetOnUpdate")
+        dao.save(k, MixedScoreRow(id = "1", score = 5), emptySet(), setOf("score"))
+        assertEquals(listOf("1"), dao.listPageByZSetIndex(k, MixedScoreRow::class, "score", 0, 10).map { it.id })
+        dao.save(k, MixedScoreRow(id = "1", score = "abc"), emptySet(), setOf("score"))
+        assertTrue(dao.listPageByZSetIndex(k, MixedScoreRow::class, "score", 0, 10).isEmpty())
     }
 
     // ---------- defensive null-return guards (mocked template) ----------

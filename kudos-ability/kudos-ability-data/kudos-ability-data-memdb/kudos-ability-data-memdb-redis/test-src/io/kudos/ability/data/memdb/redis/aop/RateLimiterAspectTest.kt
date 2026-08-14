@@ -28,13 +28,8 @@ import kotlin.test.assertTrue
 
 /**
  * Tests for [RateLimiterAspect] (based on RedisTestContainer; the advice is invoked directly with a
- * mocked [JoinPoint] instead of going through Spring AOP).
- *
- * Why no AspectJ auto-proxy: the aspect injects [RedisTemplates] with `@Autowired @Lazy`, and a lazy
- * injection proxy requires CGLIB-subclassing the *final* class [RedisTemplates], which fails with
- * `AopConfigException: Cannot subclass final class`. That is a suspected main-code bug (recorded, not
- * worked around in main code); these tests bypass it by instantiating the aspect and setting the field
- * reflectively, which still exercises every line of the aspect against a real Redis.
+ * mocked [JoinPoint] instead of going through Spring AOP — the aspect is a plain constructor-injected
+ * class registered by RedisAutoConfiguration, so it can simply be instantiated here).
  *
  * Covers: allowing calls up to the threshold then throwing ServiceException, the three
  * [LimitType] key dimensions (DEFAULT / USER / IP) including their missing-context failure
@@ -66,14 +61,8 @@ internal class RateLimiterAspectTest {
         open fun limitedByIp(): String = "ok"
     }
 
-    /** Builds an aspect instance with its private (lazy-injected in production) RedisTemplates field set reflectively. */
-    private fun aspect(templates: RedisTemplates = redisTemplates): RateLimiterAspect {
-        val a = RateLimiterAspect()
-        val field = RateLimiterAspect::class.java.getDeclaredField("redisTemplates")
-        field.isAccessible = true
-        field.set(a, templates)
-        return a
-    }
+    /** Builds an aspect instance the same way RedisAutoConfiguration does: plain constructor injection. */
+    private fun aspect(templates: RedisTemplates = redisTemplates): RateLimiterAspect = RateLimiterAspect(templates)
 
     /** Mocks a JoinPoint whose signature points at the given [RateLimitedService] method. */
     private fun joinPoint(methodName: String): JoinPoint {
@@ -110,8 +99,8 @@ internal class RateLimiterAspectTest {
         aspect.doBefore(point, limiter)
         aspect.doBefore(point, limiter)
         assertFailsWith<ServiceException> { aspect.doBefore(point, limiter) }
-        // counter key is rate.limit<class>-<method> for the DEFAULT dimension
-        val expectedKey = "rate.limit${RateLimitedService::class.java.name}-limitedDefault"
+        // counter key is rate.limit:<class>-<method> for the DEFAULT dimension
+        val expectedKey = "rate.limit:${RateLimitedService::class.java.name}-limitedDefault"
         assertTrue(redisTemplates.defaultRedisTemplate.hasKey(expectedKey))
     }
 
@@ -125,7 +114,7 @@ internal class RateLimiterAspectTest {
         }
         aspect.doBefore(point, limiter)
         assertFailsWith<ServiceException> { aspect.doBefore(point, limiter) }
-        val expectedKey = "rate.limituser-001-${RateLimitedService::class.java.name}-limitedByUser"
+        val expectedKey = "rate.limit:user-001:${RateLimitedService::class.java.name}-limitedByUser"
         assertTrue(redisTemplates.defaultRedisTemplate.hasKey(expectedKey))
 
         // a different user has an independent counter
@@ -153,7 +142,7 @@ internal class RateLimiterAspectTest {
         KudosContextHolder.get().clientInfo = ClientInfo(ClientInfo.Builder()).apply { ip = "10.0.0.9" }
         aspect.doBefore(point, limiter)
         assertFailsWith<ServiceException> { aspect.doBefore(point, limiter) }
-        val expectedKey = "rate.limit10.0.0.9-${RateLimitedService::class.java.name}-limitedByIp"
+        val expectedKey = "rate.limit:10.0.0.9:${RateLimitedService::class.java.name}-limitedByIp"
         assertTrue(redisTemplates.defaultRedisTemplate.hasKey(expectedKey))
     }
 
@@ -182,23 +171,66 @@ internal class RateLimiterAspectTest {
     }
 
     @Test
+    fun redisFailure_withFailOpen_letsTheCallThrough() {
+        // availability over enforcement: a dead rate-limit backend must not take the endpoint down with it
+        val broken = RedisTemplates(mutableMapOf(), RedisTemplate())
+        val limiter = RateLimiter(time = 60, count = 2, failOpen = true)
+        aspect(broken).doBefore(joinPoint("limitedDefault"), limiter)
+    }
+
+    @Test
+    fun exceedingThreshold_stillRejects_evenWithFailOpen() {
+        // failOpen only covers infrastructure failures; the limit itself is still enforced
+        val aspect = aspect()
+        val point = joinPoint("limitedDefault")
+        val limiter = RateLimiter(time = 60, count = 1, failOpen = true)
+        aspect.doBefore(point, limiter)
+        assertFailsWith<ServiceException> { aspect.doBefore(point, limiter) }
+    }
+
+    @Test
+    fun redisName_selectsTheNamedInstance() {
+        val named = RedisTemplates(
+            mapOf("rateLimit" to redisTemplates.defaultRedisTemplate),
+            RedisTemplate() // default is unusable, so a passing call proves the named one was used
+        )
+        val limiter = RateLimiter(time = 60, count = 2, redisName = "rateLimit")
+        aspect(named).doBefore(joinPoint("limitedDefault"), limiter)
+        assertTrue(
+            redisTemplates.defaultRedisTemplate.hasKey(
+                "rate.limit:${RateLimitedService::class.java.name}-limitedDefault"
+            )
+        )
+    }
+
+    @Test
+    fun unknownRedisName_failsFast_evenWithFailOpen() {
+        // a misconfigured instance name is a deployment error; failOpen must not mask it
+        val limiter = RateLimiter(time = 60, count = 2, redisName = "nowhere", failOpen = true)
+        val ex = assertFailsWith<IllegalArgumentException> {
+            aspect().doBefore(joinPoint("limitedDefault"), limiter)
+        }
+        assertTrue(ex.message!!.contains("nowhere"), ex.message)
+    }
+
+    @Test
     fun getCombineKey_assemblesPerDimension() {
         val aspect = aspect()
         val className = RateLimitedService::class.java.name
         assertEquals(
-            "rate.limit$className-limitedDefault",
+            "rate.limit:$className-limitedDefault",
             aspect.getCombineKey(RateLimiter(), joinPoint("limitedDefault"))
         )
         KudosContextHolder.get().user = object : IIdEntity<String> {
             override val id: String = "u42"
         }
         assertEquals(
-            "rate.limitu42-$className-limitedByUser",
+            "rate.limit:u42:$className-limitedByUser",
             aspect.getCombineKey(RateLimiter(limitType = LimitType.USER), joinPoint("limitedByUser"))
         )
         KudosContextHolder.get().clientInfo = ClientInfo(ClientInfo.Builder()).apply { ip = "127.0.0.2" }
         assertEquals(
-            "rate.limit127.0.0.2-$className-limitedByIp",
+            "rate.limit:127.0.0.2:$className-limitedByIp",
             aspect.getCombineKey(RateLimiter(limitType = LimitType.IP), joinPoint("limitedByIp"))
         )
     }
@@ -207,7 +239,9 @@ internal class RateLimiterAspectTest {
     fun buildLuaScript_loadsClasspathScript() {
         val script = RateLimiterAspect.buildLuaScript()
         assertEquals(Long::class.java, script.resultType)
-        assertTrue(script.scriptAsString.contains("INCRBY"))
+        assertTrue(script.scriptAsString.contains("INCR"))
+        // fixed-window semantics: EXPIRE only on window creation, never refreshed by later allowed calls
+        assertTrue(script.scriptAsString.contains("current == 1"))
     }
 
     @Test

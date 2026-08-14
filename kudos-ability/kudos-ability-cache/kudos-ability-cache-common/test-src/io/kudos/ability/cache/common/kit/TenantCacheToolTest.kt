@@ -17,6 +17,7 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -29,7 +30,8 @@ import kotlin.test.assertTrue
  * pattern-based clear operations. KeyValueCacheKit is stubbed via overrideForTesting + an in-memory cache.
  *
  * Coverage:
- *  - getTenantKey behavior via put/getValue (tenant prefix, Unicode key, null tenant -> "null::").
+ *  - getTenantKey behavior via put/getValue (tenant prefix, Unicode key, absent tenant -> reserved
+ *    namespace, and the guards that stop a tenant id from impersonating another namespace).
  *  - putIfAbsent / doEvict apply the tenant prefix.
  *  - isCacheActive / isWriteInTime / getCache / getCacheConfig pass-through.
  *  - clear / doClear / evictByPattern inactive guards (no-op) and active null-manager early return.
@@ -89,11 +91,60 @@ internal class TenantCacheToolTest {
     }
 
     @Test
-    fun nullTenant_keyPrefixedWithLiteralNull() {
+    fun nullTenant_usesReservedNamespace_notLiteralNull() {
         KudosContextHolder.get().tenantId = null
         provider.register("C", true, CacheStrategy.REMOTE)
         TenantCacheTool.put("C", "k", "v")
-        assertEquals("v", mgr.underlying("C").get("null::k")?.get())
+        assertEquals("v", mgr.underlying("C").get("${TenantCacheTool.NO_TENANT_NAMESPACE}::k")?.get())
+        // The old layout must be gone; `"null"` is a legal tenant id and may not double as "no tenant".
+        assertNull(mgr.underlying("C").get("null::k"))
+    }
+
+    @Test
+    fun blankTenant_usesReservedNamespace() {
+        KudosContextHolder.get().tenantId = "  "
+        provider.register("C", true, CacheStrategy.REMOTE)
+        TenantCacheTool.put("C", "k", "v")
+        assertEquals("v", mgr.underlying("C").get("${TenantCacheTool.NO_TENANT_NAMESPACE}::k")?.get())
+    }
+
+    /**
+     * The point of the reserved namespace: a tenant that happens to be *named* `null` must not be able to
+     * read what no-tenant callers wrote. Under the old `"$tenantId::$key"` interpolation both produced
+     * `"null::k"` and the two shared one keyspace.
+     */
+    @Test
+    fun tenantNamedNull_doesNotCollideWithNoTenant() {
+        provider.register("C", true, CacheStrategy.REMOTE)
+
+        KudosContextHolder.get().tenantId = null
+        TenantCacheTool.put("C", "k", "no-tenant-value")
+
+        KudosContextHolder.get().tenantId = "null"
+        TenantCacheTool.put("C", "k", "tenant-null-value")
+
+        assertEquals("tenant-null-value", TenantCacheTool.getValue("C", "k"))
+        KudosContextHolder.get().tenantId = null
+        assertEquals("no-tenant-value", TenantCacheTool.getValue("C", "k"))
+    }
+
+    /**
+     * A tenant id carrying the separator can forge another tenant's prefix: tenant `"a::b"` writing key `"k"`
+     * and tenant `"a"` writing key `"b::k"` both resolve to `"a::b::k"`.
+     */
+    @Test
+    fun tenantIdContainingSeparator_failsFast() {
+        provider.register("C", true, CacheStrategy.REMOTE)
+        KudosContextHolder.get().tenantId = "a::b"
+        val e = assertFailsWith<IllegalStateException> { TenantCacheTool.put("C", "k", "v") }
+        assertTrue(e.message!!.contains("::"), "message should name the offending separator: ${e.message}")
+    }
+
+    @Test
+    fun tenantIdEqualToReservedNamespace_failsFast() {
+        provider.register("C", true, CacheStrategy.REMOTE)
+        KudosContextHolder.get().tenantId = TenantCacheTool.NO_TENANT_NAMESPACE
+        assertFailsWith<IllegalStateException> { TenantCacheTool.put("C", "k", "v") }
     }
 
     @Test

@@ -2,8 +2,10 @@ package io.kudos.ability.data.memdb.redis
 
 import io.kudos.ability.data.memdb.redis.init.properties.RedisExtProperties
 import io.lettuce.core.ClientOptions
+import io.lettuce.core.ReadFrom
 import io.lettuce.core.api.StatefulConnection
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig
+import java.time.Duration
 import org.springframework.boot.data.redis.autoconfigure.DataRedisProperties
 import org.springframework.data.redis.connection.RedisPassword
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration
@@ -11,6 +13,7 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -76,13 +79,13 @@ internal class RedisConnectFactoryTest {
     }
 
     @Test
-    fun newLettuceConnectionFactory_standalone_withoutAuth_usesDefaultPoolCap() {
+    fun newLettuceConnectionFactory_standalone_withoutAuth_negativeMaxActiveMeansUnlimited() {
         val properties = RedisExtProperties().apply {
             host = "localhost"
             port = 6379
             password = null
             username = null
-            maxActive = -1 // non-positive -> falls back to 200
+            maxActive = -1 // commons-pool2 semantics: negative = no limit, passed through as-is
         }
         val factory = RedisConnectFactory.newLettuceConnectionFactory(properties)
         try {
@@ -91,7 +94,87 @@ internal class RedisConnectFactoryTest {
             assertEquals(RedisPassword.none(), standalone.password)
             assertNull(standalone.username)
             val clientConfig = factory.clientConfiguration as LettucePoolingClientConfiguration
-            assertEquals(200, clientConfig.poolConfig.maxTotal)
+            assertEquals(-1, clientConfig.poolConfig.maxTotal)
+        } finally {
+            factory.destroy()
+        }
+    }
+
+    // ---------- newLettuceConnectionFactory: sentinel ----------
+
+    @Test
+    fun newLettuceConnectionFactory_sentinel_withSeparateDataAndSentinelCredentials() {
+        val properties = RedisExtProperties().apply {
+            sentinel = DataRedisProperties.Sentinel().apply {
+                master = "mymaster"
+                nodes = listOf("127.0.0.1:26379", "127.0.0.1:26380")
+                username = "sentinelUser"
+                password = "sentinelPw"
+            }
+            database = 3
+            username = "dataUser"
+            password = "dataPw"
+        }
+        val factory = RedisConnectFactory.newLettuceConnectionFactory(properties)
+        try {
+            val sentinelConfig = assertNotNull(factory.sentinelConfiguration)
+            assertEquals("mymaster", sentinelConfig.master!!.name)
+            assertEquals(2, sentinelConfig.sentinels.size)
+            assertEquals(3, sentinelConfig.database)
+            // the two credential pairs must not be swapped: top-level auth is for the data nodes...
+            assertEquals(RedisPassword.of("dataPw"), sentinelConfig.password)
+            assertEquals("dataUser", sentinelConfig.username)
+            // ...and sentinel.* auth is for the sentinel nodes themselves
+            assertEquals(RedisPassword.of("sentinelPw"), sentinelConfig.sentinelPassword)
+            assertEquals("sentinelUser", sentinelConfig.sentinelUsername)
+        } finally {
+            factory.destroy()
+        }
+    }
+
+    @Test
+    fun newLettuceConnectionFactory_sentinel_takesPrecedenceOverCluster() {
+        // Spring Boot's own precedence: sentinel wins when both are configured
+        val properties = RedisExtProperties().apply {
+            sentinel = DataRedisProperties.Sentinel().apply {
+                master = "mymaster"
+                nodes = listOf("127.0.0.1:26379")
+            }
+            cluster = DataRedisProperties.Cluster().apply { nodes = listOf("127.0.0.1:7000") }
+        }
+        val factory = RedisConnectFactory.newLettuceConnectionFactory(properties)
+        try {
+            assertNotNull(factory.sentinelConfiguration)
+            assertFalse(factory.isClusterAware)
+        } finally {
+            factory.destroy()
+        }
+    }
+
+    @Test
+    fun newLettuceConnectionFactory_sentinel_withoutMaster_failsFast() {
+        val properties = RedisExtProperties().apply {
+            sentinel = DataRedisProperties.Sentinel().apply {
+                nodes = listOf("127.0.0.1:26379")
+            }
+        }
+        val ex = assertFailsWith<IllegalArgumentException> {
+            RedisConnectFactory.newLettuceConnectionFactory(properties)
+        }
+        assertTrue(ex.message!!.contains("sentinel.master"), ex.message)
+    }
+
+    @Test
+    fun newLettuceConnectionFactory_emptySentinelNodes_fallsBackToStandalone() {
+        val properties = RedisExtProperties().apply {
+            sentinel = DataRedisProperties.Sentinel().apply { nodes = emptyList() }
+            host = "localhost"
+            port = 6379
+        }
+        val factory = RedisConnectFactory.newLettuceConnectionFactory(properties)
+        try {
+            assertNull(factory.sentinelConfiguration)
+            assertFalse(factory.isClusterAware)
         } finally {
             factory.destroy()
         }
@@ -118,13 +201,14 @@ internal class RedisConnectFactoryTest {
     // ---------- newLettuceConnectionFactory: cluster ----------
 
     @Test
-    fun newLettuceConnectionFactory_cluster_withMaxRedirectsAndPassword() {
+    fun newLettuceConnectionFactory_cluster_withMaxRedirectsAndAuth() {
         val properties = RedisExtProperties().apply {
             cluster = DataRedisProperties.Cluster().apply {
                 nodes = listOf("127.0.0.1:7000", "127.0.0.1:7001")
                 maxRedirects = 3
             }
             password = "clusterPw"
+            username = "clusterUser" // Redis 6+ ACL user must reach the cluster configuration too
         }
         val factory = RedisConnectFactory.newLettuceConnectionFactory(properties)
         try {
@@ -133,6 +217,7 @@ internal class RedisConnectFactoryTest {
             assertEquals(2, clusterConfig.clusterNodes.size)
             assertEquals(3, clusterConfig.maxRedirects)
             assertEquals(RedisPassword.of("clusterPw"), clusterConfig.password)
+            assertEquals("clusterUser", clusterConfig.username)
         } finally {
             factory.destroy()
         }
@@ -211,5 +296,37 @@ internal class RedisConnectFactoryTest {
         )
 
         assertTrue(config.isUseSsl)
+    }
+
+    @Test
+    fun newLettuceClientConfiguration_appliesCommandTimeout() {
+        val properties = RedisExtProperties().apply {
+            timeout = Duration.ofSeconds(3)
+        }
+
+        val config = RedisConnectFactory.newLettuceClientConfiguration(
+            properties,
+            ClientOptions.builder().build(),
+            GenericObjectPoolConfig<StatefulConnection<*, *>>()
+        )
+
+        assertEquals(Duration.ofSeconds(3), config.commandTimeout)
+    }
+
+    @Test
+    fun newLettuceClientConfiguration_readFrom_defaultsToReplicaPreferred_andIsConfigurable() {
+        val defaultConfig = RedisConnectFactory.newLettuceClientConfiguration(
+            RedisExtProperties(),
+            ClientOptions.builder().build(),
+            GenericObjectPoolConfig<StatefulConnection<*, *>>()
+        )
+        assertEquals(ReadFrom.REPLICA_PREFERRED, defaultConfig.readFrom.get())
+
+        val anyConfig = RedisConnectFactory.newLettuceClientConfiguration(
+            RedisExtProperties().apply { readFrom = "any" },
+            ClientOptions.builder().build(),
+            GenericObjectPoolConfig<StatefulConnection<*, *>>()
+        )
+        assertEquals(ReadFrom.ANY, anyConfig.readFrom.get())
     }
 }

@@ -41,7 +41,14 @@ internal class CacheKeyTest {
 
     @Test
     fun separators_areTheExpectedConstants() {
-        assertEquals(":", CacheKey.CACHE_KEY_SEPERATOR)
-        assertEquals(",", CacheKey.CACHE_KEY_PREFIX_SEPERATOR)
+        assertEquals(":", CacheKey.CACHE_KEY_SEPARATOR)
+        assertEquals(",", CacheKey.CACHE_KEY_PREFIX_SEPARATOR)
+    }
+
+    @Test
+    @Suppress("DEPRECATION")
+    fun misspelledLegacyAliases_stillResolveToTheSameValues() {
+        assertEquals(CacheKey.CACHE_KEY_SEPARATOR, CacheKey.CACHE_KEY_SEPERATOR)
+        assertEquals(CacheKey.CACHE_KEY_PREFIX_SEPARATOR, CacheKey.CACHE_KEY_PREFIX_SEPERATOR)
     }
 }

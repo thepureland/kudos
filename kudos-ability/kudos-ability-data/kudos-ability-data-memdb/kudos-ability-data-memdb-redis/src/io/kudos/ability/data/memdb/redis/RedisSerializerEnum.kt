@@ -16,8 +16,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer
  *  - [JDK] — Native Java `Serializable`; compact binary but strongly coupled across service versions
  *  - [FASTJSON] — Fastjson2 JSON serialization; highly readable and cross-language friendly
  *
- * To add a new serializer, add an enum value here; `getSerializerByType` instantiates it
- * reflectively (the class must expose a public no-arg constructor).
+ * To add a new serializer, either add an enum value here, or simply configure the fully-qualified
+ * class name of any `RedisSerializer` implementation with a public no-arg constructor —
+ * `getSerializerByType` falls back to `Class.forName` for non-enum literals.
  *
  * @author K
  * @author AI: Codex

@@ -2,21 +2,22 @@ package io.kudos.ability.data.memdb.redis.serializer
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 /**
- * Unit tests for the prefix-aware [StringRedisSerializer].
+ * Unit tests for [PrefixedStringRedisSerializer].
  *
  * Covers: prefix added on serialize, prefix stripped on deserialize, legacy (unprefixed) value
- * preservation, null bytes, Unicode prefix/key, key identical to the prefix, and round-trip.
- * Pure unit test, no Redis required.
+ * preservation, null key/bytes, blank-prefix rejection, Unicode prefix/key, key identical to the
+ * prefix, and round-trip. Pure unit test, no Redis required.
  *
  * @author K
  * @since 1.0.0
  */
-internal class StringRedisSerializerTest {
+internal class PrefixedStringRedisSerializerTest {
 
-    private val serializer = StringRedisSerializer("tenant1")
+    private val serializer = PrefixedStringRedisSerializer("tenant1")
 
     @Test
     fun serialize_prependsPrefix() {
@@ -26,6 +27,18 @@ internal class StringRedisSerializerTest {
     @Test
     fun serialize_emptyKey_yieldsBarePrefix() {
         assertEquals("tenant1:", String(serializer.serialize(""), Charsets.UTF_8))
+    }
+
+    @Test
+    fun serialize_nullKey_isTreatedAsEmptyKey() {
+        // the interface requires a non-null result; null must never be rendered as the literal "prefix:null"
+        assertEquals("tenant1:", String(serializer.serialize(null), Charsets.UTF_8))
+    }
+
+    @Test
+    fun blankPrefix_isRejected() {
+        assertFailsWith<IllegalArgumentException> { PrefixedStringRedisSerializer("") }
+        assertFailsWith<IllegalArgumentException> { PrefixedStringRedisSerializer("   ") }
     }
 
     @Test
@@ -57,18 +70,10 @@ internal class StringRedisSerializerTest {
 
     @Test
     fun unicode_prefixAndKey_roundTrip() {
-        val unicodeSerializer = StringRedisSerializer("租戶甲")
+        val unicodeSerializer = PrefixedStringRedisSerializer("租戶甲")
         val key = "鍵-値-🔑"
         assertEquals("租戶甲:$key", String(unicodeSerializer.serialize(key), Charsets.UTF_8))
         assertEquals(key, unicodeSerializer.deserialize(unicodeSerializer.serialize(key)))
-    }
-
-    @Test
-    fun nullPrefix_isRenderedLiterally() {
-        // Constructor accepts a nullable prefix; "$prefix:" renders null as the literal "null:"
-        val nullPrefixSerializer = StringRedisSerializer(null)
-        assertEquals("null:k", String(nullPrefixSerializer.serialize("k"), Charsets.UTF_8))
-        assertEquals("k", nullPrefixSerializer.deserialize("null:k".toByteArray(Charsets.UTF_8)))
     }
 
     @Test

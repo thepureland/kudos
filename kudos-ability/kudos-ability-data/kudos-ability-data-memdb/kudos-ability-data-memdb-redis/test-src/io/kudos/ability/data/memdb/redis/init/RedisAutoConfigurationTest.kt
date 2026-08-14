@@ -72,12 +72,21 @@ internal class RedisAutoConfigurationTest {
                 cache.valueSerializer!!.javaClass.simpleName
             )
 
+            // the per-instance connection factories are retained for lifecycle management and reuse
+            assertSame(
+                templates.getRedisTemplate("main")!!.connectionFactory as LettuceConnectionFactory,
+                assertNotNull(templates.getConnectionFactory("main"))
+            )
+            assertNotNull(templates.getConnectionFactory("cache"))
+
             // redisTemplate bean simply exposes the default template
             assertSame(templates.defaultRedisTemplate, configuration.redisTemplate(templates))
+
+            // the rate limiter aspect is registered by this configuration (not component scanning)
+            assertNotNull(configuration.rateLimiterAspect(templates))
         } finally {
-            templates.getRedisTemplateMap().values.forEach {
-                (it.connectionFactory as? LettuceConnectionFactory)?.destroy()
-            }
+            // DisposableBean contract: shuts down every managed connection factory
+            templates.destroy()
         }
     }
 

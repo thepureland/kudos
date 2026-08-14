@@ -84,6 +84,23 @@ internal class RedisExtPropertiesTest {
     }
 
     @Test
+    fun fullyQualifiedClassName_isInstantiatedAsFallback() {
+        // not an enum literal -> resolved as a RedisSerializer class name, so new serializers can be
+        // plugged in via configuration without touching the enum
+        val props = RedisExtProperties().apply {
+            valueSerializer = "org.springframework.data.redis.serializer.JdkSerializationRedisSerializer"
+        }
+        assertTrue(props.valueSerializer() is JdkSerializationRedisSerializer)
+    }
+
+    @Test
+    fun fullyQualifiedClassName_notASerializer_throws() {
+        val props = RedisExtProperties().apply { valueSerializer = "java.lang.String" }
+        val ex = assertFailsWith<RuntimeException> { props.valueSerializer() }
+        assertTrue(ex.message!!.contains("does not implement RedisSerializer"), ex.message)
+    }
+
+    @Test
     fun nullSerializerType_throws() {
         val props = RedisExtProperties().apply { valueSerializer = null }
         assertFailsWith<RuntimeException> { props.valueSerializer() }

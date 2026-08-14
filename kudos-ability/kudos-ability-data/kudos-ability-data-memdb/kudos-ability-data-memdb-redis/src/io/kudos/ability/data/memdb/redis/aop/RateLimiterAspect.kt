@@ -1,6 +1,7 @@
 package io.kudos.ability.data.memdb.redis.aop
 
 import io.kudos.ability.data.memdb.redis.RedisTemplates
+import io.kudos.ability.data.memdb.redis.consts.CacheKey
 import io.kudos.base.enums.impl.ErrorStatusEnum
 import io.kudos.base.error.ServiceException
 import io.kudos.base.logger.LogFactory
@@ -9,49 +10,51 @@ import org.aspectj.lang.JoinPoint
 import org.aspectj.lang.annotation.Aspect
 import org.aspectj.lang.annotation.Before
 import org.aspectj.lang.reflect.MethodSignature
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Lazy
 import org.springframework.data.redis.core.script.DefaultRedisScript
 import org.springframework.data.redis.core.script.RedisScript
 import org.springframework.data.redis.serializer.RedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 import org.springframework.scripting.support.ResourceScriptSource
-import org.springframework.stereotype.Component
 
 
 /**
  * Aspect implementing the [RateLimiter] annotation. Invokes the `limit.lua` script once before the annotated method executes:
- *  - The script performs `INCR` on `combineKey`; on the first hit it sets `EXPIRE time`.
+ *  - The script counts in a fixed window: the first allowed request creates the counter with `EXPIRE time`;
+ *    later requests only `INCR` it, so the window never slides forward with traffic.
  *  - A return value of 0 indicates the threshold has been exceeded; this aspect translates it into `ServiceException(SC_REQUEST_FREQUENTLY)`.
  *
- * Note: All rate-limiting goes through [RedisTemplates.defaultRedisTemplate]; separate rate-limiting per Redis instance is not currently supported.
+ * Registered as a bean by `RedisAutoConfiguration` (not component scanning) with plain constructor injection —
+ * a `@Lazy` field injection would require CGLIB-subclassing [RedisTemplates] and is deliberately avoided.
+ *
+ * The counter lives in [RateLimiter.redisName]'s instance (default instance when unset), so a dedicated
+ * rate-limit Redis can be configured without replacing this aspect.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
-@Component
 @Aspect
-@Lazy
-class RateLimiterAspect {
-
-    @Autowired
-    @Lazy
-    private lateinit var redisTemplates: RedisTemplates
+class RateLimiterAspect(private val redisTemplates: RedisTemplates) {
 
     /**
      * Invokes the lua counter script once before entering the method; throws `ServiceException(SC_REQUEST_FREQUENTLY)` when the threshold is exceeded.
-     * Non-business exceptions (Redis failures, etc.) are uniformly wrapped as `RuntimeException` and propagated to avoid swallowing the problem.
+     *
+     * Infrastructure failures (Redis down, timeout, ...) are wrapped as `RuntimeException` and propagated —
+     * i.e. fail-closed — unless the annotation opts into [RateLimiter.failOpen], in which case the call is
+     * allowed through with a WARN. Misconfiguration (an unknown [RateLimiter.redisName]) always propagates:
+     * it is a deployment error, not a runtime outage, and fail-open must not mask it.
      */
     @Before("@annotation(rateLimiter)")
     fun doBefore(point: JoinPoint, rateLimiter: RateLimiter) {
         val time: Int = rateLimiter.time
         val count: Int = rateLimiter.count
 
+        // resolved before the try block so an unknown redisName is never swallowed by failOpen
+        val redisTemplate = resolveRedisTemplate(rateLimiter)
         val combineKey = getCombineKey(rateLimiter, point)
         val keys = mutableListOf<Any>(combineKey)
         try {
-            val number = redisTemplates.defaultRedisTemplate.execute(
+            val number = redisTemplate.execute(
                 luaScriptStr,
                 argSerializer,
                 resultSerializer,
@@ -69,34 +72,54 @@ class RateLimiterAspect {
             val className: String? = point.target.javaClass.getName()
             val signature: MethodSignature = point.signature as MethodSignature
             val methodName: String? = signature.method.name
+            if (rateLimiter.failOpen) {
+                log.warn(
+                    "Rate-limit backend unavailable; letting the call through (failOpen). {0}.{1}, error={2}",
+                    className, methodName, e.toString()
+                )
+                return
+            }
             log.error("Server rate-limit exception. ${className}.${methodName}")
             throw RuntimeException("Server rate-limit exception; please try again later.", e)
         }
     }
 
     /**
-     * Assembles the Redis rate-limit counter key. The structure is `rate.limit[<id>-]<class>-<method>`, where `<id>`
-     * is only present for [LimitType.IP] / [LimitType.USER]; for [LimitType.DEFAULT] the key is shared across the entire process.
+     * Picks the RedisTemplate holding the counter: [RateLimiter.redisName] when set, the default instance
+     * otherwise. An unknown name raises immediately, listing the configured instance names.
+     */
+    private fun resolveRedisTemplate(rateLimiter: RateLimiter) =
+        if (rateLimiter.redisName.isBlank()) redisTemplates.defaultRedisTemplate
+        else redisTemplates.getRequiredRedisTemplate(rateLimiter.redisName)
+
+    /**
+     * Assembles the Redis rate-limit counter key: `rate.limit:[<id>:]<class>-<method>`, joined with the
+     * [CacheKey] separator convention. `<id>` is only present for [LimitType.IP] / [LimitType.USER];
+     * for [LimitType.DEFAULT] the key is shared across the entire process.
      */
     fun getCombineKey(rateLimiter: RateLimiter, point: JoinPoint): String {
         val signature = point.signature as MethodSignature
         val method = signature.method
-        return buildString {
-            append("rate.limit")
-            when (rateLimiter.limitType) {
-                LimitType.IP -> append(
-                    requireNotNull(KudosContextHolder.get().clientInfo?.ip) { "Rate-limit (IP) requires clientInfo.ip" }
-                ).append("-")
-                LimitType.USER -> append(
-                    requireNotNull(KudosContextHolder.get().user?.id) { "Rate-limit (USER) requires user.id" }
-                ).append("-")
-                LimitType.DEFAULT -> Unit
-            }
-            append(method.declaringClass.name).append("-").append(method.name)
+        val methodPart = "${method.declaringClass.name}-${method.name}"
+        return when (rateLimiter.limitType) {
+            LimitType.IP -> CacheKey.getCacheKey(
+                RATE_LIMIT_KEY_PREFIX,
+                requireNotNull(KudosContextHolder.get().clientInfo?.ip) { "Rate-limit (IP) requires clientInfo.ip" },
+                methodPart
+            )
+            LimitType.USER -> CacheKey.getCacheKey(
+                RATE_LIMIT_KEY_PREFIX,
+                requireNotNull(KudosContextHolder.get().user?.id) { "Rate-limit (USER) requires user.id" }.toString(),
+                methodPart
+            )
+            LimitType.DEFAULT -> CacheKey.getCacheKey(RATE_LIMIT_KEY_PREFIX, methodPart)
         }
     }
 
     companion object {
+        /** First segment of every rate-limit counter key. */
+        const val RATE_LIMIT_KEY_PREFIX = "rate.limit"
+
         private val log = LogFactory.getLog(RateLimiterAspect::class.java)
         private val luaScriptStr = buildLuaScript()
         private val argSerializer = argSerializer()

@@ -27,11 +27,29 @@ import kotlin.reflect.KClass
  * - Avoiding cross-tenant cache interference.
  *
  * Caveats:
- * - Depends on tenantId from KudosContext; an empty tenantId may produce an unexpected cache key.
+ * - Depends on tenantId from KudosContext; with no tenant present, keys land in the reserved
+ *   [TenantCacheTool.NO_TENANT_NAMESPACE] rather than sharing a namespace with a tenant named "null".
  * - All cache operations apply tenant isolation automatically — do not add the tenant prefix manually.
  * - The clear-all operation removes data for all tenants — use with care.
  */
 object TenantCacheTool {
+
+    /** Separator between the tenant namespace and the business key. */
+    const val TENANT_KEY_SEPARATOR = "::"
+
+    /**
+     * Namespace used for cache keys built while no tenant is present in the context.
+     *
+     * [getTenantKey] used to interpolate the tenant id straight into `"$tenantId::$key"`, so a null tenant
+     * produced the literal prefix `"null"`. That is not a reserved value: `"null"` is a perfectly legal
+     * tenant id, so a tenant actually named `null` shared one keyspace with every no-tenant caller and the
+     * two could read each other's entries. This token cannot be taken by a real tenant — [getTenantKey]
+     * rejects a tenant id equal to it.
+     *
+     * Note this changes the key layout for no-tenant entries (`null::k` -> `__kudos_no_tenant__::k`).
+     * Existing entries are not migrated; they simply go unread and age out by TTL.
+     */
+    const val NO_TENANT_NAMESPACE = "__kudos_no_tenant__"
 
     /**
      * Whether caching is enabled. Both the global switch and the cache-specific switch must be on.
@@ -234,15 +252,30 @@ object TenantCacheTool {
      * - Prevents cross-tenant cache interference.
      *
      * Caveats:
-     * - When tenantId is null, "null" is used as the prefix.
+     * - With no tenant in context the reserved [NO_TENANT_NAMESPACE] is used, never the literal "null".
      * - The "::" separator distinguishes the tenant id from the original key.
      * - All cache operations apply this method automatically.
      *
      * @param key original cache key
-     * @return the cache key prefixed with the tenant id
+     * @return the cache key prefixed with the tenant namespace
+     * @throws IllegalStateException when the tenant id could impersonate another tenant's namespace
      */
     private fun getTenantKey(key: Any): String {
         val tenantId = KudosContextHolder.get().tenantId
-        return "$tenantId::$key"
+        val namespace = when {
+            tenantId.isNullOrBlank() -> NO_TENANT_NAMESPACE
+            // A tenant id carrying the separator can forge any other tenant's prefix: tenant "a::b" writing
+            // key "k" and tenant "a" writing key "b::k" both resolve to "a::b::k". Fail fast — this can only
+            // come from a malformed tenant id, and silently producing forgeable keys is the worse outcome.
+            tenantId.contains(TENANT_KEY_SEPARATOR) -> throw IllegalStateException(
+                "tenantId must not contain '$TENANT_KEY_SEPARATOR' (it would collide with another tenant's " +
+                    "cache namespace): $tenantId"
+            )
+            tenantId == NO_TENANT_NAMESPACE -> throw IllegalStateException(
+                "tenantId must not equal the reserved no-tenant namespace '$NO_TENANT_NAMESPACE'"
+            )
+            else -> tenantId
+        }
+        return "$namespace$TENANT_KEY_SEPARATOR$key"
     }
 }

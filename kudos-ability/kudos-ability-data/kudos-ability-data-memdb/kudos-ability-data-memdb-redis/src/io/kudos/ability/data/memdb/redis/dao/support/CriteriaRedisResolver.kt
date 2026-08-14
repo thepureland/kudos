@@ -30,9 +30,6 @@ internal class CriteriaRedisResolver(
          */
         private const val SCORE_MIN: Double = -Double.MAX_VALUE
         private const val SCORE_MAX: Double = Double.MAX_VALUE
-
-        /** Epsilon for equality matching of ZSet scores, to avoid missed equality matches caused by floating-point approximation. */
-        private const val SCORE_EPSILON: Double = 1e-10
     }
 
     /**
@@ -82,7 +79,15 @@ internal class CriteriaRedisResolver(
     /**
      * Parses a single [Criterion] into a set of ids.
      * When value is null, the result depends on whether the operator accepts null (does not accept → empty set; accepts → null means "no constraint").
-     * Whether to use the ZSet index: numeric value or range-type operator.
+     *
+     * Index selection:
+     *  - Range operators always need the ZSet index (only it can answer a score range).
+     *  - Equality goes to the Set index, which is where `filterableProperties` live — **regardless of the
+     *    value's type**. Routing on "the value looks numeric" alone would send `type = 1` to the ZSet index and
+     *    silently return nothing whenever `type` is declared filterable but not sortable, which is the natural
+     *    way to declare an enum-like numeric column.
+     *  - A numeric value whose Set index key is absent falls back to the ZSet index, so properties declared only
+     *    in `sortableProperties` still answer equality queries.
      *
      * @param c Single condition.
      * @return The set of ids matching this condition.
@@ -94,8 +99,32 @@ internal class CriteriaRedisResolver(
             if (c.operator.acceptNull) return null
             return emptySet()
         }
-        val useZSet = isNumericValue(value) || isRangeOperator(c.operator)
-        return if (useZSet) idsFromZSet(c.property, c.operator, value) else idsFromSet(c.property, c.operator, value)
+        if (isRangeOperator(c.operator)) return idsFromZSet(c.property, c.operator, value)
+        if (!isNumericValue(value)) return idsFromSet(c.property, c.operator, value)
+        return if (hasSetIndexFor(c.property, c.operator, value)) idsFromSet(c.property, c.operator, value)
+        else idsFromZSet(c.property, c.operator, value)
+    }
+
+    /**
+     * Whether a Set index key exists for this equality condition, i.e. whether the property was written as a
+     * filterable one. Used only to disambiguate numeric values, which both index types could serve.
+     *
+     * @return true if at least one Set index key backing this condition exists.
+     * @author K
+     * @since 1.0.0
+     */
+    private fun hasSetIndexFor(property: String, operator: OperatorEnum, value: Any): Boolean = when (operator) {
+        OperatorEnum.EQ, OperatorEnum.IEQ -> redisTemplate.hasKey(setKey(property, value.toString()))
+        OperatorEnum.IN -> inValuesOf(value).any { redisTemplate.hasKey(setKey(property, it)) }
+        else -> false
+    }
+
+    /** Normalizes the many accepted shapes of an IN value into the list of its string members. */
+    private fun inValuesOf(value: Any): List<String> = when (value) {
+        is Collection<*> -> value.map { it.toString() }
+        is Array<*> -> value.map { it.toString() }
+        is String -> value.split(",").map { it.trim() }
+        else -> listOf(value.toString())
     }
 
     /**
@@ -151,12 +180,7 @@ internal class CriteriaRedisResolver(
     private fun idsFromSet(property: String, operator: OperatorEnum, value: Any): Set<String>? = when (operator) {
         OperatorEnum.EQ, OperatorEnum.IEQ -> setMembers(setKey(property, value.toString()))
         OperatorEnum.IN -> {
-            val values = when (value) {
-                is Collection<*> -> value.map { it.toString() }
-                is Array<*> -> value.map { it.toString() }
-                is String -> value.split(",").map { it.trim() }
-                else -> listOf(value.toString())
-            }
+            val values = inValuesOf(value)
             if (values.isEmpty()) emptySet()
             else {
                 val keys = values.map { setKey(property, it) }
@@ -170,8 +194,10 @@ internal class CriteriaRedisResolver(
     /**
      * Queries ids via the ZSet index for numeric or range operators.
      *
-     * Range endpoints use [SCORE_EPSILON] to handle "strict greater-than / less-than" — floating-point equality matching is unreliable,
-     * so we use a tiny offset to turn an open interval into a closed one, then let `rangeByScore` handle it.
+     * Strict bounds (GT/LT/NOT_BETWEEN) are expressed by moving the endpoint one ULP with [Math.nextUp] /
+     * [Math.nextDown], which is exact at every magnitude. A fixed epsilon must NOT be used here: for scores
+     * around 1e12 (millisecond timestamps) any epsilon below the local ULP (~2.4e-4) is absorbed by rounding
+     * and GT silently degenerates into GE.
      *
      * @param property Property name.
      * @param operator Operator.
@@ -192,13 +218,13 @@ internal class CriteriaRedisResolver(
                 }
                 values.fold(emptySet()) { acc, v -> acc.union(zsetRange(key, v, v)) }
             }
-            OperatorEnum.GT -> zsetRange(key, toDouble(value) + SCORE_EPSILON, SCORE_MAX)
+            OperatorEnum.GT -> zsetRange(key, Math.nextUp(toDouble(value)), SCORE_MAX)
             OperatorEnum.GE -> zsetRange(key, toDouble(value), SCORE_MAX)
-            OperatorEnum.LT -> zsetRange(key, SCORE_MIN, toDouble(value) - SCORE_EPSILON)
+            OperatorEnum.LT -> zsetRange(key, SCORE_MIN, Math.nextDown(toDouble(value)))
             OperatorEnum.LE -> zsetRange(key, SCORE_MIN, toDouble(value))
             OperatorEnum.BETWEEN -> rangeMinMax(value)?.let { (min, max) -> zsetRange(key, min, max) } ?: emptySet()
             OperatorEnum.NOT_BETWEEN -> rangeMinMax(value)?.let { (min, max) ->
-                zsetRange(key, SCORE_MIN, min - SCORE_EPSILON).union(zsetRange(key, max + SCORE_EPSILON, SCORE_MAX))
+                zsetRange(key, SCORE_MIN, Math.nextDown(min)).union(zsetRange(key, Math.nextUp(max), SCORE_MAX))
             } ?: emptySet()
             else -> null
         }

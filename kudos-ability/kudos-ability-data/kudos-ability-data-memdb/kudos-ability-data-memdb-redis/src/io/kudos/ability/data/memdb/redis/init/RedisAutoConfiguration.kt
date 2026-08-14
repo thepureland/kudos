@@ -2,6 +2,7 @@ package io.kudos.ability.data.memdb.redis.init
 
 import io.kudos.ability.data.memdb.redis.RedisConnectFactory
 import io.kudos.ability.data.memdb.redis.RedisTemplates
+import io.kudos.ability.data.memdb.redis.aop.RateLimiterAspect
 import io.kudos.ability.data.memdb.redis.init.properties.RedisExtProperties
 import io.kudos.ability.data.memdb.redis.init.properties.RedisProperties
 import io.kudos.context.config.YamlPropertySourceFactory
@@ -16,6 +17,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 import org.springframework.context.annotation.Role
 import org.springframework.data.redis.connection.RedisConnectionFactory
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 
 
@@ -49,21 +51,31 @@ open class RedisAutoConfiguration : IComponentInitializer {
     ): RedisTemplates {
         val redisMap = redisProperties.redisMap
         val redisTemplateMap = mutableMapOf<String, RedisTemplate<Any, Any?>>()
+        val connectionFactoryMap = mutableMapOf<String, LettuceConnectionFactory>()
         redisMap.forEach { (key, properties) ->
             val lettuceConnectionFactory = RedisConnectFactory.newLettuceConnectionFactory(properties)
+            connectionFactoryMap[key] = lettuceConnectionFactory
             // createRedisTemplate already invokes afterPropertiesSet() on the template.
             redisTemplateMap[key] = createRedisTemplate(lettuceConnectionFactory, properties)
         }
 
         val defaultKey = requireNotNull(redisProperties.defaultRedis) { "kudos.ability.data.redis.default-redis must be set" }
         val defaultRedisTemplate = requireNotNull(redisTemplateMap[defaultKey]) { "no redis config for default-redis: $defaultKey" }
-        return RedisTemplates(redisTemplateMap, defaultRedisTemplate)
+        // RedisTemplates keeps the factories so their pools / Lettuce clients get closed on context shutdown.
+        return RedisTemplates(redisTemplateMap, defaultRedisTemplate, connectionFactoryMap)
     }
 
     @Bean("redisTemplate")
     @ConditionalOnMissingBean
     open fun redisTemplate(redisTemplateMap: RedisTemplates): RedisTemplate<Any, Any?> =
         redisTemplateMap.defaultRedisTemplate
+
+    // Registered here (not via component scanning) so the rate limiter works for every application that
+    // imports this configuration, regardless of the application's base package scan.
+    @Bean
+    @ConditionalOnMissingBean
+    open fun rateLimiterAspect(redisTemplateMap: RedisTemplates): RateLimiterAspect =
+        RateLimiterAspect(redisTemplateMap)
 
     /**
      * Creates a redisTemplate from the given Redis connection factory.
