@@ -1,0 +1,5 @@
+# Registers the multi-data-source migrator as a database initializer so that beans depending on
+# database initialization (@DependsOnDatabaseInitialization, JdbcTemplate, ...) are only created
+# after all module migrations have completed.
+org.springframework.boot.sql.init.dependency.DatabaseInitializerDetector=\
+io.kudos.ability.data.rdb.flyway.init.FlywayMigratorDatabaseInitializerDetector

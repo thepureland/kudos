@@ -14,24 +14,42 @@ kudos:
       # discovery; the ds mapping decision is never relaxed.
       auto-config:
         enabled: false
+      # Optional execution mode: "migrate" (default) applies migrations at startup;
+      # "dry-run" only LOGS each module's pending migrations without touching any schema.
+      # mode: migrate
+      # Flyway's own parameters. This module builds one Flyway instance per module and does NOT
+      # use Spring Boot's Flyway auto-configuration, so these live here rather than under
+      # spring.flyway.* (which is ignored, and warned about at startup).
+      flyway-config:
+        # `migrate` needs a flyway_history_<module> table; `baseline` creates it if missing
+        baseline-on-migrate: true
+        # Baseline version; scripts with a lower version are not executed by migrate
+        baseline-version: 0
+        # Character encoding
+        encoding: UTF-8
+        # Disallow out-of-order migration
+        out-of-order: false
+        # Validate migrations on migrate
+        validate-on-migrate: false
+        # A missing sql/<module>/<dbType> directory aborts startup instead of silently reporting
+        # "up to date" (e.g. the module only ships postgresql scripts but runs against h2).
+        fail-on-missing-locations: true
+        # Disable Flyway's clean command (clean drops all tables under the schema)
+        clean-disabled: true
+        # Placeholder replacement
+        placeholder-replacement: false
+      # Optional per-data-source overrides of flyway-config; unset fields inherit the global
+      # value, placeholders merge per key.
+      # datasource-flyway-config:
+      #   master:
+      #     out-of-order: true
+      #     placeholders:
+      #       app_schema: public
 
 spring:
   flyway:
-    # Enable Flyway
-    enabled: true
-    # Disable Flyway's clean command (clean drops all tables under the schema)
-    clean-disabled: true
-    # `migrate` needs a flyway_schema_history table; `baseline` creates it if missing
-    baseline-on-migrate: true
-    # Baseline version; scripts with a lower version are not executed by migrate
-    baseline-version: 0
-    # Character encoding
-    encoding: UTF-8
-    # Disallow out-of-order migration
-    out-of-order: false
-    # Schema(s) managed by Flyway; defaults to the schema in datasource.url when unset
-    #schemas: yt-boss
-    # Validate migrations on migrate
-    validate-on-migrate: false
-    # Placeholder replacement
-    placeholder-replacement: false
+    # This module does not use Spring Boot's Flyway auto-configuration (it depends on flyway-core
+    # only). Keeping this false makes that auto-configuration back off should the Boot Flyway
+    # starter ever land on the classpath transitively — it would otherwise try to migrate
+    # classpath:db/migration against the primary data source.
+    enabled: false

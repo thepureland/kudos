@@ -52,8 +52,25 @@ class FlywayTest {
                     assert(rs.next())
                     assertEquals("codex-placeholder", rs.getString(1))
                 }
+                // sql/module1/common/ merges into the same version stream as sql/module1/h2/
+                statement.executeQuery("select count(*) from test_table_flyway_common").use { rs ->
+                    assert(rs.next())
+                    assertEquals(1, rs.getInt(1))
+                }
             }
         }
+    }
+
+    /**
+     * Per-data-source override binding: test application.yml declares
+     * `kudos.ability.flyway.datasource-flyway-config.ds1.out-of-order: true`; the typed
+     * [FlywayMultiDataSourceProperties.FlywayOverrides] must carry it (unset fields stay null).
+     */
+    @Test
+    fun datasourceFlywayConfigBinds() {
+        val overrides = requireNotNull(properties.datasourceFlywayConfig["ds1"]) { "ds1 overrides should be bound" }
+        assertEquals(true, overrides.outOfOrder)
+        assertEquals(null, overrides.baselineOnMigrate)
     }
 
     /**

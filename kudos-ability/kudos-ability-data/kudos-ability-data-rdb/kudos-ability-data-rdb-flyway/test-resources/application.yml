@@ -1,8 +1,8 @@
 spring:
+  # Deliberately left here: proves the migrator warns about ignored spring.flyway.* keys
+  # (this module no longer uses Spring Boot's Flyway auto-configuration).
   flyway:
-    placeholder-replacement: true
-    placeholders:
-      flyway_test_name: codex-placeholder
+    baseline-description: ignored-on-purpose
   datasource:
     dynamic:
       primary: ds1
@@ -77,6 +77,15 @@ kudos:
         - no_exists
       auto-config:
         enabled: false
+      flyway-config:
+        placeholder-replacement: true
+        placeholders:
+          flyway_test_name: codex-placeholder
+      # Per-ds override binding proof for FlywayTest.datasourceFlywayConfigBinds
+      # (out-of-order=true is harmless here: scripts already apply strictly in order)
+      datasource-flyway-config:
+        ds1:
+          out-of-order: true
 
 logging:
   level:

@@ -155,8 +155,12 @@ micrometer-core = { module = "io.micrometer:micrometer-core"}
 spring-boot-starter-jetty = { module = "org.springframework.boot:spring-boot-starter-jetty"}
 #spring-boot-starter-undertow = { module = "org.springframework.boot:spring-boot-starter-undertow"}
 spring-boot-starter-flyway = { module = "org.springframework.boot:spring-boot-starter-flyway"}
-# Flyway 10+ split database adapters into separate artifacts; spring-boot-starter-flyway no longer
-# pulls in the PG adapter, and without it Flyway throws "Unsupported Database" on PostgreSQL (incl. 18).
+# kudos-ability-data-rdb-flyway builds its own per-module Flyway instances and does not use Spring
+# Boot's Flyway auto-configuration, so it depends on the engine alone (no spring-boot-flyway).
+# Version is aligned by the spring-boot BOM.
+flyway-core = { module = "org.flywaydb:flyway-core"}
+# Flyway 10+ split database adapters into separate artifacts; flyway-core no longer bundles the PG
+# adapter, and without it Flyway throws "Unsupported Database" on PostgreSQL (incl. 18).
 # Version is aligned by the spring-boot BOM.
 flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql"}
 spring-cloud-loadbalancer = { module = "org.springframework.cloud:spring-cloud-loadbalancer"}

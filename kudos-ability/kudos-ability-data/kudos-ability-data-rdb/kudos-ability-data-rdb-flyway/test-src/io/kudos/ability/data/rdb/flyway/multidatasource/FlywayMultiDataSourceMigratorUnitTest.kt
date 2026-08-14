@@ -1,9 +1,8 @@
 package io.kudos.ability.data.rdb.flyway.multidatasource
 
-import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
+import org.h2.jdbcx.JdbcDataSource
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.Mockito
-import org.springframework.boot.flyway.autoconfigure.FlywayProperties
 import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.MapPropertySource
 import org.springframework.core.env.StandardEnvironment
@@ -12,13 +11,14 @@ import java.net.URLClassLoader
 import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
  * Pure unit tests for [FlywayMultiDataSourceMigrator] (no Spring container; collaborators are
- * injected via reflection, [DsContextProcessor] is mocked). Covers:
+ * injected via reflection, [IFlywayDataSourceResolver] is mocked). Covers:
  * - empty execution plan: migrate() returns early and never touches the data source layer
  * - auto-config mode: an on-disk `sql/<module>/` without a datasource-config mapping aborts startup
  * - auto-config happy path: when every on-disk module is mapped, the auto check passes and the
@@ -47,13 +47,12 @@ internal class FlywayMultiDataSourceMigratorUnitTest {
 
     private fun newMigrator(
         props: FlywayMultiDataSourceProperties,
-        dsContextProcessor: DsContextProcessor = Mockito.mock(DsContextProcessor::class.java),
+        dataSourceResolver: IFlywayDataSourceResolver = Mockito.mock(IFlywayDataSourceResolver::class.java),
         environment: ConfigurableEnvironment = StandardEnvironment()
     ): FlywayMultiDataSourceMigrator {
         val migrator = FlywayMultiDataSourceMigrator()
         inject(migrator, "flywayMultiDatasourceProperties", props)
-        inject(migrator, "flywayProperties", FlywayProperties())
-        inject(migrator, "dsContextProcessor", dsContextProcessor)
+        inject(migrator, "dataSourceResolver", dataSourceResolver)
         inject(migrator, "environment", environment)
         return migrator
     }
@@ -79,10 +78,10 @@ internal class FlywayMultiDataSourceMigratorUnitTest {
     /** Empty datasource-config → empty plan → early return, data source layer never consulted. */
     @Test
     fun migrateWithEmptyPlanIsNoOp() {
-        val dsProcessor = Mockito.mock(DsContextProcessor::class.java)
-        val migrator = newMigrator(FlywayMultiDataSourceProperties(), dsProcessor)
+        val resolver = Mockito.mock(IFlywayDataSourceResolver::class.java)
+        val migrator = newMigrator(FlywayMultiDataSourceProperties(), resolver)
         migrator.migrate()
-        Mockito.verifyNoInteractions(dsProcessor)
+        Mockito.verifyNoInteractions(resolver)
     }
 
     /**
@@ -108,12 +107,12 @@ internal class FlywayMultiDataSourceMigratorUnitTest {
      */
     @Test
     fun autoConfigWithAllModulesMappedProceedsToMigration() {
-        val dsProcessor = Mockito.mock(DsContextProcessor::class.java)
-        Mockito.`when`(dsProcessor.haveDataSource("ds_all")).thenReturn(false)
+        val resolver = Mockito.mock(IFlywayDataSourceResolver::class.java)
+        Mockito.`when`(resolver.hasDataSource("ds_all")).thenReturn(false)
         val props = FlywayMultiDataSourceProperties()
         props.datasourceConfig = linkedMapOf("ds_all" to "module1,module_bad")
         props.autoConfig.enabled = true
-        val migrator = newMigrator(props, dsProcessor)
+        val migrator = newMigrator(props, resolver)
         val e = assertFailsWith<IllegalStateException> { migrator.migrate() }
         assertTrue(e.message!!.contains("[ds_all]"), "message should name the data source: ${e.message}")
         assertTrue(e.message!!.contains("does not exist"), "should be the missing-ds error: ${e.message}")
@@ -188,12 +187,12 @@ internal class FlywayMultiDataSourceMigratorUnitTest {
             jar.write("create table t_jar(id int);".toByteArray())
             jar.closeEntry()
         }
-        val dsProcessor = Mockito.mock(DsContextProcessor::class.java)
-        Mockito.`when`(dsProcessor.haveDataSource("ds_jar")).thenReturn(false)
+        val resolver = Mockito.mock(IFlywayDataSourceResolver::class.java)
+        Mockito.`when`(resolver.hasDataSource("ds_jar")).thenReturn(false)
         withExtraClasspath(jarFile.toURI().toURL()) {
             val props = FlywayMultiDataSourceProperties()
             props.datasourceConfig = linkedMapOf("ds_jar" to "modjar")
-            val migrator = newMigrator(props, dsProcessor)
+            val migrator = newMigrator(props, resolver)
             val e = assertFailsWith<IllegalStateException> { migrator.migrate() }
             assertTrue(e.message!!.contains("ds_jar"), "message should name the data source: ${e.message}")
             assertTrue(e.message!!.contains("modjar"), "message should name the jar module: ${e.message}")
@@ -209,28 +208,84 @@ internal class FlywayMultiDataSourceMigratorUnitTest {
     fun sqlRootAsPlainFileContributesNoModules(@TempDir tempDir: File) {
         val sqlAsFile = File(tempDir, "sql")
         assertTrue(sqlAsFile.createNewFile(), "should create a plain file named sql")
-        val dsProcessor = Mockito.mock(DsContextProcessor::class.java)
+        val resolver = Mockito.mock(IFlywayDataSourceResolver::class.java)
         withExtraClasspath(tempDir.toURI().toURL()) {
             val props = FlywayMultiDataSourceProperties()
             props.datasourceConfig = linkedMapOf("ds_file" to "module_in_file_entry")
-            val migrator = newMigrator(props, dsProcessor)
+            val migrator = newMigrator(props, resolver)
             migrator.migrate() // must not throw: orphan module is warned and skipped
-            Mockito.verifyNoInteractions(dsProcessor)
+            Mockito.verifyNoInteractions(resolver)
         }
     }
 
-    /** haveDataSource=true but getDataSource=null → checkNotNull must fail with a clear message. */
+    /** hasDataSource=true but getDataSource=null → checkNotNull must fail with a clear message. */
     @Test
     fun nullResolvedDataSourceAborts() {
-        val dsProcessor = Mockito.mock(DsContextProcessor::class.java)
-        Mockito.`when`(dsProcessor.haveDataSource("ds_null")).thenReturn(true)
-        Mockito.`when`(dsProcessor.getDataSource("ds_null")).thenReturn(null)
+        val resolver = Mockito.mock(IFlywayDataSourceResolver::class.java)
+        Mockito.`when`(resolver.hasDataSource("ds_null")).thenReturn(true)
+        Mockito.`when`(resolver.getDataSource("ds_null")).thenReturn(null)
         val props = FlywayMultiDataSourceProperties()
         props.datasourceConfig = linkedMapOf("ds_null" to "module1")
-        val migrator = newMigrator(props, dsProcessor)
+        val migrator = newMigrator(props, resolver)
         val e = assertFailsWith<IllegalStateException> { migrator.migrateByModule("module1", "ds_null") }
         assertTrue(e.message!!.contains("resolved to null"), "unexpected message: ${e.message}")
         assertTrue(e.message!!.contains("ds_null"), "message should name the data source: ${e.message}")
+    }
+
+    /**
+     * `spring.flyway.*` keys are not used by this module (it never runs Boot's Flyway
+     * auto-configuration): they must be reported as ignored, except `spring.flyway.enabled`,
+     * which this module sets itself to keep Boot's auto-configuration inert.
+     */
+    @Test
+    fun ignoredSpringFlywayKeysAreReported() {
+        val environment = StandardEnvironment()
+        environment.propertySources.addFirst(
+            MapPropertySource(
+                "legacy-flyway-config",
+                mapOf(
+                    "spring.flyway.enabled" to "false",
+                    "spring.flyway.out-of-order" to "true",
+                    "spring.flyway.placeholders.app_schema" to "public"
+                )
+            )
+        )
+        val migrator = newMigrator(FlywayMultiDataSourceProperties(), environment = environment)
+        assertEquals(
+            setOf("spring.flyway.out-of-order", "spring.flyway.placeholders.app_schema"),
+            migrator.warnOnIgnoredSpringFlywayKeys()
+        )
+    }
+
+    /**
+     * mode=dry-run: the execution plan is previewed via Flyway `info()` — pending migrations are
+     * logged but nothing is applied: neither business tables nor the module history table may
+     * exist afterwards.
+     */
+    @Test
+    fun dryRunModePreviewsWithoutApplying() {
+        val resolver = Mockito.mock(IFlywayDataSourceResolver::class.java)
+        val ds = JdbcDataSource()
+        ds.setURL("jdbc:h2:mem:flyway_migrator_dry_run;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1;")
+        ds.user = "sa"
+        ds.password = "sa"
+        Mockito.`when`(resolver.hasDataSource("ds_dry")).thenReturn(true)
+        Mockito.`when`(resolver.getDataSource("ds_dry")).thenReturn(ds)
+        val props = FlywayMultiDataSourceProperties()
+        props.datasourceConfig = linkedMapOf("ds_dry" to "module1")
+        props.mode = "dry-run"
+        val migrator = newMigrator(props, resolver)
+        migrator.migrate()
+        ds.connection.use { conn ->
+            conn.createStatement().use { statement ->
+                statement.executeQuery(
+                    "select count(*) from information_schema.tables where lower(table_name) like 'test_table_flyway%' or lower(table_name) like 'flyway_history%'"
+                ).use { rs ->
+                    assertTrue(rs.next())
+                    assertEquals(0, rs.getInt(1), "dry-run must not create any table")
+                }
+            }
+        }
     }
 
     /**
@@ -240,12 +295,12 @@ internal class FlywayMultiDataSourceMigratorUnitTest {
      */
     @Test
     fun executionOrderReordersDataSources() {
-        val dsProcessor = Mockito.mock(DsContextProcessor::class.java)
-        Mockito.`when`(dsProcessor.haveDataSource(Mockito.anyString())).thenReturn(false)
+        val resolver = Mockito.mock(IFlywayDataSourceResolver::class.java)
+        Mockito.`when`(resolver.hasDataSource(Mockito.anyString())).thenReturn(false)
         val props = FlywayMultiDataSourceProperties()
         props.datasourceConfig = linkedMapOf("ds_a" to "module1", "ds_b" to "module_bad")
         props.executionOrder = listOf(" ", "ds_b", "no_such_ds")
-        val migrator = newMigrator(props, dsProcessor)
+        val migrator = newMigrator(props, resolver)
         val e = assertFailsWith<IllegalStateException> { migrator.migrate() }
         assertTrue(e.message!!.contains("[ds_b]"), "ds_b should be attempted first: ${e.message}")
         assertTrue(e.message!!.contains("[module_bad]"), "module_bad should be attempted first: ${e.message}")

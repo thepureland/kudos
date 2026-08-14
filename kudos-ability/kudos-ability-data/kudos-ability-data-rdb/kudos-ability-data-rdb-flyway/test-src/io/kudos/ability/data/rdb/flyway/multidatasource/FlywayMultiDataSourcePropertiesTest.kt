@@ -1,7 +1,9 @@
 package io.kudos.ability.data.rdb.flyway.multidatasource
 
+import io.kudos.ability.data.rdb.flyway.kit.FlywayConfig
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -107,5 +109,50 @@ internal class FlywayMultiDataSourcePropertiesTest {
         assertTrue(props.getDatasourceModules().isEmpty())
         assertTrue(props.executionOrder.isEmpty())
         assertFalse(props.autoConfig.enabled)
+        assertFalse(props.isDryRun())
+        assertTrue(props.datasourceFlywayConfig.isEmpty())
+    }
+
+    /** mode accepts migrate / dry-run in any casing and with `_` for `-`; anything else fails loudly. */
+    @Test
+    fun modeParsingAndValidation() {
+        val props = FlywayMultiDataSourceProperties()
+        props.mode = "migrate"
+        assertFalse(props.isDryRun())
+        props.mode = "dry-run"
+        assertTrue(props.isDryRun())
+        props.mode = " DRY_RUN "
+        assertTrue(props.isDryRun())
+        props.mode = "nonsense"
+        val e = assertFailsWith<IllegalStateException> { props.isDryRun() }
+        assertTrue(e.message!!.contains("nonsense"), "message should name the bad value: ${e.message}")
+    }
+
+    /**
+     * FlywayOverrides.mergedInto: null fields inherit the global value, set fields win,
+     * placeholders merge per key (override wins on conflict), and the base object is never mutated.
+     */
+    @Test
+    fun flywayOverridesMergeOnTopOfGlobal() {
+        val base = FlywayConfig().apply {
+            outOfOrder = false
+            placeholderReplacement = true
+            placeholders = mutableMapOf("a" to "1", "b" to "2")
+            baselineVersion = "0"
+        }
+        val overrides = FlywayMultiDataSourceProperties.FlywayOverrides().apply {
+            outOfOrder = true
+            encoding = "ISO-8859-1"
+            placeholders = linkedMapOf("b" to "20", "c" to "3")
+        }
+        val merged = overrides.mergedInto(base)
+        assertTrue(merged.outOfOrder)
+        assertEquals("0", merged.baselineVersion)
+        assertEquals("ISO-8859-1", merged.encoding)
+        assertTrue(merged.placeholderReplacement)
+        assertEquals(mapOf("a" to "1", "b" to "20", "c" to "3"), merged.placeholders)
+        // the base must stay untouched
+        assertFalse(base.outOfOrder)
+        assertEquals(mapOf("a" to "1", "b" to "2"), base.placeholders)
     }
 }

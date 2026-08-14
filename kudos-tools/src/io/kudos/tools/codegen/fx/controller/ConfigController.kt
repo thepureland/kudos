@@ -1,5 +1,6 @@
 package io.kudos.tools.codegen.fx.controller
 
+import io.kudos.ability.data.rdb.flyway.kit.FlywayConfig
 import io.kudos.ability.data.rdb.flyway.kit.FlywayKit
 import io.kudos.ability.data.rdb.jdbc.kit.DataSourceKit
 import io.kudos.ability.data.rdb.jdbc.kit.RdbKit
@@ -15,7 +16,6 @@ import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.control.*
 import javafx.stage.DirectoryChooser
-import org.springframework.boot.flyway.autoconfigure.FlywayProperties
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -243,24 +243,24 @@ class ConfigController : Initializable {
     /**
      * Runs Flyway migrations (for codegen's own metadata tables).
      *
-     * - `isBaselineOnMigrate = true`: new databases are baselined automatically to avoid empty-DB errors
-     * - `isValidateOnMigrate = false`: validation is permissive so historical scripts can be tweaked locally
-     * - `isPlaceholderReplacement = false`: this tool's scripts contain no placeholders, so disable to avoid `${}` misinterpretation
+     * - `baselineOnMigrate = true`: new databases are baselined automatically to avoid empty-DB errors
+     * - `validateOnMigrate = false`: validation is permissive so historical scripts can be tweaked locally
+     * - `placeholderReplacement = false`: this tool's scripts contain no placeholders, so disable to avoid `${}` misinterpretation
      *
      * @param dataSource Data source established by the previous step
      * @author K
      * @since 1.0.0
      */
     private fun migrateDb(dataSource: DataSource) {
-        val flywayProperties = FlywayProperties().apply {
-            isBaselineOnMigrate = true
+        val flywayConfig = FlywayConfig().apply {
+            baselineOnMigrate = true
             baselineVersion = "0"
-            encoding = Charsets.UTF_8
-            isOutOfOrder = false
-            isValidateOnMigrate = false
-            isPlaceholderReplacement = false
+            encoding = Charsets.UTF_8.name()
+            outOfOrder = false
+            validateOnMigrate = false
+            placeholderReplacement = false
         }
-        FlywayKit.migrate("codegen", dataSource, flywayProperties)
+        FlywayKit.migrate("codegen", dataSource, flywayConfig)
     }
 
     /**

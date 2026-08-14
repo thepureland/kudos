@@ -1,16 +1,18 @@
 package io.kudos.ability.data.rdb.flyway.multidatasource
 
+import io.kudos.ability.data.rdb.flyway.kit.FlywayConfig
 import io.kudos.ability.data.rdb.flyway.kit.FlywayKit
-import io.kudos.ability.data.rdb.jdbc.datasource.DsContextProcessor
+import io.kudos.ability.data.rdb.flyway.kit.IFlywayModuleConfigCustomizer
 import io.kudos.base.io.FileKit
 import io.kudos.base.io.scanner.classpath.ClassPathScanner
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.config.YamlPropertySourceFactory
 import jakarta.annotation.Resource
-import org.springframework.boot.flyway.autoconfigure.FlywayProperties
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.env.ConfigurableEnvironment
 import org.springframework.core.env.EnumerablePropertySource
 import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
 
 /**
@@ -33,12 +35,20 @@ import java.io.File
  *    aborts — Flyway can't reconcile a single history table sourced from two origins.
  * 7. Any module's migration failure interrupts the rest (exception from [FlywayKit] propagates).
  * 8. Supports different RDB types in one pass (`dbType` is detected from each module's data source).
+ * 9. Flyway parameters come from `kudos.ability.flyway.flyway-config.*` ([FlywayConfig]), optionally
+ *    overridden per data source; `spring.flyway.*` is NOT used and is warned about at startup.
  *
- * Coupling: data source instances are resolved via [DsContextProcessor], so this currently
- * **depends on the dynamic-routing data source provided by the baomidou dynamic-datasource starter**.
+ * Data source instances are resolved via the [IFlywayDataSourceResolver] SPI; the default
+ * implementation delegates to the baomidou dynamic-routing table, but any other multi-data-source
+ * mechanism can plug in by registering its own resolver bean.
+ *
+ * Startup ordering: [io.kudos.ability.data.rdb.flyway.init.FlywayMigratorDatabaseInitializerDetector]
+ * registers this class as a Spring Boot database initializer, so beans detected as depending on
+ * database initialization are created only after migrations complete.
  *
  * @author K
  * @author AI: Codex
+ * @author AI: Claude
  * @since 1.0.0
  */
 open class FlywayMultiDataSourceMigrator {
@@ -47,13 +57,20 @@ open class FlywayMultiDataSourceMigrator {
     private lateinit var flywayMultiDatasourceProperties: FlywayMultiDataSourceProperties
 
     @Resource
-    private lateinit var flywayProperties: FlywayProperties
-
-    @Resource
-    private lateinit var dsContextProcessor: DsContextProcessor
+    private lateinit var dataSourceResolver: IFlywayDataSourceResolver
 
     @Resource
     private lateinit var environment: ConfigurableEnvironment
+
+    /** Per-module configuration hooks; empty when no such beans are registered (see [IFlywayModuleConfigCustomizer]). */
+    @Autowired(required = false)
+    private var moduleConfigCustomizers: List<IFlywayModuleConfigCustomizer> = emptyList()
+
+    /** dbType per datasource key, so N modules on one data source detect it only once. */
+    private val dbTypeCache = ConcurrentHashMap<String, String>()
+
+    /** Effective (global + per-ds override) Flyway parameters per datasource key. */
+    private val effectiveConfigCache = ConcurrentHashMap<String, FlywayConfig>()
 
     private val log = LogFactory.getLog(this::class)
 
@@ -61,17 +78,23 @@ open class FlywayMultiDataSourceMigrator {
      * Main entry point: scan the classpath, reconcile with declared `datasource-config`, build
      * an ordered `ds → [modules]` plan, then migrate. Any per-module failure propagates so Spring
      * startup is interrupted instead of running against a half-migrated schema.
+     *
+     * With `kudos.ability.flyway.mode=dry-run` the same plan is only previewed: each module's
+     * pending migrations are logged and nothing is applied.
      */
     fun migrate() {
+        warnOnIgnoredSpringFlywayKeys()
         val plan = buildExecutionPlan()
         if (plan.isEmpty()) {
             log.info("kudos-ability-data-rdb-flyway: no Flyway modules to execute (no sql/<module>/ on classpath, or datasource-config is empty)")
             return
         }
+        val dryRun = flywayMultiDatasourceProperties.isDryRun()
         val totalModules = plan.values.sumOf { it.size }
-        log.info("kudos-ability-data-rdb-flyway: discovered $totalModules Flyway module(s); execution plan by data source: $plan")
+        val dryRunHint = if (dryRun) " [dry-run: nothing will be applied]" else ""
+        log.info("kudos-ability-data-rdb-flyway: discovered $totalModules Flyway module(s); execution plan by data source: $plan$dryRunHint")
         plan.forEach { (ds, modules) ->
-            modules.forEach { module -> migrateByModule(module, ds) }
+            modules.forEach { module -> if (dryRun) previewByModule(module, ds) else migrateByModule(module, ds) }
         }
     }
 
@@ -81,32 +104,109 @@ open class FlywayMultiDataSourceMigrator {
      * source, throws with a hint pointing at the originating yml file(s) — see
      * [resolveDatasourceConfigSources].
      */
-    fun migrateByModule(moduleName: String) {
-        val datasourceKey = flywayMultiDatasourceProperties.getDataSourceKey(moduleName)
+    fun migrateByModule(moduleName: String) = migrateByModule(moduleName, requireDatasourceKey(moduleName))
+
+    /**
+     * 2-arg variant: validates that [datasourceKey] actually exists in the resolver's routing
+     * table before handing off to [FlywayKit]. Public on purpose: besides tests and code
+     * generators, it is the entry point for data sources registered at runtime (e.g. migrating a
+     * newly onboarded tenant's data source without restarting).
+     */
+    fun migrateByModule(moduleName: String, datasourceKey: String) {
+        val dataSource = resolveDataSource(moduleName, datasourceKey)
+        val dbType = dbTypeCache.getOrPut(datasourceKey) { FlywayKit.detectDbType(dataSource) }
+        FlywayKit.migrate(moduleName, dataSource, effectiveConfig(datasourceKey), dbType, moduleConfigCustomizers)
+    }
+
+    /**
+     * Dry-run preview of a single (module, ds) pair: logs the pending migrations without applying
+     * anything (see [FlywayKit.pendingMigrations] — `info()` never modifies the schema).
+     */
+    fun previewByModule(moduleName: String, datasourceKey: String) {
+        val dataSource = resolveDataSource(moduleName, datasourceKey)
+        val dbType = dbTypeCache.getOrPut(datasourceKey) { FlywayKit.detectDbType(dataSource) }
+        val pending = FlywayKit.pendingMigrations(
+            moduleName, dataSource, effectiveConfig(datasourceKey), dbType, moduleConfigCustomizers
+        )
+        if (pending.isEmpty()) {
+            log.info("[dry-run] module [$moduleName] on data source [$datasourceKey] is up to date; nothing pending.")
+        } else {
+            log.warn("[dry-run] module [$moduleName] on data source [$datasourceKey] has ${pending.size} pending migration(s), NOT applied: $pending")
+        }
+    }
+
+    /**
+     * Repair the schema history of one module (remove failed records, realign checksums — see
+     * [FlywayKit.repair]); the data source is looked up from `datasource-config` like in
+     * [migrateByModule]. Intended for ops after a hotfix edited an already-applied script.
+     */
+    fun repairByModule(moduleName: String) = repairByModule(moduleName, requireDatasourceKey(moduleName))
+
+    /** 2-arg variant of [repairByModule] targeting an explicit data source key. */
+    fun repairByModule(moduleName: String, datasourceKey: String) {
+        val dataSource = resolveDataSource(moduleName, datasourceKey)
+        val dbType = dbTypeCache.getOrPut(datasourceKey) { FlywayKit.detectDbType(dataSource) }
+        FlywayKit.repair(moduleName, dataSource, effectiveConfig(datasourceKey), dbType, moduleConfigCustomizers)
+    }
+
+    /** Data source key of [moduleName] per `datasource-config`; error (with source tracing) when unmapped. */
+    private fun requireDatasourceKey(moduleName: String): String =
+        flywayMultiDatasourceProperties.getDataSourceKey(moduleName)
             ?: run {
                 val sources = resolveDatasourceConfigSources().ifEmpty { listOf("unknown") }
                 error("Module [$moduleName] has no data source configured under kudos.ability.flyway.datasource-config (configuration sources: $sources)")
             }
-        migrateByModule(moduleName, datasourceKey)
-    }
 
-    /**
-     * 2-arg variant: validates that [datasourceKey] actually exists in the dynamic routing table
-     * before handing off to [FlywayKit]. Exposed `internal` so tests and adjacent callers (e.g.
-     * code generators inside the same module) can drive a specific (module, ds) pair.
-     */
-    internal fun migrateByModule(moduleName: String, datasourceKey: String) {
-        if (!dsContextProcessor.haveDataSource(datasourceKey)) {
+    /** Validate [datasourceKey] against the resolver's routing table and return its data source. */
+    private fun resolveDataSource(moduleName: String, datasourceKey: String): javax.sql.DataSource {
+        if (!dataSourceResolver.hasDataSource(datasourceKey)) {
             val sources = resolveDatasourceConfigSources().ifEmpty { listOf("unknown") }
             val errMsg = "The data source [$datasourceKey] configured for module [$moduleName] does not exist! All subsequent database updates are aborted! (configuration sources: $sources)"
             log.error(errMsg)
             error(errMsg)
         }
-
-        val dataSource = checkNotNull(dsContextProcessor.getDataSource(datasourceKey)) {
+        return checkNotNull(dataSourceResolver.getDataSource(datasourceKey)) {
             "Data source [$datasourceKey] resolved to null"
         }
-        FlywayKit.migrate(moduleName, dataSource, flywayProperties)
+    }
+
+    /**
+     * Effective Flyway parameters for [datasourceKey]: the global `flyway-config` with the
+     * matching `datasource-flyway-config` overrides merged on top (cached — the result is
+     * immutable per startup).
+     */
+    private fun effectiveConfig(datasourceKey: String): FlywayConfig {
+        val global = flywayMultiDatasourceProperties.flywayConfig
+        return effectiveConfigCache.getOrPut(datasourceKey) {
+            flywayMultiDatasourceProperties.datasourceFlywayConfig[datasourceKey]?.mergedInto(global) ?: global
+        }
+    }
+
+    /**
+     * Warn about `spring.flyway.*` keys found in the environment: this module never runs Spring
+     * Boot's Flyway auto-configuration, so those keys have no effect — their kudos equivalents
+     * live under `kudos.ability.flyway.flyway-config.*`. `spring.flyway.enabled` is exempt: this
+     * module sets it to false itself, to keep Boot's auto-configuration inert should it ever
+     * reappear on the classpath.
+     *
+     * @return the ignored property names (empty when the environment declares none)
+     */
+    internal fun warnOnIgnoredSpringFlywayKeys(): Set<String> {
+        val ignored = linkedSetOf<String>()
+        for (propertySource in environment.propertySources) {
+            if (propertySource !is EnumerablePropertySource<*>) continue
+            propertySource.propertyNames.filterTo(ignored) {
+                it.startsWith("spring.flyway.") && it != "spring.flyway.enabled"
+            }
+        }
+        if (ignored.isNotEmpty()) {
+            log.warn(
+                "kudos-ability-data-rdb-flyway ignores these spring.flyway.* properties: $ignored." +
+                    " This module does not use Spring Boot's Flyway auto-configuration;" +
+                    " move them to kudos.ability.flyway.flyway-config.* (see the module README)."
+            )
+        }
+        return ignored
     }
 
     /**
@@ -193,14 +293,17 @@ open class FlywayMultiDataSourceMigrator {
 
     /**
      * Return the names of the direct subdirectories of [sqlRootPath] under a given classpath URL;
-     * automatically handles both jar and filesystem protocols.
+     * automatically handles both jar and filesystem protocols. Only directories qualify as module
+     * names — stray files directly under `sql/` are ignored in both branches.
      */
     private fun listChildFolders(url: java.net.URL, sqlRootPath: String): List<String> {
         return if (url.protocol == "jar") {
             val paths = FileKit.listFilesOrDirsInJar(url.toString().removeSuffix(sqlRootPath), sqlRootPath)
-            paths.map { it.removePrefix("$sqlRootPath/").removeSuffix("/") }
+            paths.filter { it.endsWith("/") }.map { it.removePrefix("$sqlRootPath/").removeSuffix("/") }
         } else {
-            File(url.path).listFiles()?.map { it.name }.orEmpty()
+            // url.path is percent-encoded (spaces, CJK characters, ...); go through the URI so the path is decoded
+            val dir = runCatching { File(url.toURI()) }.getOrElse { File(url.path) }
+            dir.listFiles()?.filter { it.isDirectory }?.map { it.name }.orEmpty()
         }
     }
 
