@@ -80,14 +80,27 @@ internal class ScanClearRedisCache(
 ) : RedisCache(name, cacheWriter, cacheConfiguration) {
 
     override fun clear() {
-        deleteAllKeys()
+        val template = redisTemplate ?: findRedisTemplate() ?: run {
+            // No RedisTemplate available (rare, e.g. pure unit-test mocks) — fall back to Spring's own clear().
+            super.clear()
+            return
+        }
+        deleteAllKeysWith(template)
     }
 
     /**
      * Spring's `Cache.invalidate()` reports whether anything was actually removed. It reaches the same
      * `cacheWriter` path as [clear], so it needs the same workaround.
+     *
+     * Each method falls back to **its own** super implementation. Routing both through one fallback looked
+     * tidier but changed what `clear()` does when no template is available: `RedisCache.invalidate()` and
+     * `RedisCache.clear()` are not interchangeable, and callers (plus `ScanClearRedisCacheTest`) rely on
+     * `clear()` reaching `cacheWriter.clear(name, pattern)`.
      */
-    override fun invalidate(): Boolean = deleteAllKeys()
+    override fun invalidate(): Boolean {
+        val template = redisTemplate ?: findRedisTemplate() ?: return super.invalidate()
+        return deleteAllKeysWith(template)
+    }
 
     /**
      * The full Redis key this cache would use for [key] — prefix included.
@@ -104,15 +117,11 @@ internal class ScanClearRedisCache(
     internal fun redisKeyOf(key: Any): String = createCacheKey(key)
 
     /**
-     * Deletes every key under this cache's prefix.
+     * Deletes every key under this cache's prefix using [template].
      *
      * @return true when at least one key was removed
      */
-    private fun deleteAllKeys(): Boolean {
-        val template = redisTemplate ?: findRedisTemplate() ?: run {
-            // No RedisTemplate available (rare, e.g. pure unit-test mocks) — fall back to Spring's default logic
-            return super.invalidate()
-        }
+    private fun deleteAllKeysWith(template: RedisTemplate<String, Any>): Boolean {
         val pattern = "${cacheConfiguration.getKeyPrefixFor(name)}*"
         val matched = template.keys(pattern)
         if (matched.isEmpty()) return false

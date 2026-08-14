@@ -95,6 +95,95 @@ internal class FeignCacheInterceptorsTest {
     }
 
     @Test
+    fun request_binaryBodiesThatDifferDoNotShareACacheKey() {
+        // body 以原始字节参与摘要。旧实现走 String(body)：用平台字符集解码任意字节既不跨机器确定，
+        // 对二进制载荷（protobuf、文件上传）还是有损的——无法映射的字节统统塌缩成替换字符，
+        // 于是两个不同的 body 会算出同一个 key，一个请求可能拿到另一个请求的缓存响应。
+        helper.localCacheEnabled = true
+        val interceptor = newRequestInterceptor(appName = "svc-A")
+
+        // 两串各自都不是合法 UTF-8 的字节，且互不相同
+        val bodyA = byteArrayOf(0xC3.toByte(), 0x28)
+        val bodyB = byteArrayOf(0xA0.toByte(), 0xA1.toByte())
+
+        val templateA = newRequestTemplate(method = "POST", url = "/upload", body = bodyA)
+        val templateB = newRequestTemplate(method = "POST", url = "/upload", body = bodyB)
+        interceptor.apply(templateA)
+        interceptor.apply(templateB)
+
+        assertNotEquals(
+            templateA.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.first(),
+            templateB.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.first(),
+            "二进制 body 不同则 cacheKey 必须不同，否则会串用彼此的缓存响应"
+        )
+    }
+
+    @Test
+    fun request_sameRequestProducesStableCacheKey() {
+        helper.localCacheEnabled = true
+        val interceptor = newRequestInterceptor(appName = "svc-A")
+
+        val first = newRequestTemplate(method = "GET", url = "/users/1")
+        val second = newRequestTemplate(method = "GET", url = "/users/1")
+        interceptor.apply(first)
+        interceptor.apply(second)
+
+        assertEquals(
+            first.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.first(),
+            second.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.first(),
+            "同一请求必须稳定地算出同一个 key"
+        )
+    }
+
+    // ---- per-client 开关 ------------------------------------------------------
+
+    @Test
+    fun request_excludedClientGetsNoCacheHeaders() {
+        // Spring Cloud 会把每个 RequestInterceptor 应用到所有 @FeignClient 上，
+        // 包括调用第三方 API 的那些——那会把内部内容指纹发给外部。
+        helper.localCacheEnabled = true
+        val interceptor = newRequestInterceptor(appName = "svc-A", excludeClients = setOf("third-party"))
+
+        val template = newRequestTemplate(method = "GET", url = "/x")
+            .apply { feignTarget(Target.HardCodedTarget(Any::class.java, "third-party", "http://third-party")) }
+        interceptor.apply(template)
+
+        assertNull(
+            template.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY],
+            "被排除的 client 不应带上任何缓存头"
+        )
+    }
+
+    @Test
+    fun request_allowListRestrictsToListedClients() {
+        helper.localCacheEnabled = true
+        val interceptor = newRequestInterceptor(appName = "svc-A", includeClients = setOf("internal-svc"))
+
+        val allowed = newRequestTemplate(method = "GET", url = "/x")
+            .apply { feignTarget(Target.HardCodedTarget(Any::class.java, "internal-svc", "http://internal-svc")) }
+        val other = newRequestTemplate(method = "GET", url = "/x")
+            .apply { feignTarget(Target.HardCodedTarget(Any::class.java, "other-svc", "http://other-svc")) }
+        interceptor.apply(allowed)
+        interceptor.apply(other)
+
+        assertNotNull(allowed.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY], "白名单内的 client 应参与")
+        assertNull(other.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY], "白名单外的 client 不应参与")
+    }
+
+    @Test
+    fun request_bothListsEmpty_appliesEverywhere() {
+        // 默认不配置时保持原有的"处处生效"行为。
+        helper.localCacheEnabled = true
+        val interceptor = newRequestInterceptor(appName = "svc-A")
+
+        val template = newRequestTemplate(method = "GET", url = "/x")
+            .apply { feignTarget(Target.HardCodedTarget(Any::class.java, "any-svc", "http://any-svc")) }
+        interceptor.apply(template)
+
+        assertNotNull(template.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY])
+    }
+
+    @Test
     fun request_doesNotCreateAKudosContextOnTheCallingThread() {
         // Feign 跑在 HTTP 客户端 / @Async / 舱壁线程池上。KudosContextHolder.get() 在没有绑定时会新建并 set 进
         // InheritableThreadLocal —— 既在池线程上留下永不回收的上下文（该类自己的 KDoc 就警告了这点），
@@ -449,8 +538,12 @@ internal class FeignCacheInterceptorsTest {
 
     // region helpers
 
-    private fun newRequestInterceptor(appName: String): FeignCacheRequestInterceptor {
-        return FeignCacheRequestInterceptor(helper, appName)
+    private fun newRequestInterceptor(
+        appName: String,
+        includeClients: Set<String> = emptySet(),
+        excludeClients: Set<String> = emptySet(),
+    ): FeignCacheRequestInterceptor {
+        return FeignCacheRequestInterceptor(helper, appName, includeClients, excludeClients)
     }
 
     private fun newRequestTemplate(method: String, url: String, body: ByteArray? = null): RequestTemplate {

@@ -63,7 +63,10 @@ open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
     open fun feignCacheRequestInterceptor(
         cacheHelper: ClientCacheHelper,
         @Value("\${spring.application.name:}") applicationName: String?,
-    ) = FeignCacheRequestInterceptor(cacheHelper, applicationName)
+        properties: InterServiceCacheClientProperties,
+    ) = FeignCacheRequestInterceptor(
+        cacheHelper, applicationName, properties.includeClients, properties.excludeClients
+    )
 
     /**
      * The converter set `SpringDecoder` decodes with.

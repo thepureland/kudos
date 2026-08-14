@@ -17,6 +17,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 /**
@@ -379,6 +380,33 @@ internal class MixHashCacheTest {
         val cache = MixHashCache("c", CacheStrategy.LOCAL_REMOTE, local, remote, "n")
         val res = cache.listBySetIndex<String, E>("c", E::class, "type", "A")
         assertEquals(1, res.size)
+    }
+
+    @Test
+    fun collectionReads_returnStableLocalInstancesAcrossCalls() {
+        // LOCAL_REMOTE 下重复读同一实体必须返回同一对象引用——这是 HashCacheKit.isLocalCacheEnabled
+        // 明确文档化的契约，HashCacheableBySecondaryAspect 也依赖它。
+        // 成员集合取自远端（保证完整），但实例必须取自本地：若每次都用远端新反序列化的对象覆盖本地，
+        // 两次读同一实体就会拿到不同实例。此前只有集成测试覆盖这一点，单测漏掉了。
+        val local = RecordingHashCache()
+        val remote = FreshInstanceHashCache()
+        val cache = MixHashCache("c", CacheStrategy.LOCAL_REMOTE, local, remote, "n")
+
+        val first = cache.listBySetIndex<String, E>("c", E::class, "type", "A")
+        val second = cache.listBySetIndex<String, E>("c", E::class, "type", "A")
+
+        assertEquals(1, first.size)
+        assertSame(first.first(), second.first(), "重复读同一实体必须返回同一对象引用")
+    }
+
+    /** Remote stand-in that hands back a *new* instance on every read, as real deserialization does. */
+    private class FreshInstanceHashCache : RecordingHashCache() {
+        override fun <PK, E : IIdEntity<PK>> listBySetIndex(
+            cacheName: String, entityClass: KClass<E>, property: String, value: Any
+        ): List<E> {
+            @Suppress("UNCHECKED_CAST")
+            return listOf(E("1", "A") as E)
+        }
     }
 
     @Test

@@ -12,10 +12,21 @@ package io.kudos.ability.cache.interservice.client.init
  * apparent sources is worse than one with an obvious source, so the field is gone and the property key stays.
  *
  * @property ttlSeconds Feign local cache TTL in seconds, default 10 minutes.
+ * @property includeClients `@FeignClient` names that may take part in cache negotiation. Empty (default)
+ *   means every client, preserving the previous behaviour.
+ * @property excludeClients `@FeignClient` names excluded from cache negotiation; takes precedence over
+ *   [includeClients].
+ *
+ *   Spring Cloud applies every `RequestInterceptor` bean to **every** Feign client, so by default the
+ *   `cache-key` / `cache-uid` headers also go out to third-party APIs — leaking an internal content
+ *   fingerprint, and risking rejection by gateways that sign or whitelist headers. List those clients here,
+ *   or switch to an allowlist via [includeClients].
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
 class InterServiceCacheClientProperties {
     var ttlSeconds: Int = 600
+    var includeClients: MutableSet<String> = mutableSetOf()
+    var excludeClients: MutableSet<String> = mutableSetOf()
 }

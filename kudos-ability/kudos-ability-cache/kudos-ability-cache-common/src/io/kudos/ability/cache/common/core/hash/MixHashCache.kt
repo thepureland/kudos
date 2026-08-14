@@ -170,6 +170,39 @@ internal class MixHashCache(
         )
     }
 
+    /**
+     * Takes membership and ordering from [fromRemote], but returns the **local** instance of each entity,
+     * backfilling only the ones the local tier does not have yet.
+     *
+     * This is what lets the two collection-read requirements coexist. Remote decides *which* entities are in the
+     * result, so a partial local subset can no longer masquerade as the whole set. Local supplies the *objects*,
+     * so repeatedly reading the same entity keeps returning the same reference — a documented property of
+     * LOCAL_REMOTE (see `HashCacheKit.isLocalCacheEnabled`) that callers such as
+     * `HashCacheableBySecondaryAspect` rely on.
+     *
+     * Overwriting local with every remote instance would satisfy the first requirement and break the second:
+     * each read deserializes fresh objects, so two consecutive reads of the same entity would hand back
+     * different instances.
+     *
+     * Entities that were missing locally are stored as-is, so the instance returned here is the very object now
+     * held locally, and the next read of it is reference-stable too.
+     */
+    private fun <PK, E : IIdEntity<PK>> preferLocalInstances(fromRemote: List<E>, entityClass: KClass<E>): List<E> {
+        val localCache = local ?: return fromRemote
+        if (fromRemote.isEmpty()) return fromRemote
+        val missing = mutableListOf<IIdEntity<*>>()
+        val resolved = fromRemote.map { remoteEntity ->
+            val id = remoteEntity.id
+            val localEntity = if (id == null) null else {
+                runCatching { localCache.getById(name, id, entityClass) }.getOrNull()
+            }
+            if (localEntity == null) missing.add(remoteEntity)
+            localEntity ?: remoteEntity
+        }
+        saveManyLocal(missing)
+        return resolved
+    }
+
     override fun existsById(cacheName: String, id: Any): Boolean {
         return when (strategy) {
             CacheStrategy.SINGLE_LOCAL -> local?.existsById(name, id) == true
@@ -273,8 +306,7 @@ internal class MixHashCache(
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
             // Deliberately *not* "return the local result if it is non-empty": see [collectionReadNote].
             val fromRemote = remote?.listAll(name, entityClass) ?: return emptyList()
-            saveManyLocal(fromRemote)
-            return local?.listAll(name, entityClass) ?: fromRemote
+            return preferLocalInstances(fromRemote, entityClass)
         }
         return remoteOrLocal().listAll(name, entityClass)
     }
@@ -292,8 +324,7 @@ internal class MixHashCache(
             if (property !in indexedFilterable) {
                 indexedFilterable = indexedFilterable + property
             }
-            saveManyLocal(fromRemote)
-            return local?.listBySetIndex(name, entityClass, property, value) ?: fromRemote
+            return preferLocalInstances(fromRemote, entityClass)
         }
         return remoteOrLocal().listBySetIndex(name, entityClass, property, value)
     }
@@ -312,8 +343,7 @@ internal class MixHashCache(
             if (zsetIndexName !in indexedSortable) {
                 indexedSortable = indexedSortable + zsetIndexName
             }
-            saveManyLocal(fromRemote)
-            return local?.listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc) ?: fromRemote
+            return preferLocalInstances(fromRemote, entityClass)
         }
         return remoteOrLocal().listPageByZSetIndex(name, entityClass, zsetIndexName, offset, limit, desc)
     }
@@ -329,8 +359,7 @@ internal class MixHashCache(
         if (strategy == CacheStrategy.LOCAL_REMOTE) {
             // Remote is authoritative for collection reads; see [collectionReadNote].
             val fromRemote = remote?.list(name, entityClass, criteria, pageNo, pageSize, *orders) ?: return emptyList()
-            saveManyLocal(fromRemote)
-            return local?.list(name, entityClass, criteria, pageNo, pageSize, *orders) ?: fromRemote
+            return preferLocalInstances(fromRemote, entityClass)
         }
         return remoteOrLocal().list(name, entityClass, criteria, pageNo, pageSize, *orders)
     }

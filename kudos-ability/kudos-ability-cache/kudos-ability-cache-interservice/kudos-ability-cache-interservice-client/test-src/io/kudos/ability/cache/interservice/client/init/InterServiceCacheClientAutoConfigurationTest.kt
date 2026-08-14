@@ -63,7 +63,9 @@ internal class InterServiceCacheClientAutoConfigurationTest {
 
     @Test
     fun feignCacheRequestInterceptor_isConstructed() {
-        val interceptor = config.feignCacheRequestInterceptor(ClientCacheHelper(), applicationName = null)
+        val interceptor = config.feignCacheRequestInterceptor(
+            ClientCacheHelper(), applicationName = null, properties = InterServiceCacheClientProperties()
+        )
         assertNotNull(interceptor)
     }
 

@@ -4,8 +4,9 @@ import feign.RequestInterceptor
 import feign.RequestTemplate
 import io.kudos.ability.cache.interservice.client.core.ClientCacheHelper
 import io.kudos.ability.cache.interservice.common.ClientCacheKey
+import io.kudos.base.security.DigestKit
 import io.kudos.context.core.KudosContextHolder
-import org.apache.commons.codec.digest.Md5Crypt
+import java.nio.charset.StandardCharsets
 
 /**
  * Feign cache request interceptor.
@@ -42,6 +43,10 @@ import org.apache.commons.codec.digest.Md5Crypt
 class FeignCacheRequestInterceptor(
     private val cacheHelper: ClientCacheHelper,
     private val applicationName: String?,
+    /** Feign client names to participate in cache negotiation; empty means "all". */
+    private val includeClients: Set<String> = emptySet(),
+    /** Feign client names to exclude; takes precedence over [includeClients]. */
+    private val excludeClients: Set<String> = emptySet(),
 ) : RequestInterceptor {
 
     /**
@@ -71,6 +76,9 @@ class FeignCacheRequestInterceptor(
         if (!cacheHelper.hasLocalCache()) {
             return
         }
+        if (!appliesTo(requestTemplate)) {
+            return
+        }
         val localCacheKey = genCacheKey(requestTemplate)
         // Build the key value for this request.
         requestTemplate.header(ClientCacheKey.HEADER_KEY_CACHE_KEY, localCacheKey)
@@ -97,20 +105,27 @@ class FeignCacheRequestInterceptor(
      * - Request information includes the URL, HTTP method, and request body.
      *
      * Hashing:
-     * - MD5 (apr1 variant).
-     * - Fixed salt "fCache".
-     * - Produces a fixed-length hash.
+     * - A single MD5 pass over the key material, salted with "fCache".
+     * - This is a fingerprint, not a credential: MD5's dispersion is what matters here, not its strength.
+     *
+     * It used to call `Md5Crypt.apr1Crypt`, which is the opposite of what a hot path wants — apr1 is a
+     * *deliberately slow* password hash that runs 1000 MD5 rounds, and every round re-hashes plaintext that
+     * includes the **entire request body**. A 1 MB POST therefore cost on the order of a gigabyte of hashing,
+     * once per Feign call.
+     *
+     * The body is hashed as **raw bytes** rather than via `String(body)`. Decoding an arbitrary body with the
+     * platform charset is both non-deterministic across machines and lossy for binary payloads (protobuf, file
+     * uploads): unmappable bytes all collapse to the replacement character, so two different bodies could
+     * produce the same key and one request could be served the other's cached response.
      *
      * Uniqueness guarantees:
      * - Includes the tenant id for multi-tenant isolation.
-     * - Includes the application name to distinguish services.
-     * - Includes the request information to distinguish requests.
-     * - MD5 ensures key uniqueness and fixed length.
+     * - Includes the callee identity ([targetIdentityOf]) so two services sharing a path do not share a key.
+     * - Includes url, method and the exact request bytes.
      *
-     * Caveats:
-     * - The same request produces the same key.
-     * - The same request from different tenants produces different keys.
-     * - Keys have a fixed length, making them easy to store and compare.
+     * Note that the key is **client-local**: the provider only checks that the `cache-key` header is present
+     * and never interprets its value, so changing this derivation needs no coordinated client/provider release.
+     * It does invalidate every entry already in a client's local region, which then refills on demand.
      *
      * @param requestTemplate the Feign request template
      * @return the MD5-hashed cache key
@@ -122,14 +137,19 @@ class FeignCacheRequestInterceptor(
         // pool never clears (the holder's own KDoc warns about exactly this) and yields an *empty* context whose
         // tenantId is "" — which would collapse every tenant onto one cache key.
         val tenantId = KudosContextHolder.getOrNull()?.tenantId ?: ""
-        val feignCacheKey = ClientCacheKey(request.url(), request.httpMethod().name, request.body())
-        val result = listOf(
+        val body = request.body() ?: EMPTY_BODY
+        // The body length goes into the prefix so that "prefix bytes + body bytes" has exactly one possible
+        // split; without it a crafted body could impersonate a different prefix/body pair.
+        val prefix = listOf(
             tenantId,
             applicationName.orEmpty(),
             targetIdentityOf(requestTemplate),
-            feignCacheKey.toString()
+            request.url(),
+            request.httpMethod().name,
+            body.size.toString()
         ).joinToString(ClientCacheKey.FEIGN_CACHE_DELIMITER)
-        return Md5Crypt.apr1Crypt(result, "fCache")
+        val material = prefix.toByteArray(StandardCharsets.UTF_8) + body
+        return requireNotNull(DigestKit.getMD5(material, "fCache")) { "feign cache key digest must not be empty" }
     }
 
     /**
@@ -145,9 +165,32 @@ class FeignCacheRequestInterceptor(
      * defensively all the same, since the whole mechanism is optional and must not break the call if a Feign
      * version stops populating it.
      */
+    /**
+     * Whether this Feign client should take part in cache negotiation.
+     *
+     * Spring Cloud applies every `RequestInterceptor` bean to **every** `@FeignClient`, so without this the
+     * `cache-key` / `cache-uid` headers were attached to calls to third-party APIs as well — leaking an
+     * internal content fingerprint to them, and risking rejection by gateways that sign or whitelist headers.
+     *
+     * Matching is by the `@FeignClient` name. `excludeClients` wins over `includeClients`; leaving both empty
+     * keeps the previous "apply everywhere" behaviour, so nothing changes until a list is configured. A client
+     * whose target cannot be resolved is treated as included, for the same reason: never silently disable.
+     */
+    private fun appliesTo(requestTemplate: RequestTemplate): Boolean {
+        if (includeClients.isEmpty() && excludeClients.isEmpty()) return true
+        val name = runCatching { requestTemplate.feignTarget()?.name() }.getOrNull() ?: return true
+        if (name in excludeClients) return false
+        return includeClients.isEmpty() || name in includeClients
+    }
+
     private fun targetIdentityOf(requestTemplate: RequestTemplate): String {
         val target = runCatching { requestTemplate.feignTarget() }.getOrNull() ?: return ""
         return "${target.name()}|${target.url()}"
+    }
+
+    private companion object {
+        /** Shared stand-in for "no request body", so GET requests do not allocate one per call. */
+        private val EMPTY_BODY = ByteArray(0)
     }
 
 }
