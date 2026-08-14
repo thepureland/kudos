@@ -36,7 +36,7 @@ open class InterServiceCacheProviderAutoConfiguration : IComponentInitializer {
     ): FilterRegistrationBean<ClientCacheWebFilter> {
         val registration = FilterRegistrationBean<ClientCacheWebFilter>()
         // Inject the filter
-        registration.setFilter(ClientCacheWebFilter(properties.wrapAllRequests))
+        registration.setFilter(ClientCacheWebFilter(properties.wrapAllRequests, properties.requireFeignMarker))
         // URL patterns
         registration.addUrlPatterns("/*")
         // Filter name

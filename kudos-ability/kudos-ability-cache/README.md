@@ -76,4 +76,14 @@ LOCAL_REMOTE 二级缓存）。
 
   运行期捕获保留为补充，但语义从"覆盖"改为"取并集"：`IHashCache` 的多个方法对这两个参数都默认空集，覆盖语义下一次窄集合的写入就会让缓存忘掉其他调用方仍在查询的索引。纯注解用法（无 handler）不受影响，退化为原先的从首次写入学习。
 
-以下 interservice 问题**尚未处理**，均属设计取舍而非缺陷修复：`@Primary` 全局替换 Feign decoder 的强耦合、热路径使用 apr1 慢哈希（1000 轮 MD5 × 完整请求体）、provider 侧每请求多一次完整 JSON 序列化的净开销、缺少 per-client/per-method 开关（会把指纹头发给外部第三方 API）、外部调用者可用 `cache-uid` 头把 provider 当内容猜测 oracle、以及 `decoderEnabled` 属性是死代码。
+另外两处已随后修掉：
+
+- **`decoderEnabled` 死字段已删除**：真正生效的是 `@ConditionalOnProperty` 直接读环境里的 `decoder-enabled`，而条件在任何 bean 存在之前就已求值，属性字段不可能左右它。字段在时它像个能用的开关——写 yml 有效（条件读的是同一个 key），用 Java API 设值却静默无效。开关本身通过 yml 继续可用。
+- **新增 `requireFeignMarker`（默认 `false`）**：开启后，只有带内部 Feign 标记（`_feign_request`）的请求才参与协商，外部调用者拿不到响应指纹。**默认保持现状是刻意的**——该标记由 `kudos-ability-distributed-client-feign` 的 `GlobalHeaderRequestInterceptor` 写入，而本模块对它只有 compileOnly/test 依赖，运行时不保证存在；默认开启会在这类部署里静默关掉整个 provider 端。确认所有调用方都经过该拦截器后再开。
+
+以下 interservice 问题**仍未处理**，均需产品/发布决策而非单纯改代码：
+
+- **`@Primary` 全局替换 Feign decoder**：它没有装饰 Spring Cloud 原本的 decoder，而是整个换成裸 `JacksonDecoder`。只要 classpath 上有本模块，应用内**所有** `@FeignClient` 的反序列化行为都变了（自定义 `HttpMessageConverter`、`@JsonView`、`Jackson2ObjectMapperBuilder` 定制全部失效；该 decoder 还把 404 映射为 null、`String` 硬编码 UTF-8 而忽略 `response.charset()`）。改为只装饰、内层交给原生 `feignDecoder` 是正解，但属破坏性变更，需发布说明。
+- **热路径的 apr1 慢哈希**：`Md5Crypt.apr1Crypt` 是为抗口令爆破设计的慢哈希，固定 1000 轮 MD5，且每轮参与哈希的明文包含完整请求体（1MB 的 POST 约等于 GB 量级哈希运算）。换成一次性 MD5/SHA-256 是一行代码，但会改变 cacheKey 取值，**全集群既有本地缓存条目同时失效**、集体冷启动一次，需挑发布窗口。
+- **缺少 per-client / per-method 开关**：拦截器注册为全局 `RequestInterceptor`，Spring Cloud 会应用到**每一个** Feign client，包括调用第三方外部 API 的那些——既泄漏内部指纹，也可能触怒对签名严格的外部网关。加白/黑名单不难，但要决定默认值。
+- **provider 侧是净增开销**：每个 `@ClientCacheable` 请求都要把返回对象完整 JSON 序列化一次算指纹，未命中时 MVC 再序列化一次，且 Controller 方法始终完整执行（不像 ETag 能配合 `@Cacheable` 短路）。净收益只有回程 body 字节与客户端反序列化，服务端 CPU 纯增加——不适合用在计算昂贵但响应体很小的接口上。

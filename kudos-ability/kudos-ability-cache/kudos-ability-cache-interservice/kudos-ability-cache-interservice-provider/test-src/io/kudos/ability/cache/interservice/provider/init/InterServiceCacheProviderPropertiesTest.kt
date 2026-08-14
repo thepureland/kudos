@@ -21,6 +21,9 @@ internal class InterServiceCacheProviderPropertiesTest {
 
         assertFalse(properties.uidCacheEnabled)
         assertFalse(properties.wrapAllRequests)
+        // 默认关闭是刻意的：开启后若调用方没带内部标记，整个 provider 端会静默失效，
+        // 而标记来自另一个模块，运行时并不保证存在。详见该属性的 KDoc。
+        assertFalse(properties.requireFeignMarker)
     }
 
     @Test
@@ -28,9 +31,11 @@ internal class InterServiceCacheProviderPropertiesTest {
         val properties = InterServiceCacheProviderProperties().apply {
             uidCacheEnabled = true
             wrapAllRequests = true
+            requireFeignMarker = true
         }
 
         assertTrue(properties.uidCacheEnabled)
         assertTrue(properties.wrapAllRequests)
+        assertTrue(properties.requireFeignMarker)
     }
 }

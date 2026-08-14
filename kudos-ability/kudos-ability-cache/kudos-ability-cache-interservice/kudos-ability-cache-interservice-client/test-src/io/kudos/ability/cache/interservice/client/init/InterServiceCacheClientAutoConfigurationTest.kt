@@ -41,7 +41,6 @@ internal class InterServiceCacheClientAutoConfigurationTest {
     fun interServiceCacheClientProperties_returnsDefaults() {
         val properties = config.interServiceCacheClientProperties()
         assertEquals(600, properties.ttlSeconds)
-        assertTrue(properties.decoderEnabled)
     }
 
     @Test

@@ -1,6 +1,7 @@
 package io.kudos.ability.cache.interservice.provider.web
 
 import io.kudos.ability.cache.interservice.common.ClientCacheKey
+import io.kudos.context.support.Consts
 import jakarta.servlet.FilterChain
 import jakarta.servlet.ServletRequest
 import jakarta.servlet.ServletResponse
@@ -53,6 +54,75 @@ internal class ClientCacheWebFilterTest {
         val wrapped = chain.request
         assertTrue(wrapped is CacheClientRequest)
         assertSame(response, wrapped.getServletResponse())
+    }
+
+    // ---- requireFeignMarker ---------------------------------------------------
+
+    @Test
+    fun requireFeignMarker_defaultsOff_soExistingCallersKeepWorking() {
+        // 默认必须保持现状。翻转默认值会在"标记未被发送"的部署里静默关掉整个 provider 端，
+        // 而标记来自另一个模块（distributed-client-feign），运行时并不保证存在。
+        val chain = RecordingFilterChain()
+        val request = MockHttpServletRequest().apply {
+            addHeader(ClientCacheKey.HEADER_KEY_CACHE_KEY, "cache-key")
+        }
+
+        ClientCacheWebFilter().doFilter(request, MockHttpServletResponse(), chain)
+
+        assertTrue(chain.request is CacheClientRequest, "默认不应要求内部调用标记")
+    }
+
+    @Test
+    fun requireFeignMarker_enabled_skipsCallersWithoutTheMarker() {
+        // 开启后，没有内部调用标记的请求完全不进入协商，响应里也就不会带上内容指纹。
+        val chain = RecordingFilterChain()
+        val request = MockHttpServletRequest().apply {
+            addHeader(ClientCacheKey.HEADER_KEY_CACHE_KEY, "cache-key")
+        }
+
+        ClientCacheWebFilter(requireFeignMarker = true).doFilter(request, MockHttpServletResponse(), chain)
+
+        assertFalse(chain.request is CacheClientRequest, "缺少内部调用标记时不应参与协商")
+        assertSame(request, chain.request, "请求应原样传递下去")
+    }
+
+    @Test
+    fun requireFeignMarker_enabled_allowsMarkedInternalCallers() {
+        val chain = RecordingFilterChain()
+        val request = MockHttpServletRequest().apply {
+            addHeader(ClientCacheKey.HEADER_KEY_CACHE_KEY, "cache-key")
+            addHeader(Consts.RequestHeader.FEIGN_REQUEST, "true")
+        }
+
+        ClientCacheWebFilter(requireFeignMarker = true).doFilter(request, MockHttpServletResponse(), chain)
+
+        assertTrue(chain.request is CacheClientRequest, "带标记的内部调用应正常参与协商")
+    }
+
+    @Test
+    fun requireFeignMarker_enabled_treatsBlankMarkerAsAbsent() {
+        // 与 nacos 的 FeignContextWebFilter 保持一致：空白标记等同于没有标记。
+        val chain = RecordingFilterChain()
+        val request = MockHttpServletRequest().apply {
+            addHeader(ClientCacheKey.HEADER_KEY_CACHE_KEY, "cache-key")
+            addHeader(Consts.RequestHeader.FEIGN_REQUEST, "   ")
+        }
+
+        ClientCacheWebFilter(requireFeignMarker = true).doFilter(request, MockHttpServletResponse(), chain)
+
+        assertFalse(chain.request is CacheClientRequest)
+    }
+
+    @Test
+    fun requireFeignMarker_enabled_alsoGatesWrapAllRequests() {
+        // wrapAllRequests 是"包装一切"的兼容开关，但它不应绕过内部调用校验。
+        val chain = RecordingFilterChain()
+        val request = MockHttpServletRequest()
+
+        ClientCacheWebFilter(wrapAllRequests = true, requireFeignMarker = true)
+            .doFilter(request, MockHttpServletResponse(), chain)
+
+        assertFalse(chain.request is CacheClientRequest, "requireFeignMarker 应先于 wrapAllRequests 判定")
     }
 
     @Test
