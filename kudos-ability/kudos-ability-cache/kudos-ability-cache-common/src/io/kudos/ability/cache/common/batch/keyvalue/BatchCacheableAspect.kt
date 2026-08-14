@@ -63,16 +63,17 @@ class BatchCacheableAspect {
         val cacheName = validate(joinPoint, function, batchCacheable)
 
         // Get all cache keys
-        val cachedData = linkedMapOf<String, Any?>() // Cached data. Map<cache key, cache value>
         val keys = getAllCacheKeys(joinPoint, function, batchCacheable)
-        keys.forEach { cachedData[it] = null } // preserve order
 
-        // Read data that already exists in the cache
-        readCachedData(keys, cacheName, batchCacheable, cachedData)
+        // Read everything already cached in a single call. Hit/miss is decided by key *presence*: a key mapped
+        // to null is a cached null (a hit), not a miss. The previous implementation seeded every key with null
+        // and treated "still null" as missing, which made cached nulls indistinguishable from misses and sent
+        // those keys back to the source on every single call.
+        val cachedData = readCachedData(keys, cacheName)
 
         // For entries missing from the cache (for collection params, strip out the parts already loaded from cache), read from the @BatchCacheable method
-        val noExistKeys = cachedData.filterValues { it == null }.keys
-        val uncachedData = readUncachedData(noExistKeys, joinPoint, function, batchCacheable) // Uncached data. Map<cache key, cache value>
+        val noExistKeys = keys.filterNot { cachedData.containsKey(it) }.toSet()
+        val uncachedData = readUncachedData(keys, noExistKeys, joinPoint, function, batchCacheable) // Uncached data. Map<cache key, cache value>
 
         // Verify that the underlying method's returned key set matches the missing key set. A mismatch usually indicates a bug in the contract between keysGenerator and the method;
         // the legacy implementation would "silently return fewer / more" entries, which is hard for callers to detect. Here we only log (avoid triggering failures beyond cache consistency).
@@ -91,12 +92,24 @@ class BatchCacheableAspect {
         // Cache the data read (uncached) from the @BatchCacheable method (note: existing cache entries are not updated)
         uncachedData?.forEach { (k, v) -> KeyValueCacheKit.putIfAbsent(cacheName, k, v) }
 
-        // Assemble the two parts of data: read from cache and just loaded, returning them as the @BatchCacheable method's return value
-        if (uncachedData != null) {
-            cachedData.forEach { (k, v) -> if (v == null) cachedData[k] = uncachedData[k] }
+        // Optionally remember "the source has nothing for this key" so the next batch does not ask again. Off by
+        // default: it is real negative caching, so a row created later stays invisible until the entry expires
+        // or the handler's insert hook evicts it.
+        if (batchCacheable.cacheNullForMissingKeys && uncachedData != null) {
+            noExistKeys.asSequence()
+                .filterNot { uncachedData.containsKey(it) }
+                .forEach { KeyValueCacheKit.putIfAbsent(cacheName, it, null) }
         }
 
-        return cachedData.filterValues { it != null } // drop entries whose value is null
+        // Assemble both halves in the caller's key order. Null values are dropped from the *result* — the
+        // annotated method declares a Map with a non-null value type, so a null would break its own signature —
+        // even though they are kept in the cache.
+        val result = linkedMapOf<String, Any?>()
+        keys.forEach { key ->
+            val value = if (cachedData.containsKey(key)) cachedData[key] else uncachedData?.get(key)
+            if (value != null) result[key] = value
+        }
+        return result
     }
 
     /**
@@ -155,22 +168,32 @@ class BatchCacheableAspect {
     }
 
     /**
-     * Reads data that exists in the cache.
+     * Reads whatever is already cached for [keys], in one bulk call.
+     *
+     * This used to loop `getValue` per key, so a batch of N keys cost N remote round trips — most of the point
+     * of batching, given away. [KeyValueCacheKit.multiGet] pushes the whole key set down to the cache manager,
+     * which serves the local tier in a single pass and Redis in a single `MGET`.
+     *
+     * Note the return contract: **a key present in the map was a hit even if its value is null.** Callers must
+     * test `containsKey`, otherwise cached nulls are re-fetched from the source forever.
+     *
+     * Values are not type-checked against `@BatchCacheable.valueClass` here; a bulk read cannot filter per key
+     * without giving up the single round trip, and a type mismatch means the cache was populated with the wrong
+     * type — a bug to fix at the write site rather than to paper over on every read.
      *
      * @param keys List(cache key)
-     * @param batchCacheable @BatchCacheable annotation
-     * @param result Map(cache key, cache value)
+     * @param cacheName cache name
+     * @return found keys mapped to their (possibly null) cached values
      * @author K
      * @since 1.0.0
      */
-    private fun readCachedData(
-        keys: List<String>, cacheName: String, batchCacheable: BatchCacheable, result: MutableMap<String, Any?>
-    ) {
-        keys.forEach { key ->
-            //TODO How to prevent cache breakdown when the cache entry does not exist
-            KeyValueCacheKit.getValue(cacheName, key, batchCacheable.valueClass)
-                ?.let { result[key] = it }
-        }
+    private fun readCachedData(keys: List<String>, cacheName: String): Map<String, Any?> {
+        if (keys.isEmpty()) return emptyMap()
+        val found = KeyValueCacheKit.multiGet(cacheName, keys)
+        if (found.isEmpty()) return emptyMap()
+        val result = LinkedHashMap<String, Any?>(found.size)
+        keys.forEach { key -> if (found.containsKey(key)) result[key] = found[key] }
+        return result
     }
 
     /**
@@ -178,7 +201,21 @@ class BatchCacheableAspect {
      *
      * For entries missing from the cache (for collection params, strip out the parts already loaded from cache), read from the @BatchCacheable method.
      *
-     * @param result already cached data, Map(cache key, cache value)
+     * ## Missing elements are selected by position, not by parsing keys back
+     *
+     * Keys are built by positional zip — key `i` comes from element `i` of every collection/array parameter
+     * (see [DefaultKeysGenerator]). So the elements to re-request are simply the ones at the positions of the
+     * missing keys, taken straight from the original arguments.
+     *
+     * This used to work the other way round: split each missing key on the generator's delimiter and convert
+     * segment `n` back to the parameter's element type. That was fragile in two ways — a parameter value
+     * containing the delimiter (`::` by default, which is also what tenant-aware keys are built with) split
+     * into the wrong number of segments and silently produced wrong arguments, and the round trip through
+     * `toString`/`toType` could not restore values whose textual form is lossy. Indexing needs neither the
+     * delimiter nor the conversion, and keeps the original element instances.
+     *
+     * @param allKeys all cache keys, in the positional order they were generated
+     * @param noExistKeys the subset of [allKeys] that missed the cache
      * @param joinPoint join point
      * @param function the @BatchCacheable-annotated method
      * @param batchCacheable @BatchCacheable annotation
@@ -187,42 +224,40 @@ class BatchCacheableAspect {
      * @since 1.0.0
      */
     private fun readUncachedData(
-        noExistKeys: Set<String>, joinPoint: ProceedingJoinPoint, function: KFunction<*>,
+        allKeys: List<String>, noExistKeys: Set<String>, joinPoint: ProceedingJoinPoint, function: KFunction<*>,
         batchCacheable: BatchCacheable
     ): Map<String, Any?>? {
         if (noExistKeys.isEmpty()) return null
         val keysGenerator = getKeysGenerator(batchCacheable)
-        val delimiter = keysGenerator.getDelimiter()
         val paramIndexes = keysGenerator.getParamIndexes(function, *joinPoint.args)
         val parameterTypes = (joinPoint.signature as MethodSignature).parameterTypes
+        val missingPositions = allKeys.indices.filter { allKeys[it] in noExistKeys }
         // The legacy implementation directly mutated the original array via `joinPoint.args[index] = params`: subsequent AOP reads of joinPoint.args would see the modified values,
         // which is a hard-to-debug "implicit side effect". We replace on a copy here to avoid polluting the upstream args array.
         val newArgs: Array<Any?> = joinPoint.args.copyOf()
         parameterTypes.forEachIndexed { index, clazz ->
             val paramValue = newArgs[index]
             if (index in paramIndexes && (paramValue is Collection<*> || paramValue is Array<*>)) {
-                val segIndex = paramIndexes.indexOf(index) // segment index within the key
-                val firstElemValue: Any? = when (paramValue) {
-                    is Collection<*> -> paramValue.firstOrNull()
-                    is Array<*> -> paramValue.firstOrNull()
-                    else -> null
+                val elements: List<Any?> = when (paramValue) {
+                    is Collection<*> -> paramValue.toList()
+                    is Array<*> -> paramValue.toList()
+                    else -> emptyList()
                 }
-                // The legacy `firstElemValue!!::class` would NPE on empty collection/array. Give a clear error here.
-                requireNotNull(firstElemValue) {
-                    "Cannot infer element type from empty collection/array: param index=$index. Callers should filter empty inputs before entering @BatchCacheable."
-                }
-                val elemType = firstElemValue::class
-                // The legacy implementation split by a fixed delimiter: if a key segment contains the same character, the split is incorrect. We still take by segment, but as a known constraint
-                // keysGenerator.getDelimiter is expected to provide a "collision-free enough" delimiter. A complete fix requires escaping at the keysGenerator
-                // layer, which is out of scope for this pass.
-                val elemValues = noExistKeys.map { key -> key.split(delimiter)[segIndex].toType(elemType) }
+                val elemValues = missingPositions.mapNotNull { position -> elements.getOrNull(position) }
                 // Re-wrap into the originally declared parameter type. Note: every `Array<X>::class` erases to the
                 // same `kotlin.Array` KClass, so dispatching on `Array<Int>::class`, `Array<Long>::class`, ... would
                 // collapse to the first Array branch and silently mis-handle non-String arrays. Instead we detect the
                 // array case via the Java reflection `clazz.isArray` and build an array whose runtime component type is
-                // the actual element type (`elemType`), so reflective invoke receives e.g. a real `Integer[]`/`Long[]`.
+                // the actual element type, so reflective invoke receives e.g. a real `Integer[]`/`Long[]`.
                 val params: Any? = when {
-                    clazz.isArray -> toTypedArray(elemValues, elemType)
+                    clazz.isArray -> {
+                        val elemType = elemValues.firstOrNull()?.let { it::class }
+                            ?: elements.firstOrNull()?.let { it::class }
+                        requireNotNull(elemType) {
+                            "Cannot infer element type from empty collection/array: param index=$index. Callers should filter empty inputs before entering @BatchCacheable."
+                        }
+                        toTypedArray(elemValues, elemType)
+                    }
                     Set::class.java.isAssignableFrom(clazz) -> elemValues.toSet()
                     else -> elemValues // List / Collection and any other Collection subtype
                 }

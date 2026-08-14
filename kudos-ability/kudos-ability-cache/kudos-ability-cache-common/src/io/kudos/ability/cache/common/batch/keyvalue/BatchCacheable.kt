@@ -43,6 +43,17 @@ annotation class BatchCacheable(
     val valueClass: KClass<*>,
 
     /** Indexes of parameters to ignore when composing the cache key. */
-    val ignoreParamIndexes: IntArray = []
+    val ignoreParamIndexes: IntArray = [],
+
+    /**
+     * Whether to cache a null for keys the annotated method returned nothing for, so that repeated lookups of
+     * ids the source does not have stop reaching the source (negative caching).
+     *
+     * Defaults to `false` because it is a real behaviour change: an id that gains a row later stays invisible
+     * until the entry expires or something evicts it. Turn it on when the key space is attacker- or
+     * caller-controlled and misses are frequent, and make sure inserts evict the key — `AbstractByIdCacheHandler`'s
+     * `syncOnInsert` already does.
+     */
+    val cacheNullForMissingKeys: Boolean = false
 
 )

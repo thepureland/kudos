@@ -117,6 +117,43 @@ internal class BatchCacheableAspectTest {
     }
 
     @Test
+    fun keysContainingTheDelimiter_stillSelectTheRightMissingElements() {
+        // 参数值本身含有 key 分隔符 "::"。旧实现按分隔符切分 key 再反推参数，切出来的段数不对，
+        // 会把错误的值传给业务方法；改为按位置从原始参数取元素后，分隔符不再参与其中。
+        val cache = cacheManager.getOrCreate(CACHE_NAME)
+        cache.put("a::1", "cached-a")
+
+        val service = ctx.getBean(BatchedService::class.java)
+        val log = ctx.getBean(CallLog::class.java)
+        val result = service.loadAllByCode(listOf("a::1", "b::2"))
+
+        assertEquals(
+            listOf<Set<Any>>(setOf("b::2")), log.snapshot(),
+            "只应把未命中的原始元素回传给业务方法，且保持原值不被切碎"
+        )
+        assertEquals(mapOf("a::1" to "cached-a", "b::2" to "v-b::2"), result)
+    }
+
+    @Test
+    fun cachedNullCountsAsHit_andIsNotReturned() {
+        // 负缓存：命中的 null 说明"源端确实没有这条"，不应再回源。
+        // 旧实现用 null 同时表示"未命中"和"命中且值为 null"，于是这类 key 每次调用都会重新回源。
+        val cache = cacheManager.getOrCreate(CACHE_NAME)
+        cache.put("1", "c1")
+        cache.put("2", null)
+
+        val service = ctx.getBean(BatchedService::class.java)
+        val log = ctx.getBean(CallLog::class.java)
+        val result = service.loadAll(listOf(1, 2))
+
+        assertEquals(emptyList(), log.snapshot(), "命中的 null 也是命中，不应再触发回源")
+        assertEquals(
+            mapOf("1" to "c1"), result,
+            "返回值里要剔除 null —— 被注解方法声明的返回类型是值非空的 Map"
+        )
+    }
+
+    @Test
     fun putIfAbsent_doesNotOverwriteExistingCacheValue() {
         val cache = cacheManager.getOrCreate(CACHE_NAME)
         cache.put("1", "cached-1")
@@ -150,9 +187,10 @@ internal class BatchCacheableAspectTest {
 
     /** External call recorder — the business service is a CGLIB proxy target, and in-class field initializers can return null on the proxy path. */
     open class CallLog {
-        private val entries = mutableListOf<Set<Int>>()
-        fun record(keys: Set<Int>) { entries.add(keys) }
-        fun snapshot(): List<Set<Int>> = entries.toList()
+        // Set<Any> rather than Set<Int>: some fixtures batch over String codes.
+        private val entries = mutableListOf<Set<Any>>()
+        fun record(keys: Set<Any>) { entries.add(keys) }
+        fun snapshot(): List<Set<Any>> = entries.toList()
         fun clear() { entries.clear() }
     }
 
@@ -163,6 +201,13 @@ internal class BatchCacheableAspectTest {
         open fun loadAll(ids: List<Int>): Map<String, String> {
             log.record(ids.toSet())
             return ids.associate { it.toString() to "v$it" }
+        }
+
+        /** Ids whose own text contains the key delimiter `::`, used to pin the key-splitting regression. */
+        @BatchCacheable(cacheNames = [CACHE_NAME], valueClass = String::class)
+        open fun loadAllByCode(codes: List<String>): Map<String, String> {
+            log.record(codes.toSet())
+            return codes.associate { it to "v-$it" }
         }
     }
 
