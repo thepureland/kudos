@@ -148,6 +148,75 @@ internal class RedisKeyValueCacheManagerTest {
         assertEquals("cache name required", ex.message)
     }
 
+    // ---------- TTL jitter (avalanche protection) ----------
+
+    /**
+     * Builds a manager whose only difference from the shared one is the jitter percentage.
+     */
+    private fun managerWithJitter(percent: Int): RedisKeyValueCacheManager {
+        val defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ofSeconds(900))
+            .withConversionService(RedisCacheKeyConversionService.create())
+        val m = RedisKeyValueCacheManager(cacheWriter, defaultConfig, null, percent)
+        val field = RedisKeyValueCacheManager::class.java.getDeclaredField("versionConfig")
+        field.isAccessible = true
+        field.set(m, CacheVersionConfig())
+        return m
+    }
+
+    private fun drawTtls(cache: org.springframework.data.redis.cache.RedisCache, times: Int = 200): List<Long> =
+        (0 until times).map { cache.cacheConfiguration.ttlFunction.getTimeToLive("k$it", "v").seconds }
+
+    @Test
+    fun ttlJitter_disabledByDefault_ttlStaysExact() {
+        // The default must not move expiry times: existing deployments (and tests asserting exact TTLs)
+        // depend on it.
+        val cache = manager.createCache(CacheConfig().apply { name = "exact"; ttl = 300 })
+        assertEquals(setOf(300L), drawTtls(cache).toSet(), "jitter is off by default; every draw must be exactly the configured ttl")
+    }
+
+    @Test
+    fun ttlJitter_spreadsEntriesWithinBounds() {
+        val cache = managerWithJitter(10).createCache(CacheConfig().apply { name = "jit"; ttl = 1000 })
+        val ttls = drawTtls(cache)
+
+        assertTrue(ttls.toSet().size > 1, "with jitter on, entries must not all land on the same expiry — that is the whole point")
+        assertTrue(ttls.all { it in 900L..1100L }, "every draw must stay within ttl*(1±10%), got ${ttls.minOrNull()}..${ttls.maxOrNull()}")
+    }
+
+    @Test
+    fun ttlJitter_appliesToInheritedDefaultTtl() {
+        // Jitter wraps the configuration's TtlFunction rather than a fixed Duration, so a cache item with no
+        // explicit ttl (inheriting the module default of 900s) is spread too. Reading a Duration instead would
+        // have silently left exactly these caches unjittered.
+        val cache = managerWithJitter(10).createCache(CacheConfig().apply { name = "jitDefault" })
+        val ttls = drawTtls(cache)
+        assertTrue(ttls.toSet().size > 1, "the inherited default ttl must be jittered as well")
+        assertTrue(ttls.all { it in 810L..990L }, "draws must stay within 900s*(1±10%), got ${ttls.minOrNull()}..${ttls.maxOrNull()}")
+    }
+
+    @Test
+    fun ttlJitter_leavesNonExpiringEntriesAlone() {
+        // Duration.ZERO is Spring's NO_EXPIRATION marker; spreading it would invent an expiry for a cache
+        // that was deliberately configured never to expire.
+        val defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+            .entryTtl(Duration.ZERO)
+            .withConversionService(RedisCacheKeyConversionService.create())
+        val m = RedisKeyValueCacheManager(cacheWriter, defaultConfig, null, 10)
+        val field = RedisKeyValueCacheManager::class.java.getDeclaredField("versionConfig")
+        field.isAccessible = true
+        field.set(m, CacheVersionConfig())
+
+        val cache = m.createCache(CacheConfig().apply { name = "forever" })
+        assertEquals(setOf(0L), drawTtls(cache).toSet(), "a non-expiring cache must stay non-expiring")
+    }
+
+    @Test
+    fun ttlJitter_outOfRange_failsAtStartup() {
+        assertFailsWith<IllegalArgumentException> { managerWithJitter(51) }
+        assertFailsWith<IllegalArgumentException> { managerWithJitter(-1) }
+    }
+
     // ---------- addCache / loadCaches / initCacheAfterSystemInit ----------
 
     @Test

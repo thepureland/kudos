@@ -12,6 +12,7 @@ import org.springframework.cache.support.NullValue
 import org.springframework.data.redis.cache.RedisCacheWriter
 import org.springframework.data.redis.core.RedisTemplate
 import java.time.Duration
+import java.util.concurrent.ThreadLocalRandom
 
 /**
  * Redis cache manager.
@@ -48,6 +49,8 @@ import java.time.Duration
  *   `kudos.ability.cache.remoteStore`), used by the `keys + delete` paths that work around Spring's broken
  *   `cacheWriter.clean`. Injected rather than looked up statically so that the eviction paths cannot end up on a
  *   different redis instance — or a different key serializer — than the one holding the data.
+ * @param ttlJitterPercent per-entry TTL spread in percent; `0` keeps TTLs exact. See
+ *   [io.kudos.ability.cache.remote.redis.init.RedisCacheProperties.ttlJitterPercent].
  *
  * @author K
  * @author AI: Codex
@@ -56,12 +59,21 @@ import java.time.Duration
 class RedisKeyValueCacheManager(
     private val cacheWriter: RedisCacheWriter,
     private val defaultCacheConfiguration: RedisCacheConfiguration,
-    private val redisTemplate: RedisTemplate<String, Any>? = null
+    private val redisTemplate: RedisTemplate<String, Any>? = null,
+    private val ttlJitterPercent: Int = 0
 ) : RedisCacheManager(
     cacheWriter,
     defaultCacheConfiguration,
     false
 ), IKeyValueCacheManager<RedisCache> {
+
+    init {
+        // Fail at startup rather than silently producing nonsense expiries: above 100% the lower edge would
+        // go negative, and even 50% is already a very wide spread for a cache TTL.
+        require(ttlJitterPercent in 0..50) {
+            "kudos.ability.cache.redis.ttl-jitter-percent must be within 0..50, got $ttlJitterPercent"
+        }
+    }
 
     var caches: MutableList<RedisCache> = mutableListOf()
 
@@ -133,10 +145,44 @@ class RedisKeyValueCacheManager(
         cacheConfig.ttl?.let { ttl ->
             redisCacheConfiguration = redisCacheConfiguration.entryTtl(Duration.ofSeconds(ttl.toLong()))
         }
+        redisCacheConfiguration = withTtlJitter(redisCacheConfiguration)
         val realKey: String = versionConfig.getFinalCacheName(requireNotNull(cacheConfig.name) { "cache name required" })
         // Fix for the Spring Boot 4.0.6 bug where [RedisCache.clear] does not actually delete Redis keys:
         // our override uses `RedisTemplate.keys(pattern) + delete(keys)` directly, applied to every RedisCache instance.
         return ScanClearRedisCache(realKey, cacheWriter, redisCacheConfiguration, redisTemplate)
+    }
+
+    /**
+     * Wraps [config]'s TTL function so each entry gets its own randomized expiry.
+     *
+     * Wrapping the existing `TtlFunction` rather than reading a fixed `Duration` means the jitter covers both
+     * an explicitly configured per-cache TTL and the module default inherited from `defaultCacheConfiguration`;
+     * reading the duration would have silently left default-TTL caches unjittered.
+     *
+     * @return [config] unchanged when jitter is disabled
+     */
+    private fun withTtlJitter(config: RedisCacheConfiguration): RedisCacheConfiguration {
+        if (ttlJitterPercent <= 0) return config
+        val delegate = config.ttlFunction
+        return config.entryTtl(RedisCacheWriter.TtlFunction { key, value ->
+            jitter(delegate.getTimeToLive(key, value))
+        })
+    }
+
+    /**
+     * Draws an expiry uniformly from `base * (1 ± ttlJitterPercent/100)`.
+     *
+     * A non-positive [base] is Spring's "never expires" marker ([RedisCacheWriter.TtlFunction.NO_EXPIRATION])
+     * and is returned untouched — spreading out something that has no expiry would invent one.
+     */
+    private fun jitter(base: Duration): Duration {
+        if (base.isZero || base.isNegative) return base
+        val baseSeconds = base.seconds
+        val span = baseSeconds * ttlJitterPercent / 100
+        if (span <= 0L) return base // TTL too small for the percentage to move it by a whole second
+        val jittered = baseSeconds + ThreadLocalRandom.current().nextLong(-span, span + 1)
+        // Guard the lower edge: keep an entry that was meant to expire from becoming non-expiring.
+        return if (jittered > 0L) Duration.ofSeconds(jittered) else Duration.ofSeconds(1)
     }
 
     /**

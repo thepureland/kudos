@@ -102,7 +102,7 @@ internal class RedisCacheAutoConfigurationTest {
             redisMap["r1"] = RedisExtProperties()
         }
 
-        val cacheManager = configWith(" r1 ").remoteCacheManager(redisTemplates, redisProperties)
+        val cacheManager = configWith(" r1 ").remoteCacheManager(redisTemplates, redisProperties, RedisCacheProperties())
 
         assertIs<RedisKeyValueCacheManager>(cacheManager)
     }
@@ -116,7 +116,7 @@ internal class RedisCacheAutoConfigurationTest {
             redisMap["d1"] = RedisExtProperties()
         }
 
-        val cacheManager = configWith("   ").remoteCacheManager(redisTemplates, redisProperties)
+        val cacheManager = configWith("   ").remoteCacheManager(redisTemplates, redisProperties, RedisCacheProperties())
 
         assertIs<RedisKeyValueCacheManager>(cacheManager)
     }
@@ -128,7 +128,7 @@ internal class RedisCacheAutoConfigurationTest {
         val redisProperties = RedisProperties() // defaultRedis null
 
         val ex = assertFailsWith<IllegalStateException> {
-            configWith(null).remoteCacheManager(redisTemplates, redisProperties)
+            configWith(null).remoteCacheManager(redisTemplates, redisProperties, RedisCacheProperties())
         }
         assertTrue(ex.message!!.contains("cannot initialize remoteCacheManager"))
     }
@@ -143,7 +143,7 @@ internal class RedisCacheAutoConfigurationTest {
             redisMap["d1"] = RedisExtProperties()
         }
 
-        val cacheManager = configWith("missing").remoteCacheManager(redisTemplates, redisProperties)
+        val cacheManager = configWith("missing").remoteCacheManager(redisTemplates, redisProperties, RedisCacheProperties())
 
         assertIs<RedisKeyValueCacheManager>(cacheManager)
     }
@@ -155,7 +155,7 @@ internal class RedisCacheAutoConfigurationTest {
         val redisProperties = RedisProperties() // empty redisMap, blank defaultRedis
 
         val ex = assertFailsWith<IllegalStateException> {
-            configWith("r1").remoteCacheManager(redisTemplates, redisProperties)
+            configWith("r1").remoteCacheManager(redisTemplates, redisProperties, RedisCacheProperties())
         }
         assertTrue(ex.message!!.contains("Redis serialization configuration not found"))
         assertTrue(ex.message!!.contains("r1"))

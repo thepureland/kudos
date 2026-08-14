@@ -116,6 +116,7 @@ kudos:
       remoteStore: data
       redis:
         node-id: ${HOSTNAME:}   # 可选；为空时启动期自动生成 UUID
+        ttl-jitter-percent: 10  # 可选；每个条目 TTL 取 ttl*(1±10%)，默认 0 即关闭。合法区间 0..50
       cache-items:
         - name=USER_CACHE&strategy=LOCAL_REMOTE&ttl=900
         - name=DEMO&strategy=REMOTE&ttl=1800

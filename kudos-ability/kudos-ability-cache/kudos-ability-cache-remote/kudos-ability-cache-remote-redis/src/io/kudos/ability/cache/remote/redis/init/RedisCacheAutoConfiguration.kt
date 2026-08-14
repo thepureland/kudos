@@ -98,7 +98,8 @@ open class RedisCacheAutoConfiguration : IComponentInitializer {
     @Suppress("SpringJavaInjectionPointsAutowiringInspection")
     open fun remoteCacheManager(
         redisTemplates: RedisTemplates,
-        redisProperties: RedisProperties
+        redisProperties: RedisProperties,
+        redisCacheProperties: RedisCacheProperties
     ): CacheManager {
         val configuredStore = remoteStore?.trim().orEmpty()
         val defaultStore = redisProperties.defaultRedis?.trim().orEmpty()
@@ -164,7 +165,8 @@ open class RedisCacheAutoConfiguration : IComponentInitializer {
         return RedisKeyValueCacheManager(
             redisCacheWriter,
             defaultRedisCacheConfiguration,
-            redisTemplate as? RedisTemplate<String, Any>
+            redisTemplate as? RedisTemplate<String, Any>,
+            redisCacheProperties.ttlJitterPercent
         )
     }
 
