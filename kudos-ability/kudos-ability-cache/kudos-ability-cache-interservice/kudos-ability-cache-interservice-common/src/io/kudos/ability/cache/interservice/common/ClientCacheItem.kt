@@ -52,20 +52,55 @@ class ClientCacheItem : Serializable {
          * (the client uses it to decide whether to reuse its local cache).
          *
          * Stability contract:
-         * - Input: same class, same field values → same UID (relies on kotlinx.serialization emitting fields in
-         *   declaration order, which is deterministic).
+         * - Input: same class, same field values → same UID.
          * - Type isolation: FQN and JSON are separated by `#`, eliminating edge collisions where "class name + JSON"
          *   would concatenate into the same string.
          * - Known risk: if the DTO contains a `Map<*, *>` that is not a `LinkedHashMap`, the iteration order may be
          *   unstable → JSON unstable → UID jitter. Interface layers should avoid returning a raw Map; if necessary,
          *   use `LinkedHashMap` or sort before returning.
          *
+         * **A content-free fingerprint is rejected rather than used.** `JsonKit.toJson` is
+         * `inline fun <reified T>`, and at this call site `T` is inferred as `Any`, for which kotlinx.serialization
+         * has no serializer — so serialization actually runs through the reflective fallback. A type that
+         * serializes to nothing would hand *every instance* the same fingerprint, and the provider would then
+         * answer 304 forever while clients kept serving stale data with nothing logged. Failing the fingerprint
+         * instead makes the caller skip negotiation — the response is returned in full, uncached, which is merely
+         * slower.
+         *
+         * **Residual risk (verified, not defended against).** The reflective fallback maps a *throwing* accessor
+         * to null rather than propagating, so a DTO whose accessors throw (uninitialised `lateinit`, a lazy proxy
+         * outside its session) still serializes to a well-formed object — just with null fields — and slips past
+         * the check below, collapsing every instance of that type onto one UID. Rejecting "all fields null" would
+         * also reject legitimately empty DTOs, so the guard stops at genuinely content-free output; the real
+         * mitigation is not to return such DTOs from a `@ClientCacheable` endpoint. Pinned by
+         * `ClientCacheItemTest.genUid_accessorFailuresCollapseToOneUidPerType_documentedLimitation`.
+         *
          * Not for encryption — fingerprinting only. MD5 is low-cost and provides acceptable dispersion here.
+         *
+         * @throws IllegalStateException when the object yields no usable content to fingerprint
          */
         fun genUid(obj: Any): String {
-            val fingerprint = obj::class.java.name + "#" + JsonKit.toJson(obj)
+            val json = JsonKit.toJson(obj)
+            check(hasContent(json)) {
+                "Refusing to fingerprint ${obj::class.java.name}: it serialized to '$json', which carries no field " +
+                    "data, so every instance of this type would share one UID and the client would be told its " +
+                    "stale copy is current. Check for accessors that throw (uninitialised lateinit, lazy proxies)."
+            }
+            val fingerprint = obj::class.java.name + "#" + json
             val md5 = DigestKit.getMD5(fingerprint.toByteArray(), "feignCache")
             return requireNotNull(md5) { "feignCache MD5 result is empty" }
+        }
+
+        /**
+         * Whether [json] carries any field data — i.e. it is not blank, `null`, or an empty object/array.
+         *
+         * An empty collection response is a legitimate value, but it is also indistinguishable from a
+         * serialization that silently produced nothing, so both are treated as unusable for fingerprinting.
+         * The cost of that conservatism is one uncached response.
+         */
+        private fun hasContent(json: String?): Boolean {
+            val trimmed = json?.trim() ?: return false
+            return trimmed.isNotEmpty() && trimmed != "null" && trimmed != "{}" && trimmed != "[]"
         }
 
         fun fromSnapshot(

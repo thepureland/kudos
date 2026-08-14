@@ -2,6 +2,7 @@ package io.kudos.ability.cache.interservice.aop
 
 import io.kudos.ability.cache.interservice.common.ClientCacheKey
 import io.kudos.ability.cache.interservice.provider.web.CacheClientRequest
+import io.kudos.base.logger.LogFactory
 import jakarta.servlet.http.HttpServletRequest
 import org.aspectj.lang.ProceedingJoinPoint
 import org.aspectj.lang.annotation.Around
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.context.request.RequestAttributes
 import org.springframework.web.context.request.RequestContextHolder
+import org.springframework.web.util.WebUtils
 
 /**
  * Client cache aspect.
@@ -106,13 +108,30 @@ class ClientCacheableAspect(
             return null
         }
         val requestAttributes = RequestContextHolder.getRequestAttributes() ?: return result
-        val request = requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST) as HttpServletRequest
-        if (request !is CacheClientRequest) {
+        // `as?`, not `as`: resolveReference returns Any? and yields null (or a non-servlet type) for a completed
+        // request, an async dispatch, or a non-Servlet environment — an unchecked cast turns those into a
+        // ClassCastException / NPE thrown out of a purely optional caching aspect.
+        val request = requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST) as? HttpServletRequest
+            ?: return result
+        // Walk the wrapper chain instead of testing the outermost type. ClientCacheWebFilter runs at
+        // HIGHEST_PRECEDENCE, but any filter after it may wrap the request again — Spring Security's
+        // SecurityContextHolderAwareRequestFilter always does — and an `is CacheClientRequest` check on the
+        // outermost object then fails, silently disabling the whole provider side with no error and no log.
+        val cacheRequest = WebUtils.getNativeRequest(request, CacheClientRequest::class.java) ?: return result
+        val response = cacheRequest.getServletResponse() ?: return result
+        val reqUid: String? = request.getHeader(ClientCacheKey.HEADER_KEY_CACHE_UID)
+        // Fingerprinting is an optimisation; it must never be able to fail the request. genUid serializes an
+        // arbitrary return type and can throw on types it cannot handle, which would turn a working endpoint
+        // into a 500 purely because response caching is enabled.
+        val resUid: String = try {
+            uidGenerator.generate(result)
+        } catch (t: Throwable) {
+            log.warn(
+                "Failed to fingerprint the response; skipping cache negotiation for this call. class={0} method={1} cause={2}",
+                joinPoint.target::class.java.name, joinPoint.signature.name, t.message
+            )
             return result
         }
-        val response = request.getServletResponse() ?: return result
-        val reqUid: String? = request.getHeader(ClientCacheKey.HEADER_KEY_CACHE_UID)
-        val resUid: String = uidGenerator.generate(result)
         response.setHeader(ClientCacheKey.HEADER_KEY_CACHE_UID, resUid)
         response.setHeader(ClientCacheKey.HEADER_KEY_CACHE_STATUS, ClientCacheKey.STATUS_DO_CACHE)
         if (reqUid.isNullOrBlank()) {
@@ -136,5 +155,7 @@ class ClientCacheableAspect(
             "Class ${clazz.name} must be a Controller to use ClientCacheable!"
         }
     }
+
+    private val log = LogFactory.getLog(this::class)
 
 }

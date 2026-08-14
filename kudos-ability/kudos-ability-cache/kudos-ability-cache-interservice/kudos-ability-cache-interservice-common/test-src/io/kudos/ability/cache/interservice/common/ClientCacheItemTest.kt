@@ -2,8 +2,10 @@ package io.kudos.ability.cache.interservice.common
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for [ClientCacheItem.genUid] fingerprint stability and edge cases.
@@ -69,6 +71,41 @@ internal class ClientCacheItemTest {
         val uid = ClientCacheItem.genUid(UserDto(1, "x"))
         assertNotNull(uid)
         assert(uid.isNotBlank())
+    }
+
+    @Test
+    fun genUid_rejectsContentFreeFingerprint() {
+        // 序列化不出任何字段内容的类型，其**每个实例**都会得到同一个指纹。
+        // 一旦发生，provider 会一直回 304，客户端在 TTL 内持续读到陈旧数据，且全程无异常无日志 ——
+        // 这是本机制最危险的失效方式。宁可让指纹失败：调用方跳过协商、原样返回完整响应，只是少一次缓存收益。
+        val ex = assertFailsWith<IllegalStateException> { ClientCacheItem.genUid(NoSerializableContent()) }
+        assertTrue(
+            ex.message!!.contains(NoSerializableContent::class.java.name),
+            "异常信息应指明是哪个类型无法生成指纹，实际: ${ex.message}"
+        )
+    }
+
+    @Test
+    fun genUid_accessorFailuresCollapseToOneUidPerType_documentedLimitation() {
+        // 已知残留风险，实测确认：访问器抛异常时反射兜底把该属性置为 null，JSON 结构仍在（不是 "{}"），
+        // 因此空内容守卫拦不住 —— 该类型的所有实例会得到同一个 UID。
+        // 之所以不加"全字段为 null 即拒绝"的启发式：那会误伤合法的全空 DTO。
+        // 这里把现状固化下来，以免有人误以为已经防住；真正的缓解手段是不要返回访问器会抛异常的 DTO
+        // （未初始化的 lateinit、脱离会话的懒加载代理）。
+        val a = ClientCacheItem.genUid(AllAccessorsThrow())
+        val b = ClientCacheItem.genUid(AllAccessorsThrow())
+        assertEquals(
+            a, b,
+            "记录现状：访问器失败会让同类型的不同实例产生相同 UID —— 见 genUid 的 KDoc"
+        )
+    }
+
+    /** Serializes to an empty object — no fields to fingerprint. */
+    private class NoSerializableContent
+
+    /** Every accessor throws — stands in for an uninitialised `lateinit` or an out-of-session lazy proxy. */
+    private class AllAccessorsThrow {
+        val boom: String get() = throw IllegalStateException("accessor blew up")
     }
 
     @Test

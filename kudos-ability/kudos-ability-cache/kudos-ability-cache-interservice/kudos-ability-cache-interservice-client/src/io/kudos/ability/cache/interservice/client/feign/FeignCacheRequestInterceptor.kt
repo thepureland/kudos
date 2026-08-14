@@ -117,16 +117,37 @@ class FeignCacheRequestInterceptor(
      */
     private fun genCacheKey(requestTemplate: RequestTemplate): String {
         val request = requestTemplate.request()
-        val tenantId = KudosContextHolder.get().tenantId ?: ""
+        // getOrNull, not get(): get() creates a KudosContext and binds it to the current thread when none
+        // exists. Feign runs on HTTP-client / @Async / bulkhead pool threads, so that both leaks a context the
+        // pool never clears (the holder's own KDoc warns about exactly this) and yields an *empty* context whose
+        // tenantId is "" — which would collapse every tenant onto one cache key.
+        val tenantId = KudosContextHolder.getOrNull()?.tenantId ?: ""
         val feignCacheKey = ClientCacheKey(request.url(), request.httpMethod().name, request.body())
-        val result = arrayOf(
-            ClientCacheKey.FEIGN_CACHE_DELIMITER,
+        val result = listOf(
             tenantId,
-            ClientCacheKey.FEIGN_CACHE_DELIMITER,
-            applicationName,
+            applicationName.orEmpty(),
+            targetIdentityOf(requestTemplate),
             feignCacheKey.toString()
-        ).joinToString()
+        ).joinToString(ClientCacheKey.FEIGN_CACHE_DELIMITER)
         return Md5Crypt.apr1Crypt(result, "fCache")
+    }
+
+    /**
+     * Identifies the service being called.
+     *
+     * Without this the key is ambiguous across services. `RequestInterceptor`s run *before*
+     * `Target.apply(template)` attaches the base URL, so at this point `request.url()` is only the path; and
+     * `applicationName` is this application's own name — the same value for every Feign client in the JVM.
+     * So `serviceA.get("/config")` and `serviceB.get("/config")` produced identical cache keys: one service's
+     * response would overwrite the other's, and a 304 for one would be answered from the other's data.
+     *
+     * Feign sets the target on the template when it is created, so it is already available here; it is read
+     * defensively all the same, since the whole mechanism is optional and must not break the call if a Feign
+     * version stops populating it.
+     */
+    private fun targetIdentityOf(requestTemplate: RequestTemplate): String {
+        val target = runCatching { requestTemplate.feignTarget() }.getOrNull() ?: return ""
+        return "${target.name()}|${target.url()}"
     }
 
 }

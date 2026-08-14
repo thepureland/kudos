@@ -3,7 +3,9 @@ package io.kudos.ability.cache.interservice.client.feign
 import feign.Request
 import feign.RequestTemplate
 import feign.Response
+import feign.Target
 import feign.Util
+import feign.codec.DecodeException
 import feign.codec.Decoder
 import io.kudos.ability.cache.interservice.client.core.ClientCacheHelper
 import io.kudos.ability.cache.interservice.common.ClientCacheItem
@@ -17,9 +19,11 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Protocol-contract unit tests for [FeignCacheRequestInterceptor] / [FeignCacheResponseInterceptor].
@@ -65,6 +69,46 @@ internal class FeignCacheInterceptorsTest {
             "When there is no local cache, cache-key must not be added to the request headers")
         assertNull(template.headers()[ClientCacheKey.HEADER_KEY_CACHE_UID],
             "When there is no local cache, cache-uid must not be added to the request headers")
+    }
+
+    @Test
+    fun request_cacheKeyDistinguishesTargetServices() {
+        // 同一路径、不同被调服务必须得到不同的 cacheKey。
+        // RequestInterceptor 在 Target.apply(template) 之前运行，此时 request.url() 只有路径没有 host；
+        // 而 applicationName 是"调用方自己"的名字，同一 JVM 内所有 Feign client 都一样。
+        // 于是 serviceA.get("/config") 与 serviceB.get("/config") 会算出同一个 key：
+        // 一方的响应会覆盖另一方，304 判定还会让 B 读到 A 的数据。
+        helper.localCacheEnabled = true
+        val interceptor = newRequestInterceptor(appName = "caller-app")
+
+        val toA = newRequestTemplate(method = "GET", url = "/config")
+            .apply { feignTarget(Target.HardCodedTarget(Any::class.java, "service-a", "http://service-a")) }
+        val toB = newRequestTemplate(method = "GET", url = "/config")
+            .apply { feignTarget(Target.HardCodedTarget(Any::class.java, "service-b", "http://service-b")) }
+
+        interceptor.apply(toA)
+        interceptor.apply(toB)
+
+        val keyA = toA.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.first()
+        val keyB = toB.headers()[ClientCacheKey.HEADER_KEY_CACHE_KEY]!!.first()
+        assertNotEquals(keyA, keyB, "被调服务不同时 cacheKey 必须不同，否则会跨服务串数据")
+    }
+
+    @Test
+    fun request_doesNotCreateAKudosContextOnTheCallingThread() {
+        // Feign 跑在 HTTP 客户端 / @Async / 舱壁线程池上。KudosContextHolder.get() 在没有绑定时会新建并 set 进
+        // InheritableThreadLocal —— 既在池线程上留下永不回收的上下文（该类自己的 KDoc 就警告了这点），
+        // 又让 tenantId 退化为空，把不同租户的请求算到同一个 cacheKey 上。
+        KudosContextHolder.clear()
+        helper.localCacheEnabled = true
+        val interceptor = newRequestInterceptor(appName = "caller-app")
+
+        interceptor.apply(newRequestTemplate(method = "GET", url = "/users/1"))
+
+        assertNull(
+            KudosContextHolder.getOrNull(),
+            "拦截器不应在调用线程上创建并绑定 KudosContext"
+        )
     }
 
     @Test
@@ -326,7 +370,12 @@ internal class FeignCacheInterceptorsTest {
     }
 
     @Test
-    fun response_status304_localCacheMiss_returnsNullWithoutCallingDelegate() {
+    fun response_status304_localCacheMiss_failsLoudlyInsteadOfReturningNull() {
+        // 服务端因为我们上报了 cache-uid 而只回了空 body；此时本地条目却已被淘汰（FEIGN-CACHE 区是有界的，
+        // 请求往返期间被 LRU 挤掉很常见），于是既没有 body 可解码，也没有本地副本可用。
+        // 旧实现直接返回 null —— 而 Feign 接口在 Kotlin 里通常声明为不可空返回类型，
+        // 这个 null 会一路流进业务代码，在无关的位置炸掉或被当成合法值。
+        // 现在显式失败：错误可诊断，且重试必定成功（本地无条目 → 下次请求不带 cache-uid → 服务端回完整 body）。
         helper.localCacheEnabled = true // nothing written for "cache-miss"
         val delegate = RecordingDecoder("should-not-be-called")
         val interceptor = FeignCacheResponseInterceptor(delegate, helper)
@@ -340,10 +389,14 @@ internal class FeignCacheInterceptorsTest {
             body = "ignored",
             requestHeaders = mapOf(ClientCacheKey.HEADER_KEY_CACHE_KEY to listOf("cache-miss")),
         )
-        val result = interceptor.decode(response, String::class.java)
 
-        assertNull(result, "304 with an evicted/missing local entry yields null instead of decoding the body")
-        assertEquals(0, delegate.callCount)
+        val ex = assertFailsWith<DecodeException> { interceptor.decode(response, String::class.java) }
+
+        assertTrue(
+            ex.message!!.contains("cache-miss"),
+            "异常信息应带上 cacheKey 以便定位，实际: ${ex.message}"
+        )
+        assertEquals(0, delegate.callCount, "304 分支不应调用真实 decoder（body 是空的）")
     }
 
     @Test
