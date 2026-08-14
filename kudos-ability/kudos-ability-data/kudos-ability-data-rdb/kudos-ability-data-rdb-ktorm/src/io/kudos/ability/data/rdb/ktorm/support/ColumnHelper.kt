@@ -27,15 +27,31 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @author K
  * @author AI: Codex
+ * @author AI: Claude
  * @since 1.0.0
  */
 object ColumnHelper {
 
     /**
-     * Column info cache Map(table name, Map(property name, column)).
+     * Column info cache Map(table object, Map(property name, column)).
+     *
+     * Keyed by the [BaseTable] **instance**, not by its name. Ktorm supports several table objects
+     * over the same physical table — a narrow projection of it, or `aliased()` in a self-join — and
+     * a [Column] belongs to the table object that registered it. Keying by name let those share one
+     * cache entry and hand back a column owned by a different table object, which then rendered
+     * against the wrong table in the generated SQL. `BaseTable.equals` / `hashCode` are final and
+     * identity-based, so this map is an identity cache by construction.
+     *
+     * Lifecycle: entries live as long as the table objects do. That is the whole JVM for the normal
+     * case (table objects are `object` singletons) and bounded for [ShardedTableFactory], which
+     * caches one instance per physical name. Routing a freshly built table object through here on
+     * every query — a per-call `aliased()`, say — would grow the map; hold such a table in a field
+     * (or in a [ShardedTableFactory]) as ktorm intends, rather than rebuilding it per query.
+     *
      * Uses [ConcurrentHashMap] to guarantee thread-safe read/write under multi-threaded access.
      */
-    private val columnCache: ConcurrentHashMap<String, ConcurrentHashMap<String, Column<Any>>> = ConcurrentHashMap()
+    private val columnCache: ConcurrentHashMap<BaseTable<*>, ConcurrentHashMap<String, Column<Any>>> =
+        ConcurrentHashMap()
 
     /**
      * Resolve columns by property names.
@@ -48,7 +64,7 @@ object ColumnHelper {
         if (propertyNames.isEmpty()) return emptyMap()
 
         val tableName = table.tableName
-        val columnMap = columnCache.computeIfAbsent(tableName) { ConcurrentHashMap() }
+        val columnMap = columnCache.computeIfAbsent(table) { ConcurrentHashMap() }
 
         val resultMap = linkedMapOf<String, Column<Any>>()
         propertyNames.forEach { propertyName ->

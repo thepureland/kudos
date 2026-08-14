@@ -31,6 +31,9 @@ object SqlWhereExpressionFactory {
         if (value == null && operator !in NULLABLE_OPERATORS) {
             return null
         }
+        // An encrypted column can only answer some of these, and answers the rest with the wrong
+        // rows rather than an error. See [EncryptedColumnGuard].
+        EncryptedColumnGuard.checkFilterable(column, operator)
         return when (operator) {
             OperatorEnum.EQ -> column.eq(requireNotNull(value) { "Query value for operator [$operator] must not be null." })
             OperatorEnum.NE, OperatorEnum.LG -> column.notEq(requireNotNull(value) { "Query value for operator [$operator] must not be null." })
@@ -39,24 +42,12 @@ object SqlWhereExpressionFactory {
             OperatorEnum.LT -> (column as Column<Comparable<Any>>).less(value as Comparable<Any>)
             OperatorEnum.LE -> (column as Column<Comparable<Any>>).lessEq(value as Comparable<Any>)
             OperatorEnum.IEQ -> column.ieq(value.toString().uppercase())
-            OperatorEnum.EQ_P -> columnEq(
-                column, ColumnHelper.columnOf(column.table, value as String)[value] as Column<Any>
-            )
-            OperatorEnum.NE_P -> columnNotEq(
-                column, ColumnHelper.columnOf(column.table, value as String)[value] as Column<Any>
-            )
-            OperatorEnum.GE_P -> column.columnGe(
-                ColumnHelper.columnOf(column.table, value as String)[value] as Column<String>
-            )
-            OperatorEnum.LE_P -> column.columnLe(
-                ColumnHelper.columnOf(column.table, value as String)[value] as Column<String>
-            )
-            OperatorEnum.GT_P -> column.columnGt(
-                ColumnHelper.columnOf(column.table, value as String)[value] as Column<String>
-            )
-            OperatorEnum.LT_P -> column.columnLt(
-                ColumnHelper.columnOf(column.table, value as String)[value] as Column<String>
-            )
+            OperatorEnum.EQ_P -> columnEq(column, otherColumn(column, value, operator))
+            OperatorEnum.NE_P -> columnNotEq(column, otherColumn(column, value, operator))
+            OperatorEnum.GE_P -> column.columnGe(otherColumn(column, value, operator) as Column<String>)
+            OperatorEnum.LE_P -> column.columnLe(otherColumn(column, value, operator) as Column<String>)
+            OperatorEnum.GT_P -> column.columnGt(otherColumn(column, value, operator) as Column<String>)
+            OperatorEnum.LT_P -> column.columnLt(otherColumn(column, value, operator) as Column<String>)
             OperatorEnum.LIKE -> column.like("%${requireNotNull(value) { "Query value for operator [$operator] must not be null." }}%")
             OperatorEnum.LIKE_S -> column.like("${requireNotNull(value) { "Query value for operator [$operator] must not be null." }}%")
             OperatorEnum.LIKE_E -> column.like("%${requireNotNull(value) { "Query value for operator [$operator] must not be null." }}")
@@ -72,6 +63,22 @@ object SqlWhereExpressionFactory {
             OperatorEnum.BETWEEN -> (column as Column<Comparable<Any>>).between(value as ClosedRange<Comparable<Any>>)
             OperatorEnum.NOT_BETWEEN -> (column as Column<Comparable<Any>>).notBetween(value as ClosedRange<Comparable<Any>>)
         }
+    }
+
+    /**
+     * Resolves the right-hand column of a `*_P` (column-vs-column) operator, whose name arrives as
+     * the criterion's *value*, and checks that the pair can actually be compared.
+     *
+     * The check has to look at **both** columns: [EncryptedColumnGuard.checkFilterable] inspects
+     * only the column it is given, so a plaintext left-hand side compared against an encrypted
+     * right-hand one would otherwise slip through entirely.
+     */
+    @Suppress("UNCHECKED_CAST")
+    private fun otherColumn(column: Column<Any>, value: Any?, operator: OperatorEnum): Column<Any> {
+        val name = value as String
+        val other = ColumnHelper.columnOf(column.table, name)[name] as Column<Any>
+        EncryptedColumnGuard.checkComparable(column, other, operator)
+        return other
     }
 
     /**

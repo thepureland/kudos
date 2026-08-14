@@ -19,6 +19,7 @@ import java.lang.reflect.InvocationTargetException
 import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.full.declaredMemberFunctions
+import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.jvm.isAccessible
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -127,16 +128,73 @@ internal open class BaseDaoSyntheticBridgesTest {
         assertEquals(11, rows)
     }
 
+    /**
+     * A paged query must carry the primary key in its ORDER BY, so that pages partition the result
+     * set instead of slicing whatever order the database happened to produce.
+     *
+     * Asserted on the built expression rather than on returned rows: H2 hands back a small table in
+     * insertion order whether or not an ORDER BY is present, so a "walk the pages and check for
+     * duplicates" test passes with the tiebreaker removed and proves nothing.
+     */
+    @Test
+    fun prepareQuery_whenPaging_appendsThePrimaryKeyToTheOrderBy() {
+        val fn = daoFunction("prepareQuery", 5)
+        val paged = fn.callBy(argsOf(fn, dao,
+            "criteria" to null,
+            "returnColumnMap" to ColumnHelper.columnOf(TestTableKtorms, TestTableKtorm::id.name),
+            "pageNo" to 1,
+            "pageSize" to 3,
+            "orders" to emptyArray<Order>(),
+        )) as Query
+        val orderedColumns = paged.expression.let { it as org.ktorm.expression.SelectExpression }.orderBy
+            .mapNotNull { (it.expression as? org.ktorm.expression.ColumnExpression<*>)?.name }
+        assertEquals(listOf(TestTableKtorms.id.name), orderedColumns,
+            "paging with no explicit order must still order by the primary key")
+
+        // …and an unpaged query is left exactly as the caller wrote it.
+        val unpaged = fn.callBy(argsOf(fn, dao,
+            "criteria" to null,
+            "returnColumnMap" to ColumnHelper.columnOf(TestTableKtorms, TestTableKtorm::id.name),
+            "orders" to emptyArray<Order>(),
+        )) as Query
+        assertTrue((unpaged.expression as org.ktorm.expression.SelectExpression).orderBy.isEmpty(),
+            "an unpaged query must not gain an ORDER BY it did not ask for")
+    }
+
+    @Test
+    fun prepareQuery_whenPagingAlreadyOrderedByPk_doesNotRepeatIt() {
+        val fn = daoFunction("prepareQuery", 5)
+        val query = fn.callBy(argsOf(fn, dao,
+            "criteria" to null,
+            "returnColumnMap" to ColumnHelper.columnOf(TestTableKtorms, TestTableKtorm::id.name),
+            "pageNo" to 1,
+            "pageSize" to 3,
+            "orders" to arrayOf(Order.desc(TestTableKtorm::id.name)),
+        )) as Query
+        val orderedColumns = (query.expression as org.ktorm.expression.SelectExpression).orderBy
+            .mapNotNull { (it.expression as? org.ktorm.expression.ColumnExpression<*>)?.name }
+        assertEquals(listOf(TestTableKtorms.id.name), orderedColumns,
+            "the caller's own primary-key order is already total; appending it again would be noise")
+    }
+
     @Test
     fun searchByPayload_allDefaults_returnsQueryAndColumnMetadata() {
         val fn = daoFunction("searchByPayload", 3)
-        val result = fn.callBy(argsOf(fn, dao)) as List<*>
-        assertEquals(3, result.size)
-        assertIs<Query>(result[0])
+        // The query and the columns it selects used to travel as an untyped List<Any> that every
+        // caller indexed and cast; they are a data class now, so this reads them back by name.
+        val result = assertNotNull(fn.callBy(argsOf(fn, dao)))
+        assertIs<Query>(propertyOf(result, "query"))
         @Suppress("UNCHECKED_CAST")
-        val returnProps = result[1] as Set<String>
-        assertTrue(TestTableKtorm::name.name in returnProps)
+        val returnColumnMap = propertyOf(result, "returnColumnMap") as Map<String, *>
+        assertTrue(TestTableKtorm::name.name in returnColumnMap.keys)
     }
+
+    /** Reads a property off a private data class instance obtained reflectively. */
+    private fun propertyOf(instance: Any, name: String): Any? =
+        instance::class.declaredMemberProperties
+            .first { it.name == name }
+            .apply { isAccessible = true }
+            .getter.call(instance)
 
     @Test
     fun count_twoArgOverload_defaultFactory_viaCallBy() {

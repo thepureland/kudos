@@ -1,5 +1,7 @@
 package io.kudos.ability.data.rdb.ktorm.rowscope
 
+import java.util.concurrent.Callable
+
 
 /**
  * Marks a stretch of work as running with **system authority**, so row filtering does not apply.
@@ -20,9 +22,12 @@ package io.kudos.ability.data.rdb.ktorm.rowscope
  * - *no subject and no declaration ⇒ fail loudly* — a forgotten declaration surfaces during rollout
  *   as an error, instead of as a data leak or an empty report months later.
  *
- * Uses an [InheritableThreadLocal] so a child thread spawned inside the block inherits the
- * marker — the common case of a job fanning out. A thread pool that outlives the block must clear
- * it, which [runAsSystem] does for its own frame.
+ * **The marker is confined to the thread that set it**, and crossing a thread boundary is explicit:
+ * see [wrap]. An [InheritableThreadLocal] would look more convenient and is the wrong trade here —
+ * inheritance is decided when a thread is *created*, so a pooled worker that happens to be spun up
+ * inside a `runAsSystem` block keeps system authority for the rest of its life, serving unrelated
+ * requests unfiltered. That failure is silent, permanent, and impossible to reproduce on demand;
+ * a forgotten [wrap] fails loudly on the first call instead.
  *
  * @author K
  * @author AI: Claude
@@ -30,7 +35,7 @@ package io.kudos.ability.data.rdb.ktorm.rowscope
  */
 object DataScopeContext {
 
-    private val systemDepth = InheritableThreadLocal.withInitial { 0 }
+    private val systemDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
 
     /** Whether the current thread is running with system authority. */
     @JvmStatic
@@ -51,6 +56,35 @@ object DataScopeContext {
             val remaining = systemDepth.get() - 1
             if (remaining <= 0) systemDepth.remove() else systemDepth.set(remaining)
         }
+    }
+
+    /**
+     * Captures the calling thread's authority and returns [task] re-wrapped to run under it, for the
+     * case of a system-authority job fanning work out to other threads.
+     *
+     * ```kotlin
+     * DataScopeContext.runAsSystem {
+     *     ids.map { id -> executor.submit(DataScopeContext.wrap(Callable { dao.get(id) })) }
+     * }
+     * ```
+     *
+     * Capture happens now, on the calling thread; the authority is released again when the wrapped
+     * task returns, so handing the task to a pooled thread leaves nothing behind on it.
+     *
+     * @param task the work to run on another thread
+     * @return the same work, carrying this thread's authority
+     */
+    @JvmStatic
+    fun <V> wrap(task: Callable<V>): Callable<V> {
+        if (!isSystem()) return task
+        return Callable { runAsSystem { task.call() } }
+    }
+
+    /** [wrap] for work that returns nothing. */
+    @JvmStatic
+    fun wrap(task: Runnable): Runnable {
+        if (!isSystem()) return task
+        return Runnable { runAsSystem { task.run() } }
     }
 }
 

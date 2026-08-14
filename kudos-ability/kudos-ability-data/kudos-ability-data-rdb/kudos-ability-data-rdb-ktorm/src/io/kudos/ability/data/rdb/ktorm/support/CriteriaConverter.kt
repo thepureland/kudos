@@ -27,6 +27,17 @@ internal object CriteriaConverter {
      * @since 1.0.0
      */
     fun convert(criteria: Criteria, table: Table<*>): ColumnDeclaring<Boolean> {
+        // Guard first, because the failure downstream is a bare UnsupportedOperationException out of
+        // `reduce` on an empty list — a stack trace that says nothing about which query built it.
+        // An empty Criteria reaching here is nearly always a condition Criteria dropped on the way
+        // in: it discards a criterion whose value is null (or an empty string / collection) unless
+        // the operator accepts null, so `Criteria.of("status", EQ, null)` silently becomes no
+        // condition at all. Refusing it here beats running the caller's query without their filter.
+        require(!criteria.isEmpty()) {
+            "Criteria for table [${table.tableName}] carries no query condition. Note that Criteria " +
+                "drops criterions whose value is null or empty unless the operator accepts null " +
+                "(IS_NULL / IS_NOT_NULL / IS_EMPTY / IS_NOT_EMPTY); check the values you passed in."
+        }
         val criterionGroups = criteria.getCriterionGroups()
         val andExpressions = mutableListOf<ColumnDeclaring<Boolean>>()
         criterionGroups.forEach { criterionGroup -> // Top-level elements combine with AND
@@ -46,7 +57,12 @@ internal object CriteriaConverter {
                             }
                         }
                     }
-                    andExpressions.add(orExpressions.reduce { acc, e -> acc.or(e) })
+                    val orExpression = orExpressions.reduceOrNull { acc, e -> acc.or(e) }
+                        ?: error(
+                            "An OR group in the Criteria for table [${table.tableName}] produced no " +
+                                "query condition; dropping it would silently widen the query."
+                        )
+                    andExpressions.add(orExpression)
                 }
                 is Criterion -> {
                     convertCriterion(criterionGroup, table)?.let { andExpressions.add(it) }
@@ -59,7 +75,11 @@ internal object CriteriaConverter {
                 }
             }
         }
-        return andExpressions.reduce { acc, e -> acc.and(e) }
+        return andExpressions.reduceOrNull { acc, e -> acc.and(e) }
+            ?: error(
+                "Criteria for table [${table.tableName}] produced no query condition: [$criteria]. " +
+                    "Running the query unfiltered would return rows the caller did not ask for."
+            )
     }
 
     /**

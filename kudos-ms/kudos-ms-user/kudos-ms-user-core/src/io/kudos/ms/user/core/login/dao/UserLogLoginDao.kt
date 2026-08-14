@@ -53,7 +53,7 @@ open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() 
         userId: String?,
         startTime: LocalDateTime?,
         endTime: LocalDateTime?
-    ): List<UserLogLogin> = search(buildCriteria(tenantId, userId, startTime, endTime))
+    ): List<UserLogLogin> = search(buildCriteria(tenantId, userId, startTime, endTime).orNoFilter())
 
     /**
      * Count login logs by optional filters
@@ -69,7 +69,7 @@ open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() 
         userId: String?,
         startTime: LocalDateTime?,
         endTime: LocalDateTime?
-    ): Int = count(buildCriteria(tenantId, userId, startTime, endTime))
+    ): Int = count(buildCriteria(tenantId, userId, startTime, endTime).orNoFilter())
 
     /**
      * Count logs by login result and optional filters
@@ -116,6 +116,17 @@ open class UserLogLoginDao : BaseCrudDao<String, UserLogLogin, UserLogLogins>() 
         startTime?.let { addAnd(UserLogLogin::loginTime ge it) }
         endTime?.let { addAnd(UserLogLogin::loginTime le it) }
     }
+
+    /**
+     * Null when no filter was supplied at all, which is how the DAO spells "no restriction".
+     *
+     * Every parameter of [buildCriteria] is optional, so all-null is a legitimate request — "all
+     * login logs" — and it produces a `Criteria` carrying no condition. Handing that to `search` /
+     * `count` is not the same thing: an empty `Criteria` is rejected, because a condition object
+     * that ended up with no conditions is far more often a value that got dropped on the way in than
+     * a deliberate scan of the whole table. Passing null says the latter explicitly.
+     */
+    private fun Criteria.orNoFilter(): Criteria? = takeIf { !it.isEmpty() }
 
 
 }

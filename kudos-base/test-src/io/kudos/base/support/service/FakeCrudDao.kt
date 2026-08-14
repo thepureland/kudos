@@ -5,6 +5,7 @@ import io.kudos.base.model.payload.ISearchPayload
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.base.model.payload.UpdatePayload
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.sort.Order
 import io.kudos.base.support.dao.IBaseCrudDao
 import kotlin.reflect.KClass
@@ -184,6 +185,30 @@ internal class FakeCrudDao<PK : Any, E : IIdEntity<PK>> : IBaseCrudDao<PK, E> {
     @Suppress("UNCHECKED_CAST")
     override fun <T : Any> search(listSearchPayload: ListSearchPayload?, returnItemClass: KClass<T>): List<T> {
         record("searchPayloadTyped", listSearchPayload, returnItemClass); return listResult as List<T>
+    }
+
+    override fun searchMaps(listSearchPayload: ListSearchPayload?): List<Map<String, Any?>> {
+        record("searchMaps", listSearchPayload); return mapListResult.map { it.mapValues { (_, v) -> v } }
+    }
+
+    override fun searchValues(listSearchPayload: ListSearchPayload): List<Any?> {
+        record("searchValues", listSearchPayload); return mapListResult.flatMap { it.values }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun pagingSearchWithTotal(
+        criteria: Criteria?, pageNo: Int, pageSize: Int, vararg orders: Order
+    ): PagingSearchResult<E> {
+        record("pagingSearchWithTotalCriteria", criteria, pageNo, pageSize)
+        return PagingSearchResult(listResult as List<E>, countResult)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : Any> pagingSearchWithTotal(
+        listSearchPayload: ListSearchPayload, returnItemClass: KClass<T>
+    ): PagingSearchResult<T> {
+        record("pagingSearchWithTotalPayload", listSearchPayload, returnItemClass)
+        return PagingSearchResult(listResult as List<T>, countResult)
     }
 
     override fun count(criteria: Criteria?): Int { record("countCriteria", criteria); return countResult }

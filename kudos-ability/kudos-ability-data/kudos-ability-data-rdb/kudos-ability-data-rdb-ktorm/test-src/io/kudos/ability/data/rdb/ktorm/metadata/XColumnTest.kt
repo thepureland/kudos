@@ -3,6 +3,7 @@ package io.kudos.ability.data.rdb.ktorm.metadata
 import io.kudos.ability.data.rdb.jdbc.metadata.Column
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 /**
  * Unit tests for the [Column.getKtormSqlTypeFunName] extension: it must delegate to
@@ -26,8 +27,8 @@ internal class XColumnTest {
         column.kotlinType = java.time.LocalDateTime::class
         assertEquals("datetime", column.getKtormSqlTypeFunName())
 
-        // unknown type falls through to the empty-string default
+        // An unmapped type is refused rather than silently rendered as an empty function name.
         column.kotlinType = Any::class
-        assertEquals("", column.getKtormSqlTypeFunName())
+        assertFailsWith<IllegalArgumentException> { column.getKtormSqlTypeFunName() }
     }
 }

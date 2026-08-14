@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicLong
  * @since 1.0.0
  */
 open class RowScopeShadowRecorder(
-    /** Distinct findings retained. Beyond this, new *kinds* of finding are dropped and counted. */
+    /** Distinct findings retained. Beyond this, further observations are dropped and counted. */
     private val capacity: Int = 500,
 ) {
 
@@ -42,6 +42,14 @@ open class RowScopeShadowRecorder(
          * actionable one: this call needs `DataScopeContext.runAsSystem { }` or `@SystemScoped`.
          */
         WOULD_FAIL,
+
+        /**
+         * A write would have been refused for storing a value outside the writer's own scope —
+         * an insert into another tenant, or an update moving a row out of reach. The one to read
+         * first when enabling enforcement, because it is the kind that turns into a failed request
+         * rather than a shorter result list.
+         */
+        WOULD_REJECT,
     }
 
     /** One distinct finding, with how often and how recently it happened. */
@@ -62,27 +70,40 @@ open class RowScopeShadowRecorder(
     open fun record(kind: Kind, entity: String, table: String, detail: String) {
         val key = "${kind}|${entity}|${detail}"
         val now = LocalDateTime.now()
-        val existing = findings[key]
-        if (existing != null) {
-            findings[key] = existing.copy(count = existing.count + 1, lastSeen = now)
-            return
+        // `compute` rather than get-then-put: a hot path is exactly where this recorder earns its
+        // keep, and it is also exactly where a read-modify-write loses counts to concurrent callers.
+        // An undercount would misreport how widely a finding actually occurs, which is the one
+        // number an operator uses to tell "one endpoint I forgot" from "a hot path".
+        val merged = findings.computeIfPresent(key) { _, existing ->
+            existing.copy(count = existing.count + 1, lastSeen = now)
         }
+        if (merged != null) return
         if (findings.size >= capacity) {
+            // Counts observations, not distinct findings: knowing whether a key was already dropped
+            // would mean keeping the very set the buffer is full of. Say "observations" rather than
+            // overstate it — an operator reading "50000 findings dropped" would go looking for
+            // 50000 problems that may all be one hot path.
             val total = dropped.incrementAndGet()
             // Say so, loudly and once in a while: a silently truncated work-list reads as
             // "nothing left to do", which is the opposite of the truth.
             if (total == 1L || total % 100 == 0L) {
-                log.warn("[row-scope][shadow] finding buffer full (${capacity}); ${total} distinct finding(s) dropped.")
+                log.warn("[row-scope][shadow] finding buffer full (${capacity}); ${total} observation(s) dropped.")
             }
             return
         }
-        findings[key] = Finding(kind, entity, table, detail, 1, now, now)
+        // Another thread may have created this finding since the computeIfPresent above; merging
+        // into theirs rather than overwriting keeps the count of a newly-hot finding honest.
+        if (findings.putIfAbsent(key, Finding(kind, entity, table, detail, 1, now, now)) != null) {
+            findings.computeIfPresent(key) { _, existing ->
+                existing.copy(count = existing.count + 1, lastSeen = now)
+            }
+        }
     }
 
     /** Everything observed so far, most recent first. */
     open fun findings(): List<Finding> = findings.values.sortedByDescending { it.lastSeen }
 
-    /** How many distinct findings were dropped because the buffer was full; 0 when the list is complete. */
+    /** How many observations were dropped because the buffer was full; 0 when the list is complete. */
     open fun droppedCount(): Long = dropped.get()
 
     /** Clears the list — for after you have acted on it, so the next run starts from a clean slate. */

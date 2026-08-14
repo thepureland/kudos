@@ -1,5 +1,6 @@
 package io.kudos.ability.data.rdb.ktorm.support
 
+import io.kudos.ability.data.rdb.ktorm.rowscope.RowScopeEnforcer
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.lang.string.underscoreToHump
 import io.kudos.base.model.contract.common.IAuditable
@@ -70,12 +71,57 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     override fun insertOnly(entity: E, vararg propertyNames: String): PK {
         val properties = entity.properties
         val columns = ColumnHelper.columnOf(table(), *propertyNames)
+        val assignments = linkedMapOf<Column<Any>, Any?>()
+        columns.forEach { (propertyName, column) -> assignments[column] = properties[propertyName] }
+        // A row must not be created outside the scope of whoever creates it; unset scope columns are
+        // filled from the subject when that is unambiguous. See RowScopeWriteValidator.
+        applyInsertScope(assignments)
         return database().insertAndGenerateKey(table()) {
-            columns.forEach { (propertyName, column) ->
-                set(column, properties[propertyName])
-            }
+            assignments.forEach { (column, value) -> set(column, value) }
         } as PK
     }
+
+    /**
+     * Applies the row-scope decision to one row's assignments: refuses values outside the subject's
+     * scope, and fills scope columns the caller left unset.
+     *
+     * Takes the assignments already keyed by [Column] so the check sees exactly what will be
+     * written — a column the caller excluded from the statement is genuinely unset, whatever the
+     * in-memory entity happens to hold for it.
+     */
+    private fun applyInsertScope(assignments: MutableMap<Column<Any>, Any?>) {
+        val enforcer = RowScopeEnforcer.current ?: return
+        val byName = assignments.entries.associate { (column, value) -> column.name to value }
+        val defaults = enforcer.defaultsForInsert(table(), entityClass(), byName)
+        defaults.forEach { (columnName, value) ->
+            val column = columnByName(columnName)
+            // Only where the caller supplied nothing: a value they did set has already been checked.
+            if (assignments[column] == null) assignments[column] = value
+        }
+    }
+
+    /**
+     * Refuses an update whose assignments would move the row out of the subject's own scope.
+     *
+     * @param properties property name → value being assigned
+     * @param columnMap property name → column, as already resolved by the caller
+     */
+    private fun checkUpdateScope(properties: Map<String, Any?>, columnMap: Map<String, Column<Any>>) {
+        val enforcer = RowScopeEnforcer.current ?: return
+        val byName = properties.mapNotNull { (name, value) ->
+            columnMap[name]?.let { it.name to value }
+        }.toMap()
+        enforcer.checkUpdate(table(), entityClass(), byName)
+    }
+
+    /** Resolves a scope-declared column name against the table, failing loudly if it does not exist. */
+    @Suppress("UNCHECKED_CAST")
+    private fun columnByName(columnName: String): Column<Any> =
+        table().columns.firstOrNull { it.name.equals(columnName, ignoreCase = true) } as Column<Any>?
+            ?: error(
+                "Row scope declares column [$columnName] on entity [${entityClass().simpleName}], " +
+                    "which table [${table().tableName}] does not have."
+            )
 
     override fun insertExclude(entity: E, vararg excludePropertyNames: String): PK {
         val onlyProperties = entity.properties.keys.filter { !excludePropertyNames.contains(it) }
@@ -89,7 +135,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             // Fill audit defaults before snapshotting the property keys; otherwise the auto-filled
             // columns would be missing from the INSERT column list.
             (objects as Collection<E>).forEach { setInsertDefault(it) }
-            batchInsertOnly(objects, countOfEachBatch, *objects.first().properties.keys.toTypedArray())
+            val columns = uniformPropertyKeys(objects, "batchInsert")
+            batchInsertOnly(objects, countOfEachBatch, *columns.toTypedArray())
         } else {
             val propertyNames = getEntityProperties()
             val columnMap = ColumnHelper.columnOf(table(), *propertyNames.toTypedArray())
@@ -102,12 +149,16 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                             // Plain-bean path: inject audit defaults into the property map so even
                             // DTO-style payloads end up with consistent createTime / createUserId.
                             setInsertDefault(propMap)
+                            val assignments = linkedMapOf<Column<Any>, Any?>()
                             for ((name, value) in propMap) {
                                 if (name in propertyNames) {
                                     val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
-                                    set(column, value)
+                                    assignments[column] = value
                                 }
                             }
+                            // A DTO can name a tenant just as freely as an entity can.
+                            applyInsertScope(assignments)
+                            assignments.forEach { (column, value) -> set(column, value) }
                         }
                     }
                 }
@@ -129,12 +180,19 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             val counts = database().batchInsert(table()) {
                 it.forEach { entity ->
                     item {
+                        val assignments = linkedMapOf<Column<Any>, Any?>()
                         for ((name, value) in entity.properties) {
                             if (name in propertyNames) {
                                 val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
-                                set(column, value)
+                                assignments[column] = value
                             }
                         }
+                        // Per row, because each carries its own values — but the resulting column
+                        // set stays identical across the batch: a scope column is either in
+                        // `propertyNames` for every row or absent for every row, and a fill only
+                        // supplies a value for a column already in that set.
+                        applyInsertScope(assignments)
+                        assignments.forEach { (column, value) -> set(column, value) }
                     }
                 }
             }
@@ -146,7 +204,10 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     override fun batchInsertExclude(
         entities: Collection<E>, countOfEachBatch: Int, vararg excludePropertyNames: String
     ): Int {
-        val onlyPropertyNames = entities.first().properties.keys.filter { it !in excludePropertyNames }
+        if (entities.isEmpty()) return 0
+        entities.forEach { setInsertDefault(it) }
+        val onlyPropertyNames = uniformPropertyKeys(entities, "batchInsertExclude")
+            .filter { it !in excludePropertyNames }
         return batchInsertOnly(entities, countOfEachBatch, *onlyPropertyNames.toTypedArray())
     }
 
@@ -158,8 +219,23 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
     @Suppress("UNCHECKED_CAST")
     override fun update(any: Any): Boolean {
         return if (any is IDbEntity<*, *>) {
-            setDefault(any as E)
-            entitySequence().update(any) == 1
+            val entity = any as E
+            setDefault(entity)
+            // A row the subject cannot see must not be a row they can change. Ktorm's
+            // EntitySequence.update() writes `WHERE <pk> = ?` from the entity's identity and cannot
+            // be told about the scope — it rejects a filtered sequence outright — so a scoped update
+            // goes down the criteria path, which ANDs the scope in. With no scope active the ktorm
+            // call is kept verbatim: it also attaches the entity and discards its change flags,
+            // behaviour callers may depend on.
+            if (rowScopeExpr() == null) {
+                // No row filter applies, but the entity may still carry scope columns whose values
+                // need checking — an unrestricted-on-reads subject is not the same as one allowed to
+                // write anywhere, and `scope.self` grants read access without granting either.
+                checkUpdateScope(entity.properties, ColumnHelper.columnOf(table(), *entity.properties.keys.toTypedArray()))
+                entitySequence().update(entity) == 1
+            } else {
+                updateExcludeProperties(entity)
+            }
         } else {
             val entityClass = requireNotNull(table().entityClass) { "Table has no bound entity type; cannot create entity instance." }
             val entity = Entity.create(entityClass)
@@ -175,19 +251,14 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         return updateByCriteria(entity.id, entity.properties, criteria)
     }
 
-    override fun updateProperties(id: PK, properties: Map<String, *>): Boolean {
-        val props = properties.toMutableMap()
-        setDefault(props)
-        val propertyNames = props.keys.filter { it != IDbEntity<PK, E>::id.name }.toTypedArray()
-        val columnMap = ColumnHelper.columnOf(table(), *propertyNames)
-        return database().update(table()) {
-            props.forEach { (name, value) ->
-                val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
-                set(column, value)
-            }
-            where { getPkColumn() eq id }
-        } == 1
-    }
+    /**
+     * Delegates to [updateByCriteria] with no extra condition rather than building its own
+     * `WHERE <pk> = ?`. The hand-rolled version silently skipped the row scope — an id the subject
+     * cannot read was still an id they could write — and resolved a column for every key in the map
+     * including `id`, so passing the id along with the values it accompanies threw.
+     */
+    override fun updateProperties(id: PK, properties: Map<String, *>): Boolean =
+        updateByCriteria(id, properties, null)
 
     override fun updatePropertiesWhen(id: PK, properties: Map<String, *>, criteria: Criteria): Boolean {
         require(!criteria.isEmpty()) { "Conditional entity update requires a non-empty query criteria!" }
@@ -277,9 +348,13 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         }
 
         val updateColumnMap = ColumnHelper.columnOf(table(), *updatePropertyMap.keys.toTypedArray())
+        checkUpdateScope(updatePropertyMap, updateColumnMap)
         val andOr = searchPayload?.getAndOr() ?: AndOrEnum.AND
         val whereExpression = processWhere(wherePropertyMap, andOr, true, whereConditionFactory)
         whereExpression ?: throw IllegalArgumentException("Unconditional database table update is not allowed!")
+        // Payload-driven updates are scoped like every other write: the payload decides which rows
+        // the caller asked for, the scope decides which of those they are allowed to touch.
+        val scopedExpression = withRowScope(whereExpression)
 
         return database().batchUpdate(table()) {
             item {
@@ -288,7 +363,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
                     set(column, value)
                 }
                 where {
-                    whereExpression
+                    scopedExpression
                 }
             }
         }.sum()
@@ -302,6 +377,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         setDefault(props)
         val whereExpression = withRowScope(CriteriaConverter.convert(criteria, table()))
         val columnMap = ColumnHelper.columnOf(table(), *props.keys.toTypedArray())
+        checkUpdateScope(props, columnMap)
         return database().batchUpdate(table()) {
             item {
                 props.forEach { (name, value) ->
@@ -425,6 +501,9 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         setDefault(props)
         val propertyNames = props.keys.toTypedArray()
         val columnMap = ColumnHelper.columnOf(table(), *propertyNames)
+        // The scoped WHERE below proves the caller may touch this row; it says nothing about what
+        // they may turn it into. Without this, a visible row can be assigned to another tenant.
+        checkUpdateScope(props, columnMap)
         return database().update(table()) {
             props.filter { it.key != IDbEntity<PK, E>::id.name }.forEach { (name, value) ->
                 val column = requireNotNull(columnMap[name]) { "No database column found for property [$name]." }
@@ -469,7 +548,8 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
         require(entities.isNotEmpty()) { "Entity collection argument must not be empty!" }
         var totalCount = 0
         entities.forEach { setDefault(it) }
-        var columnMap = ColumnHelper.columnOf(table(), *entities.first().properties.keys.toTypedArray())
+        val sharedKeys = uniformPropertyKeys(entities, "batchUpdate")
+        var columnMap = ColumnHelper.columnOf(table(), *sharedKeys.toTypedArray())
         if (propertyNames.isNotEmpty()) {
             columnMap = if (exclude) {
                 columnMap.filter { it.key !in propertyNames }
@@ -478,6 +558,7 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             }
         }
         val criteriaExpression = criteria?.let { withRowScope(CriteriaConverter.convert(it, table())) } ?: rowScopeExpr()
+        entities.forEach { entity -> checkUpdateScope(entity.properties, columnMap) }
         GroupExecutor(entities, countOfEachBatch) { it ->
             val counts = database().batchUpdate(table()) {
                 for (entity in it) {
@@ -499,6 +580,41 @@ open class BaseCrudDao<PK : Any, E : IDbEntity<PK, E>, T : Table<E>>
             totalCount += counts.sum()
         }.execute()
         return totalCount
+    }
+
+    /**
+     * The property names every entity in [entities] sets, rejecting a batch whose entities disagree.
+     *
+     * A batch becomes **one** prepared statement, so its column list has to be the same for every
+     * row. Deriving that list from the first entity and filtering the rest against it — what this
+     * used to do — turns a disagreement into one of two bad outcomes: a property only later entities
+     * set is silently dropped on the floor, and a property only earlier entities set makes ktorm
+     * reject the batch with a message about SQL text that names neither the entity nor the column.
+     *
+     * Refusing up front says which properties differ. A caller who genuinely wants a fixed column
+     * list already has [batchInsertOnly] / [batchUpdateOnly] and the `…Exclude` variants; a caller
+     * whose entities merely happen to differ wants to know.
+     *
+     * @param entities the batch, after audit defaults have been filled
+     * @param operation the calling operation, named in the error
+     * @return the property names shared by all of them
+     * @throws IllegalStateException when two entities set different properties
+     * @author K
+     * @author AI: Claude
+     * @since 1.0.0
+     */
+    private fun uniformPropertyKeys(entities: Collection<E>, operation: String): Set<String> {
+        val expected = entities.first().properties.keys
+        val divergent = entities.asSequence().drop(1).firstOrNull { it.properties.keys != expected }
+            ?: return expected
+        val actual = divergent.properties.keys
+        error(
+            "$operation was given entities that do not all set the same properties, and a batch has " +
+                "to be one statement with one column list. Compared with the first entity, another " +
+                "one is missing ${(expected - actual).ifEmpty { "nothing" }} and additionally sets " +
+                "${(actual - expected).ifEmpty { "nothing" }}. Give every entity the same properties, " +
+                "or state the columns explicitly with the ...Only / ...Exclude variants."
+        )
     }
 
     /**

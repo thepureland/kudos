@@ -78,6 +78,20 @@ open class TemplateModelCreator {
         templateModel["table"] = RdbMetadataKit.getTableByName(tableName)
         val origColumns = RdbMetadataKit.getColumnsByTableName(tableName).values
         templateModel["columns"] = origColumns
+        // Resolve every column before failing, so an unsupported type names the column it is on and
+        // lists all of them at once. Asking KtormSqlType.getFunName per column instead would abort
+        // on the first one with a message naming only the Kotlin type — and since the JDBC-to-Kotlin
+        // mapping falls back to types Ktorm has no column function for (OffsetDateTime for
+        // PostgreSQL `timestamptz`, Duration for `interval`, Any for the geometric types), that is a
+        // realistic table, not a corner case.
+        val unmappedColumns = origColumns.filter { KtormSqlType.getFunNameOrNull(it.kotlinType) == null }
+        require(unmappedColumns.isEmpty()) {
+            "Table [$tableName] has ${unmappedColumns.size} column(s) whose type has no Ktorm column " +
+                "binding, so no table definition can be generated for it: " +
+                unmappedColumns.joinToString { "${it.name} (${it.kotlinType.qualifiedName})" } +
+                ". Map these columns to a supported type, or exclude the table from generation and " +
+                "hand-write it with a custom SqlType."
+        }
         templateModel["ktormFunNameMap"] = origColumns.associate { it.name to KtormSqlType.getFunName(it.kotlinType) }
         templateModel["pkColumn"] = origColumns.first { it.primaryKey }
         val columnConfMap = columns.associateBy { it.getColumn() }

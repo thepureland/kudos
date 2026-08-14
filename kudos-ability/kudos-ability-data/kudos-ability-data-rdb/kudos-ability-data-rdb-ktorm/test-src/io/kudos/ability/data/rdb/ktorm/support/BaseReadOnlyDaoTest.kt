@@ -18,6 +18,10 @@ import kotlin.reflect.KProperty0
 import kotlin.reflect.KProperty1
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Test cases for BaseReadOnlyDao.
@@ -709,6 +713,93 @@ internal open class BaseReadOnlyDaoTest {
     //endregion payload search
 
 
+    /**
+     * The typed alternatives to `search(payload): List<*>`.
+     *
+     * `search` decides its element type from how many `returnProperties` the payload carries —
+     * entities for none, bare values for exactly one, maps for two or more. That rule lives nowhere
+     * in the type system, so every call site casts, and dropping a payload from two return
+     * properties to one changes the element type under call sites that still compile. These two say
+     * what they return.
+     */
+    @Test
+    fun searchMapsAndSearchValues_stateTheirShape() {
+        class Payload : ListSearchPayload() {
+            var returnPropertiesField: List<String>? = null
+            override fun getReturnProperties() = returnPropertiesField
+            override fun isUnpagedSearchAllowed() = true
+        }
+
+        // Two return properties: search(payload) and searchMaps agree.
+        val twoProps = Payload().apply { returnPropertiesField = listOf("id", "name") }
+        val maps = testTableDao.searchMaps(twoProps)
+        assertEquals(11, maps.size)
+        assertEquals(setOf("id", "name"), maps.first().keys)
+
+        // One return property: search(payload) switches to bare values, searchMaps does not.
+        val oneProp = Payload().apply { returnPropertiesField = listOf("name") }
+        val oneMaps = testTableDao.searchMaps(oneProp)
+        assertEquals(11, oneMaps.size)
+        assertEquals(setOf("name"), oneMaps.first().keys, "searchMaps must return maps for one property too")
+
+        val values = testTableDao.searchValues(oneProp)
+        assertEquals(11, values.size)
+        assertEquals(testTableDao.search(oneProp), values, "searchValues must match the legacy single-property shape")
+
+        // …and asking for values when the payload does not name exactly one property is refused
+        // rather than answered with something of a different shape.
+        val error = assertFailsWith<IllegalArgumentException> { testTableDao.searchValues(twoProps) }
+        assertTrue(error.message!!.contains("searchMaps"), "the error must point at the right method: ${error.message}")
+        assertFailsWith<IllegalArgumentException> { testTableDao.searchValues(Payload()) }
+    }
+
+    /**
+     * A page and its total in one call. Calling `pagingSearch` and `count` separately is two call
+     * sites that have to be kept in agreement about the condition, and a total computed from a
+     * different condition is a paginator that lies.
+     */
+    @Test
+    fun pagingSearchWithTotal_returnsThePageAndTheTotal() {
+        if (!isSupportPaging()) return
+        val criteria = Criteria.of(TestTableKtorm::active.name, OperatorEnum.EQ, true)
+        val expectedTotal = testTableDao.count(criteria)
+
+        val page = testTableDao.pagingSearchWithTotal(criteria, 1, 4, Order.asc(TestTableKtorm::id.name))
+        assertEquals(4, page.data.size, "the page carries only its own rows")
+        assertEquals(expectedTotal, page.totalCount, "…and the total ignores the pagination")
+        assertEquals(-11, page.data.first().id)
+    }
+
+    @Test
+    fun pagingSearchWithTotalByPayload_isTypedRatherThanStarProjected() {
+        if (!isSupportPaging()) return
+
+        class Payload : ListSearchPayload()
+
+        // The element type is stated, so no cast is needed at the call site — unlike
+        // pagingSearch(payload), whose PagingSearchResult<*> is star-projected only because
+        // search(payload) cannot say what it returns.
+        val page = testTableDao.pagingSearchWithTotal(
+            Payload().apply { pageNo = 1; pageSize = 4 },
+            TestTableCacheItem::class,
+        )
+        assertEquals(4, page.data.size)
+        assertEquals(11, page.totalCount)
+        assertNotNull(page.data.first().name, "the element type is TestTableCacheItem, not Any?")
+    }
+
+    @Test
+    fun pagingSearchWithTotalByPayload_unpagedTotalMatchesTheRowCount() {
+        class Payload : ListSearchPayload() {
+            override fun isUnpagedSearchAllowed() = true
+        }
+
+        // With no LIMIT there is no second count query to run; the total is what came back.
+        val page = testTableDao.pagingSearchWithTotal(Payload(), TestTableCacheItem::class)
+        assertEquals(11, page.data.size)
+        assertEquals(11, page.totalCount)
+    }
+
     //region aggregate
     @Test
     fun count() {
@@ -771,6 +862,64 @@ internal open class BaseReadOnlyDaoTest {
         val criteria = Criteria.of(TestTableKtorm::name.name, OperatorEnum.LIKE_S, "name1")
         val result = testTableDao.min(TestTableKtorm::weight, criteria)
         assertEquals(56.5, result)
+    }
+
+    /**
+     * An empty IN list. `x IN ()` is not valid SQL in any of the databases this framework targets,
+     * so the collection has to be answered rather than rendered — and the answer is no rows, since
+     * nothing is a member of an empty set. `getByIds` already guarded this; the `inSearch` family
+     * went straight to a syntax error.
+     */
+    @Test
+    fun inSearchWithAnEmptyCollection() {
+        assertTrue(testTableDao.inSearchById(emptyList()).isEmpty())
+        assertTrue(testTableDao.inSearch(TestTableKtorm::name, emptyList<String>()).isEmpty())
+        assertTrue(testTableDao.inSearchPropertyById(emptyList(), TestTableKtorm::name.name).isEmpty())
+        assertTrue(testTableDao.inSearchPropertiesById(emptyList(), listOf("id", "name")).isEmpty())
+    }
+
+    /**
+     * Paging must impose a total order. `LIMIT`/`OFFSET` slice whatever order the database produced,
+     * and nothing obliges it to produce the same one twice, so without a tiebreaker the same row can
+     * land on two pages while another lands on none. Walking every page and checking that the union
+     * is exactly the table is the assertion that catches it.
+     */
+    @Test
+    fun pagingWithoutAnExplicitSortStillPartitionsTheRows() {
+        if (!isSupportPaging()) return
+        val total = testTableDao.count()
+        val pageSize = 3
+        val seen = mutableListOf<Int>()
+        var pageNo = 1
+        while (seen.size < total) {
+            val page = testTableDao.pagingSearch(null, pageNo, pageSize)
+            if (page.isEmpty()) break
+            seen.addAll(page.map { it.id })
+            pageNo++
+        }
+        assertEquals(total, seen.size, "every row must appear on exactly one page")
+        assertEquals(total, seen.toSet().size, "and no row may appear on two pages")
+    }
+
+    /**
+     * Aggregates over a result set with no rows. `SUM` / `AVG` are SQL NULL there, and the DAO used
+     * to cast that straight to a non-null `Number` — so an ordinary "no matching rows" turned into a
+     * bare NullPointerException thrown from inside the framework.
+     */
+    @Test
+    fun aggregatesOverAnEmptyResultSet() {
+        val matchesNothing = Criteria.of(TestTableKtorm::name.name, OperatorEnum.EQ, "no-such-name")
+
+        // The sum of nothing is 0 — the honest total, and one the non-null signature can carry.
+        assertEquals(0, testTableDao.sum(TestTableKtorm::weight, matchesNothing))
+        // The average of nothing is undefined, so it says so rather than answering 0.
+        assertFailsWith<IllegalStateException> { testTableDao.avg(TestTableKtorm::weight, matchesNothing) }
+
+        // …and the nullable overloads report the empty result instead of deciding for the caller.
+        assertNull(testTableDao.sumOrNull(TestTableKtorm::weight, matchesNothing))
+        assertNull(testTableDao.avgOrNull(TestTableKtorm::weight, matchesNothing))
+        assertEquals(122.5, testTableDao.sumOrNull(TestTableKtorm::weight, Criteria.of(
+            TestTableKtorm::name.name, OperatorEnum.LIKE_S, "name1")))
     }
     //endregion aggregate
 

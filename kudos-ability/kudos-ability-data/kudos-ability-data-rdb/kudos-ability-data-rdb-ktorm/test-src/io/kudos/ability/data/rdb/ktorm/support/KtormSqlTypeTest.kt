@@ -16,6 +16,9 @@ import java.time.YearMonth
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Unit tests for the [KtormSqlType] mapping function.
@@ -81,9 +84,18 @@ internal class KtormSqlTypeTest {
     }
 
     @Test
-    fun unknownTypeReturnsEmpty() {
-        // Uncovered types fall through to the else branch; the current implementation returns an empty string (not an error). Code-generation scenarios usually don't hit this type.
-        assertEquals("", KtormSqlType.getFunName(Any::class))
+    fun unknownTypeIsRejected() {
+        // An unmapped type used to come back as "", which the code generator happily wrote into a
+        // table definition as `Schema.("col")` — a syntax error in generated code with nothing
+        // pointing back at the type that caused it. Naming the type here is the whole point.
+        val error = assertFailsWith<IllegalArgumentException> { KtormSqlType.getFunName(Any::class) }
+        assertTrue(error.message!!.contains("kotlin.Any"), "the error must name the offending type: ${error.message}")
+    }
+
+    @Test
+    fun unknownTypeIsNullWhenAsked() {
+        assertNull(KtormSqlType.getFunNameOrNull(Any::class))
+        assertEquals("varchar", KtormSqlType.getFunNameOrNull(String::class))
     }
 
     /**

@@ -313,6 +313,62 @@ interface IBaseReadOnlyService<PK : Any, E : IIdEntity<PK>> {
      */
     fun <T : Any> search(listSearchPayload: ListSearchPayload, returnItemClass: KClass<T>): List<T>
 
+    /**
+     * Queries by list search payload, returning each row as a property-name → value map.
+     *
+     * The typed counterpart of [search] for the projection case: [search] picks its element type
+     * from how many `returnProperties` the payload carries, so its result is a `List<*>` that every
+     * caller casts. This one always returns maps.
+     *
+     * @param listSearchPayload List search payload
+     * @return One map per row, keyed by property name
+     */
+    fun searchMaps(listSearchPayload: ListSearchPayload): List<Map<String, Any?>>
+
+    /**
+     * Queries by list search payload, returning the values of its single return property.
+     *
+     * @param listSearchPayload List search payload; must carry exactly one `returnProperties` entry
+     * @return The value of that property for each row
+     * @throws IllegalArgumentException when the payload does not name exactly one return property
+     */
+    fun searchValues(listSearchPayload: ListSearchPayload): List<Any?>
+
+    /**
+     * Paginated query by [Criteria], returning the page **and** the total row count.
+     *
+     * Prefer this over calling [pagingSearch] and [count] separately: those are two call sites that
+     * must be kept in agreement about the condition, and a page whose total came from a different
+     * condition is a paginator that lies.
+     *
+     * @param criteria Query conditions; null means unconditional
+     * @param pageNo Page number (1-based)
+     * @param pageSize Rows per page
+     * @param orders Sort rules
+     * @return The page's rows together with the total ignoring pagination
+     */
+    fun pagingSearchWithTotal(
+        criteria: Criteria? = null,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): PagingSearchResult<E>
+
+    /**
+     * Paginated query by list search payload with the element type stated rather than inferred —
+     * the typed counterpart of [pagingSearch], whose `PagingSearchResult<*>` is star-projected only
+     * because [search] cannot say what it returns.
+     *
+     * @param T Result element type
+     * @param listSearchPayload List search payload; `returnProperties` must be empty
+     * @param returnItemClass Result element type
+     * @return The page's rows together with the total ignoring pagination
+     */
+    fun <T : Any> pagingSearchWithTotal(
+        listSearchPayload: ListSearchPayload,
+        returnItemClass: KClass<T>
+    ): PagingSearchResult<T>
+
     fun count(criteria: Criteria? = null): Int
 
     /**

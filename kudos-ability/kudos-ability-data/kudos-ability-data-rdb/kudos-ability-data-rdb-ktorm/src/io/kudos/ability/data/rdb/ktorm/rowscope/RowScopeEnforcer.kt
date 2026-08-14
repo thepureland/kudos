@@ -86,6 +86,99 @@ open class RowScopeEnforcer(
         return predicate
     }
 
+    /**
+     * The scope-column values an INSERT should add, or an empty map when the write may proceed as
+     * written.
+     *
+     * Writes go through the same switches as reads — feature off, entity undeclared, system
+     * authority, unrestricted subject, missing subject, shadow mode — deliberately here rather than
+     * in a second component, so the two sides cannot answer the same question differently.
+     *
+     * @param table the Ktorm table being written to
+     * @param entityClass the entity bound to it, which carries the declaration
+     * @param values column name → the value the caller is writing
+     * @return column name → value to add for scope columns the caller left unset
+     * @throws RowScopeViolationException when the row would land outside the subject's scope
+     * @throws RowScopeUnresolvedException on the same terms as [predicateFor]
+     */
+    open fun defaultsForInsert(
+        table: Table<*>,
+        entityClass: KClass<*>,
+        values: Map<String, Any?>,
+    ): Map<String, Any?> = onWrite(table, entityClass, "insert") { policy, scope ->
+        RowScopeWriteValidator.defaultsForInsert(policy, scope, values)
+    } ?: emptyMap()
+
+    /**
+     * Refuses an UPDATE whose assignments would move the row out of the subject's scope. See
+     * [defaultsForInsert] for why the switches live here.
+     *
+     * @param table the Ktorm table being written to
+     * @param entityClass the entity bound to it
+     * @param values column name → the value being assigned
+     * @throws RowScopeViolationException when an assignment would move the row out of scope
+     */
+    open fun checkUpdate(table: Table<*>, entityClass: KClass<*>, values: Map<String, Any?>) {
+        onWrite(table, entityClass, "update") { policy, scope ->
+            RowScopeWriteValidator.checkUpdate(policy, scope, values)
+        }
+    }
+
+    /**
+     * Runs [check] under the same conditions [predicateFor] appends a filter under, or returns null
+     * when this write is none of row scope's business.
+     *
+     * In shadow mode the check still runs, but a violation is recorded and swallowed rather than
+     * thrown — the point of shadow mode is to find out what enforcement *would* reject before it
+     * starts rejecting, and a write path is exactly where an unexpected rejection hurts most.
+     */
+    private fun <R> onWrite(
+        table: Table<*>,
+        entityClass: KClass<*>,
+        operation: String,
+        check: (RowScopePolicy, RowScope) -> R,
+    ): R? {
+        if (!properties.enabled) return null
+        val policy = registry.policyOf(entityClass)
+        if (!policy.participates) return null
+        if (DataScopeContext.isSystem()) return null
+
+        val scope = resolver?.currentScope()
+        if (scope == null) {
+            val message = "Row-scoped entity ${entityClass.simpleName} was written with no subject and " +
+                "no declared system authority. Wrap the call in DataScopeContext.runAsSystem { } if it " +
+                "legitimately runs without a logged-in user."
+            if (properties.shadowMode) {
+                log.warn("[row-scope][shadow] would fail: ${message}")
+                recorder?.record(
+                    RowScopeShadowRecorder.Kind.WOULD_FAIL,
+                    entityClass.simpleName ?: entityClass.toString(),
+                    table.tableName,
+                    "no subject and no declared system authority on $operation",
+                )
+                return null
+            }
+            throw RowScopeUnresolvedException(message)
+        }
+        if (scope.unrestricted) return null
+
+        if (!properties.shadowMode) return check(policy, scope)
+
+        return try {
+            check(policy, scope)
+            null
+        } catch (e: RowScopeViolationException) {
+            log.warn("[row-scope][shadow] would reject $operation: ${e.message}")
+            recorder?.record(
+                RowScopeShadowRecorder.Kind.WOULD_REJECT,
+                entityClass.simpleName ?: entityClass.toString(),
+                table.tableName,
+                e.message ?: operation,
+            )
+            null
+        }
+    }
+
     companion object {
         /**
          * The active enforcer, or null when the module is not wired (plain unit tests, tooling).

@@ -1,6 +1,7 @@
 package io.kudos.base.support.dao
 
 import io.kudos.base.query.Criteria
+import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.query.sort.Order
 import io.kudos.base.model.contract.entity.IIdEntity
 import io.kudos.base.model.payload.ISearchPayload
@@ -306,6 +307,64 @@ interface IBaseReadOnlyDao<PK : Any, E : IIdEntity<PK>> {
      * @return Result list of the specified type
      */
     fun <T : Any> search(listSearchPayload: ListSearchPayload? = null, returnItemClass: KClass<T>): List<T>
+
+    /**
+     * Queries by list search payload, returning each row as a property-name → value map.
+     *
+     * The typed counterpart of [search] for the projection case. [search] decides its element type
+     * from how many `returnProperties` the payload carries — entities for none, bare values for
+     * exactly one, maps for two or more — so its result is a `List<*>` that every caller has to cast,
+     * and a payload that drops from two return properties to one silently changes the element type
+     * under a call site that still compiles. This one always returns maps.
+     *
+     * @param listSearchPayload List search payload
+     * @return One map per row, keyed by property name
+     */
+    fun searchMaps(listSearchPayload: ListSearchPayload? = null): List<Map<String, Any?>>
+
+    /**
+     * Queries by list search payload, returning the values of its single return property.
+     *
+     * @param listSearchPayload List search payload; must carry exactly one `returnProperties` entry
+     * @return The value of that property for each row
+     * @throws IllegalArgumentException when the payload does not name exactly one return property,
+     *   which is the case where [search] would have returned something other than bare values
+     */
+    fun searchValues(listSearchPayload: ListSearchPayload): List<Any?>
+
+    /**
+     * Paginated query by [Criteria], returning the page **and** the total row count.
+     *
+     * Prefer this over calling [pagingSearch] and [count] separately: those are two call sites that
+     * must be kept in agreement about the condition, and a page whose total was computed from a
+     * different condition is a paginator that lies.
+     *
+     * @param criteria Query conditions; null means unconditional
+     * @param pageNo Page number (1-based)
+     * @param pageSize Rows per page
+     * @param orders Sort rules
+     * @return The page's rows together with the total ignoring pagination
+     */
+    fun pagingSearchWithTotal(
+        criteria: Criteria? = null,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): PagingSearchResult<E>
+
+    /**
+     * Paginated query by list search payload, returning the page **and** the total row count, with
+     * the element type stated rather than inferred.
+     *
+     * @param T Result element type
+     * @param listSearchPayload List search payload; `returnProperties` must be empty, as for [search]
+     * @param returnItemClass Result element type
+     * @return The page's rows together with the total ignoring pagination
+     */
+    fun <T : Any> pagingSearchWithTotal(
+        listSearchPayload: ListSearchPayload,
+        returnItemClass: KClass<T>
+    ): PagingSearchResult<T>
 
     fun count(criteria: Criteria? = null): Int
 

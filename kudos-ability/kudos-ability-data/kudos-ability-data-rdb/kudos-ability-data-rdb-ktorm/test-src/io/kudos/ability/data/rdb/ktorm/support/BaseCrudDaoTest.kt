@@ -17,6 +17,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 /**
  * Test cases for BaseDao.
@@ -148,6 +149,33 @@ internal open class BaseCrudDaoTest {
         )
         assertEquals(2, testTableDao.batchInsert(payloads))
         assertEquals(16, testTableDao.allSearch().size)
+    }
+
+    /**
+     * A batch becomes one prepared statement, so every entity in it has to set the same properties.
+     * Deriving the column list from the first entity and filtering the rest against it silently
+     * dropped whatever a later entity set in addition — data loss with no error anywhere.
+     */
+    @Test
+    @Transactional
+    open fun batchInsertRejectsEntitiesOfDifferentShapes() {
+        val entities = listOf(
+            TestTableKtorm {
+                id = 41
+                name = "name41"
+            },
+            TestTableKtorm {
+                id = 42
+                name = "name42"
+                height = 142 // only this one sets height — it used to be dropped without a word
+            },
+        )
+        val error = assertFailsWith<IllegalStateException> { testTableDao.batchInsert(entities) }
+        assertTrue(error.message!!.contains("height"), "the error must name the property that differs: ${error.message}")
+        assertTrue(
+            error.message!!.contains("Only"),
+            "and point at the explicit-column-list escape hatch: ${error.message}",
+        )
     }
 
     @Test

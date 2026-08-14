@@ -165,6 +165,28 @@ open class BaseReadOnlyService<PK : Any, E : IIdEntity<PK>, DAO : IBaseReadOnlyD
     override fun <T : Any> search(listSearchPayload: ListSearchPayload, returnItemClass: KClass<T>): List<T> =
         dao.search(listSearchPayload, returnItemClass)
 
+    override fun searchMaps(listSearchPayload: ListSearchPayload): List<Map<String, Any?>> =
+        dao.searchMaps(listSearchPayload)
+
+    override fun searchValues(listSearchPayload: ListSearchPayload): List<Any?> =
+        dao.searchValues(listSearchPayload)
+
+    override fun pagingSearchWithTotal(
+        criteria: Criteria?,
+        pageNo: Int,
+        pageSize: Int,
+        vararg orders: Order
+    ): PagingSearchResult<E> = dao.pagingSearchWithTotal(criteria, pageNo, pageSize, *orders)
+
+    override fun <T : Any> pagingSearchWithTotal(
+        listSearchPayload: ListSearchPayload,
+        returnItemClass: KClass<T>
+    ): PagingSearchResult<T> = dao.pagingSearchWithTotal(listSearchPayload, returnItemClass)
+
+    /** Shortcut for [pagingSearchWithTotal] with the element type supplied as a reified parameter. */
+    inline fun <reified T : Any> pagingSearchWithTotalAs(listSearchPayload: ListSearchPayload): PagingSearchResult<T> =
+        pagingSearchWithTotal(listSearchPayload, T::class)
+
     override fun count(criteria: Criteria?): Int = dao.count(criteria)
 
     override fun count(searchPayload: ISearchPayload): Int = dao.count(searchPayload)
