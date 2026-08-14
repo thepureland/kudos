@@ -81,9 +81,12 @@ LOCAL_REMOTE 二级缓存）。
 - **`decoderEnabled` 死字段已删除**：真正生效的是 `@ConditionalOnProperty` 直接读环境里的 `decoder-enabled`，而条件在任何 bean 存在之前就已求值，属性字段不可能左右它。字段在时它像个能用的开关——写 yml 有效（条件读的是同一个 key），用 Java API 设值却静默无效。开关本身通过 yml 继续可用。
 - **新增 `requireFeignMarker`（默认 `false`）**：开启后，只有带内部 Feign 标记（`_feign_request`）的请求才参与协商，外部调用者拿不到响应指纹。**默认保持现状是刻意的**——该标记由 `kudos-ability-distributed-client-feign` 的 `GlobalHeaderRequestInterceptor` 写入，而本模块对它只有 compileOnly/test 依赖，运行时不保证存在；默认开启会在这类部署里静默关掉整个 provider 端。确认所有调用方都经过该拦截器后再开。
 
+- **Feign decoder 改为复用 Spring Cloud 的解码链**：此前内层是裸 `JacksonDecoder`，等于把 Spring Cloud 的解码**整个换掉**而非装饰。由于本 bean 是 `@Primary` 且位于父上下文，Spring Cloud 自己那个 `@ConditionalOnMissingBean` 的 decoder 在任何 Feign client 子上下文里都不会被创建——也就是说只要 classpath 上有本模块，应用内**每一个** `@FeignClient` 的反序列化行为都变了：自定义 `HttpMessageConverter`（XML、protobuf、自定义 media type）失效，Spring 的 Jackson 配置与 `@JsonView` 也失效；该 decoder 还把 404 映射为 null 吞掉错误、`String` 硬编码 UTF-8 而忽略 `response.charset()`。现在内层换成 `SpringDecoder`，链路与 `FeignClientsConfiguration.feignDecoder` 完全一致，只有最外层的 `FeignCacheResponseInterceptor` 是本模块的。已无人使用的 `JacksonDecoder` 一并删除。
+
+  注意本 bean 仍是**抑制**而非包装 Spring Cloud 的 decoder bean——两者按构造就是互斥的（`@ConditionalOnMissingBean` 会搜索祖先上下文），所以只能在这里搭出等价的链。另外 `SpringDecoder` 依赖的 `FeignHttpMessageConverters` 只声明在 Feign client 的子上下文里、父上下文取不到，因此本模块自行声明了该 bean（它从 customizer 自行构建转换器集，不是包装既有 bean，故结果等价）。这一点是被 provider 侧的端到端测试抓出来的。
+
 以下 interservice 问题**仍未处理**，均需产品/发布决策而非单纯改代码：
 
-- **`@Primary` 全局替换 Feign decoder**：它没有装饰 Spring Cloud 原本的 decoder，而是整个换成裸 `JacksonDecoder`。只要 classpath 上有本模块，应用内**所有** `@FeignClient` 的反序列化行为都变了（自定义 `HttpMessageConverter`、`@JsonView`、`Jackson2ObjectMapperBuilder` 定制全部失效；该 decoder 还把 404 映射为 null、`String` 硬编码 UTF-8 而忽略 `response.charset()`）。改为只装饰、内层交给原生 `feignDecoder` 是正解，但属破坏性变更，需发布说明。
 - **热路径的 apr1 慢哈希**：`Md5Crypt.apr1Crypt` 是为抗口令爆破设计的慢哈希，固定 1000 轮 MD5，且每轮参与哈希的明文包含完整请求体（1MB 的 POST 约等于 GB 量级哈希运算）。换成一次性 MD5/SHA-256 是一行代码，但会改变 cacheKey 取值，**全集群既有本地缓存条目同时失效**、集体冷启动一次，需挑发布窗口。
 - **缺少 per-client / per-method 开关**：拦截器注册为全局 `RequestInterceptor`，Spring Cloud 会应用到**每一个** Feign client，包括调用第三方外部 API 的那些——既泄漏内部指纹，也可能触怒对签名严格的外部网关。加白/黑名单不难，但要决定默认值。
 - **provider 侧是净增开销**：每个 `@ClientCacheable` 请求都要把返回对象完整 JSON 序列化一次算指纹，未命中时 MVC 再序列化一次，且 Controller 方法始终完整执行（不像 ETag 能配合 `@Cacheable` 短路）。净收益只有回程 body 字节与客户端反序列化，服务端 CPU 纯增加——不适合用在计算昂贵但响应体很小的接口上。

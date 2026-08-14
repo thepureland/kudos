@@ -18,11 +18,14 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.ConfigurationProperties
+import org.springframework.boot.http.converter.autoconfigure.ClientHttpMessageConvertersCustomizer
+import org.springframework.cloud.openfeign.support.FeignHttpMessageConverters
+import org.springframework.cloud.openfeign.support.HttpMessageConverterCustomizer
 import org.springframework.cloud.openfeign.support.ResponseEntityDecoder
+import org.springframework.cloud.openfeign.support.SpringDecoder
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Primary
-import tools.jackson.databind.ObjectMapper
 
 /**
  * Auto-configuration for the inter-service cache client.
@@ -63,11 +66,40 @@ open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
     ) = FeignCacheRequestInterceptor(cacheHelper, applicationName)
 
     /**
-     * Global Feign Decoder:
-     *  - JacksonDecoder performs the actual deserialization
-     *  - ResponseEntityDecoder adds ResponseEntity support
-     *  - OptionalDecoder adds Optional support
-     *  - The outermost FeignCacheResponseInterceptor adds caching capability
+     * The converter set `SpringDecoder` decodes with.
+     *
+     * Spring Cloud declares this bean inside each Feign client's **child** context, so it is not reachable from
+     * a decoder declared here in the parent — resolving it from the parent fails at decode time with
+     * "No qualifying bean of type FeignHttpMessageConverters". Since the class builds its own converter list
+     * from the two customizer providers rather than wrapping a pre-existing bean, constructing it here yields
+     * the same set the child would have built, and `@ConditionalOnMissingBean` keeps an application-supplied
+     * one authoritative.
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    open fun feignHttpMessageConverters(
+        clientCustomizers: ObjectProvider<ClientHttpMessageConvertersCustomizer>,
+        feignCustomizers: ObjectProvider<HttpMessageConverterCustomizer>
+    ): FeignHttpMessageConverters = FeignHttpMessageConverters(clientCustomizers, feignCustomizers)
+
+    /**
+     * Global Feign `Decoder`: Spring Cloud's own chain, wrapped with the cache-negotiation layer.
+     *
+     * The inner chain is assembled exactly as `FeignClientsConfiguration.feignDecoder` does —
+     * `SpringDecoder` over [FeignHttpMessageConverters], then `ResponseEntityDecoder`, then `OptionalDecoder` —
+     * and only the outermost [FeignCacheResponseInterceptor] is ours.
+     *
+     * It used to put a bare Jackson decoder at the bottom instead, which **replaced** Spring Cloud's decoding
+     * rather than decorating it. Because this bean is `@Primary` and lives in the parent context, Spring Cloud's
+     * own `@ConditionalOnMissingBean` decoder never got created in any Feign client's child context — so merely
+     * having this module on the classpath changed how *every* `@FeignClient` in the application deserialized:
+     * custom `HttpMessageConverter`s (XML, protobuf, bespoke media types) were ignored, as were `@JsonView` and
+     * anything contributed through Spring's Jackson configuration. The bare decoder also mapped 404 to null,
+     * swallowing the error, and hardcoded UTF-8 instead of honouring `response.charset()`.
+     *
+     * Note that this bean still *suppresses* Spring Cloud's decoder bean rather than wrapping the instance —
+     * that is unavoidable, since the two are mutually exclusive by construction (`@ConditionalOnMissingBean`
+     * searches ancestor contexts). Building the identical chain here is what keeps the behaviour equivalent.
      */
     @Bean("feignDecoder")
     @Primary
@@ -79,13 +111,13 @@ open class InterServiceCacheClientAutoConfiguration : IComponentInitializer {
         matchIfMissing = true
     )
     open fun feignDecoder(
-        objectMapper: ObjectMapper,
+        messageConverters: ObjectProvider<FeignHttpMessageConverters>,
         cacheHelper: ClientCacheHelper
     ): Decoder {
-        logger.info("Init FeignCacheResponseInterceptor (Jackson based, no HttpMessageConverters)")
+        logger.info("Init FeignCacheResponseInterceptor over Spring Cloud's SpringDecoder (HttpMessageConverters preserved)")
 
-        val jacksonDecoder: Decoder = JacksonDecoder(objectMapper)
-        val responseEntityDecoder: Decoder = ResponseEntityDecoder(jacksonDecoder)
+        val springDecoder: Decoder = SpringDecoder(messageConverters)
+        val responseEntityDecoder: Decoder = ResponseEntityDecoder(springDecoder)
         val optionalDecoder: Decoder = OptionalDecoder(responseEntityDecoder)
 
         return FeignCacheResponseInterceptor(optionalDecoder, cacheHelper)

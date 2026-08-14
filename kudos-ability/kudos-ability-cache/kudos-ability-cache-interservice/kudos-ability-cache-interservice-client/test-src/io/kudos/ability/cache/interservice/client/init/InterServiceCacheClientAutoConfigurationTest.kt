@@ -69,7 +69,11 @@ internal class InterServiceCacheClientAutoConfigurationTest {
 
     @Test
     fun feignDecoder_buildsCachingDecoderChain() {
-        val decoder = config.feignDecoder(ObjectMapper(), ClientCacheHelper())
+        // 用与生产同一条路径构建转换器集：SpringDecoder 依赖 FeignHttpMessageConverters，
+        // 而后者在 Spring Cloud 里位于每个 Feign client 的子上下文，父上下文取不到，
+        // 所以本模块自行声明了它（见 feignHttpMessageConverters 的 KDoc）。
+        val converters = config.feignHttpMessageConverters(emptyProvider(), emptyProvider())
+        val decoder = config.feignDecoder(singletonProvider(converters), ClientCacheHelper())
 
         assertIs<FeignCacheResponseInterceptor>(decoder, "the outermost decoder must add caching capability")
 
@@ -94,6 +98,24 @@ internal class InterServiceCacheClientAutoConfigurationTest {
     @Test
     fun getComponentName_returnsModuleName() {
         assertEquals("kudos-ability-cache-interservice-client", config.getComponentName())
+    }
+
+    /** An [ObjectProvider] that resolves to nothing — stands in for "no customizers registered". */
+    private fun <T : Any> emptyProvider(): ObjectProvider<T> = object : ObjectProvider<T> {
+        override fun getObject(): T = throw IllegalStateException("no instance available")
+        override fun getObject(vararg args: Any?): T = getObject()
+        override fun getIfAvailable(): T? = null
+        override fun getIfUnique(): T? = null
+        override fun stream(): java.util.stream.Stream<T> = java.util.stream.Stream.empty()
+    }
+
+    /** An [ObjectProvider] that always resolves to [value]. */
+    private fun <T : Any> singletonProvider(value: T): ObjectProvider<T> = object : ObjectProvider<T> {
+        override fun getObject(): T = value
+        override fun getObject(vararg args: Any?): T = value
+        override fun getIfAvailable(): T = value
+        override fun getIfUnique(): T = value
+        override fun stream(): java.util.stream.Stream<T> = java.util.stream.Stream.of(value)
     }
 
     /** Minimal ObjectProvider stub returning a fixed instance (or nothing). */
