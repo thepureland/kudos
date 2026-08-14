@@ -14,4 +14,8 @@ import org.springframework.boot.test.context.SpringBootTest
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = ["kudos.ability.web.springmvc.server=JETTY"]
 )
-class JettyServerTest : BaseWebServerTest()
+class JettyServerTest : BaseWebServerTest() {
+
+    override val expectedFactoryType = "JettyServletWebServerFactory"
+
+}

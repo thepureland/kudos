@@ -74,28 +74,42 @@ class GlobalResponseBodyHandlerTest {
             .andExpect(jsonPath("$.data").doesNotExist())
     }
 
+    /**
+     * A message the controller set deliberately must survive untouched.
+     *
+     * This handler used to scrub any success message equal to `SUCCESS.displayText`, papering over
+     * [ApiResponse.success] injecting that unresolved i18n key in the first place. With the key gone at source,
+     * the scrubbing is not merely redundant — it would silently discard a caller's own message.
+     */
     @Test
-    fun clearSuccessPlaceholderWhenControllerReturnsApiResponse() {
-        mockMvc.perform(get("/test/response/api-success-placeholder"))
+    fun explicitSuccessMessageIsPreserved() {
+        mockMvc.perform(get("/test/response/api-explicit-message"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.code").value("200"))
-            .andExpect(jsonPath("$.message").value(""))
+            .andExpect(jsonPath("$.message").value("Saved"))
     }
 
+    /**
+     * A `String` return value is hand-serialized to JSON here, so the response must say so.
+     *
+     * Labelling JSON as `text/plain` leaves clients to sniff the payload, and — because
+     * `StringHttpMessageConverter` derives its charset from the declared content type — also decided the
+     * encoding: without a JSON content type it falls back to ISO-8859-1 and mangles every non-ASCII character.
+     * The payload below is deliberately non-ASCII so that a regression shows up as corrupted text.
+     */
     @Test
-    fun wrapStringResponseAsJsonString() {
-        val responseBody = mockMvc.perform(get("/test/response/string"))
+    fun wrapStringResponseAsJsonStringWithJsonContentType() {
+        val response = mockMvc.perform(get("/test/response/string"))
             .andExpect(status().isOk)
-            .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_PLAIN))
+            .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andReturn()
             .response
-            .contentAsString
 
-        val json = objectMapper.readTree(responseBody)
-        kotlin.test.assertEquals(true, json["success"].asBoolean())
-        kotlin.test.assertEquals("200", json["code"].asText())
-        kotlin.test.assertEquals("hello", json["data"].asText())
+        val json = objectMapper.readTree(response.getContentAsString(Charsets.UTF_8))
+        kotlin.test.assertEquals(true, json["success"].booleanValue())
+        kotlin.test.assertEquals("200", json["code"].stringValue())
+        kotlin.test.assertEquals("你好 hello", json["data"].stringValue())
     }
 
     @Test
@@ -163,23 +177,13 @@ class GlobalResponseBodyHandlerTest {
     }
 
     @Test
-    fun successWithNonSuccessCode_keepsPlaceholderMessage() {
-        // code != SUCCESS.code -> the placeholder cleanup must not touch the message
-        val body = ApiResponse.Success<Any?>(
-            code = "201",
-            message = CommonErrorCodeEnum.SUCCESS.displayText,
-            data = null
-        )
-        val result = callBeforeBodyWrite(GlobalResponseBodyHandler(objectMapper), body) as ApiResponse.Success<*>
-        kotlin.test.assertEquals(CommonErrorCodeEnum.SUCCESS.displayText, result.message)
-    }
-
-    @Test
     fun nullBody_wrapsIntoSuccessWithNullData() {
         val result = callBeforeBodyWrite(GlobalResponseBodyHandler(objectMapper), null) as ApiResponse.Success<*>
         kotlin.test.assertTrue(result.success)
         kotlin.test.assertEquals(CommonErrorCodeEnum.SUCCESS.code, result.code)
         kotlin.test.assertEquals(null, result.data)
+        // The factory must not smuggle an unresolved i18n key into the message.
+        kotlin.test.assertEquals("", result.message)
     }
 
     // endregion
@@ -198,17 +202,17 @@ class GlobalResponseBodyHandlerTest {
             return ApiResponse.success("already wrapped")
         }
 
-        @GetMapping("/api-success-placeholder")
-        fun apiSuccessPlaceholder(): ApiResponse<Any> =
+        @GetMapping("/api-explicit-message")
+        fun apiExplicitMessage(): ApiResponse<Any> =
             ApiResponse.Success(
                 code = CommonErrorCodeEnum.SUCCESS.code,
-                message = CommonErrorCodeEnum.SUCCESS.displayText,
+                message = "Saved",
                 data = null
             )
 
         @GetMapping("/string")
         fun stringResponse(): String {
-            return "hello"
+            return "你好 hello"
         }
 
         @IgnoreApiResponseWrap

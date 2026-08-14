@@ -7,10 +7,12 @@ import io.kudos.base.query.PagingSearchResult
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import jakarta.validation.constraints.NotBlank
 import org.mockito.Mockito
+import kotlin.reflect.KClass
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
@@ -152,7 +154,118 @@ internal class BaseCrudControllerTest {
         assertTrue(controller.batchDelete(ids))
     }
 
+    // region explicit VO classes lift the direct-inheritance restriction
+
+    /**
+     * A **non-generic** intermediate base class does not defeat inference.
+     *
+     * `GenericKit` walks up when the direct supertype carries no type arguments of its own, so the concrete
+     * bindings on the intermediate are still found. Pinned here because it narrows the restriction the base
+     * class documents: sharing behaviour through a plain abstract controller is fine.
+     */
+    @Test
+    fun inferredVoClasses_surviveANonGenericIntermediateBaseClass() {
+        val controller = ConcreteIntermediateLeafController().apply { attachService(service) }
+
+        assertTrue(controller.getCreateValidationRule().containsKey("name"))
+        assertTrue(controller.getUpdateValidationRule().containsKey("remark"))
+    }
+
+    /**
+     * A **generic** intermediate is what actually breaks inference: the leaf's direct supertype carries only
+     * the intermediate's own type arguments, so the base class's positions no longer line up. Passing the VO
+     * classes to the constructor is the way out, and it must fully replace the inference.
+     */
+    @Test
+    fun explicitVoClasses_workThroughAGenericIntermediateBaseClass() {
+        val indirect = ExplicitLeafController().apply { attachService(service) }
+        val detail = TestDetail("1")
+        val edit = TestEdit("1")
+        Mockito.`when`(service.get("1", TestDetail::class)).thenReturn(detail)
+        Mockito.`when`(service.get("1", TestEdit::class)).thenReturn(edit)
+
+        assertSame(detail, indirect.getDetail("1"))
+        assertSame(edit, indirect.getEdit("1"))
+        assertTrue(indirect.getCreateValidationRule().containsKey("name"))
+        assertTrue(indirect.getUpdateValidationRule().containsKey("remark"))
+    }
+
+    /**
+     * The same shape without explicit classes must fail with a message that names the actual cause.
+     * The underlying reflection otherwise reports a bare out-of-bounds index, which points nowhere near the
+     * generic intermediate that is really responsible.
+     */
+    @Test
+    fun inferredVoClasses_throughAGenericIntermediateBaseClass_failWithAnActionableMessage() {
+        val broken = InferredLeafController().apply { attachService(service) }
+
+        val ex = assertFailsWith<IllegalStateException> { broken.getCreateValidationRule() }
+        val message = assertNotNull(ex.message)
+        assertTrue("CF (create-form VO)" in message, "Message should name the parameter, got: $message")
+        assertTrue("constructor" in message, "Message should point at the way out, got: $message")
+    }
+
+    // endregion
+
 }
+
+/** Non-generic intermediate: binds every type argument itself, so inference can still walk up to it. */
+internal abstract class ConcreteIntermediateController : BaseCrudController<
+        String,
+        TestCrudService,
+        TestSearchPayload,
+        TestRecord,
+        TestDetail,
+        TestEdit,
+        TestCreateForm,
+        TestUpdateForm>() {
+
+    fun attachService(svc: TestCrudService) {
+        service = svc
+    }
+
+}
+
+/** Leaf below a non-generic intermediate; relies on inference and should get it. */
+internal class ConcreteIntermediateLeafController : ConcreteIntermediateController()
+
+/** Generic intermediate: leaves `D` open, so a leaf's direct supertype carries only that one argument. */
+internal abstract class GenericIntermediateController<D : Any>(
+    explicitDetailVoClass: KClass<D>? = null,
+    explicitEditVoClass: KClass<TestEdit>? = null,
+    explicitCreateFormVoClass: KClass<TestCreateForm>? = null,
+    explicitUpdateFormVoClass: KClass<TestUpdateForm>? = null
+) : BaseCrudController<
+        String,
+        TestCrudService,
+        TestSearchPayload,
+        TestRecord,
+        D,
+        TestEdit,
+        TestCreateForm,
+        TestUpdateForm>(
+    explicitDetailVoClass,
+    explicitEditVoClass,
+    explicitCreateFormVoClass,
+    explicitUpdateFormVoClass
+) {
+
+    fun attachService(svc: TestCrudService) {
+        service = svc
+    }
+
+}
+
+/** Leaf below a generic intermediate, supplying the VO classes explicitly. */
+internal class ExplicitLeafController : GenericIntermediateController<TestDetail>(
+    TestDetail::class,
+    TestEdit::class,
+    TestCreateForm::class,
+    TestUpdateForm::class
+)
+
+/** Leaf below a generic intermediate, relying on inference — which cannot work here. */
+internal class InferredLeafController : GenericIntermediateController<TestDetail>()
 
 /** Test entity. */
 internal data class TestEntity(override val id: String) : IIdEntity<String>

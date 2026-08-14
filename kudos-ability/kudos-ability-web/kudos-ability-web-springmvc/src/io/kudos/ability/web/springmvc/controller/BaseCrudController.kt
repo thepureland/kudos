@@ -2,7 +2,6 @@ package io.kudos.ability.web.springmvc.controller
 
 import io.kudos.base.bean.validation.terminal.TerminalConstraintsCreator
 import io.kudos.base.error.ObjectNotFoundException
-import io.kudos.base.lang.GenericKit
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.base.support.service.iservice.IBaseCrudService
 import jakarta.validation.Valid
@@ -18,6 +17,10 @@ import kotlin.reflect.KClass
 /**
  * Base CRUD Controller.
  *
+ * The VO classes are inferred from the subclass's type arguments by default, which requires the subclass to
+ * extend this class **directly**; pass them to the constructor to lift that restriction. See
+ * [BaseReadOnlyController] for the full explanation.
+ *
  * @param PK primary key type
  * @param B business service class
  * @param S list query condition VO class (request)
@@ -28,6 +31,7 @@ import kotlin.reflect.KClass
  * @param UF update-form VO class (request)
  * @author K
  * @author AI: Codex
+ * @author AI: Claude
  * @since 1.0.0
  */
 open class BaseCrudController<
@@ -38,25 +42,30 @@ open class BaseCrudController<
         D: Any,
         E: Any,
         CF: Any,
-        UF: Any>
-    :BaseReadOnlyController<PK, B, S, R, D>() {
+        UF: Any>(
+    /** Detail VO class; when null it is inferred from the subclass's type arguments. */
+    explicitDetailVoClass: KClass<D>? = null,
+    /** Edit VO class; when null it is inferred from the subclass's type arguments. */
+    explicitEditVoClass: KClass<E>? = null,
+    /** Create-form VO class; when null it is inferred from the subclass's type arguments. */
+    explicitCreateFormVoClass: KClass<CF>? = null,
+    /** Update-form VO class; when null it is inferred from the subclass's type arguments. */
+    explicitUpdateFormVoClass: KClass<UF>? = null
+) : BaseReadOnlyController<PK, B, S, R, D>(explicitDetailVoClass) {
 
-    /** Create-form VO class, resolved lazily from the subclass's generic parameter (index 6). */
-    @Suppress("UNCHECKED_CAST")
-    private val createFormVoClass: KClass<CF> by lazy {
-        GenericKit.getSuperClassGenricClass(this::class, 6) as KClass<CF>
+    /** Edit VO class: the constructor-supplied one, else resolved lazily from the subclass's type arguments. */
+    protected val editVoClass: KClass<E> by lazy {
+        explicitEditVoClass ?: resolveTypeArgument(TYPE_ARG_EDIT_VO, "E (edit VO)")
     }
 
-    /** Update-form VO class, resolved lazily from the subclass's generic parameter (index 7). */
-    @Suppress("UNCHECKED_CAST")
-    private val updateFormVoClass: KClass<UF> by lazy {
-        GenericKit.getSuperClassGenricClass(this::class, 7) as KClass<UF>
+    /** Create-form VO class: the constructor-supplied one, else resolved lazily from the subclass's type arguments. */
+    protected val createFormVoClass: KClass<CF> by lazy {
+        explicitCreateFormVoClass ?: resolveTypeArgument(TYPE_ARG_CREATE_FORM_VO, "CF (create-form VO)")
     }
 
-    /** Edit VO class, resolved lazily from the subclass's generic parameter (index 5). */
-    @Suppress("UNCHECKED_CAST")
-    private val editVoClass: KClass<E> by lazy {
-        GenericKit.getSuperClassGenricClass(this::class, 5) as KClass<E>
+    /** Update-form VO class: the constructor-supplied one, else resolved lazily from the subclass's type arguments. */
+    protected val updateFormVoClass: KClass<UF> by lazy {
+        explicitUpdateFormVoClass ?: resolveTypeArgument(TYPE_ARG_UPDATE_FORM_VO, "UF (update-form VO)")
     }
 
     /**
@@ -123,5 +132,18 @@ open class BaseCrudController<
      */
     @PostMapping("/batchDelete")
     open fun batchDelete(@RequestBody ids: List<PK>): Boolean = service.batchDelete(ids) == ids.size
+
+    companion object {
+
+        /** Position of `E` (edit VO) in this class's type parameter list. */
+        const val TYPE_ARG_EDIT_VO = 5
+
+        /** Position of `CF` (create-form VO) in this class's type parameter list. */
+        const val TYPE_ARG_CREATE_FORM_VO = 6
+
+        /** Position of `UF` (update-form VO) in this class's type parameter list. */
+        const val TYPE_ARG_UPDATE_FORM_VO = 7
+
+    }
 
 }

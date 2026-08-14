@@ -76,10 +76,21 @@ sealed class ApiResponse<out T> {
 
     companion object {
 
-        /** Build a default successful response (uses [CommonErrorCodeEnum.SUCCESS]'s code and displayText). */
+        /**
+         * Build a default successful response, carrying [CommonErrorCodeEnum.SUCCESS]'s code and an empty message.
+         *
+         * The message is empty rather than `CommonErrorCodeEnum.SUCCESS.displayText`, because that property is not
+         * display text at all: [io.kudos.base.enums.ienums.IErrorCodeEnum.displayText] returns an i18n *key*
+         * (`sys.error-msg.default.200`) whenever a prefix is configured, and nothing resolves it on this path. The
+         * key therefore travelled all the way to the caller. The web layer used to recognise and scrub that exact
+         * string back out on the way past, which fixed the symptom for HTTP callers only and left every other
+         * consumer of this factory holding the raw key.
+         *
+         * A successful response has no message worth stating anyway — the payload is the answer.
+         */
         fun <T> success(data: T? = null): ApiResponse<T> = Success(
             code = CommonErrorCodeEnum.SUCCESS.code,
-            message = CommonErrorCodeEnum.SUCCESS.displayText,
+            message = "",
             data = data
         )
 

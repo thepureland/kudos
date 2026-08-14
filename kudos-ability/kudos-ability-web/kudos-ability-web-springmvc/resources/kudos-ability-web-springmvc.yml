@@ -4,9 +4,15 @@ kudos:
       url:
         suffix: .html
       springmvc:
-        server: TOMCAT # TOMCAT、JETTY
-server:
-  max-request-hold: 0 #最大连接保持数0或者没配置为位开启
-  max-request-exclude:
-    - /_monitor/**
-    - /errors/**
+        # server: TOMCAT
+        #
+        # Deliberately left unset. Unset means "let Spring Boot pick the container from the classpath",
+        # which is its natively supported path: every server.* property and every container-specific
+        # customizer applies without this module interposing a factory of its own.
+        #
+        # Set it (TOMCAT / JETTY) only when several container dependencies coexist and one has to win
+        # deterministically — this module's own test matrix being the motivating case.
+
+# `server.max-request-hold` / `server.max-request-exclude` used to be declared here. They were removed:
+# no code in this repository ever read them, so they advertised a request-throttling guard that did not
+# exist. Configuration that nothing reads is worse than absent configuration — it reads as a feature.

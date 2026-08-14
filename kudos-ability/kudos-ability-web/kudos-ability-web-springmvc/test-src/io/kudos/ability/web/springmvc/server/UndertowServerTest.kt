@@ -17,4 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest
     webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
     properties = ["kudos.ability.web.springmvc.server=UNDERTOW"]
 )
-class UndertowServerTest : BaseWebServerTest()
+class UndertowServerTest : BaseWebServerTest() {
+
+    override val expectedFactoryType = "UndertowServletWebServerFactory"
+
+}

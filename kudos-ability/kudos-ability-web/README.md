@@ -25,8 +25,16 @@ Web 服务端能力主题。
 - **可观测性短板（两套实现共有）**：均无访问日志、慢请求日志、Micrometer 指标（QPS / 延迟 /
   错误率）。建议在 web-common 定义观测口径与配置项，springmvc 用 Filter、ktor 用
   `CallLogging`/自定义插件分别实现。
-- **限流缺失（两套实现共有）**：组内无任何请求限流 / 并发护栏能力；springmvc 的
-  `server.max-request-hold` 配置是无实现的幽灵配置（详见 springmvc README）。
-- **traceKey header 名不一致**：springmvc 读 `Consts.RequestHeader.TRACE_KEY`，ktor 默认
-  factory 读硬编码的 `X-Trace-Id`——同一套业务在两种 runtime 下 trace 透传行为不同，应统一
-  到共享常量（`kudos-ability-web-ktor/src/.../plugins/KudosContextPlugin.kt`）。
+- **限流缺失（两套实现共有）**：组内无任何请求限流 / 并发护栏能力。springmvc 侧那对无实现的
+  幽灵配置 `server.max-request-hold` / `server.max-request-exclude` **已删除**——全仓库没有任何
+  读取方，留着等于对外宣传一个不存在的护栏。
+- ✅ **traceKey 策略已上移到 `kudos-ability-web-common`**（`trace/TraceKeys`）：头名常量、
+  校验规则（长度 + 字符集，防日志注入与响应头拆分）、按序解析与兜底生成，两种 runtime 共用一份实现，
+  规则本身由 `TraceKeysTest` 单点锁定。这是该模块从空壳变为实体的第一个抽象，
+  也是"出现两次以上才上移"标准的首次应用。
+  springmvc 读 `X-Trace-Id` → `_UUID` 并回写公开头；ktor 默认只读 `X-Trace-Id`，
+  需要延续内部 Feign 调用链时把 `Consts.RequestHeader.TRACE_KEY` 追加进 `traceKeyHeaders` 即可。
+  注意 `X-Trace-Id` **不能**放进 `Consts.RequestHeader`——那里是内部头命名空间，
+  有 `_` 前缀约定且被 `ConstsTest` 强制。
+  **遗留**：ktor 侧仍不回写 trace 响应头，且业务若覆盖 `KudosContextPlugin.factory` 会绕过校验
+  （需自行调用 `TraceKeys.resolve`）。

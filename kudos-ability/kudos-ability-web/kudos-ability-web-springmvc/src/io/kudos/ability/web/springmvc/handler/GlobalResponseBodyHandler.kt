@@ -1,7 +1,6 @@
 package io.kudos.ability.web.springmvc.handler
 
 import io.kudos.base.annotations.IgnoreApiResponseWrap
-import io.kudos.base.enums.impl.CommonErrorCodeEnum
 import io.kudos.base.model.response.ApiResponse
 import io.kudos.context.core.KudosContextHolder
 import org.springframework.core.MethodParameter
@@ -22,6 +21,7 @@ import tools.jackson.databind.ObjectMapper
  *
  * @author K
  * @author AI: Codex
+ * @author AI: Claude
  * @since 1.0.0
  */
 @ControllerAdvice
@@ -53,33 +53,22 @@ class GlobalResponseBodyHandler(
     ): Any? {
         if (body is ApiResponse<*>) {
             @Suppress("UNCHECKED_CAST")
-            return enrichAndSanitize(body as ApiResponse<Any>)
+            return enrichTraceId(body as ApiResponse<Any>)
         }
 
-        val wrapped = enrichAndSanitize(ApiResponse.success(body))
+        val wrapped = enrichTraceId(ApiResponse.success(body))
 
-        return if (StringHttpMessageConverter::class.java.isAssignableFrom(selectedConverterType)) {
-            objectMapper.writeValueAsString(wrapped)
-        } else {
-            wrapped
+        if (!StringHttpMessageConverter::class.java.isAssignableFrom(selectedConverterType)) {
+            return wrapped
         }
-    }
 
-    /**
-     * Backfills the traceId; if the message of a successful response is still the unresolved
-     * [io.kudos.base.enums.ienums.IErrorCodeEnum.displayText] of [CommonErrorCodeEnum.SUCCESS]
-     * (i.e. `sys.error-msg.default.200`), clears the message to an empty string to avoid
-     * exposing the placeholder key externally.
-     *
-     * @param T response payload type
-     * @param response the response to process
-     * @return the response with traceId injected and placeholder message cleared
-     * @author K
-     * @since 1.0.0
-     */
-    private fun <T> enrichAndSanitize(response: ApiResponse<T>): ApiResponse<T> {
-        val withTrace = enrichTraceId(response)
-        return clearUnresolvedSuccessPlaceholderMessage(withTrace)
+        // A String return value is written by StringHttpMessageConverter, which would otherwise label this
+        // hand-serialized JSON as text/plain — a payload whose declared type contradicts its content, leaving
+        // clients to sniff it. Declaring application/json also settles the encoding: the converter picks its
+        // charset from the content type and answers UTF-8 for JSON, instead of falling back to its own default
+        // of ISO-8859-1 and mangling every non-ASCII character in the response.
+        response.headers.contentType = MediaType.APPLICATION_JSON
+        return objectMapper.writeValueAsString(wrapped)
     }
 
     /**
@@ -100,30 +89,6 @@ class GlobalResponseBodyHandler(
             is ApiResponse.Success -> response.copy(traceId = traceId)
             is ApiResponse.Failure -> response.copy(traceId = traceId)
         }
-    }
-
-    /**
-     * Clears the placeholder message that was not resolved by i18n in a "success response"
-     * (to avoid exposing keys like `sys.error-msg.default.200` to the frontend).
-     * Only applies to success responses; failure responses keep their original message
-     * (which often contains the real cause).
-     *
-     * @param T response payload type
-     * @param response the response to process
-     * @return the response with placeholder replaced by empty string; returns as-is when not matched
-     * @author K
-     * @since 1.0.0
-     */
-    private fun <T> clearUnresolvedSuccessPlaceholderMessage(response: ApiResponse<T>): ApiResponse<T> {
-        // Placeholder message cleanup only applies to success responses; `is Success` narrows the type and checks success at once
-        if (response !is ApiResponse.Success || response.code != CommonErrorCodeEnum.SUCCESS.code) {
-            return response
-        }
-        val placeholder = CommonErrorCodeEnum.SUCCESS.displayText
-        if (response.message == placeholder) {
-            return response.copy(message = "")
-        }
-        return response
     }
 
 }

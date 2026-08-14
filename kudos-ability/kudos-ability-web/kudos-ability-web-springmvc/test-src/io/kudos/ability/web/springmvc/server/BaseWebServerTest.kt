@@ -1,11 +1,12 @@
 package io.kudos.ability.web.springmvc.server
 
-import io.kudos.ability.web.springmvc.init.SwitchingServletWebServerFactory
 import io.kudos.base.net.http.HttpClientKit
 import io.kudos.context.kit.SpringKit
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient
+import org.springframework.boot.web.server.servlet.ServletWebServerFactory
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Import
 import org.springframework.test.web.servlet.client.RestTestClient
 import kotlin.test.assertEquals
@@ -16,22 +17,38 @@ import kotlin.test.assertEquals
  *
  * @author K
  * @author AI: Codex
+ * @author AI: Claude
  * @since 1.0.0
  */
 @Import(
     HelloWorldController::class,
-    KotlinRequestBodyController::class,
-    SwitchingServletWebServerFactory::class
+    KotlinRequestBodyController::class
 )
-//@EnableAutoConfiguration(exclude = [ServletWebServerFactoryAutoConfiguration::class])
 @AutoConfigureRestTestClient
 abstract class BaseWebServerTest {
 
-//    @LocalServerPort
-//    private val port = 0
-
     @Autowired
     private lateinit var restTestClient: RestTestClient
+
+    @Autowired
+    private lateinit var applicationContext: ApplicationContext
+
+    /** Simple name of the [ServletWebServerFactory] implementation this subclass expects to be in use. */
+    protected abstract val expectedFactoryType: String
+
+    /**
+     * The container each subclass forces via `kudos.ability.web.springmvc.server` must be the one that
+     * actually booted.
+     *
+     * Without this assertion the Tomcat/Jetty split is unverified: both containers sit on the test classpath,
+     * and Spring Boot resolves that tie in Tomcat's favour, so a Jetty test that quietly ran on Tomcat would
+     * still pass every request assertion below while proving nothing at all about Jetty.
+     */
+    @Test
+    fun testConfiguredContainerIsTheOneRunning() {
+        val factory = applicationContext.getBean(ServletWebServerFactory::class.java)
+        assertEquals(expectedFactoryType, factory::class.java.simpleName)
+    }
 
     @Test
     fun testGetHelloWorld() {

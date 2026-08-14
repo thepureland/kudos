@@ -35,7 +35,9 @@ internal class ApiResponseTest {
         assertEquals("hello", resp.data)
         assertTrue(resp.success)
         assertEquals(CommonErrorCodeEnum.SUCCESS.code, resp.code)
-        assertEquals(CommonErrorCodeEnum.SUCCESS.displayText, resp.message)
+        // Empty, not SUCCESS.displayText: that property yields the unresolved i18n key
+        // "sys.error-msg.default.200", which must never reach a caller.
+        assertEquals("", resp.message)
     }
 
     @Test

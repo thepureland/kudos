@@ -2,10 +2,10 @@ package io.kudos.ability.web.ktor.plugins
 
 import io.ktor.server.application.*
 import io.ktor.util.*
+import io.kudos.ability.web.common.trace.TraceKeys
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextElement
 import kotlinx.coroutines.withContext
-import io.kudos.base.lang.string.RandomStringKit
 
 /**
  * Key used to store the [KudosContext] in Ktor call attributes.
@@ -47,15 +47,17 @@ fun ApplicationCall.kudosContext(): KudosContext =
  * [ApplicationCall.kudosContextOrNull].
  *
  * The business side customizes how a `KudosContext` is built from an `ApplicationCall` via
- * [Configuration.factory] (the default only sets `traceKey`, read from the `X-Trace-Id` header,
- * generating a UUID when missing).
+ * [Configuration.factory] (the default only sets `traceKey`, resolved from
+ * [Configuration.traceKeyHeaders] and validated by [TraceKeys], generating a UUID when nothing usable was
+ * supplied).
  *
- * Installation:
+ * Installation — note that a custom factory replaces the default outright, so it has to resolve the trace key
+ * through [TraceKeys.resolve] to keep the validation rather than taking the header on trust:
  * ```kotlin
  * install(KudosContextPlugin) {
  *     factory = { call ->
  *         KudosContext().apply {
- *             traceKey = call.request.headers["X-Trace-Id"] ?: RandomStringKit.uuid()
+ *             traceKey = TraceKeys.resolve(listOf(TraceKeys.TRACE_ID_HEADER)) { call.request.headers[it] }
  *             // other custom fields...
  *         }
  *     }
@@ -81,15 +83,37 @@ class KudosContextPlugin private constructor(
      * (user / clientInfo etc.).
      */
     class Configuration {
+
+        /**
+         * Request headers consulted for a caller-supplied trace key, in precedence order.
+         *
+         * Defaults to the public header alone. A deployment that also receives internal service-to-service
+         * traffic can append `Consts.RequestHeader.TRACE_KEY` (`_UUID`), the header Feign puts on outgoing
+         * calls, to continue those traces rather than starting new ones.
+         */
+        var traceKeyHeaders: List<String> = listOf(TraceKeys.TRACE_ID_HEADER)
+
+        /** Upper bound on an accepted caller-supplied trace key; longer values are replaced by a generated one. */
+        var maxTraceKeyLength: Int = TraceKeys.DEFAULT_MAX_LENGTH
+
         /**
          * Constructor from [ApplicationCall] to [KudosContext]. By default reads `traceKey` from
-         * `X-Trace-Id`, generating a UUID when missing. The business side usually extends this
-         * factory to inject user / clientInfo etc.
+         * [traceKeyHeaders], **validating** it before propagating and generating a UUID when nothing usable
+         * was supplied. The business side usually extends this factory to inject user / clientInfo etc.
+         *
+         * The validation is not optional hardening. This factory previously took
+         * `headers["X-Trace-Id"]` on trust, and a trace key goes straight into log lines — so a caller could
+         * embed CR/LF and forge log entries, or send an unbounded value to inflate any log or metrics backend
+         * that indexes by trace id. The Spring MVC runtime already rejected those; accepting them here meant
+         * the same request was safe or unsafe depending only on which runtime happened to serve it.
+         *
+         * **Overriding this factory opts out of the check.** Call [TraceKeys.resolve] from a custom factory to
+         * keep it.
          */
         var factory: (ApplicationCall) -> KudosContext = { call ->
-            KudosContext().apply {
-                traceKey = call.request.headers["X-Trace-Id"] ?: RandomStringKit.uuid()
-            }
+            val context = KudosContext()
+            context.traceKey = TraceKeys.resolve(traceKeyHeaders, maxTraceKeyLength) { call.request.headers[it] }
+            context
         }
     }
 

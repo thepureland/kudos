@@ -4,9 +4,6 @@ kudos:
       url:
         suffix: .html
       springmvc:
-        server: TOMCAT # TOMCAT、JETTY
-server:
-  max-request-hold: 0 #最大连接保持数0或者没配置为位开启
-  max-request-exclude:
-    - /_monitor/**
-    - /errors/**
+        # Left unset so the default test context exercises the same path production does: Spring Boot
+        # selects the container from the classpath. The container-specific test classes
+        # (TomcatServerTest / JettyServerTest) set it explicitly to force their respective container.
