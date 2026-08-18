@@ -12,7 +12,7 @@ import io.kudos.ms.msg.core.receiver.service.iservice.IMsgReceiveService
 import io.kudos.ms.msg.core.receiver.service.iservice.IMsgUnreceivedService
 import io.kudos.ms.msg.core.send.service.iservice.IMsgSendService
 import io.kudos.ms.msg.core.support.MockitoKt.anyNN
-import io.kudos.ms.user.core.contact.service.iservice.IUserContactWayService
+import io.kudos.ms.user.client.contact.proxy.IUserContactWayProxy
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.anyCollection
 import io.kudos.ms.msg.core.support.MockitoKt.eqNN
@@ -45,7 +45,7 @@ import kotlin.test.assertEquals
 internal class MsgSmsDispatchListenerTest {
 
     private val smsHandler = mock(AwsSmsHandler::class.java)
-    private val contactService = mock(IUserContactWayService::class.java)
+    private val contactService = mock(IUserContactWayProxy::class.java)
     private val sendService = mock(IMsgSendService::class.java)
     private val receiveService = mock(IMsgReceiveService::class.java)
     private val unreceivedService = mock(IMsgUnreceivedService::class.java)

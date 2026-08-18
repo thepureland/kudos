@@ -1,6 +1,7 @@
 package io.kudos.ms.user.core.contact.api
 
 import io.kudos.ms.user.common.contact.api.IUserContactWayApi
+import io.kudos.ms.user.core.contact.service.iservice.IUserContactWayService
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 
@@ -14,8 +15,13 @@ import org.springframework.stereotype.Service
  */
 @Primary
 @Service
-open class UserContactWayApi : IUserContactWayApi {
+open class UserContactWayApi(
+    private val userContactWayService: IUserContactWayService,
+) : IUserContactWayApi {
 
-
+    override fun getActiveContactValuesByUserIds(
+        userIds: Collection<String>,
+        contactWayDictCode: String,
+    ): Map<String, String> = userContactWayService.getActiveContactValuesByUserIds(userIds, contactWayDictCode)
 
 }

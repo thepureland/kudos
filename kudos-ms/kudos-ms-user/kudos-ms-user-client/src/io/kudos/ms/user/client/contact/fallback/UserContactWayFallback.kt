@@ -6,8 +6,7 @@ import org.springframework.stereotype.Component
 
 
 /**
- * User contact way Feign fallback. `IUserContactWayApi` currently exposes no methods;
- * the class is kept as a valid target for `@FeignClient(fallback=...)`.
+ * User contact way Feign fallback.
  *
  * @author K
  * @author AI: Codex
@@ -15,4 +14,21 @@ import org.springframework.stereotype.Component
  */
 @Component
 open class UserContactWayFallback :
-    AbstractFeignFallbackSupport("UserContactWayFallback"), IUserContactWayProxy
+    AbstractFeignFallbackSupport("UserContactWayFallback"), IUserContactWayProxy {
+
+    /**
+     * Degraded read: returns an empty map, i.e. "no receiver has a contact of this type".
+     *
+     * Callers (the messaging dispatch listeners) already treat an absent user as "no contact" and record
+     * them as undelivered, so a message is never silently dropped — it lands in the undelivered ledger
+     * and can be retried once user is reachable again.
+     */
+    override fun getActiveContactValuesByUserIds(
+        userIds: Collection<String>,
+        contactWayDictCode: String,
+    ): Map<String, String> {
+        warnRead("getActiveContactValuesByUserIds", userIds.size, contactWayDictCode)
+        return emptyMap()
+    }
+
+}

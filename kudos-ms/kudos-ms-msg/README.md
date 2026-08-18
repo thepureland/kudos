@@ -92,8 +92,9 @@ status=CONSUMED_FROM_MQ
 
 ## 与其他服务的依赖
 
-- **`kudos-ms-user-core`**：`msg-core` 直接依赖（不是通过 Feign）——把 receiverId 换成
-  具体联系方式（邮箱 / 手机号 / 推送 token）
+- **`kudos-ms-user-client`**：`msg-core` 通过 Feign 代理 `IUserContactWayProxy` 把 receiverId 换成
+  具体联系方式（邮箱 / 手机号 / 推送 token）。降级时返回空 map，收件人被登记为未送达而不是静默丢弃
+  （2026-08-18 由直接依赖 `kudos-ms-user-core` 改为 client）
 - **`kudos-ability-comm-email`**：SMTP 投递通道（`MsgEmailDispatchListener`）
 - **`kudos-ability-comm-sms-aws`**：AWS SNS SMS 投递通道（msg-core README 提及）
 - **`kudos-ability-distributed-notify-common`**：channel listener 的事件分发抽象

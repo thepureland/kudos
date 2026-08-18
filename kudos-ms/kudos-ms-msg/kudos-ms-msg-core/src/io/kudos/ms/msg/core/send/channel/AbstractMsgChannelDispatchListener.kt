@@ -13,7 +13,7 @@ import io.kudos.ms.msg.core.receiver.model.po.MsgReceive
 import io.kudos.ms.msg.core.receiver.service.iservice.IMsgReceiveService
 import io.kudos.ms.msg.core.receiver.service.iservice.IMsgUnreceivedService
 import io.kudos.ms.msg.core.send.service.iservice.IMsgSendService
-import io.kudos.ms.user.core.contact.service.iservice.IUserContactWayService
+import io.kudos.ms.user.client.contact.proxy.IUserContactWayProxy
 import java.io.Serializable
 import java.time.LocalDateTime
 
@@ -50,7 +50,7 @@ import java.time.LocalDateTime
  * @since 1.0.0
  */
 abstract class AbstractMsgChannelDispatchListener(
-    protected val userContactWayService: IUserContactWayService,
+    protected val userContactWayService: IUserContactWayProxy,
     protected val msgSendService: IMsgSendService,
     protected val msgReceiveService: IMsgReceiveService,
     protected val msgUnreceivedService: IMsgUnreceivedService,

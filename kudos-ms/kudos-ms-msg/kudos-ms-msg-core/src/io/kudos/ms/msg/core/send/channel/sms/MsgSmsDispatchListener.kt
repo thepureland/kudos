@@ -8,7 +8,7 @@ import io.kudos.ms.msg.core.receiver.service.iservice.IMsgReceiveService
 import io.kudos.ms.msg.core.receiver.service.iservice.IMsgUnreceivedService
 import io.kudos.ms.msg.core.send.channel.AbstractMsgChannelDispatchListener
 import io.kudos.ms.msg.core.send.service.iservice.IMsgSendService
-import io.kudos.ms.user.core.contact.service.iservice.IUserContactWayService
+import io.kudos.ms.user.client.contact.proxy.IUserContactWayProxy
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Component
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger
 open class MsgSmsDispatchListener(
     private val smsProperties: MsgSmsProperties,
     private val awsSmsHandler: AwsSmsHandler,
-    userContactWayService: IUserContactWayService,
+    userContactWayService: IUserContactWayProxy,
     msgSendService: IMsgSendService,
     msgReceiveService: IMsgReceiveService,
     msgUnreceivedService: IMsgUnreceivedService,
