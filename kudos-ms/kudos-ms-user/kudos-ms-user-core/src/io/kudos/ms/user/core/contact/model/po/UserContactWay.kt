@@ -1,8 +1,7 @@
 package io.kudos.ms.user.core.contact.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
-import java.time.LocalDateTime
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 
 /**
  * User contact way database entity.
@@ -11,7 +10,7 @@ import java.time.LocalDateTime
  * @author AI: Codex
  * @since 1.0.0
  */
-interface UserContactWay : IDbEntity<String, UserContactWay> {
+interface UserContactWay : IManagedDbEntity<String, UserContactWay> {
 
     companion object : DbEntityFactory<UserContactWay>()
 
@@ -29,33 +28,6 @@ interface UserContactWay : IDbEntity<String, UserContactWay> {
 
     /** Priority. */
     var priority: Int?
-
-    /** Remark. */
-    var remark: String?
-
-    /** Active flag. */
-    var active: Boolean
-
-    /** Built-in flag. */
-    var builtIn: Boolean
-
-    /** Creator id. */
-    var createUserId: String?
-
-    /** Creator name. */
-    var createUserName: String?
-
-    /** Create time. */
-    var createTime: LocalDateTime?
-
-    /** Updater id. */
-    var updateUserId: String?
-
-    /** Updater name. */
-    var updateUserName: String?
-
-    /** Update time. */
-    var updateTime: LocalDateTime?
 
 
 

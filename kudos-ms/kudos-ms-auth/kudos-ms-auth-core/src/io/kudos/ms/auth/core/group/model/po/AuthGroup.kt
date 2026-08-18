@@ -1,9 +1,7 @@
 package io.kudos.ms.auth.core.group.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
-import io.kudos.base.model.contract.common.IHasBuiltIn
-import java.time.LocalDateTime
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 
 /**
  * User group database entity.
@@ -12,7 +10,7 @@ import java.time.LocalDateTime
  * @author AI: Codex
  * @since 1.0.0
  */
-interface AuthGroup : IDbEntity<String, AuthGroup>, IHasBuiltIn {
+interface AuthGroup : IManagedDbEntity<String, AuthGroup> {
 
     companion object : DbEntityFactory<AuthGroup>()
 
@@ -27,33 +25,6 @@ interface AuthGroup : IDbEntity<String, AuthGroup>, IHasBuiltIn {
 
     /** Subsystem code. */
     var subsysCode: String
-
-    /** Remark. */
-    var remark: String?
-
-    /** Whether active. */
-    var active: Boolean
-
-    /** Whether built-in. */
-    override var builtIn: Boolean
-
-    /** Creator id. */
-    var createUserId: String?
-
-    /** Creator name. */
-    var createUserName: String?
-
-    /** Creation time. */
-    var createTime: LocalDateTime?
-
-    /** Updater id. */
-    var updateUserId: String?
-
-    /** Updater name. */
-    var updateUserName: String?
-
-    /** Update time. */
-    var updateTime: LocalDateTime?
 
 
 

@@ -1,8 +1,7 @@
 package io.kudos.ms.user.core.account.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
-import java.time.LocalDateTime
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 
 /**
  * User account protection database entity.
@@ -11,7 +10,7 @@ import java.time.LocalDateTime
  * @author AI: Codex
  * @since 1.0.0
  */
-interface UserAccountProtection : IDbEntity<String, UserAccountProtection> {
+interface UserAccountProtection : IManagedDbEntity<String, UserAccountProtection> {
 
     companion object : DbEntityFactory<UserAccountProtection>()
 
@@ -47,33 +46,6 @@ interface UserAccountProtection : IDbEntity<String, UserAccountProtection> {
 
     /** Error count. */
     var errorTimes: Int
-
-    /** Remark. */
-    var remark: String?
-
-    /** Active flag. */
-    var active: Boolean
-
-    /** Built-in flag. */
-    var builtIn: Boolean
-
-    /** Creator id. */
-    var createUserId: String?
-
-    /** Creator name. */
-    var createUserName: String?
-
-    /** Create time. */
-    var createTime: LocalDateTime?
-
-    /** Updater id. */
-    var updateUserId: String?
-
-    /** Updater name. */
-    var updateUserName: String?
-
-    /** Update time. */
-    var updateTime: LocalDateTime?
 
 
 
