@@ -1,9 +1,7 @@
 package io.kudos.ms.auth.core.role.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
-import io.kudos.base.model.contract.common.IHasBuiltIn
-import java.time.LocalDateTime
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 
 /**
  * Role database entity
@@ -14,7 +12,7 @@ import java.time.LocalDateTime
  * @author AI: Claude
  * @since 1.0.0
  */
-interface AuthRole : IDbEntity<String, AuthRole>, IHasBuiltIn {
+interface AuthRole : IManagedDbEntity<String, AuthRole> {
 
     companion object : DbEntityFactory<AuthRole>()
 
@@ -36,38 +34,11 @@ interface AuthRole : IDbEntity<String, AuthRole>, IHasBuiltIn {
     /** Data-scope policy code (see DataScopeEnum); NULL = ALL (no row restriction). */
     var dataScope: String?
 
-    /** Remark */
-    var remark: String?
-
-    /** Whether active */
-    var active: Boolean
-
-    /** Whether built-in */
-    override var builtIn: Boolean
-
     /** Delegation ceiling: how many hops a grant of this role may ever carry. 0 = no delegation. */
     var delegableMax: Int?
 
     /** Whether assigning this role requires an approval workflow (see auth_role_grant_request). */
     var approvalRequired: Boolean?
-
-    /** Creator id */
-    var createUserId: String?
-
-    /** Creator name */
-    var createUserName: String?
-
-    /** Create time */
-    var createTime: LocalDateTime?
-
-    /** Updater id */
-    var updateUserId: String?
-
-    /** Updater name */
-    var updateUserName: String?
-
-    /** Update time */
-    var updateTime: LocalDateTime?
 
 
 

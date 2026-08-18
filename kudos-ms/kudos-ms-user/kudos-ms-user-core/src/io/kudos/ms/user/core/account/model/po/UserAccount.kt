@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.account.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 import java.time.LocalDateTime
 
 /**
@@ -11,7 +11,7 @@ import java.time.LocalDateTime
  * @author AI: Cursor
  * @since 1.0.0
  */
-interface UserAccount : IDbEntity<String, UserAccount> {
+interface UserAccount : IManagedDbEntity<String, UserAccount> {
 
     companion object : DbEntityFactory<UserAccount>()
 
@@ -69,9 +69,6 @@ interface UserAccount : IDbEntity<String, UserAccount> {
     /** Direct supervisor id. */
     var supervisorId: String
 
-    /** Remark. */
-    var remark: String?
-
     /** Freeze type dict code; non-null indicates a freeze record exists. */
     var freezeType: String?
 
@@ -89,30 +86,6 @@ interface UserAccount : IDbEntity<String, UserAccount> {
 
     /** Freeze detailed description. */
     var freezeContent: String?
-
-    /** Active flag. */
-    var active: Boolean
-
-    /** Built-in flag. */
-    var builtIn: Boolean?
-
-    /** Creator id. */
-    var createUserId: String?
-
-    /** Creator name. */
-    var createUserName: String?
-
-    /** Create time. */
-    var createTime: LocalDateTime?
-
-    /** Updater id. */
-    var updateUserId: String?
-
-    /** Updater name. */
-    var updateUserName: String?
-
-    /** Update time. */
-    var updateTime: LocalDateTime?
 
 
 

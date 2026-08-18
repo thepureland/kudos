@@ -1,8 +1,7 @@
 package io.kudos.ms.user.core.org.model.po
 
 import io.kudos.ability.data.rdb.ktorm.support.DbEntityFactory
-import io.kudos.ability.data.rdb.ktorm.support.IDbEntity
-import java.time.LocalDateTime
+import io.kudos.ability.data.rdb.ktorm.support.IManagedDbEntity
 
 /**
  * Organization database entity.
@@ -11,7 +10,7 @@ import java.time.LocalDateTime
  * @author AI: Cursor
  * @since 1.0.0
  */
-interface UserOrg : IDbEntity<String, UserOrg> {
+interface UserOrg : IManagedDbEntity<String, UserOrg> {
 
     companion object : DbEntityFactory<UserOrg>()
 
@@ -32,33 +31,6 @@ interface UserOrg : IDbEntity<String, UserOrg> {
 
     /** Sort number. */
     var sortNum: Int?
-
-    /** Remark. */
-    var remark: String?
-
-    /** Whether active. */
-    var active: Boolean
-
-    /** Whether built-in. */
-    var builtIn: Boolean?
-
-    /** Creator id. */
-    var createUserId: String?
-
-    /** Creator name. */
-    var createUserName: String?
-
-    /** Create time. */
-    var createTime: LocalDateTime?
-
-    /** Updater id. */
-    var updateUserId: String?
-
-    /** Updater name. */
-    var updateUserName: String?
-
-    /** Update time. */
-    var updateTime: LocalDateTime?
 
 
 
