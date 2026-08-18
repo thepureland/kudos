@@ -1,0 +1,18 @@
+package io.kudos.ms.user.api.internal.init
+
+import io.kudos.context.init.EnableKudos
+import org.springframework.boot.SpringApplication
+
+/**
+ * user-api-provider startup entry point.
+ *
+ * @author K
+ * @since 1.0.0
+ */
+@EnableKudos
+class UserApiInternalApplication
+
+fun main(args : Array<String>) {
+
+    SpringApplication.run(UserApiInternalApplication::class.java, *args)
+}

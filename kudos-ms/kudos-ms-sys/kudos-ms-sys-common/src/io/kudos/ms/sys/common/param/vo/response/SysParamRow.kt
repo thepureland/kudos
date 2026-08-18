@@ -1,5 +1,7 @@
 package io.kudos.ms.sys.common.param.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
+
 /**
  * Parameter list query result response VO.
  *
@@ -9,7 +11,7 @@ package io.kudos.ms.sys.common.param.vo.response
 data class SysParamRow (
 
     /** Primary key */
-    val id: String = "",
+    override val id: String = "",
 
     /** Parameter name */
     val paramName: String = "",
@@ -35,4 +37,4 @@ data class SysParamRow (
     /** Whether built-in */
     val builtIn: Boolean = true,
 
-)
+) : IIdEntity<String>

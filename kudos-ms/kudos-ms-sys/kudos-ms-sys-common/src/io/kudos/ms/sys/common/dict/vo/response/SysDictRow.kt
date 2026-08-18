@@ -1,5 +1,7 @@
 package io.kudos.ms.sys.common.dict.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
+
 /**
  * Response VO for dict list query results.
  *
@@ -9,7 +11,7 @@ package io.kudos.ms.sys.common.dict.vo.response
 data class SysDictRow (
 
     /** Primary key */
-    val id: String = "",
+    override val id: String = "",
 
     /** Dict type */
     val dictType: String = "",
@@ -43,4 +45,4 @@ data class SysDictRow (
 
     val seqNo: Int? = null, //TODO
 
-)
+) : IIdEntity<String>

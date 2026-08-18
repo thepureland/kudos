@@ -1,5 +1,7 @@
 package io.kudos.ms.sys.common.microservice.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
+
 /**
  * Response VO for microservice list query result.
  *
@@ -9,7 +11,7 @@ package io.kudos.ms.sys.common.microservice.vo.response
 data class SysMicroServiceRow (
 
     /** Primary key */
-    val id: String = "",
+    override val id: String = "",
 
     /** Code */
     val code: String = "",
@@ -35,4 +37,4 @@ data class SysMicroServiceRow (
     /** Whether built-in */
     val builtIn: Boolean = true,
 
-)
+) : IIdEntity<String>

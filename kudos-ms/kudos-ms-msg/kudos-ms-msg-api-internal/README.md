@@ -5,8 +5,8 @@ Msg 服务 **对内 Provider 进程**的启动入口、自动配置与 `/api/int
 
 ## 内容
 
-- `MsgApiProviderApplication` —— Spring Boot main，挂 `@EnableKudos`
-- `MsgApiProviderAutoConfiguration` —— `@ComponentScan("io.kudos.ms.msg.api.internal")` +
+- `MsgApiInternalApplication` —— Spring Boot main，挂 `@EnableKudos`
+- `MsgApiInternalAutoConfiguration` —— `@ComponentScan("io.kudos.ms.msg.api.internal")` +
   `IComponentInitializer.getComponentName() = "kudos-ms-msg-api-internal"`
 - 5 个 thin controller，每个 `implements IMsg*Api`（来自 common），方法体单行
   转发到 core 的 `MsgXxxApi` 实现
@@ -72,11 +72,11 @@ api(":kudos-ability-web-springmvc")
 ## 装配链
 
 ```
-MsgApiProviderApplication(@EnableKudos)
+MsgApiInternalApplication(@EnableKudos)
   ↓ boot
 ComponentInitializationDispatcher 扫到所有 classpath 上的 IComponentInitializer：
   - MsgAutoConfiguration                  (msg-core)
-  - MsgApiProviderAutoConfiguration       (本模块, scan io.kudos.ms.msg.api.internal)
+  - MsgApiInternalAutoConfiguration       (本模块, scan io.kudos.ms.msg.api.internal)
   - 各 ability 模块的 *AutoConfiguration   (cache / ktorm / nacos / springmvc / ...)
   ↓
 四个 internal controller 被注册成 bean，分别绑定到 IMsg*Api 注解的路径
@@ -95,5 +95,6 @@ ComponentInitializationDispatcher 扫到所有 classpath 上的 IComponentInitia
   排障时需要确认链路追踪 starter 实际在 classpath
 - ❗ **无 yml**——本模块零配置文件，nacos endpoint / serverPort / spring profile 都
   靠运行环境注入。本地起进程必须先设 `NACOS_SERVER_ADDR` 等环境变量
-- ❗ **`MsgApiProviderApplication` 和 `MsgApiAdminApplication` 命名不一致**：
-  Web / Provider / Admin 三套命名混用；建议统一成 Web / Provider 或全部 Application
+- ✅ 已修复（2026-08-18）**启动类命名不一致**：原先 Web / Provider / Admin 三套混用，
+  现统一为 `MsgApiPublicApplication` / `MsgApiInternalApplication` / `MsgApiAdminApplication`，
+  与 gradle 模块名和 `getComponentName()` 对齐

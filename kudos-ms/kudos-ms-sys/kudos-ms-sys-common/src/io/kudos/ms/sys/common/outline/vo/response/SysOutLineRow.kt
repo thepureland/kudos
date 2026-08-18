@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.outline.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
 import java.time.LocalDateTime
 
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime
 data class SysOutLineRow(
 
     /** Primary key */
-    val id: String = "",
+    override val id: String = "",
 
     /** Name */
     val name: String = "",
@@ -43,4 +44,4 @@ data class SysOutLineRow(
 
     /** Creation time */
     val createTime: LocalDateTime? = null,
-)
+) : IIdEntity<String>

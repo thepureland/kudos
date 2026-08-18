@@ -87,15 +87,13 @@
 | `i18nKeyPrefix` | `<module>.error-msg.<bizModule>` | sys 是四家里唯一自洽的（前缀 ↔ 业务模块一一对应） |
 | Fallback 基类 | `AbstractFeignFallbackSupport` | user / auth / msg 都直接继承；sys 的 `SysClientFallbackSupport` 只是历史包袱，其自身注释也建议新模块直接继承 |
 | `*-common` 的 `KotlinCompile` 块 | 不生成 | 全仓库只有 sys-common 有；`javaParameters` 对 `jackson-module-kotlin` 无必要，`-Xjvm-default=all` 在 Kotlin 2.2+ 已是默认且该 flag 已废弃 |
+| init 类名 | `<Module>ApiInternalApplication` / `<Module>ApiPublicApplication` | gradle 模块名（`-api-internal` / `-api-public`）和 `getComponentName()` 早已是 internal/public，只有类名停在 `Provider` / `Web`；四个 ms 模块已同步改名 |
 
 未定（模板暂时保持现状）：
 
 - **Feign 服务名**：sys 全小写拼接 vs 其余三家 kebab。但 `kudos-ms` 下**没有任何 `spring.application.name`**，
   而部署单元是 `<module>-api-internal`——这批"每实体一个服务名"很可能压根注册不上，属设计问题而非风格问题，
   需先确认线上注册名再决定
-- **init 类名**：四个模块都是 `*ApiProviderApplication` / `*ApiWebApplication`，模板生成的是
-  `*ApiInternalApplication` / `*ApiPublicApplication`（与 gradle 模块名和 `getComponentName()` 一致）。
-  ⚠ 在统一之前对现存模块生成会**新增**一套类，导致两套 `IComponentInitializer` 同时被扫到
 
 #### 合并标记约定
 

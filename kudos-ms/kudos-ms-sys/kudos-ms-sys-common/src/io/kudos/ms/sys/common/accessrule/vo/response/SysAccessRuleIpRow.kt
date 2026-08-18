@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.accessrule.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -13,7 +14,7 @@ import java.time.LocalDateTime
 data class SysAccessRuleIpRow (
 
     /** IP rule id. */
-    val id: String = "",
+    override val id: String = "",
 
     /** Range start numeric value. */
     val ipStart: BigDecimal,
@@ -48,7 +49,7 @@ data class SysAccessRuleIpRow (
     /** Rule type dictionary code. */
     val accessRuleTypeDictCode: String? = null,
 
-): IIpBigDecimalToStringSupport {
+): IIpBigDecimalToStringSupport, IIdEntity<String> {
 
     override fun getIpStartBigDecimal(): BigDecimal {
         return this.ipStart

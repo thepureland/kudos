@@ -1,5 +1,7 @@
 package io.kudos.ms.sys.common.accessrule.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
+
 /**
  * Access rule list row DTO.
  *
@@ -10,7 +12,7 @@ package io.kudos.ms.sys.common.accessrule.vo.response
 data class SysAccessRuleRow (
 
     /** Primary key. */
-    val id: String = "",
+    override val id: String = "",
 
     /** Tenant id. */
     val tenantId: String? = null,
@@ -21,4 +23,4 @@ data class SysAccessRuleRow (
     /** Rule type dictionary code. */
     val accessRuleTypeDictCode: String? = null,
 
-)
+) : IIdEntity<String>

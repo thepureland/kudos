@@ -5,8 +5,8 @@ User 服务**面向其他微服务**的 Spring Boot 进程。作为 Feign 调用
 
 ## 启动入口
 
-- `UserApiProviderApplication`（`@EnableKudos`）—— main 类
-- `UserApiProviderAutoConfiguration` —— 装配入口
+- `UserApiInternalApplication`（`@EnableKudos`）—— main 类
+- `UserApiInternalAutoConfiguration` —— 装配入口
 
 ```bash
 ./gradlew :kudos-ms:kudos-ms-user:kudos-ms-user-api-internal:bootRun

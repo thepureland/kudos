@@ -1,5 +1,7 @@
 package io.kudos.ms.sys.common.dict.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
+
 /**
  * Response VO for dict item list query results.
  *
@@ -9,7 +11,7 @@ package io.kudos.ms.sys.common.dict.vo.response
 data class SysDictItemRow (
 
     /** Dict item id */
-    val id: String = "",
+    override val id: String = "",
 
     /** Atomic service code */
     val atomicServiceCode: String = "",
@@ -47,4 +49,4 @@ data class SysDictItemRow (
     /** All parent item ids */
     var parentIds: List<String>? = null
 
-)
+) : IIdEntity<String>

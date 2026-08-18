@@ -5,8 +5,8 @@ User 服务**面向终端用户**的 Spring Boot 进程。承载浏览器 / 移�
 
 ## 启动入口
 
-- `UserApiWebApplication`（`@EnableKudos`）—— main 类
-- `UserApiWebAutoConfiguration` —— 装配入口
+- `UserApiPublicApplication`（`@EnableKudos`）—— main 类
+- `UserApiPublicAutoConfiguration` —— 装配入口
 
 ```bash
 ./gradlew :kudos-ms:kudos-ms-user:kudos-ms-user-api-public:bootRun

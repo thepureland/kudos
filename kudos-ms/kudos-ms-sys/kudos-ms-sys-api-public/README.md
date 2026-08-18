@@ -12,8 +12,8 @@
 
 | 类型 | 类 | 说明 |
 |------|-----|------|
-| 启动类 | `SysApiWebApplication` | `@EnableKudos`，`main` 启动 Spring Boot |
-| 自动配置 | `SysApiWebAutoConfiguration` | `@ComponentScan("io.kudos.ms.sys.api.public")`，组件名 **`kudos-ms-sys-api-public`** |
+| 启动类 | `SysApiPublicApplication` | `@EnableKudos`，`main` 启动 Spring Boot |
+| 自动配置 | `SysApiPublicAutoConfiguration` | `@ComponentScan("io.kudos.ms.sys.api.public")`，组件名 **`kudos-ms-sys-api-public`** |
 
 当前 `io.kudos.ms.sys.api.public` 包下仅有 `init` 包，**无 Controller**；扫描仅注册该包内的配置类，避免与 admin 重复。
 
@@ -36,12 +36,12 @@ kudos-ms-sys-api-public
 
 | 组合 | 入口主类 | 暴露的路径 | 适用场景 |
 |------|----------|------------|----------|
-| **仅 public** | `SysApiWebApplication` | （无业务路径，只剩 `kudos-ability-web-springmvc` 装配的健康检查等） | 验证 Web 装配；通常不直接用于生产 |
-| **public + admin** | `SysApiWebApplication` | `/api/admin/sys/**` | 对外管理 API（控制台后端） |
+| **仅 public** | `SysApiPublicApplication` | （无业务路径，只剩 `kudos-ability-web-springmvc` 装配的健康检查等） | 验证 Web 装配；通常不直接用于生产 |
+| **public + admin** | `SysApiPublicApplication` | `/api/admin/sys/**` | 对外管理 API（控制台后端） |
 | **public + admin + internal** | 任选一个 application 主类（最终扫描三个模块） | `/api/admin/sys/**` + `/api/internal/sys/**` | 单进程同时承载控制台与 Feign 提供方；不需 Nacos 的本地开发可缺省 internal 中的分布式 ability |
-| **internal 单独** | `SysApiProviderApplication` | `/api/internal/sys/**` | 纯 Provider 节点（生产中通常如此分离） |
+| **internal 单独** | `SysApiInternalApplication` | `/api/internal/sys/**` | 纯 Provider 节点（生产中通常如此分离） |
 
-> 由于本模块的 `SysApiWebAutoConfiguration` 仅扫描 `io.kudos.ms.sys.api.public`（包内只有 `init`），实际"加载哪些控制器"完全由 classpath 上是否含 `api-admin` / `api-internal` 决定——`core` 的 `SysAutoConfiguration` 在 `IComponentInitializer` 编排下会一并启动。
+> 由于本模块的 `SysApiPublicAutoConfiguration` 仅扫描 `io.kudos.ms.sys.api.public`（包内只有 `init`），实际"加载哪些控制器"完全由 classpath 上是否含 `api-admin` / `api-internal` 决定——`core` 的 `SysAutoConfiguration` 在 `IComponentInitializer` 编排下会一并启动。
 
 ---
 
@@ -49,7 +49,7 @@ kudos-ms-sys-api-public
 
 | 维度 | api-public | api-admin | api-internal |
 |------|------------|-----------|--------------|
-| 主类命名 | `SysApiWebApplication` | `SysApiAdminApplication` | `SysApiProviderApplication` |
+| 主类命名 | `SysApiPublicApplication` | `SysApiAdminApplication` | `SysApiInternalApplication` |
 | 是否含 Controller | **否** | 是（管理端 REST） | 是（**对内 RPC**，路径继承 `common.ISys*Api` 的方法注解） |
 | 路径前缀 | （无） | `/api/admin/sys/**` | `/api/internal/sys/**` |
 | 额外分布式能力 | 无（仅 core + MVC） | 无 | Nacos discovery / config + interservice 缓存 provider |
@@ -64,7 +64,7 @@ kudos-ms-sys-api-public
 
 ## 已知限制 / 后续工作
 
-- ❗ **本模块无业务路径，单独跑无意义** — `SysApiWebApplication` 启动后仅装配 Web 栈 + actuator，
+- ❗ **本模块无业务路径，单独跑无意义** — `SysApiPublicApplication` 启动后仅装配 Web 栈 + actuator，
   不挂任何 controller；除做"启动验证" / "本地空容器复现 bug"之外没有生产用途
 - ❗ **`@ComponentScan("io.kudos.ms.sys.api.public")` 覆盖范围窄** — 包内目前仅 `init`，
   未来加任何业务 controller 都会破坏与 `api-admin` / `api-internal` 的端点边界

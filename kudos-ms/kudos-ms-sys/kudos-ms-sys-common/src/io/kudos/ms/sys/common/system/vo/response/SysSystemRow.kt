@@ -1,5 +1,7 @@
 package io.kudos.ms.sys.common.system.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
+
 /**
  * System list query result response VO.
  *
@@ -9,7 +11,7 @@ package io.kudos.ms.sys.common.system.vo.response
 data class SysSystemRow (
 
     /** Primary key */
-    val id: String = "",
+    override val id: String = "",
 
     /** Code */
     val code: String = "",
@@ -32,4 +34,4 @@ data class SysSystemRow (
     /** Whether built-in */
     val builtIn: Boolean = false,
 
-)
+) : IIdEntity<String>

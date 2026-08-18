@@ -12,8 +12,8 @@
 
 | 类型 | 类 | 说明 |
 |------|-----|------|
-| 启动类 | `SysApiProviderApplication` | `@EnableKudos`，`main` 启动 Spring Boot |
-| 自动配置 | `SysApiProviderAutoConfiguration` | `@ComponentScan("io.kudos.ms.sys.api.internal")`，组件名 **`kudos-ms-sys-api-internal`**，由 `IComponentInitializer` 机制装配（非 Spring Boot 原生 SPI） |
+| 启动类 | `SysApiInternalApplication` | `@EnableKudos`，`main` 启动 Spring Boot |
+| 自动配置 | `SysApiInternalAutoConfiguration` | `@ComponentScan("io.kudos.ms.sys.api.internal")`，组件名 **`kudos-ms-sys-api-internal`**，由 `IComponentInitializer` 机制装配（非 Spring Boot 原生 SPI） |
 
 `@ComponentScan` 同时扫描 `init` 与 `controller` 子包；`core` 中各 `Sys*Api`（`@Component`）由 `core` 自身的 `SysAutoConfiguration` 提供，本模块只负责把它们暴露为 HTTP。
 
@@ -111,7 +111,7 @@ kudos-ms-sys-api-internal
 
 | 维度 | api-public | api-admin | api-internal |
 |------|------------|-----------|--------------|
-| 主类命名 | `SysApiWebApplication` | `SysApiAdminApplication` | `SysApiProviderApplication` |
+| 主类命名 | `SysApiPublicApplication` | `SysApiAdminApplication` | `SysApiInternalApplication` |
 | 路径前缀 | （无控制器） | `/api/admin/sys/**` | `/api/internal/sys/**` |
 | Controller 来源 | 无 | 显式定义 `*AdminController` | 实现 `common.ISys*Api` 接口，路径来自接口方法注解 |
 | 调用方 | 一般作为 Web 入口与 `api-admin` 同进程组合 | 控制台 / 管理网关 | **`kudos-ms-sys-client` 的 Feign 代理**；服务网格内部其他微服务 |

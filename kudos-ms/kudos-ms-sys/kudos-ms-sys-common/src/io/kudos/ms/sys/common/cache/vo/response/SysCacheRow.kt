@@ -1,5 +1,7 @@
 package io.kudos.ms.sys.common.cache.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
+
 /**
  * Cache list query result response VO
  *
@@ -9,7 +11,7 @@ package io.kudos.ms.sys.common.cache.vo.response
 data class SysCacheRow (
 
     /** Primary key */
-    val id: String = "",
+    override val id: String = "",
 
     /** Name */
     val name: String = "",
@@ -41,4 +43,4 @@ data class SysCacheRow (
     /** Whether it is a Hash cache */
     val hash: Boolean = false,
 
-)
+) : IIdEntity<String>

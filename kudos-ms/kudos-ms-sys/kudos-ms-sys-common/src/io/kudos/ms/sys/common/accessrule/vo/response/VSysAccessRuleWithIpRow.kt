@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.accessrule.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
 import java.math.BigDecimal
 import java.time.LocalDateTime
 
@@ -14,7 +15,7 @@ import java.time.LocalDateTime
 data class VSysAccessRuleWithIpRow(
 
     /** Row primary key: COALESCE(ip.id, ar.id); falls back to the parent rule id when there is no IP child row. */
-    val id: String = "",
+    override val id: String = "",
 
     /** Parent access rule id (sys_access_rule.id). */
     val parentId: String = "",
@@ -77,7 +78,7 @@ data class VSysAccessRuleWithIpRow(
 
     val updateTime: LocalDateTime? = null,
 
-): IIpBigDecimalToStringSupport {
+): IIpBigDecimalToStringSupport, IIdEntity<String> {
 
     override fun getIpStartBigDecimal(): BigDecimal? {
         return ipStart

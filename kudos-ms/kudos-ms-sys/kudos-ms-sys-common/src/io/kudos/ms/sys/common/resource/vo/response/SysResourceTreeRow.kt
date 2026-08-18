@@ -1,5 +1,7 @@
 package io.kudos.ms.sys.common.resource.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
+
 /**
  * Resource tree list query result response VO
  *
@@ -9,7 +11,7 @@ package io.kudos.ms.sys.common.resource.vo.response
 data class SysResourceTreeRow (
 
     /** Primary key */
-    val id: String = "",
+    override val id: String = "",
 
     /** Name */
     val name: String? = null,
@@ -44,4 +46,4 @@ data class SysResourceTreeRow (
     /** Child resource list */
     val children: MutableList<SysResourceTreeRow>? = null,
 
-)
+) : IIdEntity<String>

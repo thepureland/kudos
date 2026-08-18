@@ -54,7 +54,7 @@
 | `service.iservice` | 服务接口 | `ISysTenantService`、`IVSysAccessRuleIpService` |
 | `service.impl` | 业务实现（`open class`，参见下文 Kotlin 风格） | `SysTenantServiceImpl` |
 | `cache` | 领域缓存处理器（多级 Caffeine + Redis），与 Service 通过事件解耦 | `TenantByIdCache`、`SysDictHashCache`、`LocaleByCodeCache`、`OutLineBySystemAndTenantCache`、`AccessRuleIpsBySubSysAndTenantIdCache` |
-| `event` | 领域事件定义（`Sys*Inserted/Updated/Deleted/BatchDeleted`），供 `cache` 层用 `@TransactionalEventListener(AFTER_COMMIT)` 订阅 | `TenantEvents.kt`、`AccessRuleIpEvents.kt`、`DictEvents.kt`、`DictItemEvents.kt`（同一模块可拆多个事件文件） |
+| `event` | 领域事件定义（`Sys*Inserted/Updated/Deleted/BatchDeleted`），供 `cache` 层用 `@TransactionalEventListener(AFTER_COMMIT)` 订阅 | `SysTenantEvents.kt`、`SysAccessRuleIpEvents.kt`、`SysDictEvents.kt`、`SysDictItemEvents.kt`（同一模块可拆多个事件文件） |
 | `api` | `@Component` 形态的 `Sys*Api`，实现 `common` 中 `ISys*Api`，方法签名与路径与接口完全一致，供 **同进程注入** 与 **`api-internal` 控制器复用** | `SysTenantApi`、`SysOutLineApi` |
 | `support`（可选） | 模块内辅助类，避免 Service 膨胀 | `dict/support/DictItemCodeFinder`、`dict/support/SysDictTypesStartupValidator`（启动期校验 `SysDictTypes` 声明的字典都真实存在） |
 
@@ -142,22 +142,22 @@
 
 | 模块 | 事件 sealed 根 | 文件 | 维度键 / 注意点 |
 |------|--------------|------|----------------|
-| `accessrule` | `SysAccessRuleEvent` | `accessrule/event/AccessRuleEvents.kt` | Inserted/Updated/Deleted 携带 `(systemCode, tenantId)`；Updated 额外有 `before*` + `dimensionChanged`；BatchDeleted 携带 `dimensions: List<Pair<String, String?>>` |
-| `accessrule` (IP) | `SysAccessRuleIpEvent` | `accessrule/event/AccessRuleIpEvents.kt` | 子事件按 **父规则维度** `parentSystemCode/parentTenantId` 携带；Insert/Update 携带 `active` 标志 |
+| `accessrule` | `SysAccessRuleEvent` | `accessrule/event/SysAccessRuleEvents.kt` | Inserted/Updated/Deleted 携带 `(systemCode, tenantId)`；Updated 额外有 `before*` + `dimensionChanged`；BatchDeleted 携带 `dimensions: List<Pair<String, String?>>` |
+| `accessrule` (IP) | `SysAccessRuleIpEvent` | `accessrule/event/SysAccessRuleIpEvents.kt` | 子事件按 **父规则维度** `parentSystemCode/parentTenantId` 携带；Insert/Update 携带 `active` 标志 |
 | `cache` | `SysCacheEvent` | `cache/event/SysCacheEvents.kt` | 纯按 id |
-| `datasource` | `SysDataSourceEvent` | `datasource/event/DataSourceEvents.kt` | 纯按 id |
-| `dict` | `SysDictEvent` | `dict/event/DictEvents.kt` | 纯按 id |
-| `dict` (item) | `SysDictItemEvent` | `dict/event/DictItemEvents.kt` | Deleted 含父字典 id 等附加字段（见源码） |
-| `domain` | `SysDomainEvent` | `domain/event/DomainEvents.kt` | Deleted 含 `name`（按名查缓存 `DomainByNameCache`） |
-| `i18n` | `SysI18nEvent` | `i18n/event/I18nEvents.kt` | 纯按 id |
-| `locale` | `SysLocaleEvent` | `locale/event/LocaleEvents.kt` | Deleted 含 `code`（按 code 缓存 `LocaleByCodeCache`） |
-| `microservice` | `SysMicroServiceEvent` | `microservice/event/MicroServiceEvents.kt` | 纯按 id |
-| `outline` | `SysOutLineEvent` | `outline/event/OutLineEvents.kt` | Deleted 含 `(systemCode, tenantId)` 维度键 |
-| `param` | `SysParamEvent` | `param/event/ParamEvents.kt` | Deleted 含 `(moduleName, paramName)` |
-| `resource` | `SysResourceEvent` | `resource/event/ResourceEvents.kt` | 纯按 id |
-| `system` | `SysSystemEvent` | `system/event/SystemEvents.kt` | 纯按 id |
-| `tenant` | `SysTenantEvent` | `tenant/event/TenantEvents.kt` | 纯按 id |
-| `tenant` (system 绑定) | `SysTenantSystemEvent` | `tenant/event/TenantSystemEvents.kt` | 维度键 `(tenantId, subSystemCode)`，由 `SysTenantSystemHashCache` 订阅 |
+| `datasource` | `SysDataSourceEvent` | `datasource/event/SysDataSourceEvents.kt` | 纯按 id |
+| `dict` | `SysDictEvent` | `dict/event/SysDictEvents.kt` | 纯按 id |
+| `dict` (item) | `SysDictItemEvent` | `dict/event/SysDictItemEvents.kt` | Deleted 含父字典 id 等附加字段（见源码） |
+| `domain` | `SysDomainEvent` | `domain/event/SysDomainEvents.kt` | Deleted 含 `name`（按名查缓存 `DomainByNameCache`） |
+| `i18n` | `SysI18nEvent` | `i18n/event/SysI18nEvents.kt` | 纯按 id |
+| `locale` | `SysLocaleEvent` | `locale/event/SysLocaleEvents.kt` | Deleted 含 `code`（按 code 缓存 `LocaleByCodeCache`） |
+| `microservice` | `SysMicroServiceEvent` | `microservice/event/SysMicroServiceEvents.kt` | 纯按 id |
+| `outline` | `SysOutLineEvent` | `outline/event/SysOutLineEvents.kt` | Deleted 含 `(systemCode, tenantId)` 维度键 |
+| `param` | `SysParamEvent` | `param/event/SysParamEvents.kt` | Deleted 含 `(moduleName, paramName)` |
+| `resource` | `SysResourceEvent` | `resource/event/SysResourceEvents.kt` | 纯按 id |
+| `system` | `SysSystemEvent` | `system/event/SysSystemEvents.kt` | 纯按 id |
+| `tenant` | `SysTenantEvent` | `tenant/event/SysTenantEvents.kt` | 纯按 id |
+| `tenant` (system 绑定) | `SysTenantSystemEvent` | `tenant/event/SysTenantSystemEvents.kt` | 维度键 `(tenantId, subSystemCode)`，由 `SysTenantSystemHashCache` 订阅 |
 
 **模板**（accessrule 是最完整范例，其他模块按需裁剪）：
 

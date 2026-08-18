@@ -9,9 +9,9 @@
 
 | 模块 | Application 类 | 暴露面 | 端点示例 |
 |---|---|---|---|
-| `api-public` | `UserApiWebApplication` | 终端用户态 HTTP + `UserContextWebFilter`（session → KudosContext） | `/api/public/user/passport/*` |
+| `api-public` | `UserApiPublicApplication` | 终端用户态 HTTP + `UserContextWebFilter`（session → KudosContext） | `/api/public/user/passport/*` |
 | `api-admin` | `UserApiAdminApplication` | 管理端 HTTP | `/api/admin/user/*` |
-| `api-internal` | `UserApiProviderApplication` | 服务间 Feign provider；带 Nacos 发现 / 配置 | `IUser*Api` 接口注解路径 |
+| `api-internal` | `UserApiInternalApplication` | 服务间 Feign provider；带 Nacos 发现 / 配置 | `IUser*Api` 接口注解路径 |
 
 > 三者**互不依赖**——各自单独 bootRun，端口 / 注册中心 / 暴露面通过 yml 区分。
 > `kudos-ms-user-client` 的 Feign proxy 默认调的是 `api-internal` 进程。

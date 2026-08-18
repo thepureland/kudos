@@ -1,0 +1,22 @@
+package io.kudos.ms.user.api.internal.init
+
+import io.kudos.context.init.IComponentInitializer
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.Configuration
+
+
+/**
+ * user-api-provider auto-configuration class.
+ *
+ * @author K
+ * @since 1.0.0
+ */
+@Configuration
+@ComponentScan(basePackages = ["io.kudos.ms.user.api.internal"])
+open class UserApiInternalAutoConfiguration : IComponentInitializer {
+
+
+
+    override fun getComponentName() = "kudos-ms-user-api-internal"
+
+}

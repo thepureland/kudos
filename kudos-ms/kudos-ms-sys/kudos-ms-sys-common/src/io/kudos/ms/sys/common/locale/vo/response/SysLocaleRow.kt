@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.locale.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
 import java.time.LocalDateTime
 
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime
 data class SysLocaleRow(
 
     /** Primary key */
-    val id: String = "",
+    override val id: String = "",
 
     /** Language code */
     val code: String = "",
@@ -37,4 +38,4 @@ data class SysLocaleRow(
 
     /** Creation time */
     val createTime: LocalDateTime? = null,
-)
+) : IIdEntity<String>

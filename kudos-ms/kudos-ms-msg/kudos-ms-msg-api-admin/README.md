@@ -101,7 +101,7 @@ public / internal 启动模块的职责，让 admin 保持纯 controller 层。
 ```
                 ┌──────────────────────┐
                 │ msg-api-public       │  ← 启动入口（管理端 HTTP / 用户面向）
-                │ MsgApiWebApplication │
+                │ MsgApiPublicApp      │
                 └──────────┬───────────┘
                            │ @ComponentScan 拉取
                 ┌──────────▼───────────┐
@@ -111,7 +111,7 @@ public / internal 启动模块的职责，让 admin 保持纯 controller 层。
 
                 ┌──────────────────────┐
                 │ msg-api-internal     │  ← 启动入口（服务间 Feign provider）
-                │ MsgApiProviderApp    │
+                │ MsgApiInternalApp    │
                 └──────────┬───────────┘
                            │ @ComponentScan 拉取（路径不同：internal/...）
                            ▼

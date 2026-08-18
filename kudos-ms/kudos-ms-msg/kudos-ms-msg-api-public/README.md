@@ -5,9 +5,9 @@ Msg 服务 **对外 Web 进程**的启动入口与自动配置。生产部署 ms
 
 ## 内容
 
-- `MsgApiWebApplication` —— Spring Boot `main`，加 `@EnableKudos` 触发 kudos 框架
+- `MsgApiPublicApplication` —— Spring Boot `main`，加 `@EnableKudos` 触发 kudos 框架
   自动装配
-- `MsgApiWebAutoConfiguration` —— `@ComponentScan("io.kudos.ms.msg.api.public")` +
+- `MsgApiPublicAutoConfiguration` —— `@ComponentScan("io.kudos.ms.msg.api.public")` +
   `IComponentInitializer.getComponentName() = "kudos-ms-msg-api-public"`
 
 ## 启动
@@ -31,7 +31,7 @@ api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-springmvc"))
 
 | 维度 | api-public | api-internal |
 |------|------------|--------------|
-| 启动类 | `MsgApiWebApplication` | `MsgApiProviderApplication` |
+| 启动类 | `MsgApiPublicApplication` | `MsgApiInternalApplication` |
 | 包路径 | `io.kudos.ms.msg.api.public` | `io.kudos.ms.msg.api.internal` |
 | 路径规约 | `/api/admin/msg/...`（管理端） | `/api/internal/msg/...`（Feign provider） |
 | 额外依赖 | `msg-api-admin` | `discovery-nacos` / `config-nacos` / `cache-interservice-provider` |
@@ -46,7 +46,7 @@ api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-springmvc"))
 - ❗ **缺 `application.yml`**——repo 内没有任何 `application*.yml` / `application*.properties`，
   配置完全靠运行环境注入（容器 env、Spring Cloud Config）。CI 集成测试 / 本地调试
   缺示例文件，需要先翻 sibling 服务的 yml 模板
-- ❗ **`MsgApiWebAutoConfiguration` `@ComponentScan` 只扫 `io.kudos.ms.msg.api.public`**
+- ❗ **`MsgApiPublicAutoConfiguration` `@ComponentScan` 只扫 `io.kudos.ms.msg.api.public`**
   ——只能拉到本模块的 controller / 配置；其他模块（admin / internal）的 controller 即使
   classpath 上有，也得靠各自的 `IComponentInitializer` 被框架 dispatcher 拉起。如果想
   让 public 同时挂 admin 路由，需要在依赖里加 admin 模块（dispatcher 会自动拉 admin 的

@@ -1,5 +1,7 @@
 package io.kudos.ms.sys.common.i18n.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
+
 /**
  * Response VO for i18n list query result.
  *
@@ -9,7 +11,7 @@ package io.kudos.ms.sys.common.i18n.vo.response
 data class SysI18nRow (
 
     /** Primary key */
-    val id: String = "",
+    override val id: String = "",
 
     /** Language_Region */
     val locale: String = "",
@@ -38,4 +40,4 @@ data class SysI18nRow (
     /** Whether built-in */
     val builtIn: Boolean = true,
 
-)
+) : IIdEntity<String>

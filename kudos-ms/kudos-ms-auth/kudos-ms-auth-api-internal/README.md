@@ -13,8 +13,8 @@
 
 | 类型 | 类 | 说明 |
 |------|----|------|
-| 启动类 | `AuthApiProviderApplication` | `@EnableKudos`，`main` 启动 Spring Boot |
-| 自动配置 | `AuthApiProviderAutoConfiguration` | `@ComponentScan("io.kudos.ms.auth.api.internal")`，`IComponentInitializer` 组件名 **`kudos-ms-auth-api-internal`** |
+| 启动类 | `AuthApiInternalApplication` | `@EnableKudos`，`main` 启动 Spring Boot |
+| 自动配置 | `AuthApiInternalAutoConfiguration` | `@ComponentScan("io.kudos.ms.auth.api.internal")`，`IComponentInitializer` 组件名 **`kudos-ms-auth-api-internal`** |
 
 `io.kudos.ms.auth.api.internal` 下当前有两个包：
 

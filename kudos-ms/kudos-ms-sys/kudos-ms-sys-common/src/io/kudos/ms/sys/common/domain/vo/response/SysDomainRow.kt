@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.domain.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
 import java.time.LocalDateTime
 
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime
 data class SysDomainRow (
 
     /** Primary key */
-    val id: String = "",
+    override val id: String = "",
 
     /** Domain name */
     val domain: String = "",
@@ -35,7 +36,7 @@ data class SysDomainRow (
     /** Creation time */
     val createTime: LocalDateTime? = null,
 
-) {
+) : IIdEntity<String> {
 
 
     /** Tenant name */

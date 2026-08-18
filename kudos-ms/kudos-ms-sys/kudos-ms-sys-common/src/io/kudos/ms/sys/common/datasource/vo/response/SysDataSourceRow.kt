@@ -1,5 +1,7 @@
 package io.kudos.ms.sys.common.datasource.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
+
 /**
  * Data source list query result response VO.
  *
@@ -9,7 +11,7 @@ package io.kudos.ms.sys.common.datasource.vo.response
 data class SysDataSourceRow (
 
     /** Primary key. */
-    val id: String = "",
+    override val id: String = "",
 
     /** Name. */
     val name: String = "",
@@ -62,4 +64,4 @@ data class SysDataSourceRow (
     /** Whether built-in. */
     val builtIn: Boolean? = null,
 
-)
+) : IIdEntity<String>

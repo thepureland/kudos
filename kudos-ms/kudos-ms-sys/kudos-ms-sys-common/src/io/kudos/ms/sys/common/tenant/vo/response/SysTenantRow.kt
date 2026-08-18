@@ -1,5 +1,6 @@
 package io.kudos.ms.sys.common.tenant.vo.response
 
+import io.kudos.base.model.contract.entity.IIdEntity
 import java.time.LocalDateTime
 
 
@@ -12,7 +13,7 @@ import java.time.LocalDateTime
 data class SysTenantRow (
 
     /** Primary key. */
-    val id: String = "",
+    override val id: String = "",
 
     /** Name. */
     val name: String = "",
@@ -35,7 +36,7 @@ data class SysTenantRow (
     /** Whether built-in. */
     val builtIn: Boolean = false,
 
-) {
+) : IIdEntity<String> {
 
 
     /** Comma-separated sub-system codes. */

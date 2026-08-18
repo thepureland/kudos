@@ -13,8 +13,8 @@
 
 | 类型 | 类 | 说明 |
 |------|----|------|
-| 启动类 | `AuthApiWebApplication` | `@EnableKudos`，`main` 启动 Spring Boot |
-| 自动配置 | `AuthApiWebAutoConfiguration` | `@ComponentScan("io.kudos.ms.auth.api.public")`，`IComponentInitializer` 组件名 **`kudos-ms-auth-api-public`** |
+| 启动类 | `AuthApiPublicApplication` | `@EnableKudos`，`main` 启动 Spring Boot |
+| 自动配置 | `AuthApiPublicAutoConfiguration` | `@ComponentScan("io.kudos.ms.auth.api.public")`，`IComponentInitializer` 组件名 **`kudos-ms-auth-api-public`** |
 
 `io.kudos.ms.auth.api.public` 下当前有两个包：
 
@@ -83,7 +83,7 @@ kudos-ms-auth-api-public
 
 | 维度 | api-public | api-admin | api-internal |
 |------|------------|-----------|--------------|
-| 主类 | `AuthApiWebApplication` | `AuthApiAdminApplication` | `AuthApiProviderApplication` |
+| 主类 | `AuthApiPublicApplication` | `AuthApiAdminApplication` | `AuthApiInternalApplication` |
 | 是否含 Controller | 是（`PermittedResourceController`，1 个） | 是（`AuthRoleAdminController` / `AuthGroupAdminController`） | 是（`AuthRoleInternalController`，1 个） |
 | 额外分布式能力 | 无（仅 core + MVC） | 无 | Nacos + interservice 缓存 |
 | 暴露面 | 当前用户视图 + 管理 HTTP（由 admin 组合时） | 管理 REST `/api/admin/auth/**` | 服务间 Feign `/api/internal/auth/**` |
@@ -110,5 +110,5 @@ kudos-ms-auth-api-public
   `IPermittedResource` 实现侧加 user 级缓存（与 `ResourceIdsByUserIdCache` 配合）
 - ❗ **未提供 admin 视角下的"看他人菜单"** — admin 排查权限问题时无法通过 API 看到指定用户的
   菜单视图；需要业务方自建 admin 接口走 service 层
-- ❗ **`AuthApiWebApplication` 单独运行无 admin 路径** — 与 sys-api-public 类似，
+- ❗ **`AuthApiPublicApplication` 单独运行无 admin 路径** — 与 sys-api-public 类似，
   本模块单独 boot 仅得 `permittedResource` 一个端点；管理用户角色等仍需 admin 进程
