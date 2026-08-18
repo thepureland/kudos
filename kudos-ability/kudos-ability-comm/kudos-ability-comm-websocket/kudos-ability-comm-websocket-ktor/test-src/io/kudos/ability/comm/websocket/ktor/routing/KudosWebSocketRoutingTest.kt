@@ -1,10 +1,12 @@
 package io.kudos.ability.comm.websocket.ktor.routing
 
-import io.kudos.ability.comm.websocket.ktor.broadcast.WebSocketBroadcaster
-import io.kudos.ability.comm.websocket.ktor.handler.IKudosWebSocketHandler
-import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketRegistry
+import io.kudos.ability.comm.websocket.common.connect.IWebSocketConnectInterceptor
+import io.kudos.ability.comm.websocket.common.connect.WebSocketConnectDecision
+import io.kudos.ability.comm.websocket.common.broadcast.WebSocketBroadcaster
+import io.kudos.ability.comm.websocket.common.handler.IKudosWebSocketHandler
+import io.kudos.ability.comm.websocket.common.session.KudosWebSocketRegistry
 import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSession
-import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSessionRef
+import io.kudos.ability.comm.websocket.common.session.KudosWebSocketSessionRef
 import io.ktor.client.plugins.websocket.WebSockets as ClientWebSockets
 import io.ktor.client.plugins.websocket.webSocket
 import io.ktor.server.application.install
@@ -12,6 +14,7 @@ import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import io.ktor.server.websocket.WebSockets
 import io.ktor.websocket.CloseReason
+import io.kudos.ability.comm.websocket.common.session.WebSocketCloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
@@ -177,7 +180,7 @@ internal class KudosWebSocketRoutingTest {
                         IWebSocketConnectInterceptor { order.add("first"); WebSocketConnectDecision.Proceed },
                         IWebSocketConnectInterceptor {
                             order.add("second")
-                            WebSocketConnectDecision.Reject(CloseReason.Codes.TRY_AGAIN_LATER, "full")
+                            WebSocketConnectDecision.Reject(WebSocketCloseReason.Codes.TRY_AGAIN_LATER, "full")
                         },
                         IWebSocketConnectInterceptor { order.add("third"); WebSocketConnectDecision.Proceed },
                     ),
@@ -217,7 +220,7 @@ internal class KudosWebSocketRoutingTest {
                             // The whole point of rejecting here rather than inside onConnect: at this
                             // moment the session claims tenant "acme" but must not yet be a member of it.
                             reachedDuringAdmission.set(broadcaster.broadcastToTenant("acme", "secret"))
-                            WebSocketConnectDecision.Reject(CloseReason.Codes.VIOLATED_POLICY, "not allowed")
+                            WebSocketConnectDecision.Reject(WebSocketCloseReason.Codes.VIOLATED_POLICY, "not allowed")
                         },
                     ),
                 ) { raw -> KudosWebSocketSession(raw, userId = "mallory", tenantId = "acme") }

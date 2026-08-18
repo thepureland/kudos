@@ -1,14 +1,17 @@
 package io.kudos.ability.comm.websocket.ktor.routing
 
-import io.kudos.ability.comm.websocket.ktor.handler.IKudosWebSocketHandler
-import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketRegistry
+import io.kudos.ability.comm.websocket.common.connect.IWebSocketConnectInterceptor
+import io.kudos.ability.comm.websocket.common.connect.admit
+import io.kudos.ability.comm.websocket.common.handler.IKudosWebSocketHandler
+import io.kudos.ability.comm.websocket.common.session.KudosWebSocketRegistry
+import io.kudos.ability.comm.websocket.common.session.KudosWebSocketSessionRef
+import io.kudos.ability.comm.websocket.common.session.WebSocketCloseReason
 import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSession
-import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSessionRef
+import io.kudos.ability.comm.websocket.ktor.session.toKtor
 import io.kudos.base.logger.LogFactory
 import io.ktor.server.routing.Route
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.webSocket
-import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.FrameType
 import io.ktor.websocket.close
@@ -60,7 +63,7 @@ const val DEFAULT_MAX_MESSAGE_SIZE: Long = 10L * 1024 * 1024
  *    quotas and the like stay independent of each other and of session construction. The first
  *    rejection wins; see [IWebSocketConnectInterceptor].
  *  - **Per-message interception** is not a separate mechanism: wrap [handler] in a
- *    [io.kudos.ability.comm.websocket.ktor.handler.WebSocketHandlerDecorator]
+ *    [io.kudos.ability.comm.websocket.common.handler.WebSocketHandlerDecorator]
  *    (see `wrappedBy`), which can run code around the delegate and short-circuit it.
  *  - **Handshake-level concerns stay in Ktor.** This is an ordinary `Route` extension, so
  *    `authenticate("jwt") { kudosWebSocket(...) }` composes with Ktor's own `Authentication` plugin;
@@ -78,7 +81,7 @@ const val DEFAULT_MAX_MESSAGE_SIZE: Long = 10L * 1024 * 1024
  *  - **Makes no assumption** about the wire protocol (JSON / Protobuf / etc.) — this extension
  *    only reassembles frames into whole messages and passes them to the handler; higher-level
  *    serialization is the handler's business (see
- *    [io.kudos.ability.comm.websocket.ktor.handler.TypedWebSocketHandler]).
+ *    [io.kudos.ability.comm.websocket.common.handler.TypedWebSocketHandler]).
  *
  * Multiple `kudosWebSocket` routes can share the same [KudosWebSocketRegistry] — the typical
  * pattern is a process-level singleton on the business side.
@@ -95,7 +98,7 @@ fun Route.kudosWebSocket(
     handler: IKudosWebSocketHandler,
     maxMessageSize: Long = DEFAULT_MAX_MESSAGE_SIZE,
     connectInterceptors: List<IWebSocketConnectInterceptor> = emptyList(),
-    rejectCloseReason: CloseReason = CloseReason(CloseReason.Codes.VIOLATED_POLICY, "Connection rejected"),
+    rejectCloseReason: WebSocketCloseReason = WebSocketCloseReason.REJECTED,
     sessionFactory: suspend (DefaultWebSocketServerSession) -> KudosWebSocketSession? = { KudosWebSocketSession(it) },
 ) {
     webSocket(path) {
@@ -108,13 +111,13 @@ fun Route.kudosWebSocket(
         }
         if (session == null) {
             log.debug("WebSocket connection rejected by sessionFactory path={0}", path)
-            runCatching { close(rejectCloseReason) }
+            runCatching { close(rejectCloseReason.toKtor()) }
             return@webSocket
         }
 
-        val rejection = admit(session, connectInterceptors, path)
+        val rejection = connectInterceptors.admit(session, path)
         if (rejection != null) {
-            runCatching { close(rejection.reason) }
+            runCatching { close(rejection.reason.toKtor()) }
             return@webSocket
         }
 
@@ -136,42 +139,11 @@ fun Route.kudosWebSocket(
                 runCatching { handler.onDisconnect(session, cause) }
                     .onFailure { log.warn("onDisconnect threw an exception sessionId={0} cause={1}", session.sessionId, it.message) }
                 registry.unregister(session)
-                runCatching { close(CloseReason(CloseReason.Codes.NORMAL, "")) }
+                runCatching { close(WebSocketCloseReason.NORMAL.toKtor()) }
             }
         }
         if (cause is CancellationException) throw cause
     }
-}
-
-/**
- * Runs [interceptors] in order and returns the first rejection, or `null` when the session is
- * admitted.
- *
- * An interceptor that throws is converted into a rejection rather than propagated: admission control
- * fails closed, because a quota or ban check that blew up must not be read as "allowed". Cancellation
- * is not an interceptor failure and is re-thrown.
- */
-private suspend fun admit(
-    session: KudosWebSocketSession,
-    interceptors: List<IWebSocketConnectInterceptor>,
-    path: String,
-): WebSocketConnectDecision.Reject? {
-    for (interceptor in interceptors) {
-        val decision = try {
-            interceptor.intercept(session)
-        } catch (t: Throwable) {
-            if (t is CancellationException) throw t
-            log.warn("WebSocket connect interceptor {0} threw, rejecting connection sessionId={1} path={2} cause={3}",
-                interceptor::class.simpleName, session.sessionId, path, t.message)
-            WebSocketConnectDecision.Reject(CloseReason.Codes.INTERNAL_ERROR, "Admission check failed")
-        }
-        if (decision is WebSocketConnectDecision.Reject) {
-            log.debug("WebSocket connection rejected by {0} sessionId={1} path={2}",
-                interceptor::class.simpleName, session.sessionId, path)
-            return decision
-        }
-    }
-    return null
 }
 
 /**
@@ -182,7 +154,8 @@ private suspend fun admit(
  *    emits every fragment as its own [Frame] carrying `fin = false`, and re-labels continuation
  *    frames with the opcode of the message they belong to. Dispatching each fragment directly would
  *    hand the handler partial messages, and would corrupt any multi-byte UTF-8 character that
- *    happens to straddle a fragment boundary.
+ *    happens to straddle a fragment boundary. (The Spring engine module needs no equivalent: the
+ *    Servlet container reassembles before invoking the handler.)
  *  - **Control frames pass through mid-message.** Ping / Pong may legally interleave a fragmented
  *    message, so they are skipped without disturbing the buffer. The Ktor plugin already answers
  *    pings, so the business side never needs to see them.
@@ -212,7 +185,7 @@ internal suspend fun dispatchFrames(
                 val buffered = pending?.size() ?: 0
                 if (buffered + frame.data.size > maxMessageSize) {
                     log.warn("WebSocket message exceeds maxMessageSize={0} sessionId={1}; closing", maxMessageSize, session.sessionId)
-                    runCatching { session.close(CloseReason(CloseReason.Codes.TOO_BIG, "Message too big")) }
+                    runCatching { session.close(WebSocketCloseReason(WebSocketCloseReason.Codes.TOO_BIG, "Message too big")) }
                     break
                 }
                 if (frame.fin && pending == null) {

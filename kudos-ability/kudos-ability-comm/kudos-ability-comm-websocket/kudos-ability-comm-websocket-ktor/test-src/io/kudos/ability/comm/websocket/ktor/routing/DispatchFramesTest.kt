@@ -1,8 +1,9 @@
 package io.kudos.ability.comm.websocket.ktor.routing
 
-import io.kudos.ability.comm.websocket.ktor.handler.IKudosWebSocketHandler
-import io.kudos.ability.comm.websocket.ktor.session.KudosWebSocketSessionRef
+import io.kudos.ability.comm.websocket.common.handler.IKudosWebSocketHandler
+import io.kudos.ability.comm.websocket.common.session.KudosWebSocketSessionRef
 import io.ktor.websocket.CloseReason
+import io.kudos.ability.comm.websocket.common.session.WebSocketCloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import kotlinx.coroutines.channels.Channel
@@ -40,7 +41,7 @@ internal class DispatchFramesTest {
     private fun newSession() = StubSession("s-dispatch")
 
     @Test
-    fun textAndBinaryFrames_areDispatchedInOrderWithSameSession() = runBlocking {
+    fun textAndBinaryFrames_areDispatchedInOrderWithSameSession(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         val session = newSession()
         val handler = RecordingHandler()
@@ -56,7 +57,7 @@ internal class DispatchFramesTest {
     }
 
     @Test
-    fun fragmentedTextMessage_isReassembledIntoOneCall() = runBlocking {
+    fun fragmentedTextMessage_isReassembledIntoOneCall(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         val handler = RecordingHandler()
         // Ktor labels continuation frames with the original opcode and only flags the last one `fin`.
@@ -72,7 +73,7 @@ internal class DispatchFramesTest {
     }
 
     @Test
-    fun fragmentBoundarySplittingAMultiByteChar_stillDecodesCorrectly() = runBlocking {
+    fun fragmentBoundarySplittingAMultiByteChar_stillDecodesCorrectly(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         val handler = RecordingHandler()
         val message = "中文🚀"
@@ -89,7 +90,7 @@ internal class DispatchFramesTest {
     }
 
     @Test
-    fun fragmentedBinaryMessage_isReassembled() = runBlocking {
+    fun fragmentedBinaryMessage_isReassembled(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         val handler = RecordingHandler()
         frames.send(Frame.Binary(false, byteArrayOf(1, 2)))
@@ -102,7 +103,7 @@ internal class DispatchFramesTest {
     }
 
     @Test
-    fun controlFramesInterleavingAFragmentedMessage_doNotCorruptIt() = runBlocking {
+    fun controlFramesInterleavingAFragmentedMessage_doNotCorruptIt(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         val handler = RecordingHandler()
         frames.send(Frame.Text(false, "part-1 ".toByteArray()))
@@ -118,7 +119,7 @@ internal class DispatchFramesTest {
     }
 
     @Test
-    fun consecutiveFragmentedMessages_areDispatchedSeparately() = runBlocking {
+    fun consecutiveFragmentedMessages_areDispatchedSeparately(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         val handler = RecordingHandler()
         frames.send(Frame.Text(false, "a".toByteArray()))
@@ -135,7 +136,7 @@ internal class DispatchFramesTest {
     }
 
     @Test
-    fun pingAndPongFrames_areIgnored() = runBlocking {
+    fun pingAndPongFrames_areIgnored(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         val handler = RecordingHandler()
         frames.send(Frame.Ping(byteArrayOf(1)))
@@ -150,7 +151,7 @@ internal class DispatchFramesTest {
     }
 
     @Test
-    fun closeFrame_breaksLoop_leavingLaterFramesUnconsumed() = runBlocking {
+    fun closeFrame_breaksLoop_leavingLaterFramesUnconsumed(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         val handler = RecordingHandler()
         frames.send(Frame.Text("before-close"))
@@ -167,7 +168,7 @@ internal class DispatchFramesTest {
     }
 
     @Test
-    fun closedEmptyChannel_endsLoopWithoutHandlerCalls() = runBlocking {
+    fun closedEmptyChannel_endsLoopWithoutHandlerCalls(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 1)
         frames.close()
         val handler = RecordingHandler()
@@ -179,7 +180,7 @@ internal class DispatchFramesTest {
     }
 
     @Test
-    fun singleFrameOverTheSizeLimit_closesTheConnectionWithoutDispatching() = runBlocking {
+    fun singleFrameOverTheSizeLimit_closesTheConnectionWithoutDispatching(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         val session = newSession()
         val handler = RecordingHandler()
@@ -189,11 +190,11 @@ internal class DispatchFramesTest {
         dispatchFrames(frames, session, handler, maxMessageSize = 16)
 
         assertEquals(emptyList(), handler.events, "An over-sized message must not reach the handler")
-        assertEquals(CloseReason.Codes.TOO_BIG.code, session.closeReason?.code)
+        assertEquals(WebSocketCloseReason.Codes.TOO_BIG.code, session.closeReason?.code)
     }
 
     @Test
-    fun fragmentsExceedingTheSizeLimit_closeTheConnectionInsteadOfBuffering() = runBlocking {
+    fun fragmentsExceedingTheSizeLimit_closeTheConnectionInsteadOfBuffering(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         val session = newSession()
         val handler = RecordingHandler()
@@ -207,11 +208,11 @@ internal class DispatchFramesTest {
         dispatchFrames(frames, session, handler, maxMessageSize = 16)
 
         assertEquals(emptyList(), handler.events)
-        assertEquals(CloseReason.Codes.TOO_BIG.code, session.closeReason?.code)
+        assertEquals(WebSocketCloseReason.Codes.TOO_BIG.code, session.closeReason?.code)
     }
 
     @Test
-    fun handlerException_propagatesToCaller() = runBlocking {
+    fun handlerException_propagatesToCaller(): Unit = runBlocking {
         val frames = Channel<Frame>(capacity = 16)
         frames.send(Frame.Text("boom"))
         frames.close()
@@ -245,11 +246,11 @@ internal class DispatchFramesTest {
     private class StubSession(override val sessionId: String) : KudosWebSocketSessionRef {
         override val userId: String? = null
         override val tenantId: String? = null
-        var closeReason: CloseReason? = null
+        var closeReason: WebSocketCloseReason? = null
             private set
         override val attributes: MutableMap<String, Any> = ConcurrentHashMap()
         override suspend fun sendText(text: String) {}
         override suspend fun sendBinary(bytes: ByteArray) {}
-        override suspend fun close(reason: CloseReason) { closeReason = reason }
+        override suspend fun close(reason: WebSocketCloseReason) { closeReason = reason }
     }
 }

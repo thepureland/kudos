@@ -120,6 +120,10 @@ spring-web = { module = "org.springframework:spring-web"}
 spring-session-core = { module = "org.springframework.session:spring-session-core"}
 spring-session-data-redis = { module = "org.springframework.session:spring-session-data-redis"}
 spring-boot-starter-web = { module = "org.springframework.boot:spring-boot-starter-web"}
+# kudos-ability-comm-websocket-spring: Spring 原生 WebSocket 支持（WebSocketHandler / HandshakeInterceptor /
+# WebSocketConfigurer）。不用 spring-boot-starter-websocket：那个 starter 只是 web starter + spring-websocket 的
+# 聚合，依赖它的模块已经显式声明了 web starter，多一层聚合只会让实际拖入的东西更难看清。
+spring-websocket = { module = "org.springframework:spring-websocket"}
 springdoc-openapi-starter-webmvc-api = { module = "org.springdoc:springdoc-openapi-starter-webmvc-api", version.ref = "springdoc-openapi" }
 springdoc-openapi-starter-webmvc-ui = { module = "org.springdoc:springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc-openapi" }
 spring-boot-starter-mail = { module = "org.springframework.boot:spring-boot-starter-mail"}

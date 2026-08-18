@@ -1,27 +1,30 @@
 package io.kudos.ability.comm.websocket.ktor.session
 
 import io.ktor.server.websocket.DefaultWebSocketServerSession
-import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.send
+import io.kudos.ability.comm.websocket.common.session.KudosWebSocketSessionRef
+import io.kudos.ability.comm.websocket.common.session.WebSocketCloseReason
 import io.kudos.base.lang.string.RandomStringKit
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Kudos business-layer wrapper around a WebSocket session.
+ * Kudos business-layer wrapper around a Ktor WebSocket session.
  *
- * Attaches the metadata required by the business side on top of the native
- * [DefaultWebSocketServerSession]:
- *  - [sessionId]: unique session identifier within the process (defaults to a UUID)
+ * The Ktor-side implementation of [KudosWebSocketSessionRef]. Attaches the metadata required by the
+ * business side on top of the native [DefaultWebSocketServerSession]:
+ *  - [sessionId]: unique session identifier within the process (defaults to a UUID, since Ktor
+ *    assigns no identity of its own)
  *  - [userId] / [tenantId]: populated by the business side when the connection is established;
  *    used for indexing and broadcasting by business dimension
  *  - [attributes]: open extension point (client version, device ID, Locale, etc.)
  *
  * Upstream route code holds a [KudosWebSocketSession] rather than the Ktor session directly.
  * Benefits:
- *  - Unified close/send semantics ([send] / [close]); swapping the underlying engine later
- *    does not require changing business code.
+ *  - Unified close/send semantics ([send] / [close]); the registry, broadcaster and handler SPI in
+ *    `kudos-ability-comm-websocket-common` are written against the interface, so the same business
+ *    code runs unchanged on another engine.
  *  - Multiple business modules share the same object, avoiding each one maintaining its own
  *    "sessionId → user" mapping.
  *
@@ -54,8 +57,11 @@ class KudosWebSocketSession(
      * Closes the connection normally. Defaults to `NORMAL` close reason; the business side may
      * explicitly pass `GOING_AWAY` etc. After close, the incoming channel of [raw] is closed
      * automatically and the corresponding route lambda exits.
+     *
+     * The engine-neutral [WebSocketCloseReason] is mapped to Ktor's own type by [toKtor]; see
+     * `WebSocketCloseReasons.kt` for why that translation is confined to a single file.
      */
-    override suspend fun close(reason: CloseReason) {
-        raw.close(reason)
+    override suspend fun close(reason: WebSocketCloseReason) {
+        raw.close(reason.toKtor())
     }
 }

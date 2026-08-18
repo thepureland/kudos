@@ -3,6 +3,7 @@ package io.kudos.ability.comm.websocket.ktor.session
 import io.ktor.server.application.ApplicationCall
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.websocket.CloseReason
+import io.kudos.ability.comm.websocket.common.session.WebSocketCloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketExtension
 import io.ktor.utils.io.InternalAPI
@@ -76,7 +77,7 @@ internal class KudosWebSocketSessionTest {
     }
 
     @Test
-    fun sendText_emitsTextFrameWithVerbatimContent() = runBlocking {
+    fun sendText_emitsTextFrameWithVerbatimContent(): Unit = runBlocking {
         val raw = FakeRawSession()
         val s = KudosWebSocketSession(raw)
 
@@ -92,7 +93,7 @@ internal class KudosWebSocketSessionTest {
     }
 
     @Test
-    fun sendBinary_emitsFinalBinaryFrame() = runBlocking {
+    fun sendBinary_emitsFinalBinaryFrame(): Unit = runBlocking {
         val raw = FakeRawSession()
         val s = KudosWebSocketSession(raw)
         val payload = byteArrayOf(0, 1, -1, 127, -128)
@@ -106,11 +107,11 @@ internal class KudosWebSocketSessionTest {
     }
 
     @Test
-    fun close_emitsCloseFrameWithGivenReason() = runBlocking {
+    fun close_emitsCloseFrameWithGivenReason(): Unit = runBlocking {
         val raw = FakeRawSession()
         val s = KudosWebSocketSession(raw)
 
-        s.close(CloseReason(CloseReason.Codes.GOING_AWAY, "maintenance"))
+        s.close(WebSocketCloseReason(WebSocketCloseReason.Codes.GOING_AWAY, "maintenance"))
 
         val frame = raw.sentFrames.receive()
         assertTrue(frame is Frame.Close)
@@ -120,7 +121,7 @@ internal class KudosWebSocketSessionTest {
     }
 
     @Test
-    fun close_withoutArgument_usesNormalEmptyReason() = runBlocking {
+    fun close_withoutArgument_usesNormalEmptyReason(): Unit = runBlocking {
         val raw = FakeRawSession()
         val s = KudosWebSocketSession(raw)
 

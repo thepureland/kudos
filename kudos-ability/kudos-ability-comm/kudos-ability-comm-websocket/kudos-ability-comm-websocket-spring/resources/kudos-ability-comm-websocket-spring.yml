@@ -1,0 +1,58 @@
+kudos:
+  ability:
+    comm:
+      websocket:
+        spring:
+          # 是否注册 WebSocket 端点。设为 false 可保留本模块的类型但不挂载任何端点。
+          enabled: true
+
+          # 兜底端点路径：仅当应用只声明了一个 IKudosWebSocketHandler bean、且没有任何
+          # IKudosWebSocketEndpoint bean 时生效。声明了端点 bean 后本项被忽略。
+          path: /ws
+
+          # allowed-origins 留空 = Spring 默认的同源限制，这是有意的。
+          #
+          # 写成 "*" 不是图方便，是一个真实漏洞：WebSocket 握手不受同源策略约束，浏览器仍会带上
+          # 用户的 cookie。允许任意源，等于让互联网上任何一个页面都能以你已登录用户的身份打开一条
+          # 认证过的连接。启动时若检测到 "*"，SpringWebSocketAutoConfiguration 会打 WARN。
+          # allowed-origins:
+          #   - https://app.example.com
+          # allowed-origin-patterns:      # 仅在 allowed-origins 为空时生效
+          #   - https://*.example.com
+
+          # SockJS 回退，默认关闭。现役浏览器与 HTTP 客户端原生支持 WebSocket 已逾十年，
+          # 只有客户端处在会剥掉 Upgrade 头的代理之后才需要打开。
+          sock-js: false
+
+          # 关闭上下文时等待在途消息与 onDisconnect 完成的时间
+          shutdown-timeout-millis: 10000
+
+          inbound:
+            # 每连接入站队列容量。按"吸收突发"而非"堆积积压"来定：队列越深只是把背压推迟得越久，
+            # 同时把最坏情况的堆内存乘以连接数。
+            buffer-capacity: 64
+            # 队列满时的策略：
+            #   BACKPRESSURE —— 阻塞容器线程直到消费跟上，靠 TCP 流控限速客户端。不丢消息，
+            #                    代价是每条积压连接占一个容器线程；配合虚拟线程几乎无成本（默认）
+            #   DROP_LATEST  —— 丢弃并打日志，不阻塞，但客户端视角是静默丢数据
+            #   CLOSE        —— 直接断开。适用于"客户端跑赢服务端属于滥用"的端点
+            overflow: BACKPRESSURE
+
+          send:
+            time-limit-millis: 10000
+            # 单个不读 socket 的客户端最多允许堆积的字节数。这一项挡在"一个卡死客户端"和 OOM 之间：
+            # 不限制的话，一条不排空的连接会把发给它的每一条消息都攒在堆里。
+            buffer-size-limit-bytes: 524288
+            # TERMINATE：超限即断开（默认）。DROP：丢弃其待发消息。
+            # 选 TERMINATE 是因为跟不上的连接本就已经丢了消息，静默丢弃只是对两端都藏起这个事实。
+            overflow-strategy: TERMINATE
+
+          container:
+            # 因为 supportsPartialMessages = false，分片重组由 Servlet 容器完成，
+            # 所以"单条消息最大能有多大"由容器缓冲区决定，而不是本模块里的任何检查。
+            # Jakarta WebSocket 默认只有 8KB，超出会直接失败且报错位置离真正原因很远。
+            max-text-message-buffer-size: 65536
+            max-binary-message-buffer-size: 65536
+            # 0 = 沿用容器自身默认值。若设置，务必大于客户端心跳间隔，否则健康连接会被判定空闲而清掉。
+            max-session-idle-timeout-millis: 0
+            async-send-timeout-millis: 0
