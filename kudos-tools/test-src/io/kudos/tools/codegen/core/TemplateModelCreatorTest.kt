@@ -40,6 +40,58 @@ internal class TemplateModelCreatorTest {
         assertEquals("User", model["moduleCapitalize"])
         assertEquals("K", model["author"])
         assertEquals("1.0.0", model["version"])
+        assertFalse(
+            model.containsKey("bizModule"),
+            "bizModule is table-scoped; leaking it into the base model would make non-entity templates " +
+                "renderable with a stale value from a previous table"
+        )
+    }
+
+    //endregion
+
+    //region defaultBizModule
+
+    @Test
+    fun defaultBizModuleStripsTheModulePrefixAndLowercases() {
+        assertEquals("param", TemplateModelCreator.defaultBizModule("sys_param", "sys"))
+        assertEquals("org", TemplateModelCreator.defaultBizModule("user_org", "user"))
+        // The module prefix is stripped case-insensitively, matching createEntityRelativeModel.
+        assertEquals("locale", TemplateModelCreator.defaultBizModule("SYS_LOCALE", "sys"))
+        // No module prefix on the table name: nothing is stripped.
+        assertEquals("auditlog", TemplateModelCreator.defaultBizModule("audit_log", "sys"))
+    }
+
+    @Test
+    fun defaultBizModuleIsWrongForSecondaryTablesWhichIsWhyItIsOverridable() {
+        // These are exactly the cases the wizard has to correct by hand: the real directories are
+        // dict / accountthird->account, and no derivation from the table name can produce them.
+        assertEquals("dictitem", TemplateModelCreator.defaultBizModule("sys_dict_item", "sys"))
+        assertEquals("accountthird", TemplateModelCreator.defaultBizModule("user_account_third", "user"))
+    }
+
+    @Test
+    fun explicitBizModuleOverridesTheDefault() {
+        CodegenTestSupport.bindNewH2(
+            "tmc_biz_module",
+            """CREATE TABLE IF NOT EXISTS "sys_dict_item" (
+                 "id" CHAR(36) DEFAULT RANDOM_UUID() NOT NULL PRIMARY KEY,
+                 "item_code" VARCHAR(64) NOT NULL
+               )""",
+        )
+        CodeGeneratorContext.tableName = "sys_dict_item"
+        CodeGeneratorContext.tableComment = "dict item"
+        CodeGeneratorContext.bizModule = "dict"
+        CodeGeneratorContext.config = CodegenTestSupport.newConfig(moduleName = "sys")
+        CodeGeneratorContext.columns = emptyList()
+        CodeGeneratorContext.templateModelCreator = creator
+
+        val model = creator.createEntityRelativeModel()
+
+        assertEquals("SysDictItem", model["entityName"])
+        assertEquals("dictitem", model["lowerShortEntityName"], "the derived name is still exposed")
+        assertEquals("dict", model["bizModule"], "the wizard value wins over the default")
+
+        CodeGeneratorContext.bizModule = ""
     }
 
     //endregion
@@ -48,14 +100,16 @@ internal class TemplateModelCreatorTest {
 
     @Test
     fun stringPkWithAllMaintenanceColumnsUsesManagedTable() {
-        // NOTE: per the current implementation, the user-id maintenance columns are matched by their
-        // camelCase property names (createUserId/updateUserId), not by snake_case database names.
+        // Every ManagedTable-provided column is matched by its snake_case database name, exactly as the
+        // Flyway scripts declare them; all of them are filtered out of the PO/table column list.
         val columns = listOf(
             col("id", String::class, pk = true),
             col("create_time", java.time.LocalDateTime::class),
-            col("createUserId", String::class),
+            col("create_user_id", String::class),
+            col("create_user_name", String::class),
             col("update_time", java.time.LocalDateTime::class),
-            col("updateUserId", String::class),
+            col("update_user_id", String::class),
+            col("update_user_name", String::class),
             col("active", Boolean::class),
             col("built_in", Boolean::class),
             col("remark", String::class),
@@ -200,6 +254,7 @@ internal class TemplateModelCreatorTest {
         )
         CodeGeneratorContext.tableName = "tmc_demo"
         CodeGeneratorContext.tableComment = "demo table"
+        CodeGeneratorContext.bizModule = ""  // left empty in the wizard -> falls back to the default
         CodeGeneratorContext.config = CodegenTestSupport.newConfig(moduleName = "tmc")
         CodeGeneratorContext.columns = listOf(
             ColumnInfo().apply {
@@ -226,6 +281,7 @@ internal class TemplateModelCreatorTest {
         assertEquals("TmcDemo", model["entityName"])
         assertEquals("Demo", model["shortEntityName"])
         assertEquals("demo", model["lowerShortEntityName"])
+        assertEquals("demo", model["bizModule"], "blank bizModule falls back to the lowercased short entity name")
         // table & columns
         assertNotNull(model["table"])
         @Suppress("UNCHECKED_CAST")

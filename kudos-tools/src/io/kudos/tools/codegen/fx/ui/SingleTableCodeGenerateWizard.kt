@@ -84,6 +84,7 @@ open class SingleTableCodeGenerateWizard : Application() {
                 } else {
                     CodeGeneratorContext.tableName = table
                     CodeGeneratorContext.tableComment = columnsController.tableComment
+                    CodeGeneratorContext.bizModule = columnsController.bizModule
                     CodeGeneratorContext.columns = columnsController.columns
                     CodeGeneratorContext.config = columnsController.getConfig()
                 }

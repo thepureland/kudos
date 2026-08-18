@@ -2,6 +2,7 @@ package io.kudos.tools.codegen.fx.controller
 
 import io.kudos.ability.ui.javafx.controls.AutoCompleteComboBoxListener
 import io.kudos.tools.codegen.core.CodeGeneratorContext
+import io.kudos.tools.codegen.core.TemplateModelCreator
 import io.kudos.tools.codegen.model.vo.ColumnInfo
 import io.kudos.tools.codegen.model.vo.Config
 import io.kudos.tools.codegen.service.CodeGenColumnService
@@ -36,6 +37,15 @@ class ColumnsController : Initializable {
     @FXML
     lateinit var tableCommentTextField: TextField
 
+    /**
+     * Business module of the currently selected table — the first-level package directory the generated
+     * code goes under. Pre-filled with the previously recorded value, else with
+     * [TemplateModelCreator.defaultBizModule]; edit it when several tables share one module
+     * (`sys_dict` + `sys_dict_item` -> `dict`).
+     */
+    @FXML
+    lateinit var bizModuleTextField: TextField
+
     /** Column-info table view, bound to all [ColumnInfo] entries of the current table */
     @FXML
     lateinit var columnTable: TableView<ColumnInfo>
@@ -48,6 +58,8 @@ class ColumnsController : Initializable {
     private lateinit var config: Config
     /** Mapping of database table name to table comment, loaded once when initializing the combo box */
     private var tableMap: Map<String, String?>? = null
+    /** Previously recorded business modules, table name -> business module; loaded alongside [tableMap] */
+    private var bizModuleMap: Map<String, String> = emptyMap()
 
     /**
      * JavaFX callback after the FXML is loaded; only binds events here
@@ -81,17 +93,22 @@ class ColumnsController : Initializable {
         // Workaround for wizard bug: going back from page3 to page2 invokes page1's onExitingPage
         val columnList = columns
         val tableComment = tableComment
+        val bizModule = bizModule
         val firstInit = tableComboBox.items.isEmpty()
         tableMap = CodeGenObjectService.readTables()
+        bizModuleMap = CodeGenObjectService.readBizModules()
         tableComboBox.items = FXCollections.observableArrayList(requireNotNull(tableMap) { "tableMap is null" }.keys.toSortedSet())
         AutoCompleteComboBoxListener<Any>(tableComboBox)
         if (firstInit) {
             tableComboBox.editor.textProperty()
                 .addListener { _: ObservableValue<out String?>?, _: String?, newValue: String? ->
                     tableCommentTextField.clear()
+                    bizModuleTextField.clear()
                     val tblMap = tableMap
                     if (newValue != null && tblMap?.containsKey(newValue) == true) {
                         tableCommentTextField.text = tblMap[newValue]
+                        bizModuleTextField.text = bizModuleMap[newValue]
+                            ?: TemplateModelCreator.defaultBizModule(newValue, config.getModuleName())
                         CodeGeneratorContext.tableName = newValue
                         thread {
                             val columns = CodeGenColumnService.readColumns(CodeGeneratorContext.tableName)
@@ -110,6 +127,7 @@ class ColumnsController : Initializable {
         if (columnList.isNotEmpty()) {
             tableComboBox.selectionModel.select(table)
             tableCommentTextField.text = tableComment
+            bizModuleTextField.text = bizModule
             columnTable.items = FXCollections.observableArrayList(columnList)
         }
     }
@@ -156,6 +174,10 @@ class ColumnsController : Initializable {
     /** Comment of the currently selected table (trimmed) */
     val tableComment: String
         get() = tableCommentTextField.text?.trim() ?: ""
+
+    /** Business module of the currently selected table (trimmed); blank means "use the default" */
+    val bizModule: String
+        get() = bizModuleTextField.text?.trim() ?: ""
 
     /** Column-info list of the current table, including the user's UI selections */
     val columns: List<ColumnInfo>

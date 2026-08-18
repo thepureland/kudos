@@ -39,6 +39,8 @@ class DbTable(
     tableName: String,
 
     tableComment: String?,
+
+    bizModule: String = "",
 ): Comparable<DbTable> {
 
     /** Flag indicating whether to generate code; bound to the "generate" checkbox in the UI */
@@ -47,11 +49,14 @@ class DbTable(
     private val tableName = SimpleStringProperty()
     /** Database table comment; may be null (some databases do not require comments) */
     private val tableComment = SimpleStringProperty()
+    /** Business module: first-level package directory of the generated code; editable in the batch table */
+    private val bizModule = SimpleStringProperty()
 
     init {
         setGenerate(generate)
         setTableName(tableName)
         setTableComment(tableComment)
+        setBizModule(bizModule)
     }
 
     fun getGenerate(): Boolean = generate.get()
@@ -71,6 +76,12 @@ class DbTable(
     fun setTableComment(tableComment: String?) = this.tableComment.set(tableComment)
 
     fun tableCommentProperty(): StringProperty = tableComment
+
+    fun getBizModule(): String = bizModule.get() ?: ""
+
+    fun setBizModule(bizModule: String?) = this.bizModule.set(bizModule)
+
+    fun bizModuleProperty(): StringProperty = bizModule
 
     /** Sort lexicographically by table name to keep the UI list stable */
     override fun compareTo(other: DbTable): Int = getTableName().compareTo(other.getTableName())

@@ -2,6 +2,7 @@ package io.kudos.tools.codegen.fx.controller
 
 import io.kudos.tools.codegen.core.CodeGenerator
 import io.kudos.tools.codegen.core.CodeGeneratorContext
+import io.kudos.tools.codegen.core.TemplateModelCreator
 import io.kudos.tools.codegen.core.TemplatePathProcessor
 import io.kudos.tools.codegen.model.vo.Config
 import io.kudos.tools.codegen.model.vo.DbTable
@@ -68,7 +69,18 @@ class BatchGenerationController : Initializable {
      */
     fun initTable() {
         tableMap = CodeGenObjectService.readTables()
-        entityTable.items = FXCollections.observableArrayList(tableMap.map { DbTable(false, it.key, it.value) })
+        val bizModules = CodeGenObjectService.readBizModules()
+        // The wizard always calls setConfig first, but do not hard-fail without it: a blank business
+        // module is a valid value that TemplateModelCreator resolves to the default at render time.
+        val moduleName = if (this::config.isInitialized) config.getModuleName() else null
+        entityTable.items = FXCollections.observableArrayList(
+            tableMap.map { (name, comment) ->
+                val bizModule = bizModules[name]
+                    ?: moduleName?.let { TemplateModelCreator.defaultBizModule(name, it) }
+                    ?: ""
+                DbTable(false, name, comment, bizModule)
+            }
+        )
     }
 
     /**
@@ -123,6 +135,7 @@ class BatchGenerationController : Initializable {
             selectTables.forEach {
                 CodeGeneratorContext.tableName = it.getTableName()
                 CodeGeneratorContext.tableComment = it.getTableComment() ?: ""
+                CodeGeneratorContext.bizModule = it.getBizModule()
                 CodeGeneratorContext.columns = CodeGenColumnService.readColumns(it.getTableName())
                 val templateModel = CodeGeneratorContext.templateModelCreator.create()
                 val entityRelativeFilePaths = TemplatePathProcessor.readPaths(true)

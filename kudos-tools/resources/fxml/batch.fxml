@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import io.kudos.ability.ui.javafx.controls.table.cell.factory.CheckBoxTableCellFactory?>
+<?import io.kudos.ability.ui.javafx.controls.table.cell.factory.XTextFieldTableCellFactory?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.control.cell.PropertyValueFactory?>
 <?import javafx.scene.layout.*?>
@@ -27,10 +28,18 @@
                     <PropertyValueFactory property="tableName"/>
                 </cellValueFactory>
             </TableColumn>
-            <TableColumn prefWidth="744.0" text="表注释">
+            <TableColumn prefWidth="564.0" text="表注释">
                 <cellValueFactory>
                     <PropertyValueFactory property="tableComment"/>
                 </cellValueFactory>
+            </TableColumn>
+            <TableColumn prefWidth="180.0" text="业务模块">
+                <cellValueFactory>
+                    <PropertyValueFactory property="bizModule"/>
+                </cellValueFactory>
+                <cellFactory>
+                    <XTextFieldTableCellFactory/>
+                </cellFactory>
             </TableColumn>
         </columns>
     </TableView>

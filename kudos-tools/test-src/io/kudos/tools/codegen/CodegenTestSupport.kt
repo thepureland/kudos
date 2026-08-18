@@ -122,5 +122,6 @@ internal object CodegenTestSupport {
         "/sql/codegen/h2/V1.0.0.1__init_code_gen_file.sql",
         "/sql/codegen/h2/V1.0.0.2__init_code_gen_object.sql",
         "/sql/codegen/h2/V1.0.0.3__init_code_gen_column.sql",
+        "/sql/codegen/h2/V1.0.0.4__add_code_gen_object_biz_module.sql",
     )
 }

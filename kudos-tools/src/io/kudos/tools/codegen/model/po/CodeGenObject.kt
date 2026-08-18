@@ -23,6 +23,9 @@ interface CodeGenObject : IDbEntity<String, CodeGenObject> {
     /** Comment */
     var comment: String?
 
+    /** Business module (first-level package directory of the generated code); falls back to the lowercased short entity name when blank */
+    var bizModule: String?
+
     /** Create time */
     var createTime: LocalDateTime
 

@@ -85,4 +85,28 @@ internal class CodeGenObjectServiceTest {
         assertEquals(1, updated.size)
         assertEquals(Triple("newer comment", 2, "tester"), updated[0])
     }
+
+    @Test
+    fun bizModuleRoundTripsAndSurvivesARunThatLeavesItBlank() {
+        CodeGeneratorContext.bizModule = "dict"
+        assertTrue(CodeGenObjectService.saveOrUpdate())
+        assertEquals(mapOf("obj_demo" to "dict"), CodeGenObjectService.readBizModules())
+
+        // A later run that leaves the field empty must not wipe the recorded value.
+        CodeGeneratorContext.bizModule = ""
+        assertTrue(CodeGenObjectService.saveOrUpdate())
+        assertEquals(mapOf("obj_demo" to "dict"), CodeGenObjectService.readBizModules())
+
+        CodeGeneratorContext.bizModule = ""
+    }
+
+    @Test
+    fun readBizModulesOmitsTablesWithoutOne() {
+        CodeGeneratorContext.bizModule = ""
+        assertTrue(CodeGenObjectService.saveOrUpdate())
+        assertTrue(
+            CodeGenObjectService.readBizModules().isEmpty(),
+            "a blank business module must not be reported, so callers fall back to the default"
+        )
+    }
 }

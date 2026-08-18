@@ -75,6 +75,9 @@ open class TemplateModelCreator {
         val shortEntityName = entityName.replaceFirst(config.getModuleName(), "", true)
         templateModel["shortEntityName"] = shortEntityName
         templateModel["lowerShortEntityName"] = shortEntityName.lowercase()
+        // First-level package directory. Not derivable from the table name — see CodeGeneratorContext.bizModule.
+        templateModel["bizModule"] = CodeGeneratorContext.bizModule
+            .ifBlank { defaultBizModule(tableName, config.getModuleName()) }
         templateModel["table"] = RdbMetadataKit.getTableByName(tableName)
         val origColumns = RdbMetadataKit.getColumnsByTableName(tableName).values
         templateModel["columns"] = origColumns
@@ -163,20 +166,27 @@ open class TemplateModelCreator {
         lateinit var daoSuperClass: String
         when (pkKotlinType) {
             String::class -> {
+                // Every property ManagedTable already declares, mapped to its snake_case database column name.
+                // The conversion has to be applied uniformly: matching some of them by the camelCase property
+                // name (createUserId vs. create_user_id) would make `containsAll` fail on every real table, so
+                // ManagedTable/IManagedDbEntity would never be selected. The user-name columns belong here too,
+                // otherwise they are re-declared in the generated PO/table and shadow the parent's.
                 val maintainColumns = listOf(
-                    ManagedTable<*>::id.name,
-                    ManagedTable<*>::createTime.name.humpToUnderscore(false),
-                    ManagedTable<*>::createUserId.name,
-                    ManagedTable<*>::updateTime.name.humpToUnderscore(false),
-                    ManagedTable<*>::updateUserId.name,
-                    ManagedTable<*>::active.name,
-                    ManagedTable<*>::builtIn.name.humpToUnderscore(false),
-                    ManagedTable<*>::remark.name,
-                )
+                    ManagedTable<*>::id,
+                    ManagedTable<*>::createTime,
+                    ManagedTable<*>::createUserId,
+                    ManagedTable<*>::createUserName,
+                    ManagedTable<*>::updateTime,
+                    ManagedTable<*>::updateUserId,
+                    ManagedTable<*>::updateUserName,
+                    ManagedTable<*>::active,
+                    ManagedTable<*>::builtIn,
+                    ManagedTable<*>::remark,
+                ).map { it.name.humpToUnderscore(false) }
                 if (origColumns.map { it.name }.containsAll(maintainColumns)) {
-                    // All maintenance fields are present; the PO implements IMaintainableDbEntity and the DAO implements MaintainableTable.
+                    // All maintenance fields are present; the PO implements IManagedDbEntity and the DAO extends ManagedTable.
                     poSuperClass = IManagedDbEntity::class.simpleName
-                    daoSuperClass = requireNotNull(ManagedTable::class.simpleName) { "MaintainableTable simpleName is null" }
+                    daoSuperClass = requireNotNull(ManagedTable::class.simpleName) { "ManagedTable simpleName is null" }
                     // Filter out columns that the parent class already provides.
                     templateModel["columns"] = origColumns.filter { !maintainColumns.contains(it.name) }
                 } else {
@@ -264,6 +274,28 @@ open class TemplateModelCreator {
 
         // serialVersionUID
         templateModel["serialVersionUID"] = RandomStringKit.randomLong() + "L"
+    }
+
+    companion object {
+
+        /**
+         * Default business module for [tableName]: the lowercased short entity name
+         * (`sys_param` + module `sys` -> `param`).
+         *
+         * Correct only for the *primary* table of a business module. Secondary tables
+         * (`sys_dict_item` -> `dictitem`, `user_account_third` -> `accountthird`) must be
+         * corrected in the wizard, because the real grouping is a human decision — `user_org_user`
+         * lives under `account`, not `orguser` nor `org`.
+         *
+         * @param tableName database table name
+         * @param moduleName atomic service name, stripped from the front of the entity name
+         * @return the default first-level package directory
+         * @author K
+         * @since 1.0.0
+         */
+        fun defaultBizModule(tableName: String, moduleName: String): String =
+            tableName.underscoreToHump().capitalizeString().replaceFirst(moduleName, "", true).lowercase()
+
     }
 
 }

@@ -111,7 +111,7 @@ testImplementation(libs.spring.boot.starter.web)
 `spring-boot-starter-web` 是 `compileOnly`——provider 端必然是 Web 应用，业务侧已经
 直接依赖，本模块不重复传递。
 
-`kudos-tools` 的脚手架模板 `${project}-ams-${module}-api-provider/build.gradle.kts`
+`kudos-tools` 的脚手架模板 `${project}-ms-${module}-api-internal/build.gradle.kts`
 默认引用本模块——这是它出现在依赖图的现实理由。
 
 ## 已知限制 / 后续工作

@@ -22,6 +22,9 @@ object CodeGenObjects : StringIdTable<CodeGenObject>("code_gen_object") {
     /** Comment */
     var comment = varchar("comment").bindTo { it.comment }
 
+    /** Business module (first-level package directory of the generated code) */
+    var bizModule = varchar("biz_module").bindTo { it.bizModule }
+
     /** Create time */
     var createTime = datetime("create_time").bindTo { it.createTime }
 

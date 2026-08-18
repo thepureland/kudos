@@ -32,14 +32,29 @@ object CodeGenObjectService {
 
     private val EXCLUDED_TABLES = setOf("code_gen_file", "code_gen_object", "code_gen_column")
 
+    /**
+     * Previously entered business modules, keyed by table name. Blank entries are dropped so callers can
+     * simply fall back to [io.kudos.tools.codegen.core.TemplateModelCreator.defaultBizModule].
+     *
+     * @return table name -> business module, only for tables that have a non-blank one recorded
+     * @author K
+     * @since 1.0.0
+     */
+    fun readBizModules(): Map<String, String> =
+        CodeGenObjectDao.allSearch()
+            .mapNotNull { obj -> obj.bizModule?.takeIf { it.isNotBlank() }?.let { obj.name to it } }
+            .toMap()
+
     fun saveOrUpdate(): Boolean {
         val tableComment = CodeGeneratorContext.tableComment
+        val bizModuleValue = CodeGeneratorContext.bizModule.takeIf { it.isNotBlank() }
         val author = CodeGeneratorContext.config.getAuthor()
         val existing = CodeGenObjectDao.searchByName(CodeGeneratorContext.tableName)
         if (existing == null) {
             CodeGenObjectDao.insert(CodeGenObject {
                 name = CodeGeneratorContext.tableName
                 comment = tableComment
+                bizModule = bizModuleValue
                 createTime = LocalDateTime.now()
                 createUser = author
                 genCount = 1
@@ -48,6 +63,8 @@ object CodeGenObjectService {
         }
         return CodeGenObjectDao.update(existing.apply {
             comment = tableComment
+            // Keep the previously recorded value when the current run left the field empty.
+            bizModule = bizModuleValue ?: bizModule
             updateTime = LocalDateTime.now()
             updateUser = author
             genCount += 1

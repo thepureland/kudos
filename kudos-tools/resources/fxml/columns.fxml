@@ -78,4 +78,6 @@
               prefWidth="253.0"/>
     <Label layoutX="25.0" layoutY="20.0" text="对象："/>
     <TextField fx:id="tableCommentTextField" layoutX="336.0" layoutY="16.0" prefHeight="25.0" prefWidth="274.0"/>
+    <Label layoutX="622.0" layoutY="20.0" text="业务模块："/>
+    <TextField fx:id="bizModuleTextField" layoutX="690.0" layoutY="16.0" prefHeight="25.0" prefWidth="200.0"/>
 </AnchorPane>

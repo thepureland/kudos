@@ -14,7 +14,97 @@
 | `codegen.core` | Freemarker 模板加载 + 模型构建 + 输出 |
 | `codegen.core.merge` | 增量合并：保留用户改过的代码段 + 替换框架生成段 |
 
-模板目录：`resources/templates/kudos/${project}-ams-${module}-...`
+模板目录：`resources/templates/kudos/${project}-ms-${module}/${project}-ms-${module}-<子模块>/...`，
+与 `kudos-ms/kudos-ms-sys` 的 7 子模块布局一一对应（见 [kudos-ms/README.md](../kudos-ms/README.md)）。
+
+#### 生成的文件清单
+
+| 子模块 | 与实体无关（每模块一份） | 与实体相关（每张表一份） |
+|---|---|---|
+| `*-common` | `build.gradle.kts` | `<e>/api/I<E>Api.kt`、`<e>/enums/<E>ErrorCodeEnum.kt`、`<e>/vo/<E>CacheEntry.kt`、`<e>/vo/request/{I<E>FormBase,<E>FormCreate,<E>FormUpdate,<E>Query}.kt`、`<e>/vo/response/{<E>Detail,<E>Edit,<E>Row}.kt` |
+| `*-sql` | `build.gradle.kts` | —（Flyway 脚本仍需手写） |
+| `*-core` | `build.gradle.kts`、`core/platform/init/<Module>AutoConfiguration.kt`、`test-resources/application.yml` | `<e>/api/<E>Api.kt`、`<e>/dao/<E>Dao.kt`、`<e>/event/<E>Events.kt`、`<e>/model/po/<E>.kt`、`<e>/model/table/<E>s.kt`、`<e>/service/impl/<E>Service.kt`、`<e>/service/iservice/I<E>Service.kt` |
+| `*-client` | `build.gradle.kts` | `<e>/proxy/I<E>Proxy.kt`、`<e>/fallback/<E>Fallback.kt` |
+| `*-api-admin` | `build.gradle.kts`、`init/` 两个类、`resources/` 与 `test-resources/` 的 `application.yml` | `controller/<e>/<E>AdminController.kt` |
+| `*-api-internal` | `build.gradle.kts`、`init/` 两个类 | `controller/<e>/<E>InternalController.kt` |
+| `*-api-public` | `build.gradle.kts`、`init/` 两个类 | —（按约定不挂业务控制器） |
+
+`<E>` = `entityName`（如 `SysParam`），`<e>` = `bizModule`（**业务模块**，如 `param`）。
+含 `${entityName}` 的模板会被 `TemplatePathProcessor` 判定为"与实体相关"，只在单表生成时产出；
+其余模板只能引用**基础模型**里的占位符。
+
+#### 模板可用占位符
+
+由 `TemplateModelCreator` 注入，分两批：
+
+| 占位符 | 批次 | 含义 |
+|---|---|---|
+| `project` / `packagePrefix` / `module` / `moduleCapitalize` / `author` / `version` | 基础 | 模板名、包前缀、原子服务名、其首字母大写形式、`@author` / `@since` |
+| `entityName` / `shortEntityName` / `lowerShortEntityName` | 实体 | `SysParam` / `Param` / `param` |
+| `bizModule` | 实体 | **业务模块**，即 `common/` `core/` `client/` `api-*/controller/` 下的一级目录。见下方「业务模块」小节 |
+| `table` / `columns` / `pkColumn` / `ktormFunNameMap` | 实体 | 表元数据；`columns` 已剔除父类（`ManagedTable` / `*IdTable`）自带的列 |
+| `searchItemColumns` / `listItemColumns` / `editItemColumns` / `detailItemColumns` / `cacheItemColumns` | 实体 | 向导里勾选的五组列 |
+| `poSuperClass` / `daoSuperClass` | 实体 | `IManagedDbEntity`\|`IDbEntity` / `ManagedTable`\|`StringIdTable`\|`IntIdTable`\|`LongIdTable`\|`Table` |
+| `contains<Type>Column` 及其 `In{Search,List,Edit,Detail,Cache}Items` 变体 | 实体 | 驱动条件 import |
+| `serialVersionUID` | 实体 | 随机值。**当前模板不用它**——`<E>CacheEntry` 固定写 `1L`，理由见模板内注释（该行在 region 外，随机值会导致每次重新生成都变、击穿 Redis 里已有的缓存条目）。保留此键是为了不破坏自定义模板 |
+
+`macro.include` 会被自动 include，提供 `generateClassComment`、`responseVoProperty`、
+`formVoProperty`、`formVoOverrideProperty` 四个宏与 `DEFAULT_LITERALS` 变量。
+
+#### 业务模块（`bizModule`）
+
+`common` / `core` / `client` / `api-admin,api-internal 的 controller` 四处的**一级目录**，
+按业务模块分组而不是一表一目录 —— 一个业务模块通常聚合多张表：
+
+| 业务模块 | 包含的表 |
+|---|---|
+| `dict` | `sys_dict`、`sys_dict_item` |
+| `accessrule` | `sys_access_rule`、`sys_access_rule_ip` |
+| `account` | `user_account`、`user_account_third`、`user_account_protection`、`user_org_user` |
+| `login` | `user_login_remember_me`、`user_log_login` |
+
+这个分组**无法从表名推导**（`user_org_user` 归在 `account` 而不是 `org`），所以由向导输入：
+
+- 单表向导：第 2 页「业务模块」输入框
+- 批量向导：表格里可编辑的「业务模块」列
+
+默认值取 `TemplateModelCreator.defaultBizModule()`（＝实体短名小写），对每个业务模块的**主表**是对的
+（`sys_param` → `param`），**从表必须手工改**（`sys_dict_item` 默认给出 `dictitem`，应改成 `dict`）。
+填过的值持久化在 `code_gen_object.biz_module`，下次自动回填；留空则回退到默认值。
+
+> URL 段用的是 `${shortEntityName?uncap_first}`（驼峰，如 `/api/admin/sys/dictItem`），
+> 与 `bizModule` 是两个概念，不要混用。
+
+#### 跨模块约定取舍（2026-08-18 定）
+
+`kudos-ms` 四个原子服务在若干写法上不一致，模板必须选一边。已定的部分：
+
+| 约定 | 模板取值 | 理由 |
+|---|---|---|
+| Events 文件名 | `<E>Events.kt`（全实体名） | user / auth 用全名，只有 sys 用短名且自身已破例（`SysCacheEvents` vs `SystemEvents`）；里面的 `sealed interface` 本来就是全名 |
+| `<E>Row` | 实现 `IIdEntity<PK>` | user / auth / msg 都实现；sys 的 `Detail`/`Edit` 也都实现，只有 `Row` 不实现，属 sys 内部不一致 |
+| `serialVersionUID` | 固定 `1L` | 该行在 region 外，随机值会让每次重新生成都变，击穿 Redis 里已有的缓存条目 |
+| `i18nKeyPrefix` | `<module>.error-msg.<bizModule>` | sys 是四家里唯一自洽的（前缀 ↔ 业务模块一一对应） |
+| Fallback 基类 | `AbstractFeignFallbackSupport` | user / auth / msg 都直接继承；sys 的 `SysClientFallbackSupport` 只是历史包袱，其自身注释也建议新模块直接继承 |
+| `*-common` 的 `KotlinCompile` 块 | 不生成 | 全仓库只有 sys-common 有；`javaParameters` 对 `jackson-module-kotlin` 无必要，`-Xjvm-default=all` 在 Kotlin 2.2+ 已是默认且该 flag 已废弃 |
+
+未定（模板暂时保持现状）：
+
+- **Feign 服务名**：sys 全小写拼接 vs 其余三家 kebab。但 `kudos-ms` 下**没有任何 `spring.application.name`**，
+  而部署单元是 `<module>-api-internal`——这批"每实体一个服务名"很可能压根注册不上，属设计问题而非风格问题，
+  需先确认线上注册名再决定
+- **init 类名**：四个模块都是 `*ApiProviderApplication` / `*ApiWebApplication`，模板生成的是
+  `*ApiInternalApplication` / `*ApiPublicApplication`（与 gradle 模块名和 `getComponentName()` 一致）。
+  ⚠ 在统一之前对现存模块生成会**新增**一套类，导致两套 `IComponentInitializer` 同时被扫到
+
+#### 合并标记约定
+
+- `//region your codes N` … `//endregion your codes N`：用户代码区，重新生成时**保留旧文件内容**。
+- `//region append <PARTIBLE|IMPARTIBLE> codes N` … `//endregion ...`：模板追加区，首次生成时被
+  `PrivateContentEraser` 抹掉，重新生成时追加进对应编号的用户代码区。
+- ⚠ 编号正则是单个 `\d`，**只能用 0–9**；yml 等 `#` 注释语言写成 `#//region your codes N`。
+- 同一个文件的不同分支（如"零查询列 / 有查询列"）必须保持**相同的 region 编号与结构**，
+  否则改动列选择后重新生成会把旧区块拼进新骨架里。
 
 ### SQL 工具
 
@@ -35,10 +125,18 @@
 ## 已知限制
 
 - ❗ 代码生成器和 JavaFX UI 强绑定——纯命令行 / CI 化使用需要重新封装
-- ❗ 模板里的路径占位符（`${project}-ams-${module}-*`）反映了**早期**项目结构；如果未来
-  调整 ms 子模块约定，模板需要同步更新
+- ❗ 模板以 `kudos-ms-sys` 为基准（2026-08-18 对齐）；如果未来调整 ms 子模块约定，模板需要同步更新
+- ❗ 生成的是**骨架**：`*-core` 的多级缓存（`<e>/cache/`）、`*-sql` 的 Flyway 脚本、
+  以及 `I<E>Api` 上除 `get(id)` 之外的领域方法都需要手写；`I<E>Api` 新增方法后，
+  `core` 的 `<E>Api`、`api-internal` 的 `<E>InternalController`、`client` 的 `<E>Fallback` 三处要同步补齐
+  （前两者编译期有约束，fallback 没有）
+- ❗ 视图（`VIEW`）走只读链路：`BaseReadOnlyDao` / `BaseReadOnlyService` / `BaseReadOnlyController`，
+  此时生成的 `<E>FormCreate` / `<E>FormUpdate` / `<E>Edit` 用不上，可在向导的文件列表里取消勾选
 - ❗ 合并器（`PrivateContentEraser` / `UserCodesRetriever`）依赖代码里的特定标记注释；
   违反约定的代码可能在重新生成时丢失
+- ❗❗ **不要用生成器覆盖现存的 `kudos-ms/`**：`CodeMerger` 只保留 `//region your codes N` 区块内的内容，
+  而 `kudos-ms` 下 1600+ 个源文件**一个标记都没有**，重新生成等于整文件替换、手写逻辑全丢。
+  对已有模块只能人工比对后定点改
 
 ## 改进建议（自动分析 2026-06-11）
 

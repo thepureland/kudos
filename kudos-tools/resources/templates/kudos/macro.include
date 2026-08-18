@@ -1,4 +1,4 @@
-<#-- 本文件包含一些公共的函数,本文件会被其它模板自动include -->
+<#-- 本文件包含一些公共的宏/变量，本文件会被其它模板自动include -->
 
 
 <#-- 类说明 -->
@@ -12,5 +12,55 @@
 </#macro>
 
 
+<#--
+    非空 Kotlin 类型对应的默认字面量。
+    查不到的类型说明没有合适的字面量(如 LocalDateTime)，调用方应退化为"可空 + null"。
+-->
+<#assign DEFAULT_LITERALS = {
+    "String": "\"\"",
+    "Boolean": "false",
+    "Int": "0",
+    "Long": "0L",
+    "Short": "0",
+    "Byte": "0",
+    "Double": "0.0",
+    "Float": "0.0F",
+    "BigDecimal": "BigDecimal.ZERO"
+}>
 
 
+<#--
+    响应 VO(Row/Detail/Edit)的属性声明。
+    响应 VO 全部带默认值，反序列化端(控制台/其它微服务)可以只传部分字段。
+-->
+<#macro responseVoProperty column>
+    <#local literal = DEFAULT_LITERALS[column.kotlinTypeName]!"">
+    /** ${column.comment!""} */
+    <#if column.nullable || literal == "">
+    val ${column.columnHumpName}: ${column.kotlinTypeName}? = null,
+    <#else>
+    val ${column.columnHumpName}: ${column.kotlinTypeName} = ${literal},
+    </#if>
+</#macro>
+
+
+<#--
+    表单(请求 VO)基础接口的属性声明，校验注解由列元数据推导：
+    非空字符串列 -> @get:NotBlank，定长字符串列 -> @get:MaxLength(长度)。
+-->
+<#macro formVoProperty column>
+    /** ${column.comment!""} */
+    <#if column.kotlinTypeName == "String" && !column.nullable>
+    @get:NotBlank
+    </#if>
+    <#if column.kotlinTypeName == "String" && (column.length!0) gt 0>
+    @get:MaxLength(${column.length})
+    </#if>
+    val ${column.columnHumpName}: ${column.kotlinTypeName}<#if column.nullable>?</#if>
+</#macro>
+
+
+<#-- 表单实现类(FormCreate/FormUpdate)的属性声明，校验注解统一写在基础接口上 -->
+<#macro formVoOverrideProperty column>
+    override val ${column.columnHumpName}: ${column.kotlinTypeName}<#if column.nullable>?</#if>,
+</#macro>

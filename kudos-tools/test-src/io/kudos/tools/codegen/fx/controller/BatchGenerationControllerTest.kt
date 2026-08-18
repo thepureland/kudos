@@ -101,6 +101,27 @@ internal class BatchGenerationControllerTest {
             assertTrue(names.none { it.startsWith("code_gen_") }, "code_gen_* tables must be excluded")
             assertTrue(names.none { it.startsWith("flyway_") }, "flyway_* tables must be excluded")
             assertTrue(controller.entityTable.items.none { it.getGenerate() }, "nothing pre-checked")
+            assertTrue(
+                controller.entityTable.items.all { it.getBizModule().isEmpty() },
+                "without a config there is no module name to strip, so the business module is left blank " +
+                    "and TemplateModelCreator resolves the default at render time"
+            )
+        }
+    }
+
+    @Test
+    fun initTablePrefillsBusinessModuleFromTheModuleName() {
+        val config = bindContext()
+        FxTestSupport.runFx {
+            CodegenTestSupport.bindDataSourceToCurrentThread(ds)
+            val (_, controller) = load()
+            controller.setConfig(config)
+            controller.initTable()
+            val demo = controller.entityTable.items.first { it.getTableName() == "batch_demo" }
+            assertEquals(
+                TemplateModelCreator.defaultBizModule("batch_demo", config.getModuleName()),
+                demo.getBizModule()
+            )
         }
     }
 
