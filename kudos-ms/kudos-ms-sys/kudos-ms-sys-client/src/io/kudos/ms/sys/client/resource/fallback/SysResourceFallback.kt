@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.resource.fallback
 
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.resource.proxy.ISysResourceProxy
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
 import io.kudos.ms.sys.common.resource.enums.ResourceTypeEnum
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.sys.common.resource.vo.response.BaseMenuTreeNode
@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysResourceFallback : SysClientFallbackSupport("SysResourceFallback"), ISysResourceProxy {
+open class SysResourceFallback : AbstractFeignFallbackSupport("SysResourceFallback"), ISysResourceProxy {
 
     override fun getResource(resourceId: String): SysResourceCacheEntry? {
         warnRead("getResource", resourceId)

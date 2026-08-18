@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.client.tenant.fallback
 
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.tenant.proxy.ISysTenantSystemProxy
 import org.springframework.stereotype.Component
 
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysTenantSystemFallback : SysClientFallbackSupport("SysTenantSystemFallback"), ISysTenantSystemProxy {
+open class SysTenantSystemFallback : AbstractFeignFallbackSupport("SysTenantSystemFallback"), ISysTenantSystemProxy {
 
     override fun searchSystemCodesByTenantId(tenantId: String): Set<String> {
         warnRead("searchSystemCodesByTenantId", tenantId)

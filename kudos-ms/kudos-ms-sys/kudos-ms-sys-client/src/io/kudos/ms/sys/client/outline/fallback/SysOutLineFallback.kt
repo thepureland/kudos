@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.outline.fallback
 
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.outline.proxy.ISysOutLineProxy
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
 import io.kudos.ms.sys.common.outline.vo.SysOutLineCacheEntry
 import org.springframework.stereotype.Component
 
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysOutLineFallback : SysClientFallbackSupport("SysOutLineFallback"), ISysOutLineProxy {
+open class SysOutLineFallback : AbstractFeignFallbackSupport("SysOutLineFallback"), ISysOutLineProxy {
 
     override fun listOutLines(systemCode: String, tenantId: String?): List<SysOutLineCacheEntry> {
         warnRead("listOutLines", systemCode, tenantId)

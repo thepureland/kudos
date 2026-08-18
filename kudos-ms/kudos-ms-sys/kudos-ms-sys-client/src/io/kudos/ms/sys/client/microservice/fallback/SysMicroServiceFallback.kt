@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.microservice.fallback
 
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.microservice.proxy.ISysMicroServiceProxy
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
 import io.kudos.ms.sys.common.microservice.vo.SysMicroServiceCacheEntry
 import org.springframework.stereotype.Component
 
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysMicroServiceFallback : SysClientFallbackSupport("SysMicroServiceFallback"), ISysMicroServiceProxy {
+open class SysMicroServiceFallback : AbstractFeignFallbackSupport("SysMicroServiceFallback"), ISysMicroServiceProxy {
 
     override fun getMicroServiceFromCache(code: String): SysMicroServiceCacheEntry? {
         warnRead("getMicroServiceFromCache", code)

@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.client.system.fallback
 
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.system.proxy.ISysSystemProxy
 import io.kudos.ms.sys.common.system.vo.SysSystemCacheEntry
 import org.springframework.stereotype.Component
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysSystemFallback : SysClientFallbackSupport("SysSystemFallback"), ISysSystemProxy {
+open class SysSystemFallback : AbstractFeignFallbackSupport("SysSystemFallback"), ISysSystemProxy {
 
     override fun getSystemFromCache(code: String): SysSystemCacheEntry? {
         warnRead("getSystemFromCache", code)

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.accessrule.fallback
 
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.accessrule.proxy.ISysAccessRuleIpProxy
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleIpRow
 import org.springframework.stereotype.Component
@@ -17,7 +17,7 @@ import java.math.BigDecimal
  * @since 1.0.0
  */
 @Component
-open class SysAccessRuleIpFallback : SysClientFallbackSupport("SysAccessRuleIpFallback"), ISysAccessRuleIpProxy {
+open class SysAccessRuleIpFallback : AbstractFeignFallbackSupport("SysAccessRuleIpFallback"), ISysAccessRuleIpProxy {
 
     override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow> {
         warnRead("getIpsByRuleId", ruleId)

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.datasource.fallback
 
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.datasource.proxy.ISysDataSourceProxy
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
 import io.kudos.ms.sys.common.datasource.vo.SysDataSourceCacheEntry
 import org.springframework.stereotype.Component
 
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysDataSourceFallback : SysClientFallbackSupport("SysDataSourceFallback"), ISysDataSourceProxy {
+open class SysDataSourceFallback : AbstractFeignFallbackSupport("SysDataSourceFallback"), ISysDataSourceProxy {
 
     override fun getDataSourceFromCache(
         tenantId: String,

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.dict.fallback
 
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.dict.proxy.ISysDictItemProxy
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
 import org.springframework.stereotype.Component
 
 
@@ -12,4 +12,4 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysDictItemFallback : SysClientFallbackSupport("SysDictItemFallback"), ISysDictItemProxy
+open class SysDictItemFallback : AbstractFeignFallbackSupport("SysDictItemFallback"), ISysDictItemProxy

@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.locale.fallback
 
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.locale.proxy.ISysLocaleProxy
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
 import io.kudos.ms.sys.common.locale.vo.SysLocaleCacheEntry
 import org.springframework.stereotype.Component
 
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysLocaleFallback : SysClientFallbackSupport("SysLocaleFallback"), ISysLocaleProxy {
+open class SysLocaleFallback : AbstractFeignFallbackSupport("SysLocaleFallback"), ISysLocaleProxy {
 
     override fun getLocaleByCode(code: String): SysLocaleCacheEntry? {
         warnRead("getLocaleByCode", code)

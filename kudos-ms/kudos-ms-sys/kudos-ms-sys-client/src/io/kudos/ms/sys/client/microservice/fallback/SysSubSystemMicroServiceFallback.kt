@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.microservice.fallback
 
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.microservice.proxy.ISysSubSystemMicroServiceProxy
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
 import org.springframework.stereotype.Component
 
 
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
  */
 @Component
 open class SysSubSystemMicroServiceFallback :
-    SysClientFallbackSupport("SysSubSystemMicroServiceFallback"), ISysSubSystemMicroServiceProxy {
+    AbstractFeignFallbackSupport("SysSubSystemMicroServiceFallback"), ISysSubSystemMicroServiceProxy {
 
     override fun getMicroServiceCodesBySubSystemCode(subSystemCode: String): Set<String> {
         warnRead("getMicroServiceCodesBySubSystemCode", subSystemCode)

@@ -85,7 +85,7 @@
 | `<E>Row` | 实现 `IIdEntity<PK>` | user / auth / msg 都实现；sys 的 `Detail`/`Edit` 也都实现，只有 `Row` 不实现，属 sys 内部不一致 |
 | `serialVersionUID` | 固定 `1L` | 该行在 region 外，随机值会让每次重新生成都变，击穿 Redis 里已有的缓存条目 |
 | `i18nKeyPrefix` | `<module>.error-msg.<bizModule>` | sys 是四家里唯一自洽的（前缀 ↔ 业务模块一一对应） |
-| Fallback 基类 | `AbstractFeignFallbackSupport` | user / auth / msg 都直接继承；sys 的 `SysClientFallbackSupport` 只是历史包袱，其自身注释也建议新模块直接继承 |
+| Fallback 基类 | `AbstractFeignFallbackSupport` | 四个 ms 模块现已全部直接继承；sys 原有的 `SysClientFallbackSupport` 别名已删除 |
 | `*-common` 的 `KotlinCompile` 块 | 不生成 | 全仓库只有 sys-common 有；`javaParameters` 对 `jackson-module-kotlin` 无必要，`-Xjvm-default=all` 在 Kotlin 2.2+ 已是默认且该 flag 已废弃 |
 | init 类名 | `<Module>ApiInternalApplication` / `<Module>ApiPublicApplication` | gradle 模块名（`-api-internal` / `-api-public`）和 `getComponentName()` 早已是 internal/public，只有类名停在 `Provider` / `Web`；四个 ms 模块已同步改名 |
 

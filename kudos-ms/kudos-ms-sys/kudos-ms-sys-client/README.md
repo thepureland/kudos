@@ -45,7 +45,7 @@ interface ISysTenantProxy : ISysTenantApi
 
 > **服务名命名风格不统一**：多数模块以小写无连字符（`sys-tenantsystem`、`sys-accessruleip`），但 `outline` 用了 `sys-out-line`（含连字符）。这是历史遗留；若调整需同时改 Nacos / 网关路由映射。
 
-**Fallback** 与对应 Proxy 分属同模块下的 **`fallback`** / **`proxy`** 包，所有 Fallback 继承自 **`io.kudos.ms.sys.client.support.SysClientFallbackSupport`**——本质是上游 `AbstractFeignFallbackSupport` 的本模块别名，保留它只是为了避免一次性修改 17+ 个已落地 Fallback 的父类；**新模块的 Fallback 可直接继承 `AbstractFeignFallbackSupport`**。
+**Fallback** 与对应 Proxy 分属同模块下的 **`fallback`** / **`proxy`** 包，所有 Fallback 直接继承上游的 **`io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport`**，与 user / auth / msg 三个模块一致。
 
 降级语义随业务而定（多为返回空集合 / null / 业务异常），目的是在 sys 不可用时避免级联故障，而不是静默吞错。
 
@@ -108,8 +108,9 @@ interface ISysTenantProxy : ISysTenantApi
   有；调整需同步 Nacos / 网关路由映射，目前没有静态检查防止漂移
 - ❗ **fallback 缺新方法时编译不报错** — 新增 `ISys*Api` 方法时 fallback 不会被强制 override，
   漏写会让降级路径走默认抛错而非业务安全返回
-- ❗ **`SysClientFallbackSupport` 是历史别名** — 保留它只是为了不动 17 个已落地 Fallback；
-  新代码应直接继承 `AbstractFeignFallbackSupport`，但缺少 lint 提示
+- ✅ 已修复（2026-08-18）**`SysClientFallbackSupport` 历史别名已删除** — 19 个 Fallback 全部改为直接
+  继承 `AbstractFeignFallbackSupport`，与 user / auth / msg 对齐；别名类及其（与上游完全重复的）
+  单测一并移除，`client/support/` 包随之消失
 - ❗ **`Pair` 入参的批量端点 client 侧无代理** — `batchGetActiveDictItemsHttp` 仅在 server 侧暴露，
   调用方需自行调用 `HTTP /api/internal/sys/dict/batchGetActiveDictItems`
 - ❗ **`FeignDictItemCodeFinder` 通过 `SpringKit.getBean` 拿 Proxy** — 启动期校验场景下 Spring

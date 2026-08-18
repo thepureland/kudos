@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.accessrule.fallback
 
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.accessrule.proxy.ISysAccessRuleProxy
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleRow
 import org.springframework.stereotype.Component
 
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component
  * @since 1.0.0
  */
 @Component
-open class SysAccessRuleFallback : SysClientFallbackSupport("SysAccessRuleFallback"), ISysAccessRuleProxy {
+open class SysAccessRuleFallback : AbstractFeignFallbackSupport("SysAccessRuleFallback"), ISysAccessRuleProxy {
 
     override fun getAccessRuleByTenantAndSystem(
         systemCode: String,

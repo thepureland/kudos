@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.client.accessrule.fallback
 
+import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
 import io.kudos.ms.sys.client.accessrule.proxy.ISysAccessRuleIpProxy
-import io.kudos.ms.sys.client.support.SysClientFallbackSupport
 import java.math.BigDecimal
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,7 +13,7 @@ import kotlin.test.assertTrue
  * Unit tests for [SysAccessRuleIpFallback].
  *
  * Coverage:
- *  - The fallback is a valid [ISysAccessRuleIpProxy] / [SysClientFallbackSupport]
+ *  - The fallback is a valid [ISysAccessRuleIpProxy] / [AbstractFeignFallbackSupport]
  *    implementation, keeping it usable as a `@FeignClient(fallback=...)` target.
  *  - Read methods (getIpsByRuleId / getIpsBySystemAndTenant) return empty list safe defaults,
  *    including the nullable tenantId parameter (null and non-null).
@@ -31,7 +31,7 @@ internal class SysAccessRuleIpFallbackTest {
     @Test
     fun instantiation_yieldsValidProxyFallback() {
         assertIs<ISysAccessRuleIpProxy>(fallback)
-        assertIs<SysClientFallbackSupport>(fallback)
+        assertIs<AbstractFeignFallbackSupport>(fallback)
     }
 
     @Test
