@@ -42,11 +42,10 @@ kudos:
       # datasource-config format: {datasource-key: [module-names]}
       # All modules target the same h2 datasource.
       # Execution order: sys first (creates sys_cache / sys_dict and other sys tables that the
-      # msg module`s `merge into "sys_*"` seed scripts depend on), then msg (msg tables + seeds).
-      # `user` was dropped when msg-core switched from user-core to user-client: msg no longer
-      # touches the user schema, it resolves contacts over Feign.
+      # msg module's `merge into "sys_*"` seed scripts depend on), then user (user tables that
+      # msg-core's dependency on user-core may touch), then msg (creates msg tables + seeds).
       datasource-config:
-        h2: sys,msg
+        h2: sys,user,msg
       execution-order:
         - h2
 

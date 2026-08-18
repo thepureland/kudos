@@ -92,9 +92,15 @@ status=CONSUMED_FROM_MQ
 
 ## 与其他服务的依赖
 
-- **`kudos-ms-user-client`**：`msg-core` 通过 Feign 代理 `IUserContactWayProxy` 把 receiverId 换成
-  具体联系方式（邮箱 / 手机号 / 推送 token）。降级时返回空 map，收件人被登记为未送达而不是静默丢弃
-  （2026-08-18 由直接依赖 `kudos-ms-user-core` 改为 client）
+- **`kudos-ms-user-core`**：`msg-core` 直接依赖（不是通过 Feign）——把 receiverId 换成
+  具体联系方式（邮箱 / 手机号 / 推送 token）
+
+  > 改走 Feign 的契约已就绪：`IUserContactWayApi.getActiveContactValuesByUserIds` +
+  > `UserContactWayInternalController` + `UserContactWayFallback`（降级返回空 map，收件人进未送达台账）。
+  > 但**暂不能切**——`sys-client` / `user-client` / `auth-client` 三个模块都没有 `@EnableFeignClients`
+  > （全 kudos-ms 只有 `MsgClientAutoConfiguration` 一处），它们的 `@FeignClient` 接口不会被扫描成 bean，
+  > 注入 `IUserContactWayProxy` 会在启动时 `NoSuchBeanDefinitionException`。
+  > 待 client 层接通（补各自的 `*ClientAutoConfiguration`）并确定 Feign 服务名后再切。
 - **`kudos-ability-comm-email`**：SMTP 投递通道（`MsgEmailDispatchListener`）
 - **`kudos-ability-comm-sms-aws`**：AWS SNS SMS 投递通道（msg-core README 提及）
 - **`kudos-ability-distributed-notify-common`**：channel listener 的事件分发抽象
