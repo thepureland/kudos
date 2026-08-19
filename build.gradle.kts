@@ -45,6 +45,21 @@ subprojects {
             getByName("main").kotlin.srcDirs("src")
             getByName("test").kotlin.srcDirs("test-src")
         }
+        compilerOptions {
+            // Emit the Java `MethodParameters` attribute (the javac `-parameters` equivalent).
+            // Required by Spring interface clients: AbstractNamedValueArgumentResolver resolves a
+            // bare `@RequestParam name: String` through `MethodParameter.getParameterName()`, which
+            // reads reflection metadata only — HttpServiceProxyFactory installs no
+            // ParameterNameDiscoverer, so Kotlin metadata is not consulted. Without this, every
+            // unnamed @RequestParam fails at call time with "Name for argument of type [...] not
+            // specified, and parameter name information not available via reflection."
+            //
+            // It is set here rather than per module because the flag has to be on whichever module
+            // *compiles the interface* — for sys that is kudos-ms-sys-common, which already set it
+            // locally (for Jackson), which is why the sys migration passed before this line existed.
+            // kudos-ms-user / -auth / -msg commons do not, so they would have failed at runtime.
+            javaParameters = true
+        }
     }
 
     // Resource directories

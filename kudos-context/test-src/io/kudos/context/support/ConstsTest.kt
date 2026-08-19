@@ -33,7 +33,7 @@ internal class ConstsTest {
     @Test
     fun requestHeaderKeys() {
         assertNotNull(Consts.RequestHeader)
-        assertEquals("_feign_request", Consts.RequestHeader.FEIGN_REQUEST)
+        assertEquals("_rpc_request", Consts.RequestHeader.RPC_REQUEST)
         assertEquals("_notify_request", Consts.RequestHeader.NOTIFY_REQUEST)
         assertEquals("_sub_sys_code", Consts.RequestHeader.SUB_SYS_CODE)
         assertEquals("_tenant_id", Consts.RequestHeader.TENANT_ID)
@@ -42,7 +42,7 @@ internal class ConstsTest {
         assertEquals("_DATA_SOURCE_ID", Consts.RequestHeader.DATASOURCE_ID)
         // The cross-process header keys all share the "_" prefix convention
         listOf(
-            Consts.RequestHeader.FEIGN_REQUEST, Consts.RequestHeader.NOTIFY_REQUEST,
+            Consts.RequestHeader.RPC_REQUEST, Consts.RequestHeader.NOTIFY_REQUEST,
             Consts.RequestHeader.SUB_SYS_CODE, Consts.RequestHeader.TENANT_ID,
             Consts.RequestHeader.TRACE_KEY, Consts.RequestHeader.LOCAL,
             Consts.RequestHeader.DATASOURCE_ID

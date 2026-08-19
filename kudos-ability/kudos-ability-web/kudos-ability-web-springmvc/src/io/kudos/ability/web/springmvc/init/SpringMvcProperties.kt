@@ -124,7 +124,7 @@ open class SpringMvcProperties {
          *
          * Defaults to `_UUID` ([io.kudos.context.support.Consts.RequestHeader.TRACE_KEY]), the internal
          * cross-process header that `GlobalHeaderRequestInterceptor` puts on outgoing Feign calls and that
-         * `FeignContextSignatureVerifier` folds into its request signature. Every internal service-to-service
+         * `InternalRpcContextSignatureVerifier` folds into its request signature. Every internal service-to-service
          * call therefore keeps resolving exactly as before; the public header simply extends the same
          * capability to external callers, who cannot be expected to speak an underscore-prefixed internal name.
          *

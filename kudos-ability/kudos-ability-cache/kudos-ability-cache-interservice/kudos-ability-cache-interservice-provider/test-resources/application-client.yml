@@ -1,6 +1,11 @@
 spring:
   application:
     name: inter-service-test
+  http:
+    serviceclient:
+      # 直连 mock 微服务，不走注册中心——等价于原来的 @FeignClient(url = "localhost:13578")
+      interservicetest:
+        base-url: http://localhost:13578
   cloud:
     # The Spring Cloud release train does not yet declare compatibility with Spring Boot 4.1.x;
     # the verifier would otherwise abort context startup in tests.

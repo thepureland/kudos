@@ -1,20 +1,18 @@
 package io.kudos.ms.sys.client.tenant.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.tenant.proxy.ISysTenantProxy
 import io.kudos.ms.sys.common.tenant.vo.SysTenantCacheEntry
-import org.springframework.stereotype.Component
 
 
 /**
- * Tenant Feign fallback implementation.
+ * Tenant fallback implementation.
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
-@Component
-open class SysTenantFallback : AbstractFeignFallbackSupport("SysTenantFallback"), ISysTenantProxy {
+open class SysTenantFallback : AbstractHttpFallbackSupport("SysTenantFallback"), ISysTenantProxy {
 
     override fun getTenantFromCache(id: String): SysTenantCacheEntry? {
         warnRead("getTenantFromCache", id)

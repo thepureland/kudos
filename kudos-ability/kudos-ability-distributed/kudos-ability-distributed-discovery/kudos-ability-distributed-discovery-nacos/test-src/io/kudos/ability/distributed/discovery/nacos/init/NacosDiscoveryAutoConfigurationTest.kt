@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.discovery.nacos.init
 
-import io.kudos.ability.distributed.discovery.nacos.filter.FeignContextWebFilter
+import io.kudos.ability.distributed.discovery.nacos.filter.InternalRpcContextWebFilter
 import io.kudos.ability.distributed.discovery.nacos.init.properties.NacosDiscoveryProperties
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
@@ -32,11 +32,11 @@ import kotlin.test.assertNull
 internal class NacosDiscoveryAutoConfigurationTest {
 
     @Test
-    fun feignContextWebFilterRegistration_registersFilterForAllPathsWithHighPrecedence() {
-        val registration = NacosDiscoveryAutoConfiguration().feignContextWebFilterRegistration()
+    fun internalRpcContextWebFilterRegistration_registersFilterForAllPathsWithHighPrecedence() {
+        val registration = NacosDiscoveryAutoConfiguration().internalRpcContextWebFilterRegistration()
 
-        assertIs<FeignContextWebFilter>(registration.filter)
-        assertEquals("feignContextWebFilter", registration.filterName)
+        assertIs<InternalRpcContextWebFilter>(registration.filter)
+        assertEquals("internalRpcContextWebFilter", registration.filterName)
         assertEquals(NacosDiscoveryProperties.FILTER_ORDER, registration.order)
         assertEquals(setOf("/*"), registration.urlPatterns.toSet())
     }
@@ -52,14 +52,14 @@ internal class NacosDiscoveryAutoConfigurationTest {
     @Test
     fun registration_withSecretConfigured_wiresVerifier_unsignedRequestRejectedWith401() {
         val properties = NacosDiscoveryProperties().apply {
-            feignContextFilter.contextSignatureSecret = "shared-secret"
-            feignContextFilter.contextSignatureTimestampWindowMillis = 60_000L
-            feignContextFilter.contextSignatureNonceCacheMaxSize = 16
+            rpcContextFilter.contextSignatureSecret = "shared-secret"
+            rpcContextFilter.contextSignatureTimestampWindowMillis = 60_000L
+            rpcContextFilter.contextSignatureNonceCacheMaxSize = 16
         }
-        val registration = NacosDiscoveryAutoConfiguration().feignContextWebFilterRegistration(properties)
+        val registration = NacosDiscoveryAutoConfiguration().internalRpcContextWebFilterRegistration(properties)
 
         val request = MockHttpServletRequest("POST", "/api").apply {
-            addHeader(Consts.RequestHeader.FEIGN_REQUEST, "true")
+            addHeader(Consts.RequestHeader.RPC_REQUEST, "true")
             addHeader(Consts.RequestHeader.TENANT_ID, "tenant-a")
         }
         val response = MockHttpServletResponse()
@@ -77,12 +77,12 @@ internal class NacosDiscoveryAutoConfigurationTest {
         KudosContextHolder.clear()
         try {
             val properties = NacosDiscoveryProperties().apply {
-                feignContextFilter.contextSignatureSecret = "   "
+                rpcContextFilter.contextSignatureSecret = "   "
             }
-            val registration = NacosDiscoveryAutoConfiguration().feignContextWebFilterRegistration(properties)
+            val registration = NacosDiscoveryAutoConfiguration().internalRpcContextWebFilterRegistration(properties)
 
             val request = MockHttpServletRequest("POST", "/api").apply {
-                addHeader(Consts.RequestHeader.FEIGN_REQUEST, "true")
+                addHeader(Consts.RequestHeader.RPC_REQUEST, "true")
                 addHeader(Consts.RequestHeader.TENANT_ID, "tenant-legacy")
             }
             val response = MockHttpServletResponse()
@@ -102,8 +102,8 @@ internal class NacosDiscoveryAutoConfigurationTest {
     fun nacosDiscoveryProperties_beanReturnsDefaults() {
         val properties = NacosDiscoveryAutoConfiguration().nacosDiscoveryProperties()
 
-        assertEquals(false, properties.feignContextFilter.allowUnmarkedContextHeaders)
-        assertNull(properties.feignContextFilter.contextSignatureSecret)
+        assertEquals(false, properties.rpcContextFilter.allowUnmarkedContextHeaders)
+        assertNull(properties.rpcContextFilter.contextSignatureSecret)
     }
 
 }

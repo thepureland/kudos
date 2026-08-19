@@ -46,7 +46,7 @@ Client                                                    Provider
 ```
 
 - 出站方向：`SeataFeignXidProcessor` 实现 `IFeignRequestContextProcess`，被
-  `kudos-ability-distributed-client-feign` 的 `GlobalHeaderRequestInterceptor` 调用
+  `kudos-ability-distributed-client-http` 的 `KudosContextRequestInterceptor` 调用
 - 入站方向：`SeataXidServletFilter` 通过 `FilterRegistrationBean` 使用
   `Ordered.HIGHEST_PRECEDENCE`——必须在 `@Transactional` 切面之前完成 bind
 
@@ -115,7 +115,7 @@ PgDataSource）。详见测试代码注释。
 - ℹ️ `SeataXidServletFilter` 只处理 servlet web；reactive web (WebFlux) 没有对应实现。
   本模块通过 `@ConditionalOnClass(RequestInterceptor, OncePerRequestFilter)` 限定了装配边界
 - ✅ Feign XID 出站 / 入站处理器已补无容器单测；完整链路仍依赖
-  `kudos-ability-distributed-client-feign` 装好 `GlobalHeaderRequestInterceptor`，这是模块间装配契约
+  `kudos-ability-distributed-client-http` 装好 `KudosContextRequestInterceptor`，这是模块间装配契约
 - ℹ️ `RootContext.getXID()` 只读 ThreadLocal——跨线程业务（`@Async`、`CompletableFuture` 等）
   仍需要业务方自己显式 propagate，避免把 Seata ThreadLocal 隐式扩散到线程池
 
@@ -126,12 +126,12 @@ api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-abil
 api(libs.alibaba.cloud.seata)
 api(libs.apache.seata)
 
-compileOnly(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
+compileOnly(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-http"))
 compileOnly(libs.spring.boot.starter.web)
 
 testImplementation(project(":kudos-test:kudos-test-container"))
 testImplementation(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))
-testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
+testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-http"))
 testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-discovery:kudos-ability-distributed-discovery-nacos"))
 testImplementation(libs.spring.boot.starter.web)
 ```

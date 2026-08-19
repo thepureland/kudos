@@ -53,6 +53,18 @@ spring:
 #            schema: sql/mysql/schema.sql
 #            data: sql/mysql/data.sql
 
+  http:
+    serviceclient:
+      # 4 个 group 各指向一个 Nacos 服务；lb:// 由 LoadBalancer 解析，等价于原来的 @FeignClient("ms11")
+      ms11:
+        base-url: lb://ms11
+      ms12:
+        base-url: lb://ms12
+      ms21:
+        base-url: lb://ms21
+      ms22:
+        base-url: lb://ms22
+
   cloud:
     # Spring Boot 4.1.x 尚未進入當前 Spring Cloud release train 的兼容版本清單，
     # CompositeCompatibilityVerifier 會直接拋 CompatibilityNotMetException；

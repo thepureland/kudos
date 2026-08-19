@@ -13,7 +13,11 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
-import org.springframework.cloud.openfeign.EnableFeignClients
+import io.kudos.ability.distributed.tx.seata.main.IFeignClient11
+import io.kudos.ability.distributed.tx.seata.main.IFeignClient12
+import io.kudos.ability.distributed.tx.seata.main.IFeignClient21
+import io.kudos.ability.distributed.tx.seata.main.IFeignClient22
+import org.springframework.web.service.registry.ImportHttpServices
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.jdbc.Sql
@@ -26,7 +30,10 @@ import kotlin.test.assertFalse
  * @author K
  * @since 1.0.0
  */
-@EnableFeignClients
+@ImportHttpServices(group = "ms11", types = [IFeignClient11::class])
+@ImportHttpServices(group = "ms12", types = [IFeignClient12::class])
+@ImportHttpServices(group = "ms21", types = [IFeignClient21::class])
+@ImportHttpServices(group = "ms22", types = [IFeignClient22::class])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ActiveProfiles("main")
 @Sql(

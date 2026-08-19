@@ -1,7 +1,7 @@
 package io.kudos.ms.msg.common.template.api
 
 import io.kudos.ms.msg.common.template.vo.MsgTemplateCacheEntry
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 
 
@@ -21,7 +21,7 @@ interface IMsgTemplateApi {
      * @param id template primary key
      * @return MsgTemplateCacheEntry, or null if not found
      */
-    @GetMapping("/api/internal/msg/template/getTemplateById")
+    @GetExchange("/api/internal/msg/template/getTemplateById")
     fun getTemplateById(@RequestParam id: String): MsgTemplateCacheEntry?
 
     /**
@@ -29,7 +29,7 @@ interface IMsgTemplateApi {
      * `localeDictCode` is nullable: callers should try with a locale first, and fall back to null
      * for the default language when no match is found.
      */
-    @GetMapping("/api/internal/msg/template/getTemplateByEvent")
+    @GetExchange("/api/internal/msg/template/getTemplateByEvent")
     fun getTemplateByEvent(
         @RequestParam tenantId: String,
         @RequestParam eventTypeDictCode: String,

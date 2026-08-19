@@ -1,20 +1,18 @@
 package io.kudos.ms.sys.client.dict.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.dict.proxy.ISysDictProxy
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
-import org.springframework.stereotype.Component
 
 
 /**
- * Dictionary Feign fallback implementation: logs and returns empty collections when the remote is unavailable,
+ * Dictionary fallback implementation: logs and returns empty collections when the remote is unavailable,
  * letting callers (typically used for validation or dropdown data) continue with "no available dictionary" instead of aborting with an exception.
  *
  * @author K
  * @since 1.0.0
  */
-@Component
-open class SysDictFallback : AbstractFeignFallbackSupport("SysDictFallback"), ISysDictProxy {
+open class SysDictFallback : AbstractHttpFallbackSupport("SysDictFallback"), ISysDictProxy {
 
     override fun getActiveDictItems(
         dictType: String,

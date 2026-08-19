@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: test-http-client
+  cloud:
+    # The Spring Cloud release train does not yet declare compatibility with Spring Boot 4.1.x;
+    # the verifier would otherwise abort context startup in tests.
+    compatibility-verifier:
+      enabled: false
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:28848
+  http:
+    # Spring Boot 4 interface-client groups. `lb://` is the LoadBalancer scheme handled by
+    # LoadBalancerRestClientHttpServiceGroupConfigurer — the equivalent of @FeignClient(name = ...).
+    serviceclient:
+      testservice:
+        base-url: lb://test-http-service
+        connect-timeout: 2s
+        read-timeout: 1s
+      # Nothing listens on port 1: used to prove @HttpServiceFallback actually fires.
+      deadservice:
+        base-url: http://127.0.0.1:1
+        connect-timeout: 2s
+        read-timeout: 2s
+
+kudos:
+  ability:
+    distributed:
+      client:
+        http:
+          # 与 provider 侧 ...nacos.rpc-context-filter.context-signature-secret 同值
+          contextSignatureSecret: e2e-shared-secret
+

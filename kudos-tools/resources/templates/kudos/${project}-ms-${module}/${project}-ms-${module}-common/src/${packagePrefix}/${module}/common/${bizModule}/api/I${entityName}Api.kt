@@ -1,7 +1,7 @@
 package ${packagePrefix}.${module}.common.${bizModule}.api
 
 import ${packagePrefix}.${module}.common.${bizModule}.vo.${entityName}CacheEntry
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 
 
@@ -18,7 +18,7 @@ interface I${entityName}Api {
      * @author ${author}
      * @since ${version}
      */
-    @GetMapping("/api/internal/${module}/${shortEntityName?uncap_first}/get")
+    @GetExchange("/api/internal/${module}/${shortEntityName?uncap_first}/get")
     fun get(@RequestParam id: ${pkColumn.kotlinTypeName}): ${entityName}CacheEntry?
 
     //region your codes 2

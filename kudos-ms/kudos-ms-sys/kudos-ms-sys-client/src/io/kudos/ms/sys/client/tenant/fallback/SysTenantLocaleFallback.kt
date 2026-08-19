@@ -1,18 +1,16 @@
 package io.kudos.ms.sys.client.tenant.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.tenant.proxy.ISysTenantLocaleProxy
-import org.springframework.stereotype.Component
 
 
 /**
- * Tenant-locale relationship Feign fallback implementation.
+ * Tenant-locale relationship fallback implementation.
  *
  * @author K
  * @since 1.0.0
  */
-@Component
-open class SysTenantLocaleFallback : AbstractFeignFallbackSupport("SysTenantLocaleFallback"), ISysTenantLocaleProxy {
+open class SysTenantLocaleFallback : AbstractHttpFallbackSupport("SysTenantLocaleFallback"), ISysTenantLocaleProxy {
 
     override fun getLocaleCodesByTenantId(tenantId: String): Set<String> {
         warnRead("getLocaleCodesByTenantId", tenantId)

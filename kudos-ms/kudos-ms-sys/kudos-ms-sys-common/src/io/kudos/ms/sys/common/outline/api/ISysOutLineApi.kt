@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.outline.api
 
 import io.kudos.ms.sys.common.outline.vo.SysOutLineCacheEntry
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 
 
@@ -23,7 +23,7 @@ interface ISysOutLineApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/sys/outLine/listOutLines")
+    @GetExchange("/api/internal/sys/outLine/listOutLines")
     fun listOutLines(
         @RequestParam systemCode: String,
         @RequestParam(required = false) tenantId: String? = null

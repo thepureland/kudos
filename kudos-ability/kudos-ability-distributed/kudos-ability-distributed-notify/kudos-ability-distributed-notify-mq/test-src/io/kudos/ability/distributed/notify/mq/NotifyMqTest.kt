@@ -13,15 +13,15 @@ import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
-import org.springframework.cloud.openfeign.EnableFeignClients
+import org.springframework.web.service.registry.ImportHttpServices
 import org.springframework.context.annotation.PropertySource
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import kotlin.test.Test
 import kotlin.test.fail
 
-@EnableKudosTest
-@EnableFeignClients
+@EnableKudosTest(properties = ["spring.http.serviceclient.notifymain.base-url=http://localhost:53221"])
+@ImportHttpServices(group = "notifymain", types = [IMainClinet::class])
 @PropertySource(
     value = ["classpath:application-test.yml"
     ], factory = YamlPropertySourceFactory::class

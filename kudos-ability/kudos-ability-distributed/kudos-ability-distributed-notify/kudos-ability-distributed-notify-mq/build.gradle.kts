@@ -5,7 +5,7 @@ dependencies {
 
     testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-stream:kudos-ability-distributed-stream-rocketmq"))
     testImplementation(project(":kudos-test:kudos-test-container"))
-    testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
+    testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-http"))
     testImplementation(libs.h2database.h2)
 //    testImplementation("org.postgresql:postgresql:${libs.versions.postgres.get()}")
 //    testImplementation("org.flywaydb:flyway-database-postgresql:11.8.2") // flyway-core 8.2.1+ no longer supports postgres in the standalone flyway-core package

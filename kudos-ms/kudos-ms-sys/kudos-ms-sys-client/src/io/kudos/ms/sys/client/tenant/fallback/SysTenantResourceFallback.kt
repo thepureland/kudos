@@ -1,18 +1,16 @@
 package io.kudos.ms.sys.client.tenant.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.tenant.proxy.ISysTenantResourceProxy
-import org.springframework.stereotype.Component
 
 
 /**
- * Tenant-resource relationship Feign fallback implementation.
+ * Tenant-resource relationship fallback implementation.
  *
  * @author K
  * @since 1.0.0
  */
-@Component
-open class SysTenantResourceFallback : AbstractFeignFallbackSupport("SysTenantResourceFallback"), ISysTenantResourceProxy {
+open class SysTenantResourceFallback : AbstractHttpFallbackSupport("SysTenantResourceFallback"), ISysTenantResourceProxy {
 
     override fun getResourceIdsByTenantId(tenantId: String): Set<String> {
         warnRead("getResourceIdsByTenantId", tenantId)

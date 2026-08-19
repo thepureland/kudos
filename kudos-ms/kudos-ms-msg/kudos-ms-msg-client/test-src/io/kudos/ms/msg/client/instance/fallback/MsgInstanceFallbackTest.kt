@@ -19,8 +19,8 @@ internal class MsgInstanceFallbackTest {
 
     @Test
     fun getInstanceById_returnsNull_withCause() {
-        val fallback = MsgInstanceFallback(RuntimeException("remote down"))
-        assertNull(fallback.getInstanceById("inst-2"))
+        val fallback = MsgInstanceFallback()
+        assertNull(fallback.getInstanceById(RuntimeException("remote down"), "inst-2"))
     }
 
     @Test

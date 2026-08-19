@@ -1,24 +1,22 @@
 package io.kudos.ability.distributed.notify.mq.common
 
-import org.springframework.cloud.openfeign.FeignClient
-import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 
-@FeignClient(value = "notifyMain", path = "main", url = "localhost:53221")
 interface IMainClinet {
-    @RequestMapping("collection")
+    @GetExchange("/main/collection")
     fun collection(
         @RequestParam("port") port: Int?,
         @RequestParam("appKey") appKey: String?,
         @RequestParam("key") key: String?
     ): Boolean
 
-    @RequestMapping("change")
+    @GetExchange("/main/change")
     fun change(@RequestParam("key") key: String?): Boolean
 
-    @RequestMapping("sync")
+    @GetExchange("/main/sync")
     fun sync(@RequestParam("key") key: String?): Boolean
 
-    @RequestMapping("registry")
+    @GetExchange("/main/registry")
     fun registry(@RequestParam("appKey") appKey: String?, @RequestParam("port") port: Int?): Boolean
 }

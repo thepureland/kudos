@@ -1,6 +1,6 @@
 package io.kudos.ms.sys.client.dict.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.dict.proxy.ISysDictItemProxy
 import kotlin.test.Test
 import kotlin.test.assertIs
@@ -10,8 +10,8 @@ import kotlin.test.assertIs
  *
  * Coverage:
  *  - The class (whose proxied API currently defines no methods) can be instantiated and
- *    is a valid [ISysDictItemProxy] / [AbstractFeignFallbackSupport] implementation, keeping
- *    it usable as a `@FeignClient(fallback=...)` target.
+ *    is a valid [ISysDictItemProxy] / [AbstractHttpFallbackSupport] implementation, keeping
+ *    it usable as a `@HttpServiceFallback` target.
  *
  * @author K
  * @since 1.0.0
@@ -22,6 +22,6 @@ internal class SysDictItemFallbackTest {
     fun instantiation_yieldsValidProxyFallback() {
         val fallback = SysDictItemFallback()
         assertIs<ISysDictItemProxy>(fallback)
-        assertIs<AbstractFeignFallbackSupport>(fallback)
+        assertIs<AbstractHttpFallbackSupport>(fallback)
     }
 }

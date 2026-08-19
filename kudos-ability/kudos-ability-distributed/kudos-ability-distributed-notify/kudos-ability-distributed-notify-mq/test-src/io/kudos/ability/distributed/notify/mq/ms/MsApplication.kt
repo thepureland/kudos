@@ -8,11 +8,11 @@ import io.kudos.ability.distributed.notify.mq.ms.common.MsApplicationListener
 import io.kudos.ability.distributed.notify.mq.ms.common.MsConfig
 import io.kudos.context.config.YamlPropertySourceFactory
 import io.kudos.context.init.EnableKudos
-import org.springframework.cloud.openfeign.EnableFeignClients
+import org.springframework.web.service.registry.ImportHttpServices
 import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 
-@EnableFeignClients(basePackageClasses = [IMainClinet::class])
+@ImportHttpServices(group = "notifymain", types = [IMainClinet::class])
 @PropertySource(
     value = ["classpath:application-ms.yml"
     ], factory = YamlPropertySourceFactory::class

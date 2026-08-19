@@ -2,8 +2,8 @@ package io.kudos.ms.sys.common.accessrule.api
 
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleIpRow
-import org.springframework.web.bind.annotation.DeleteMapping
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.service.annotation.DeleteExchange
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 import java.math.BigDecimal
 
@@ -20,13 +20,13 @@ interface ISysAccessRuleIpApi {
     /**
      * Gets the list of IPs for a rule.
      */
-    @GetMapping("/api/internal/sys/accessRuleIp/getIpsByRuleId")
+    @GetExchange("/api/internal/sys/accessRuleIp/getIpsByRuleId")
     fun getIpsByRuleId(@RequestParam ruleId: String): List<SysAccessRuleIpRow>
 
     /**
      * Gets the IP rule list from cache by system code and tenant id.
      */
-    @GetMapping("/api/internal/sys/accessRuleIp/getIpsBySystemAndTenant")
+    @GetExchange("/api/internal/sys/accessRuleIp/getIpsBySystemAndTenant")
     fun getIpsBySystemAndTenant(
         @RequestParam systemCode: String,
         @RequestParam(required = false) tenantId: String?
@@ -38,7 +38,7 @@ interface ISysAccessRuleIpApi {
      * Hit on a blacklist rule denies; when whitelist rules exist for the dimension,
      * only a whitelist hit allows; with no effective rule configured, access is allowed by default.
      */
-    @GetMapping("/api/internal/sys/accessRuleIp/checkIpAccess")
+    @GetExchange("/api/internal/sys/accessRuleIp/checkIpAccess")
     fun checkIpAccess(
         @RequestParam ip: BigDecimal,
         @RequestParam systemCode: String,
@@ -48,7 +48,7 @@ interface ISysAccessRuleIpApi {
     /**
      * Deletes all IPs of a rule.
      */
-    @DeleteMapping("/api/internal/sys/accessRuleIp/deleteByRuleId")
+    @DeleteExchange("/api/internal/sys/accessRuleIp/deleteByRuleId")
     fun deleteByRuleId(@RequestParam ruleId: String): Int
 
 

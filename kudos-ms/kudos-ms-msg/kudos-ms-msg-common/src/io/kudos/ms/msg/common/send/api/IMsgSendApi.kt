@@ -1,7 +1,7 @@
 package io.kudos.ms.msg.common.send.api
 
 import io.kudos.ms.msg.common.send.vo.request.MsgPublishRequest
-import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.service.annotation.PostExchange
 import org.springframework.web.bind.annotation.RequestBody
 
 
@@ -22,7 +22,7 @@ interface IMsgSendApi {
      * persisted with status FAILED_TO_SEND_TO_MQ, and the caller may retry based on it (see Batch 4's
      * MsgUnreceived for the retry mechanism).
      */
-    @PostMapping("/api/internal/msg/send/publish")
+    @PostExchange("/api/internal/msg/send/publish")
     fun publish(@RequestBody request: MsgPublishRequest): String?
 
 }

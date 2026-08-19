@@ -1,20 +1,18 @@
 package io.kudos.ms.user.client.contact.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.user.client.contact.proxy.IUserContactWayProxy
-import org.springframework.stereotype.Component
 
 
 /**
- * User contact way Feign fallback.
+ * User contact way fallback.
  *
  * @author K
  * @author AI: Codex
  * @since 1.0.0
  */
-@Component
 open class UserContactWayFallback :
-    AbstractFeignFallbackSupport("UserContactWayFallback"), IUserContactWayProxy {
+    AbstractHttpFallbackSupport("UserContactWayFallback"), IUserContactWayProxy {
 
     /**
      * Degraded read: returns an empty map, i.e. "no receiver has a contact of this type".

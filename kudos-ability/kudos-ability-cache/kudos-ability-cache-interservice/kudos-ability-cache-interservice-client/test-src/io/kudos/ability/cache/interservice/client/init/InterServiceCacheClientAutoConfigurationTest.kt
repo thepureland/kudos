@@ -1,21 +1,17 @@
 package io.kudos.ability.cache.interservice.client.init
 
-import feign.Request
-import feign.RequestTemplate
-import feign.Response
 import io.kudos.ability.cache.common.core.keyvalue.IKeyValueCacheManager
-import io.kudos.ability.cache.common.support.CacheConfig
 import io.kudos.ability.cache.interservice.client.core.ClientCacheHelper
-import io.kudos.ability.cache.interservice.client.feign.FeignCacheResponseInterceptor
+import io.kudos.ability.cache.interservice.client.http.HttpCacheNegotiationInterceptor
 import org.springframework.beans.factory.ObjectProvider
-import org.springframework.cache.Cache
-import org.springframework.cache.concurrent.ConcurrentMapCache
-import tools.jackson.databind.ObjectMapper
-import java.nio.charset.StandardCharsets
+import org.springframework.core.Ordered
+import org.springframework.web.client.RestClient
+import org.springframework.web.service.registry.HttpServiceGroup
+import org.springframework.web.service.registry.HttpServiceGroupConfigurer
+import java.util.function.Predicate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
-import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -24,13 +20,18 @@ import kotlin.test.assertTrue
  *
  * Calls each `@Bean` method directly (no Spring container) and asserts:
  *  - default [InterServiceCacheClientProperties] are produced;
- *  - [ClientCacheHelper] respects presence/absence of the local cache manager (ObjectProvider.ifAvailable);
- *  - the request interceptor bean is constructed;
- *  - the global Feign decoder is the caching interceptor wrapping the
- *    Optional/ResponseEntity/Jackson decoding chain, and the chain actually decodes a body;
+ *  - [ClientCacheHelper] respects presence/absence of the local cache manager (`ObjectProvider.ifAvailable`);
+ *  - the group configurer installs one [HttpCacheNegotiationInterceptor] per group;
  *  - the component name is reported.
  *
+ * The Feign-era test additionally asserted that the `@Primary` `feignDecoder` bean wrapped Spring
+ * Cloud's Optional/ResponseEntity/Jackson decoder chain and that the chain decoded a body. There is
+ * no such bean any more, and deliberately so: overriding a framework bean application-wide to add one
+ * feature was the riskiest part of that design. `RestClient` runs the application's own message
+ * converters, so nothing is replaced and there is nothing left to assert there.
+ *
  * @author K
+ * @author AI: Claude
  * @since 1.0.0
  */
 internal class InterServiceCacheClientAutoConfigurationTest {
@@ -38,106 +39,88 @@ internal class InterServiceCacheClientAutoConfigurationTest {
     private val config = InterServiceCacheClientAutoConfiguration()
 
     @Test
-    fun interServiceCacheClientProperties_returnsDefaults() {
+    fun properties_defaults() {
         val properties = config.interServiceCacheClientProperties()
         assertEquals(600, properties.ttlSeconds)
+        assertTrue(properties.includeGroups.isEmpty())
+        assertTrue(properties.excludeGroups.isEmpty())
     }
 
     @Test
-    fun clientCacheHelper_usesLocalCacheManagerWhenAvailable() {
-        val helper = config.clientCacheHelper(
-            InterServiceCacheClientProperties(),
-            StaticObjectProvider(NoopCacheManager)
-        )
-        assertTrue(helper.hasLocalCache())
-    }
-
-    @Test
-    fun clientCacheHelper_disablesLocalCacheWhenManagerAbsent() {
-        val helper = config.clientCacheHelper(
-            InterServiceCacheClientProperties(),
-            StaticObjectProvider(null)
-        )
+    fun clientCacheHelper_withoutCacheManager_hasNoLocalCache() {
+        val helper = config.clientCacheHelper(InterServiceCacheClientProperties(), EmptyProvider())
         assertFalse(helper.hasLocalCache())
     }
 
     @Test
-    fun feignCacheRequestInterceptor_isConstructed() {
-        val interceptor = config.feignCacheRequestInterceptor(
-            ClientCacheHelper(), applicationName = null, properties = InterServiceCacheClientProperties()
+    fun groupConfigurer_installsOneInterceptorPerGroup() {
+        val helper = config.clientCacheHelper(InterServiceCacheClientProperties(), EmptyProvider())
+        val configurer = config.interServiceCacheGroupConfigurer(
+            helper, InterServiceCacheClientProperties(), "test-app"
         )
-        assertNotNull(interceptor)
+        assertEquals(Ordered.LOWEST_PRECEDENCE, configurer.order)
+
+        val builders = mapOf(
+            "groupA" to RestClient.builder(),
+            "groupB" to RestClient.builder(),
+        )
+        configurer.configureGroups(RecordingGroups(builders))
+
+        // Each group's builder must have received exactly one negotiation interceptor.
+        builders.forEach { (name, builder) ->
+            val installed = mutableListOf<Any>()
+            builder.requestInterceptors { interceptors -> installed.addAll(interceptors) }
+            assertEquals(
+                1,
+                installed.count { it is HttpCacheNegotiationInterceptor },
+                "group $name should carry exactly one negotiation interceptor"
+            )
+        }
     }
 
     @Test
-    fun feignDecoder_buildsCachingDecoderChain() {
-        // 用与生产同一条路径构建转换器集：SpringDecoder 依赖 FeignHttpMessageConverters，
-        // 而后者在 Spring Cloud 里位于每个 Feign client 的子上下文，父上下文取不到，
-        // 所以本模块自行声明了它（见 feignHttpMessageConverters 的 KDoc）。
-        val converters = config.feignHttpMessageConverters(emptyProvider(), emptyProvider())
-        val decoder = config.feignDecoder(singletonProvider(converters), ClientCacheHelper())
-
-        assertIs<FeignCacheResponseInterceptor>(decoder, "the outermost decoder must add caching capability")
-
-        // Without a local cache the interceptor falls through to the Optional/ResponseEntity/Jackson chain,
-        // which must decode the raw body for a String target type.
-        val request = Request.create(
-            Request.HttpMethod.GET,
-            "http://localhost/x",
-            emptyMap(),
-            Request.Body.empty(),
-            RequestTemplate(),
-        )
-        val response = Response.builder()
-            .status(200)
-            .headers(emptyMap())
-            .request(request)
-            .body("hello".toByteArray(StandardCharsets.UTF_8))
-            .build()
-        assertEquals("hello", decoder.decode(response, String::class.java))
-    }
-
-    @Test
-    fun getComponentName_returnsModuleName() {
+    fun componentName() {
+        assertNotNull(config.getComponentName())
         assertEquals("kudos-ability-cache-interservice-client", config.getComponentName())
     }
 
-    /** An [ObjectProvider] that resolves to nothing — stands in for "no customizers registered". */
-    private fun <T : Any> emptyProvider(): ObjectProvider<T> = object : ObjectProvider<T> {
-        override fun getObject(): T = throw IllegalStateException("no instance available")
-        override fun getObject(vararg args: Any?): T = getObject()
-        override fun getIfAvailable(): T? = null
-        override fun getIfUnique(): T? = null
-        override fun stream(): java.util.stream.Stream<T> = java.util.stream.Stream.empty()
+    /** `ObjectProvider` that never yields a cache manager. */
+    private class EmptyProvider : ObjectProvider<IKeyValueCacheManager<*>> {
+        override fun getObject(vararg args: Any?): IKeyValueCacheManager<*> = throw UnsupportedOperationException()
+        override fun getObject(): IKeyValueCacheManager<*> = throw UnsupportedOperationException()
+        override fun getIfAvailable(): IKeyValueCacheManager<*>? = null
+        override fun getIfUnique(): IKeyValueCacheManager<*>? = null
     }
 
-    /** An [ObjectProvider] that always resolves to [value]. */
-    private fun <T : Any> singletonProvider(value: T): ObjectProvider<T> = object : ObjectProvider<T> {
-        override fun getObject(): T = value
-        override fun getObject(vararg args: Any?): T = value
-        override fun getIfAvailable(): T = value
-        override fun getIfUnique(): T = value
-        override fun stream(): java.util.stream.Stream<T> = java.util.stream.Stream.of(value)
+    /** Minimal [HttpServiceGroupConfigurer.Groups] that replays a fixed set of named builders. */
+    private class RecordingGroups(
+        private val builders: Map<String, RestClient.Builder>
+    ) : HttpServiceGroupConfigurer.Groups<RestClient.Builder> {
+
+        override fun filterByName(vararg groupNames: String) = this
+
+        override fun filter(predicate: Predicate<HttpServiceGroup>) = this
+
+        override fun forEachClient(callback: HttpServiceGroupConfigurer.ClientCallback<RestClient.Builder>) {
+            builders.forEach { (name, builder) -> callback.withClient(NamedGroup(name), builder) }
+        }
+
+        override fun forEachClient(callback: HttpServiceGroupConfigurer.InitializingClientCallback<RestClient.Builder>) {
+            throw UnsupportedOperationException("not used by the configurer under test")
+        }
+
+        override fun forEachProxyFactory(callback: HttpServiceGroupConfigurer.ProxyFactoryCallback) {
+            throw UnsupportedOperationException("not used by the configurer under test")
+        }
+
+        override fun forEachGroup(callback: HttpServiceGroupConfigurer.GroupCallback<RestClient.Builder>) {
+            throw UnsupportedOperationException("not used by the configurer under test")
+        }
     }
 
-    /** Minimal ObjectProvider stub returning a fixed instance (or nothing). */
-    private class StaticObjectProvider(
-        private val value: IKeyValueCacheManager<*>?
-    ) : ObjectProvider<IKeyValueCacheManager<*>> {
-        override fun getObject(): IKeyValueCacheManager<*> =
-            value ?: throw IllegalStateException("no instance available")
-
-        override fun getIfAvailable(): IKeyValueCacheManager<*>? = value
-    }
-
-    /** Cache manager stand-in: only its presence matters for these tests. */
-    private object NoopCacheManager : IKeyValueCacheManager<ConcurrentMapCache> {
-        override fun createCache(cacheConfig: CacheConfig) = ConcurrentMapCache("noop")
-        override fun evictByPattern(cacheName: String, pattern: String) = Unit
-        override fun existsKey(cacheName: String, key: Any): Boolean = false
-        override fun multiGet(cacheName: String, keys: Collection<Any>): Map<Any, Any?> = emptyMap()
-        override fun initCacheAfterSystemInit(cacheConfigMap: Map<String, CacheConfig>) = Unit
-        override fun getCache(name: String): Cache? = null
-        override fun getCacheNames(): MutableCollection<String> = mutableListOf()
+    private class NamedGroup(private val name: String) : HttpServiceGroup {
+        override fun name(): String = name
+        override fun httpServiceTypes(): Set<Class<*>> = emptySet()
+        override fun clientType(): HttpServiceGroup.ClientType = HttpServiceGroup.ClientType.REST_CLIENT
     }
 }

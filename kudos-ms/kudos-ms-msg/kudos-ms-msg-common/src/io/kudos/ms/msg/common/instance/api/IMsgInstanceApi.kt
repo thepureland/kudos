@@ -1,7 +1,7 @@
 package io.kudos.ms.msg.common.instance.api
 
 import io.kudos.ms.msg.common.instance.vo.MsgInstanceCacheEntry
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 
 
@@ -21,7 +21,7 @@ interface IMsgInstanceApi {
      * @param id instance primary key
      * @return MsgInstanceCacheEntry, or null if not found
      */
-    @GetMapping("/api/internal/msg/instance/getInstanceById")
+    @GetExchange("/api/internal/msg/instance/getInstanceById")
     fun getInstanceById(@RequestParam id: String): MsgInstanceCacheEntry?
 
 

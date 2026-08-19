@@ -1,22 +1,20 @@
 package io.kudos.ms.sys.client.resource.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.resource.proxy.ISysResourceProxy
 import io.kudos.ms.sys.common.resource.enums.ResourceTypeEnum
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.sys.common.resource.vo.response.BaseMenuTreeNode
 import io.kudos.ms.sys.common.resource.vo.response.MenuTreeNode
-import org.springframework.stereotype.Component
 
 
 /**
- * Resource Feign fault-tolerant fallback implementation.
+ * Resource fallback implementation.
  *
  * @author K
  * @since 1.0.0
  */
-@Component
-open class SysResourceFallback : AbstractFeignFallbackSupport("SysResourceFallback"), ISysResourceProxy {
+open class SysResourceFallback : AbstractHttpFallbackSupport("SysResourceFallback"), ISysResourceProxy {
 
     override fun getResource(resourceId: String): SysResourceCacheEntry? {
         warnRead("getResource", resourceId)

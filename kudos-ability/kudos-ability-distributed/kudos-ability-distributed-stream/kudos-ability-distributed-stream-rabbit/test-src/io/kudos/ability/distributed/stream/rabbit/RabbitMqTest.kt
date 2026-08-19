@@ -1,6 +1,7 @@
 package io.kudos.ability.distributed.stream.rabbit
 
 import io.kudos.ability.distributed.stream.rabbit.main.IRabbitMqMainService
+import io.kudos.ability.distributed.stream.rabbit.main.IRabbitMqProducerClient
 import io.kudos.ability.distributed.stream.rabbit.main.RabbitMqConsumerHandler
 import io.kudos.ability.distributed.stream.rabbit.main.RabbitMqMainService
 import io.kudos.ability.distributed.stream.rabbit.producer.RabbitMqProducerApplication
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
-import org.springframework.cloud.openfeign.EnableFeignClients
+import org.springframework.web.service.registry.ImportHttpServices
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -31,8 +32,8 @@ import kotlin.test.Test
  * @author K
  * @since 1.0.0
  */
-@EnableKudosTest
-@EnableFeignClients
+@EnableKudosTest(properties = ["spring.http.serviceclient.rabbitproducer.base-url=http://localhost:53122"])
+@ImportHttpServices(group = "rabbitproducer", types = [IRabbitMqProducerClient::class])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledIfDockerInstalled
 @Import(RabbitMqConsumerHandler::class, RabbitMqMainService::class)

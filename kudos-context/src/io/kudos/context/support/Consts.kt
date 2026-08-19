@@ -41,8 +41,18 @@ object Consts {
      * @since 1.0.0
      */
     object RequestHeader {
-        /** Marks the current request as an internal Feign call, to avoid duplicate auth / rate limiting. */
-        const val FEIGN_REQUEST: String = "_feign_request"
+        /**
+         * Marks the current request as an internal service-to-service call, to avoid duplicate auth /
+         * rate limiting.
+         *
+         * This is the gate every provider-side context filter checks before honouring the propagated
+         * context headers, so an unmarked request from a browser or curl cannot forge a tenant id.
+         *
+         * Named after the *concept*, not the transport: it was `FEIGN_REQUEST` with the wire value
+         * `_feign_request` until 2026-08-19, which stopped being accurate once OpenFeign was removed
+         * from the repo. **The wire value changed too**, so both ends must be deployed together.
+         */
+        const val RPC_REQUEST: String = "_rpc_request"
         /** Marks the current request as a notification (e.g. callback, async push). */
         const val NOTIFY_REQUEST: String = "_notify_request"
         /** Subsystem code passthrough. */

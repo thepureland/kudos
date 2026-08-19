@@ -7,7 +7,7 @@
 | [`kudos-ability-cache-common`](kudos-ability-cache-common/README.md) | 核心：`MixCache` 二级缓存抽象、`@TenantCacheable` 注解 + 切面、跨节点失效广播 SPI |
 | [`kudos-ability-cache-local`](kudos-ability-cache-local/README.md) | 本地缓存（Caffeine） |
 | [`kudos-ability-cache-remote`](kudos-ability-cache-remote/README.md) | 远程缓存（Redis） |
-| [`kudos-ability-cache-interservice`](kudos-ability-cache-interservice/README.md) | 跨服务缓存协作（Feign 协商缓存：client/provider/common 三件套） |
+| [`kudos-ability-cache-interservice`](kudos-ability-cache-interservice/README.md) | 跨服务缓存协作（协商缓存：client/provider/common 三件套） |
 
 业务侧典型组合：`cache-common` + `cache-local-caffeine` + `cache-remote-redis`（开启
 LOCAL_REMOTE 二级缓存）。
@@ -52,6 +52,15 @@ LOCAL_REMOTE 二级缓存）。
 
 ### 跨服务协商缓存（interservice）
 
+> ⚠️ **本节是 2026-06-11 那一轮的历史记录，描述的是 OpenFeign 时代的实现。**
+> 2026-08-19 全仓迁移到 Spring Interface Clients 后，这里提到的 `FeignCacheRequestInterceptor` /
+> `FeignCacheResponseInterceptor` / `@Primary` 的 `feignDecoder` / `include-clients` /
+> `exclude-clients` **均已不存在**。当前实现是单个 `HttpCacheNegotiationInterceptor`，筛选参数改为
+> `include-groups` / `exclude-groups`。以
+> [`kudos-ability-cache-interservice-client/README.md`](kudos-ability-cache-interservice/kudos-ability-cache-interservice-client/README.md)
+> 为准。下面的条目保留，因为它们记录的问题（cacheKey 未区分被调方、`getOrNull` 的线程池陷阱、
+> 全局拦截器泄漏内部头给第三方 API）在新实现里同样成立，只是落点换了类。
+
 - **cacheKey 现在区分被调服务**：`RequestInterceptor` 在 `Target.apply(template)` 之前运行，此时 `request.url()` 只有路径没有 host，而拼进 key 的 `applicationName` 是**调用方自己**的名字，同一 JVM 内所有 Feign client 都一样。于是 `serviceA.get("/config")` 与 `serviceB.get("/config")` 会算出同一个 key：一方的响应覆盖另一方，304 判定还会让 B 读到 A 的数据。现在把 `feignTarget()` 的服务名与 URL 纳入 key（读取方式是防御性的，Feign 若不再填充也不会影响调用）。顺带修掉了 `joinToString()` 用默认 `", "` 分隔、把分隔符常量当数组元素混在里面的拼接方式。
 - **provider 端不再被下游 Filter 包装后静默失效**：原先用 `request !is CacheClientRequest` 判定，而 `ClientCacheWebFilter` 之后任何再包一层的 Filter（Spring Security 的 `SecurityContextHolderAwareRequestFilter` 必定会包）都会让该判定失败，整个服务端逻辑无声关闭、不报错也无日志。改用 `WebUtils.getNativeRequest` 沿包装链查找。同时把 `resolveReference(...) as HttpServletRequest` 改为 `as?`——请求已完成、异步派发或非 Servlet 环境下它会返回 null 或别的类型。
 - **304 命中但本地条目已淘汰时改为显式失败**：`FEIGN-CACHE` 区是有界的（默认 `maximumSize=150`），请求往返期间条目被挤掉很常见；此时服务端因为我们上报了 uid 只回了空 body，既无 body 可解码也无本地副本。旧实现返回 null，而 Feign 接口在 Kotlin 里通常是不可空返回类型，这个 null 会流进业务代码在无关位置炸掉。现在抛带诊断信息的 `DecodeException`，且重试必定成功（本地无条目 → 下次不带 uid → 服务端回完整 body）。
@@ -79,7 +88,7 @@ LOCAL_REMOTE 二级缓存）。
 另外两处已随后修掉：
 
 - **`decoderEnabled` 死字段已删除**：真正生效的是 `@ConditionalOnProperty` 直接读环境里的 `decoder-enabled`，而条件在任何 bean 存在之前就已求值，属性字段不可能左右它。字段在时它像个能用的开关——写 yml 有效（条件读的是同一个 key），用 Java API 设值却静默无效。开关本身通过 yml 继续可用。
-- **新增 `requireFeignMarker`（默认 `false`）**：开启后，只有带内部 Feign 标记（`_feign_request`）的请求才参与协商，外部调用者拿不到响应指纹。**默认保持现状是刻意的**——该标记由 `kudos-ability-distributed-client-feign` 的 `GlobalHeaderRequestInterceptor` 写入，而本模块对它只有 compileOnly/test 依赖，运行时不保证存在；默认开启会在这类部署里静默关掉整个 provider 端。确认所有调用方都经过该拦截器后再开。
+- **新增 `requireFeignMarker`（默认 `false`）**：开启后，只有带内部 Feign 标记（`_feign_request`）的请求才参与协商，外部调用者拿不到响应指纹。**默认保持现状是刻意的**——该标记由 `kudos-ability-distributed-client-http` 的 `KudosContextRequestInterceptor` 写入，而本模块对它只有 compileOnly/test 依赖，运行时不保证存在；默认开启会在这类部署里静默关掉整个 provider 端。确认所有调用方都经过该拦截器后再开。
 
 - **Feign decoder 改为复用 Spring Cloud 的解码链**：此前内层是裸 `JacksonDecoder`，等于把 Spring Cloud 的解码**整个换掉**而非装饰。由于本 bean 是 `@Primary` 且位于父上下文，Spring Cloud 自己那个 `@ConditionalOnMissingBean` 的 decoder 在任何 Feign client 子上下文里都不会被创建——也就是说只要 classpath 上有本模块，应用内**每一个** `@FeignClient` 的反序列化行为都变了：自定义 `HttpMessageConverter`（XML、protobuf、自定义 media type）失效，Spring 的 Jackson 配置与 `@JsonView` 也失效；该 decoder 还把 404 映射为 null 吞掉错误、`String` 硬编码 UTF-8 而忽略 `response.charset()`。现在内层换成 `SpringDecoder`，链路与 `FeignClientsConfiguration.feignDecoder` 完全一致，只有最外层的 `FeignCacheResponseInterceptor` 是本模块的。已无人使用的 `JacksonDecoder` 一并删除。
 

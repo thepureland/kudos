@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
  * Unit tests for [SysCacheFallback].
  *
  * The cache proxy currently exposes no public methods; the fallback is kept only as a
- * valid `@FeignClient(fallback=...)` target. This test asserts it can be instantiated
+ * valid `@HttpServiceFallback` target. This test asserts it can be instantiated
  * and is wired into the expected proxy/support type hierarchy.
  *
  * @author K

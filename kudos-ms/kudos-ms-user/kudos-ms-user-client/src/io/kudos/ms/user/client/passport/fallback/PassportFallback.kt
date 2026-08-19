@@ -1,6 +1,6 @@
 package io.kudos.ms.user.client.passport.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.user.client.passport.proxy.IPassportProxy
 import io.kudos.ms.user.common.passport.enums.ChangePasswordResultEnum
 import io.kudos.ms.user.common.passport.enums.PassportLoginStatusEnum
@@ -8,17 +8,15 @@ import io.kudos.ms.user.common.passport.vo.request.ChangePasswordRequest
 import io.kudos.ms.user.common.passport.vo.request.PassportLoginRequest
 import io.kudos.ms.user.common.passport.vo.request.VerifyPasswordRequest
 import io.kudos.ms.user.common.passport.vo.response.PassportLoginResult
-import org.springframework.stereotype.Component
 
 
 /**
- * Login passport Feign fallback.
+ * Login passport fallback.
  *
  * @author K
  * @since 1.0.0
  */
-@Component
-open class PassportFallback : AbstractFeignFallbackSupport("PassportFallback"), IPassportProxy {
+open class PassportFallback : AbstractHttpFallbackSupport("PassportFallback"), IPassportProxy {
 
     override fun login(req: PassportLoginRequest): PassportLoginResult {
         errorWrite("login", req.tenantId, req.username)

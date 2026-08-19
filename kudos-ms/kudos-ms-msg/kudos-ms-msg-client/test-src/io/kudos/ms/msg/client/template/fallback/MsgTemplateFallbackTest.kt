@@ -13,12 +13,13 @@ import kotlin.test.assertNull
 internal class MsgTemplateFallbackTest {
 
     private val fallback = MsgTemplateFallback()
-    private val fallbackWithCause = MsgTemplateFallback(RuntimeException("remote down"))
+    /** 传给 Throwable 首参重载——Spring Cloud 在降级时优先解析的就是这个签名。 */
+    private val cause = RuntimeException("remote down")
 
     @Test
     fun getTemplateById_returnsNull() {
         assertNull(fallback.getTemplateById("tpl-1"))
-        assertNull(fallbackWithCause.getTemplateById("範本-😀"))
+        assertNull(fallback.getTemplateById(cause, "範本-😀"))
     }
 
     @Test
@@ -29,6 +30,6 @@ internal class MsgTemplateFallbackTest {
     @Test
     fun getTemplateByEvent_returnsNull_withNullLocale() {
         assertNull(fallback.getTemplateByEvent("t", "e", "m", null))
-        assertNull(fallbackWithCause.getTemplateByEvent("t", "e", "m", null))
+        assertNull(fallback.getTemplateByEvent(cause, "t", "e", "m", null))
     }
 }

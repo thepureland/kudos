@@ -1,19 +1,17 @@
 package io.kudos.ms.sys.client.i18n.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.i18n.proxy.ISysI18nProxy
 import io.kudos.ms.sys.common.i18n.vo.request.SysI18nFormUpdate
-import org.springframework.stereotype.Component
 
 
 /**
- * I18n Feign client fallback implementation.
+ * I18n fallback implementation.
  *
  * @author K
  * @since 1.0.0
  */
-@Component
-open class SysI18nFallback : AbstractFeignFallbackSupport("SysI18nFallback"), ISysI18nProxy {
+open class SysI18nFallback : AbstractHttpFallbackSupport("SysI18nFallback"), ISysI18nProxy {
 
     override fun getI18nValue(
         locale: String,

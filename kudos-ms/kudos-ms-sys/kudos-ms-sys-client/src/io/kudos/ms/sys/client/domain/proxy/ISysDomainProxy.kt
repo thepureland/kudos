@@ -1,8 +1,6 @@
 package io.kudos.ms.sys.client.domain.proxy
 
-import io.kudos.ms.sys.client.domain.fallback.SysDomainFallback
 import io.kudos.ms.sys.common.domain.api.ISysDomainApi
-import org.springframework.cloud.openfeign.FeignClient
 
 
 /**
@@ -11,7 +9,6 @@ import org.springframework.cloud.openfeign.FeignClient
  * @author K
  * @since 1.0.0
  */
-@FeignClient(name = "sys-domain", fallback = SysDomainFallback::class)
 interface ISysDomainProxy : ISysDomainApi {
 
 

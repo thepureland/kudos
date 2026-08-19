@@ -1,0 +1,25 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: test-http-service
+  cloud:
+    # The Spring Cloud release train does not yet declare compatibility with Spring Boot 4.1.x;
+    # the verifier would otherwise abort context startup in tests.
+    compatibility-verifier:
+      enabled: false
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:28848
+
+kudos:
+  ability:
+    distributed:
+      discovery:
+        nacos:
+          rpc-context-filter:
+            # 与客户端 kudos.ability.distributed.client.http.contextSignatureSecret 同值。
+            # 配上之后 FeignContextSignatureVerifier 会对上下文头验签（含时间戳窗口 + nonce 防重放），
+            # 失败一律 401。这是签名链路端到端验证的 provider 侧开关。
+            context-signature-secret: e2e-shared-secret

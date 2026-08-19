@@ -1,20 +1,18 @@
 package io.kudos.ability.distributed.stream.kafka.main
 
-import org.springframework.cloud.openfeign.FeignClient
-import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 
 /**
- * Feign client for the Kafka producer.
+ * Kafka producer client (interface client; target set by the test).
  *
  * @author shane
  * @author K
  * @since 1.0.0
  */
-@FeignClient(name = "kafkamsp", url = "localhost:53322")
 interface IKafkaProducerClient {
 
-    @RequestMapping("/producer/send")
+    @GetExchange("/producer/send")
     fun send(@RequestParam("message") message: String?)
 
 }

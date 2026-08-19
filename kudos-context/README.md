@@ -41,7 +41,7 @@
 | 字段 | 类型 | 语义 | 谁消费 |
 |---|---|---|---|
 | `portalCode` | `String?` | 门户编码（最外层多门户隔离层） | 业务侧极少用，预留 |
-| `subSystemCode` | `String?` | 子系统编码（同一门户下的逻辑分区，如 admin / ops / open） | `GlobalHeaderRequestInterceptor` 透传 Feign 头 `_sub_sys_code`；`FeignContextWebFilter` 解出回写到 `context.subSystemCode`；`@HashCacheableBySecondary` SpEL `#subSystemCode` 拼缓存 key；`sys-core.AccessRuleIpsBySubSysAndTenantIdCache` 维度键 |
+| `subSystemCode` | `String?` | 子系统编码（同一门户下的逻辑分区，如 admin / ops / open） | `KudosContextRequestInterceptor` 透传 Feign 头 `_sub_sys_code`；`FeignContextWebFilter` 解出回写到 `context.subSystemCode`；`@HashCacheableBySecondary` SpEL `#subSystemCode` 拼缓存 key；`sys-core.AccessRuleIpsBySubSysAndTenantIdCache` 维度键 |
 | `microServiceCode` | `String?` | 微服务编码（部署单元粒度） | 预留 |
 | `atomicServiceCode` | `String?` | **原子服务编码**——本工程里 microservice 拆得更细的最小自治单元 | [`RetryConfig.pathFor`](src/io/kudos/context/retry/RetryConfig.kt) 失败数据子目录；`StreamProducerExceptionHandler` 失败落盘；`DistributedLockAspect` 锁 key 一部分 |
 | `tenantId` | `String?` | 租户 ID。null = 平台级；空白 = 视场景；具体值 = 业务租户 | Stream `StreamHeader.tenantId` 透传；Feign 头 `_tenant_id`；多租户路由；缓存维度键（sys/auth 模块大量用，详见 sys-core 的 "租户键归一化"） |

@@ -1,7 +1,7 @@
 package io.kudos.ms.auth.common.platform.api
 
 import io.kudos.ms.sys.common.resource.vo.response.MenuTreeNode
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.service.annotation.GetExchange
 
 
 /**
@@ -22,7 +22,7 @@ interface IPermittedResource {
      *
      * @return List of menu tree node objects.
      */
-    @GetMapping("/api/public/auth/permittedResource/getMenusForCurrentUser")
+    @GetExchange("/api/public/auth/permittedResource/getMenusForCurrentUser")
     fun getMenusForCurrentUser(): List<MenuTreeNode>
 
 }

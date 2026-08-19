@@ -1,19 +1,17 @@
 package io.kudos.ms.sys.client.microservice.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.microservice.proxy.ISysSubSystemMicroServiceProxy
-import org.springframework.stereotype.Component
 
 
 /**
- * SubSystem-Microservice relation Feign client fallback implementation.
+ * SubSystem-Microservice relation fallback implementation.
  *
  * @author K
  * @since 1.0.0
  */
-@Component
 open class SysSubSystemMicroServiceFallback :
-    AbstractFeignFallbackSupport("SysSubSystemMicroServiceFallback"), ISysSubSystemMicroServiceProxy {
+    AbstractHttpFallbackSupport("SysSubSystemMicroServiceFallback"), ISysSubSystemMicroServiceProxy {
 
     override fun getMicroServiceCodesBySubSystemCode(subSystemCode: String): Set<String> {
         warnRead("getMicroServiceCodesBySubSystemCode", subSystemCode)

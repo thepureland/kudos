@@ -1,19 +1,17 @@
 package io.kudos.ms.sys.client.accessrule.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.accessrule.proxy.ISysAccessRuleProxy
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleRow
-import org.springframework.stereotype.Component
 
 
 /**
- * Access rule Feign fallback implementation.
+ * Access rule fallback implementation.
  *
  * @author K
  * @since 1.0.0
  */
-@Component
-open class SysAccessRuleFallback : AbstractFeignFallbackSupport("SysAccessRuleFallback"), ISysAccessRuleProxy {
+open class SysAccessRuleFallback : AbstractHttpFallbackSupport("SysAccessRuleFallback"), ISysAccessRuleProxy {
 
     override fun getAccessRuleByTenantAndSystem(
         systemCode: String,

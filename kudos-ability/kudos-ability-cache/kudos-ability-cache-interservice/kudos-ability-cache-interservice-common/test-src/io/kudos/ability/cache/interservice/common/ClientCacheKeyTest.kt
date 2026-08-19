@@ -68,8 +68,8 @@ internal class ClientCacheKeyTest {
 
     @Test
     fun companionConstants_haveDocumentedValues() {
-        assertEquals("FEIGN-CACHE", ClientCacheKey.FEIGN_CACHE_PREFIX)
-        assertEquals("::", ClientCacheKey.FEIGN_CACHE_DELIMITER)
+        assertEquals("RPC-CACHE", ClientCacheKey.RPC_CACHE_PREFIX)
+        assertEquals("::", ClientCacheKey.RPC_CACHE_DELIMITER)
         assertEquals("cache-uid", ClientCacheKey.HEADER_KEY_CACHE_UID)
         assertEquals("cache-key", ClientCacheKey.HEADER_KEY_CACHE_KEY)
         assertEquals("cache-status", ClientCacheKey.HEADER_KEY_CACHE_STATUS)

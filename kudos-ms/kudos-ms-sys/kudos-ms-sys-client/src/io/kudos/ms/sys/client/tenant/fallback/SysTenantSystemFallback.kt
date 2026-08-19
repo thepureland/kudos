@@ -1,18 +1,16 @@
 package io.kudos.ms.sys.client.tenant.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.tenant.proxy.ISysTenantSystemProxy
-import org.springframework.stereotype.Component
 
 
 /**
- * Tenant-subsystem relationship Feign fallback implementation.
+ * Tenant-subsystem relationship fallback implementation.
  *
  * @author K
  * @since 1.0.0
  */
-@Component
-open class SysTenantSystemFallback : AbstractFeignFallbackSupport("SysTenantSystemFallback"), ISysTenantSystemProxy {
+open class SysTenantSystemFallback : AbstractHttpFallbackSupport("SysTenantSystemFallback"), ISysTenantSystemProxy {
 
     override fun searchSystemCodesByTenantId(tenantId: String): Set<String> {
         warnRead("searchSystemCodesByTenantId", tenantId)

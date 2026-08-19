@@ -2,8 +2,8 @@ package io.kudos.ms.user.common.account.api
 
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.service.annotation.GetExchange
+import org.springframework.web.service.annotation.PostExchange
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 
@@ -24,7 +24,7 @@ interface IUserAccountApi {
      * @param id user id
      * @return UserAccountCacheEntry, null if not found
      */
-    @GetMapping("/api/internal/user/account/getUserById")
+    @GetExchange("/api/internal/user/account/getUserById")
     fun getUserById(@RequestParam id: String): UserAccountCacheEntry?
 
     /**
@@ -33,7 +33,7 @@ interface IUserAccountApi {
      * @param ids user id collection
      * @return Map<user id, UserAccountCacheEntry>
      */
-    @PostMapping("/api/internal/user/account/getUsersByIds")
+    @PostExchange("/api/internal/user/account/getUsersByIds")
     fun getUsersByIds(@RequestBody ids: Collection<String>): Map<String, UserAccountCacheEntry>
 
     /**
@@ -43,7 +43,7 @@ interface IUserAccountApi {
      * @param username username
      * @return user ID, null if not found
      */
-    @GetMapping("/api/internal/user/account/getUserId")
+    @GetExchange("/api/internal/user/account/getUserId")
     fun getUserId(@RequestParam tenantId: String, @RequestParam username: String): String?
 
     /**
@@ -52,7 +52,7 @@ interface IUserAccountApi {
      * @param userId user ID
      * @return organization list; empty list if the user does not exist or has no organizations
      */
-    @GetMapping("/api/internal/user/account/getUserOrgs")
+    @GetExchange("/api/internal/user/account/getUserOrgs")
     fun getUserOrgs(@RequestParam userId: String): List<UserOrgCacheEntry>
 
     /**
@@ -62,7 +62,7 @@ interface IUserAccountApi {
      * @param orgId organization ID
      * @return true if the user belongs to the organization
      */
-    @GetMapping("/api/internal/user/account/isUserInOrg")
+    @GetExchange("/api/internal/user/account/isUserInOrg")
     fun isUserInOrg(@RequestParam userId: String, @RequestParam orgId: String): Boolean
 
     /**
@@ -71,7 +71,7 @@ interface IUserAccountApi {
      * @param tenantId tenant ID
      * @return user ID list
      */
-    @GetMapping("/api/internal/user/account/getUserIds")
+    @GetExchange("/api/internal/user/account/getUserIds")
     fun getUserIds(@RequestParam tenantId: String): List<String>
 
 

@@ -1,25 +1,24 @@
 package io.kudos.ability.cache.interservice.client
 
 import io.kudos.ability.cache.interservice.common.RequestResult
-import org.springframework.cloud.openfeign.FeignClient
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.service.annotation.GetExchange
 
 /**
- * Mock FeignClient proxy; bypasses the service registry and connects directly.
+ * Mock interface-client proxy; bypasses the service registry and connects directly (the group's
+ * base-url is a plain `http://localhost:13578`, set in the `client` test profile).
  *
  * @author K
  * @since  1.0.0
  */
-@FeignClient(name = "inter-service-test", url = "localhost:13578")
 interface IMockProxy {
 
-    @GetMapping("/same")
+    @GetExchange("/same")
     fun same(): RequestResult
 
-    @GetMapping("/different1")
+    @GetExchange("/different1")
     fun different1(): RequestResult
 
-    @GetMapping("/different2")
+    @GetExchange("/different2")
     fun different2(): RequestResult
 
 }

@@ -1,15 +1,14 @@
 package io.kudos.ms.auth.client.role.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.auth.client.role.proxy.IAuthRoleProxy
 import io.kudos.ms.auth.common.role.vo.AuthRoleCacheEntry
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
-import org.springframework.stereotype.Component
 
 
 /**
- * Feign fallback implementation for the role proxy.
+ * fallback implementation for the role proxy.
  *
  * **Security-relevant**: [hasResource] / [hasRole] / [hasRoleByCode] / [isUserHasResource]
  * always return `false` (deny) when the remote is unreachable. This is the secure default —
@@ -20,9 +19,8 @@ import org.springframework.stereotype.Component
  * @author AI: Cursor
  * @since 1.0.0
  */
-@Component
 open class AuthRoleFallback :
-    AbstractFeignFallbackSupport("AuthRoleFallback"), IAuthRoleProxy {
+    AbstractHttpFallbackSupport("AuthRoleFallback"), IAuthRoleProxy {
 
     override fun getRoleById(id: String): AuthRoleCacheEntry? {
         warnRead("getRoleById", id)

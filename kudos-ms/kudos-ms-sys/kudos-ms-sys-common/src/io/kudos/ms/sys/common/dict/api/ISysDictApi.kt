@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.dict.api
 
 import io.kudos.ms.sys.common.dict.vo.SysDictItemCacheEntry
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 
 
@@ -22,7 +22,7 @@ interface ISysDictApi {
     /**
      * Fetch the dictionary items for the given dict type and atomic service code (active items only).
      */
-    @GetMapping("/api/internal/sys/dict/getActiveDictItems")
+    @GetExchange("/api/internal/sys/dict/getActiveDictItems")
     fun getActiveDictItems(
         @RequestParam dictType: String,
         @RequestParam atomicServiceCode: String
@@ -31,7 +31,7 @@ interface ISysDictApi {
     /**
      * Fetch dictionary item codes and names for the given dict type and atomic service code (active items only).
      */
-    @GetMapping("/api/internal/sys/dict/getActiveDictItemMap")
+    @GetExchange("/api/internal/sys/dict/getActiveDictItemMap")
     fun getActiveDictItemMap(
         @RequestParam dictType: String,
         @RequestParam atomicServiceCode: String

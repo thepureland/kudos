@@ -1,6 +1,6 @@
 package io.kudos.ability.distributed.discovery.nacos.init.properties
 
-import io.kudos.ability.distributed.discovery.nacos.filter.FeignContextSignatureVerifier
+import io.kudos.ability.distributed.discovery.nacos.filter.InternalRpcContextSignatureVerifier
 import org.springframework.boot.web.servlet.FilterRegistrationBean
 
 /**
@@ -11,7 +11,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean
  * @since 1.0.0
  */
 class NacosDiscoveryProperties {
-    var feignContextFilter: FeignContextFilter = FeignContextFilter()
+    var rpcContextFilter: RpcContextFilter = RpcContextFilter()
 
     /**
      * Feign context filter configuration.
@@ -20,9 +20,9 @@ class NacosDiscoveryProperties {
      * @author AI: Codex
      * @since 1.0.0
      */
-    class FeignContextFilter {
+    class RpcContextFilter {
         /**
-         * Whether to allow requests without the FEIGN_REQUEST / NOTIFY_REQUEST marker to also
+         * Whether to allow requests without the RPC_REQUEST / NOTIFY_REQUEST marker to also
          * populate KudosContext from headers. Defaults to false to prevent external requests from
          * forging context; may be enabled explicitly for development/debugging.
          */
@@ -42,14 +42,14 @@ class NacosDiscoveryProperties {
          * Also used as the TTL of the nonce replay cache. Default: 5 minutes.
          */
         var contextSignatureTimestampWindowMillis: Long =
-            FeignContextSignatureVerifier.DEFAULT_TIMESTAMP_WINDOW_MILLIS
+            InternalRpcContextSignatureVerifier.DEFAULT_TIMESTAMP_WINDOW_MILLIS
 
         /**
          * Upper bound of the in-process seen-nonce cache, protecting against memory growth under
          * high request rates. Oldest entries are evicted first when the cap is reached.
          */
         var contextSignatureNonceCacheMaxSize: Int =
-            FeignContextSignatureVerifier.DEFAULT_NONCE_CACHE_MAX_SIZE
+            InternalRpcContextSignatureVerifier.DEFAULT_NONCE_CACHE_MAX_SIZE
     }
 
     companion object {

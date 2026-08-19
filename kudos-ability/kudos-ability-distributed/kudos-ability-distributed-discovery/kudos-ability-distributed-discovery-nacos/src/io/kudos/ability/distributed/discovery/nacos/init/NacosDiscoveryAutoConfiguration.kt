@@ -1,7 +1,7 @@
 package io.kudos.ability.distributed.discovery.nacos.init
 
-import io.kudos.ability.distributed.discovery.nacos.filter.FeignContextSignatureVerifier
-import io.kudos.ability.distributed.discovery.nacos.filter.FeignContextWebFilter
+import io.kudos.ability.distributed.discovery.nacos.filter.InternalRpcContextSignatureVerifier
+import io.kudos.ability.distributed.discovery.nacos.filter.InternalRpcContextWebFilter
 import io.kudos.ability.distributed.discovery.nacos.init.properties.NacosDiscoveryProperties
 import io.kudos.context.init.ContextAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
@@ -22,24 +22,24 @@ import org.springframework.context.annotation.Configuration
  *
  *  1. Via [getComponentName] hooks this module into the kudos-custom SPI dispatcher
  *     `ComponentInitializerSelector`.
- *  2. Registers [FeignContextWebFilter] — the sole entry point that **writes headers propagated
+ *  2. Registers [InternalRpcContextWebFilter] — the sole entry point that **writes headers propagated
  *     by Feign clients (`TENANT_ID` / `TRACE_KEY` / `DATASOURCE_ID` etc.) back into the
  *     `KudosContext` on the provider side**.
  *
  * Filter registration details:
  *  - Only assembled when `FilterRegistrationBean` is available ([ConditionalOnClass]); does not
  *    affect non-servlet applications.
- *  - Kill switch `kudos.ability.distributed.discovery.nacos.feign-context-filter.enabled=false`
+ *  - Kill switch `kudos.ability.distributed.discovery.nacos.rpc-context-filter.enabled=false`
  *    for dev debugging or transitional scenarios that integrate non-kudos clients.
  *  - Order set as early as possible ([FilterRegistrationBean.HIGHEST_PRECEDENCE] + 1) — the
  *    context must be ready before business filters / interceptors, otherwise downstream code
  *    sees an empty `KudosContextHolder`.
  *  - urlPatterns covers all paths (`/&#42;`) — the filter internally uses explicit
- *    `FEIGN_REQUEST` / `NOTIFY_REQUEST` markers to block regular browser / curl requests, so no
+ *    `RPC_REQUEST` / `NOTIFY_REQUEST` markers to block regular browser / curl requests, so no
  *    path whitelisting is needed at the registration layer.
- *  - When `kudos.ability.distributed.discovery.nacos.feign-context-filter.context-signature-secret`
+ *  - When `kudos.ability.distributed.discovery.nacos.rpc-context-filter.context-signature-secret`
  *    is configured (same value as the client's `contextSignatureSecret`), a
- *    [io.kudos.ability.distributed.discovery.nacos.filter.FeignContextSignatureVerifier] is wired
+ *    [io.kudos.ability.distributed.discovery.nacos.filter.InternalRpcContextSignatureVerifier] is wired
  *    into the filter so context headers are only trusted after HMAC + timestamp window + nonce
  *    replay verification.
  *
@@ -56,33 +56,33 @@ open class NacosDiscoveryAutoConfiguration : IComponentInitializer {
     @Bean
     @ConditionalOnClass(FilterRegistrationBean::class)
     @ConditionalOnProperty(
-        prefix = "kudos.ability.distributed.discovery.nacos.feign-context-filter",
+        prefix = "kudos.ability.distributed.discovery.nacos.rpc-context-filter",
         name = ["enabled"],
         havingValue = "true",
         matchIfMissing = true
     )
-    open fun feignContextWebFilterRegistration(
+    open fun internalRpcContextWebFilterRegistration(
         properties: NacosDiscoveryProperties = NacosDiscoveryProperties()
-    ): FilterRegistrationBean<FeignContextWebFilter> {
-        val filterProperties = properties.feignContextFilter
+    ): FilterRegistrationBean<InternalRpcContextWebFilter> {
+        val filterProperties = properties.rpcContextFilter
         // Verifier is only built when the provider configures the shared HMAC secret; otherwise the
         // filter keeps the legacy unauthenticated behavior (and logs a one-time WARN).
         val signatureVerifier = filterProperties.contextSignatureSecret
             ?.takeIf { it.isNotBlank() }
             ?.let {
-                FeignContextSignatureVerifier(
+                InternalRpcContextSignatureVerifier(
                     secret = it,
                     timestampWindowMillis = filterProperties.contextSignatureTimestampWindowMillis,
                     nonceCacheMaxSize = filterProperties.contextSignatureNonceCacheMaxSize
                 )
             }
-        val registration = FilterRegistrationBean<FeignContextWebFilter>()
+        val registration = FilterRegistrationBean<InternalRpcContextWebFilter>()
         registration.setFilter(
-            FeignContextWebFilter(filterProperties.allowUnmarkedContextHeaders, signatureVerifier)
+            InternalRpcContextWebFilter(filterProperties.allowUnmarkedContextHeaders, signatureVerifier)
         )
         registration.addUrlPatterns("/*")
         registration.order = NacosDiscoveryProperties.FILTER_ORDER
-        registration.setName("feignContextWebFilter")
+        registration.setName("internalRpcContextWebFilter")
         return registration
     }
 

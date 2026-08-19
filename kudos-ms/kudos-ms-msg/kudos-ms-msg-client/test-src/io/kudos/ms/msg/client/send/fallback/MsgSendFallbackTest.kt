@@ -32,7 +32,7 @@ internal class MsgSendFallbackTest {
 
     @Test
     fun publish_returnsNull_withCause() {
-        assertNull(MsgSendFallback(RuntimeException("remote down")).publish(request))
+        assertNull(MsgSendFallback().publish(RuntimeException("remote down"), request))
     }
 
     @Test

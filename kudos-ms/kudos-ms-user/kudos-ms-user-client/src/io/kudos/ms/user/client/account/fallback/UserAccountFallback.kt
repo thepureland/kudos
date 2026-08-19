@@ -1,22 +1,20 @@
 package io.kudos.ms.user.client.account.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.user.client.account.proxy.IUserAccountProxy
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
-import org.springframework.stereotype.Component
 
 
 /**
- * User account Feign fallback.
+ * User account fallback.
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
-@Component
 open class UserAccountFallback :
-    AbstractFeignFallbackSupport("UserAccountFallback"), IUserAccountProxy {
+    AbstractHttpFallbackSupport("UserAccountFallback"), IUserAccountProxy {
 
     override fun getUserById(id: String): UserAccountCacheEntry? {
         warnRead("getUserById", id)

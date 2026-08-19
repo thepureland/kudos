@@ -198,7 +198,7 @@ internal class WebContextInitFilterTest {
 
     /**
      * The internal Feign header must keep working untouched: `GlobalHeaderRequestInterceptor` sets it on every
-     * outgoing service-to-service call and `FeignContextSignatureVerifier` folds it into the request signature,
+     * outgoing service-to-service call and `InternalRpcContextSignatureVerifier` folds it into the request signature,
      * so every existing internal call has to resolve exactly as it did before.
      */
     @Test

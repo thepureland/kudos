@@ -10,9 +10,9 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.cache.Cache
 
 /**
- * Feign inter-service cache helper (client side).
+ * Inter-service negotiation cache helper (client side).
  *
- * Caches Feign responses locally (default TTL 600s) when invoking remote services, reducing cross-service
+  * Caches remote responses locally (default TTL 600s) when invoking remote services, reducing cross-service
  * call frequency. Silently disables itself when no local cache manager is available — avoiding startup
  * failures in downstream applications that have not pulled in caffeine/redis.
  *
@@ -44,7 +44,7 @@ open class ClientCacheHelper(
     fun havaLocalCache(): Boolean = hasLocalCache()
 
     /**
-     * Initializes the Feign cache region after the Spring container is assembled.
+     * Initializes the negotiation cache region after the Spring container is assembled.
      *
      * - Sets `ignoreVersion = true`: inter-service caches do not participate in version prefixing,
      *   avoiding key misses caused by upstream/downstream version drift.
@@ -61,8 +61,8 @@ open class ClientCacheHelper(
             log.info("No local cache implementation found; feature disabled...")
             return
         }
-        log.info("Initializing Feign cache region...")
-        val cacheName = ClientCacheKey.FEIGN_CACHE_PREFIX
+        log.info("Initializing inter-service negotiation cache region...")
+        val cacheName = ClientCacheKey.RPC_CACHE_PREFIX
         require(properties.ttlSeconds > 0) {
             "kudos.ability.cache.interservice.client.ttl-seconds must be greater than 0"
         }
@@ -73,7 +73,7 @@ open class ClientCacheHelper(
         }
         requireNotNull(cacheManager) { "localCacheManager not available" }
             .initCacheAfterSystemInit(mapOf(cacheName to cacheConfig))
-        log.debug("Feign cache region {0} initialized", ClientCacheKey.FEIGN_CACHE_PREFIX)
+        log.debug("Negotiation cache region {0} initialized", ClientCacheKey.RPC_CACHE_PREFIX)
     }
 
     /**
@@ -84,17 +84,17 @@ open class ClientCacheHelper(
      */
     open fun loadFromLocalCache(cacheKey: String): ClientCacheItem? {
         // Consider switching to CacheKit.
-        val value = feignCache().get(cacheKey)?.get()
+        val value = rpcCache().get(cacheKey)?.get()
         return when (value) {
             null -> null
             is ClientCacheItem -> value
             else -> {
                 log.warn(
-                    "Feign cache item type mismatch, evict local entry. key={0}, actualType={1}",
+                    "Negotiation cache item type mismatch, evict local entry. key={0}, actualType={1}",
                     cacheKey,
                     value::class.java.name
                 )
-                feignCache().evict(cacheKey)
+                rpcCache().evict(cacheKey)
                 null
             }
         }
@@ -108,22 +108,22 @@ open class ClientCacheHelper(
      */
     open fun writeToLocalCache(cacheKey: String, data: ClientCacheItem?) {
         // Consider switching to CacheKit.
-        feignCache().put(cacheKey, data)
+        rpcCache().put(cacheKey, data)
     }
 
     /**
-     * Returns the Feign-dedicated cache region.
+     * Returns the negotiation cache region.
      * Fails fast if the cache manager or region is uninitialized, avoiding hard-to-trace NPEs downstream.
      *
-     * @return the Feign cache region
+     * @return the negotiation cache region
      * @throws IllegalStateException when the cache is uninitialized
      * @author K
      * @since 1.0.0
      */
-    private fun feignCache(): Cache {
+    private fun rpcCache(): Cache {
         val mgr = cacheManager ?: error("localCacheManager not available")
-        return mgr.getCache(ClientCacheKey.FEIGN_CACHE_PREFIX)
-            ?: error("Feign cache region ${ClientCacheKey.FEIGN_CACHE_PREFIX} not initialized")
+        return mgr.getCache(ClientCacheKey.RPC_CACHE_PREFIX)
+            ?: error("Negotiation cache region ${ClientCacheKey.RPC_CACHE_PREFIX} not initialized")
     }
 
     /** Logger. */

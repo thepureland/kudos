@@ -1,26 +1,26 @@
 # kudos-ability-cache-interservice-provider
 
 跨服务缓存协作的 **provider 端**（被调用方）模块。被 `kudos-ability-cache-interservice-client`
-通过 Feign 调用时，告诉 client 端"本次响应是否与你本地缓存的 UID 一致"，从而决定 client
+被跨服务调用时，告诉 client 端"本次响应是否与你本地缓存的 UID 一致"，从而决定 client
 端用本地副本还是用 body。
 
 ## 设计要点
 
-### 协议契约（与 client 的 Feign Interceptor 配合）
+### 协议契约（与 client 的 `HttpCacheNegotiationInterceptor` 配合）
 
 | 步骤 | 模块 | 类 |
 |---|---|---|
-| ① client 把本地缓存 UID 写入 `cache-uid` 请求头 | `kudos-ability-cache-interservice-client` | `FeignCacheRequestInterceptor` |
+| ① client 把本地缓存 UID 写入 `cache-uid` 请求头 | `kudos-ability-cache-interservice-client` | `HttpCacheNegotiationInterceptor`（请求侧） |
 | ② provider 端 servlet filter 把请求包成 `CacheClientRequest`（携带 response 引用） | 本模块 | `ClientCacheWebFilter` |
 | ③ provider Controller 方法标了 `@ClientCacheable`，Aspect 拦下 | 本模块 | `ClientCacheableAspect` |
 | ④ Aspect 算响应 UID = `MD5(<FQN>#<JSON>)`、写回响应头 `cache-uid` / `cache-status` | 本模块 | `ClientCacheableAspect` |
-| ⑤ client 端 Feign Decoder 看 `cache-status`：`304` → 用本地缓存；`200` → decode + 写本地缓存 | `kudos-ability-cache-interservice-client` | `FeignCacheResponseInterceptor` |
+| ⑤ client 端看 `cache-status`：`304` → 回放本地缓存字节；`200` → 缓存字节 + content type | `kudos-ability-cache-interservice-client` | `HttpCacheNegotiationInterceptor`（响应侧） |
 
 ### `ClientCacheableAspect` 的两条短路
 
 - **目标类不是 `@RestController` / `@Controller`** → 直接 `IllegalArgumentException`，**编译期**
   没法强制，所以放运行时校验
-- **当前请求不是 `CacheClientRequest`**（即非 Feign 调用、普通浏览器 / curl）→ 直接返回原结果，
+- **当前请求不是 `CacheClientRequest`**（即非内部服务调用、普通浏览器 / curl）→ 直接返回原结果，
   不写响应头——避免给 ETag-like 头污染外部直接调用 provider 接口的场景
 
 ### Aspect 顺序：`@Order(100)`
@@ -82,7 +82,7 @@ kudos:
 
 `InterServiceCacheTest` 在 provider test-src 启动一对 SpringApplication：
 - `MockMsApplication`（profile `ms`）暴露 `/same` / `/different1` / `/different2` 三条 endpoint
-- 主测试进程（profile `client`）持 Feign client `IMockProxy` 调用前者
+- 主测试进程（profile `client`）持 interface client `IMockProxy` 调用前者
 
 | 用例 | 校验 |
 |---|---|
@@ -102,7 +102,7 @@ api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice
 compileOnly(libs.spring.boot.starter.web)
 
 testImplementation(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-interservice:kudos-ability-cache-interservice-client"))
-testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign"))
+testImplementation(project(":kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-http"))
 testImplementation(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-local:kudos-ability-cache-local-caffeine"))
 testImplementation(project(":kudos-test:kudos-test-container"))
 testImplementation(libs.spring.boot.starter.web)

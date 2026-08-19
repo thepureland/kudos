@@ -2,6 +2,7 @@ package io.kudos.ability.distributed.stream.kafka
 
 import com.github.dockerjava.api.model.Container
 import io.kudos.ability.distributed.stream.kafka.main.IKafkaMainService
+import io.kudos.ability.distributed.stream.kafka.main.IKafkaProducerClient
 import io.kudos.ability.distributed.stream.kafka.main.KafkaConsumerHandler
 import io.kudos.ability.distributed.stream.kafka.main.KafkaMainService
 import io.kudos.ability.distributed.stream.kafka.producer.KafkaProducerApplication
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
-import org.springframework.cloud.openfeign.EnableFeignClients
+import org.springframework.web.service.registry.ImportHttpServices
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -31,8 +32,8 @@ import kotlin.test.Test
  * @author K
  * @since 1.0.0
  */
-@EnableKudosTest
-@EnableFeignClients
+@EnableKudosTest(properties = ["spring.http.serviceclient.kafkaproducer.base-url=http://localhost:53322"])
+@ImportHttpServices(group = "kafkaproducer", types = [IKafkaProducerClient::class])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledIfDockerInstalled
 @Import(KafkaConsumerHandler::class, KafkaMainService::class)

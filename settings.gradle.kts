@@ -64,7 +64,7 @@ include("kudos-ability:kudos-ability-data:kudos-ability-data-docdb:kudos-ability
 include("kudos-ability:kudos-ability-data:kudos-ability-data-tsdb:kudos-ability-data-tsdb-influxdb")
 
 // distributed
-include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-feign")
+include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-client:kudos-ability-distributed-client-http")
 include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-config:kudos-ability-distributed-config-nacos")
 include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-discovery:kudos-ability-distributed-discovery-nacos")
 include("kudos-ability:kudos-ability-distributed:kudos-ability-distributed-lock:kudos-ability-distributed-lock-common")

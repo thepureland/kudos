@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.param.api
 
 import io.kudos.ms.sys.common.param.vo.SysParamCacheEntry
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 
 
@@ -23,7 +23,7 @@ interface ISysParamApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/sys/param/getParam")
+    @GetExchange("/api/internal/sys/param/getParam")
     fun getParam(
         @RequestParam paramName: String,
         @RequestParam(required = false, defaultValue = "default") atomicServiceCode: String = "default"

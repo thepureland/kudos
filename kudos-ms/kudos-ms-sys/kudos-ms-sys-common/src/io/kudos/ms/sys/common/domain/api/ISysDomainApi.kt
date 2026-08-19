@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.domain.api
 
 import io.kudos.ms.sys.common.domain.vo.SysDomainCacheEntry
-import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 
 
@@ -22,7 +22,7 @@ interface ISysDomainApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/sys/domain/getDomainByName")
+    @GetExchange("/api/internal/sys/domain/getDomainByName")
     fun getDomainByName(@RequestParam domainName: String): SysDomainCacheEntry?
 
 

@@ -48,7 +48,7 @@ class ClientCacheItem : Serializable {
         private const val serialVersionUID = 1112894179070136297L
 
         /**
-         * Generates a uuid from an object, used as the content fingerprint of an inter-service Feign response
+         * Generates a uuid from an object, used as the content fingerprint of an inter-service response
          * (the client uses it to decide whether to reuse its local cache).
          *
          * Stability contract:
@@ -87,8 +87,8 @@ class ClientCacheItem : Serializable {
                     "stale copy is current. Check for accessors that throw (uninitialised lateinit, lazy proxies)."
             }
             val fingerprint = obj::class.java.name + "#" + json
-            val md5 = DigestKit.getMD5(fingerprint.toByteArray(), "feignCache")
-            return requireNotNull(md5) { "feignCache MD5 result is empty" }
+            val md5 = DigestKit.getMD5(fingerprint.toByteArray(), "rpcCache")
+            return requireNotNull(md5) { "rpcCache MD5 result is empty" }
         }
 
         /**

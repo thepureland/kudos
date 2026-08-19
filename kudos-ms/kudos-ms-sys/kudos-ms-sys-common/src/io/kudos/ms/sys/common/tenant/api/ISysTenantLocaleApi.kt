@@ -1,7 +1,7 @@
 package io.kudos.ms.sys.common.tenant.api
 
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.service.annotation.GetExchange
+import org.springframework.web.service.annotation.PostExchange
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 
@@ -15,19 +15,19 @@ import org.springframework.web.bind.annotation.RequestParam
 interface ISysTenantLocaleApi {
 
 
-    @GetMapping("/api/internal/sys/tenantLocale/getLocaleCodesByTenantId")
+    @GetExchange("/api/internal/sys/tenantLocale/getLocaleCodesByTenantId")
     fun getLocaleCodesByTenantId(@RequestParam tenantId: String): Set<String>
 
-    @GetMapping("/api/internal/sys/tenantLocale/getTenantIdsByLocaleCode")
+    @GetExchange("/api/internal/sys/tenantLocale/getTenantIdsByLocaleCode")
     fun getTenantIdsByLocaleCode(@RequestParam localeCode: String): Set<String>
 
-    @PostMapping("/api/internal/sys/tenantLocale/batchBind")
+    @PostExchange("/api/internal/sys/tenantLocale/batchBind")
     fun batchBind(@RequestParam tenantId: String, @RequestBody localeCodes: Collection<String>): Int
 
-    @PostMapping("/api/internal/sys/tenantLocale/unbind")
+    @PostExchange("/api/internal/sys/tenantLocale/unbind")
     fun unbind(@RequestParam tenantId: String, @RequestParam localeCode: String): Boolean
 
-    @GetMapping("/api/internal/sys/tenantLocale/exists")
+    @GetExchange("/api/internal/sys/tenantLocale/exists")
     fun exists(@RequestParam tenantId: String, @RequestParam localeCode: String): Boolean
 
 

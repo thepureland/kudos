@@ -23,32 +23,32 @@ class ClientCacheKey : Serializable {
     }
 
     override fun toString(): String {
-        return this.url + FEIGN_CACHE_DELIMITER + method + FEIGN_CACHE_DELIMITER + this.param
+        return this.url + RPC_CACHE_DELIMITER + method + RPC_CACHE_DELIMITER + this.param
     }
 
     companion object {
         @Serial
         private const val serialVersionUID: Long = -5550889928680327059L
 
-        // primary key for feign cache
-        const val FEIGN_CACHE_PREFIX: String = "FEIGN-CACHE"
+        // 本地协商缓存的 region 名
+        const val RPC_CACHE_PREFIX: String = "RPC-CACHE"
 
-        // feign cache delimiter
-        const val FEIGN_CACHE_DELIMITER: String = "::"
+        // 缓存 key 各段之间的分隔符
+        const val RPC_CACHE_DELIMITER: String = "::"
 
-        // feign request header: uid value
+        // 请求头：本地副本的内容指纹
         const val HEADER_KEY_CACHE_UID: String = "cache-uid"
 
-        // feign request header: cache key of the current request's local cache
+        // 请求头：本次请求的客户端本地缓存 key
         const val HEADER_KEY_CACHE_KEY: String = "cache-key"
 
-        // feign response header: status field
+        // 响应头：协商结果
         const val HEADER_KEY_CACHE_STATUS: String = "cache-status"
 
-        // feign response status: tells the client to use the cached data
+        // 协商结果：让客户端用本地缓存
         const val STATUS_USE_CACHE: String = "304"
 
-        // feign response status: tells the client to use the returned data and cache it locally
+        // 协商结果：让客户端用返回的数据并写入本地缓存
         const val STATUS_DO_CACHE: String = "200"
     }
 }

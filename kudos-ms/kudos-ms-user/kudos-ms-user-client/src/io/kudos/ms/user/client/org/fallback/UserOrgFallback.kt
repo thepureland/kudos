@@ -1,22 +1,20 @@
 package io.kudos.ms.user.client.org.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.user.client.org.proxy.IUserOrgProxy
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
-import org.springframework.stereotype.Component
 
 
 /**
- * Organization Feign fallback.
+ * Organization fallback.
  *
  * @author K
  * @author AI: Cursor
  * @since 1.0.0
  */
-@Component
 open class UserOrgFallback :
-    AbstractFeignFallbackSupport("UserOrgFallback"), IUserOrgProxy {
+    AbstractHttpFallbackSupport("UserOrgFallback"), IUserOrgProxy {
 
     override fun getOrgById(id: String): UserOrgCacheEntry? {
         warnRead("getOrgById", id)

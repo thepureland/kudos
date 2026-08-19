@@ -8,7 +8,7 @@ import kotlin.test.assertTrue
  * Unit tests for [UserAccountThirdFallback].
  *
  * The third-party account proxy currently exposes no methods; the fallback is kept only as a
- * valid `@FeignClient(fallback=...)` target. This test asserts it instantiates and is wired into
+ * valid `@HttpServiceFallback` target. This test asserts it instantiates and is wired into
  * the expected proxy type hierarchy.
  *
  * @author K

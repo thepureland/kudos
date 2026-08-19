@@ -3,8 +3,8 @@ package io.kudos.ms.auth.common.role.api
 import io.kudos.ms.auth.common.role.vo.AuthRoleCacheEntry
 import io.kudos.ms.sys.common.resource.vo.SysResourceCacheEntry
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.service.annotation.GetExchange
+import org.springframework.web.service.annotation.PostExchange
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 
@@ -27,7 +27,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/getRoleById")
+    @GetExchange("/api/internal/auth/role/getRoleById")
     fun getRoleById(@RequestParam id: String): AuthRoleCacheEntry?
 
     /**
@@ -39,7 +39,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @PostMapping("/api/internal/auth/role/getRolesByIds")
+    @PostExchange("/api/internal/auth/role/getRolesByIds")
     fun getRolesByIds(@RequestBody ids: Collection<String>): Map<String, AuthRoleCacheEntry>
 
     /**
@@ -52,7 +52,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/getRoleId")
+    @GetExchange("/api/internal/auth/role/getRoleId")
     fun getRoleId(@RequestParam tenantId: String, @RequestParam code: String): String?
 
     /**
@@ -63,7 +63,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/getRoleUsers")
+    @GetExchange("/api/internal/auth/role/getRoleUsers")
     fun getRoleUsers(@RequestParam roleId: String): List<UserAccountCacheEntry>
 
     /**
@@ -75,7 +75,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/getUserIdsByRoleCode")
+    @GetExchange("/api/internal/auth/role/getUserIdsByRoleCode")
     fun getUserIdsByRoleCode(@RequestParam tenantId: String, @RequestParam roleCode: String): List<String>
 
     /**
@@ -86,7 +86,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/getRoleResources")
+    @GetExchange("/api/internal/auth/role/getRoleResources")
     fun getRoleResources(@RequestParam roleId: String): List<SysResourceCacheEntry>
 
     /**
@@ -98,7 +98,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/hasResource")
+    @GetExchange("/api/internal/auth/role/hasResource")
     fun hasResource(@RequestParam roleId: String, @RequestParam resourceId: String): Boolean
 
     /**
@@ -110,7 +110,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/getRoleIds")
+    @GetExchange("/api/internal/auth/role/getRoleIds")
     fun getRoleIds(@RequestParam tenantId: String): List<String>
 
     /**
@@ -122,7 +122,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/getResources")
+    @GetExchange("/api/internal/auth/role/getResources")
     fun getResources(@RequestParam userId: String): List<SysResourceCacheEntry>
 
     /**
@@ -133,7 +133,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/getUserRoles")
+    @GetExchange("/api/internal/auth/role/getUserRoles")
     fun getUserRoles(@RequestParam userId: String): List<AuthRoleCacheEntry>
 
     /**
@@ -145,7 +145,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/hasRole")
+    @GetExchange("/api/internal/auth/role/hasRole")
     fun hasRole(@RequestParam userId: String, @RequestParam roleId: String): Boolean
 
     /**
@@ -158,7 +158,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/hasRoleByCode")
+    @GetExchange("/api/internal/auth/role/hasRoleByCode")
     fun hasRoleByCode(
         @RequestParam userId: String,
         @RequestParam tenantId: String,
@@ -174,7 +174,7 @@ interface IAuthRoleApi {
      * @author K
      * @since 1.0.0
      */
-    @GetMapping("/api/internal/auth/role/isUserHasResource")
+    @GetExchange("/api/internal/auth/role/isUserHasResource")
     fun isUserHasResource(@RequestParam userId: String, @RequestParam resourceId: String): Boolean
 
 

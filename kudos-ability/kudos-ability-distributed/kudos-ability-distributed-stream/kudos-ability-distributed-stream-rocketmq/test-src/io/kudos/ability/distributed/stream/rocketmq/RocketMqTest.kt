@@ -1,6 +1,7 @@
 package io.kudos.ability.distributed.stream.rocketmq
 
 import io.kudos.ability.distributed.stream.rocketmq.main.IRocketMqMainService
+import io.kudos.ability.distributed.stream.rocketmq.main.IRocketMqProducerClient
 import io.kudos.ability.distributed.stream.rocketmq.main.RocketMqConsumerHandler
 import io.kudos.ability.distributed.stream.rocketmq.main.RocketMqMainService
 import io.kudos.ability.distributed.stream.rocketmq.producer.RocketMqProducerApplication
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringApplication
-import org.springframework.cloud.openfeign.EnableFeignClients
+import org.springframework.web.service.registry.ImportHttpServices
 import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -30,8 +31,8 @@ import kotlin.test.Test
  * @author K
  * @since 1.0.0
  */
-@EnableKudosTest
-@EnableFeignClients
+@EnableKudosTest(properties = ["spring.http.serviceclient.rocketproducer.base-url=http://localhost:13542"])
+@ImportHttpServices(group = "rocketproducer", types = [IRocketMqProducerClient::class])
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @EnabledIfDockerInstalled
 @Import(RocketMqConsumerHandler::class, RocketMqMainService::class)

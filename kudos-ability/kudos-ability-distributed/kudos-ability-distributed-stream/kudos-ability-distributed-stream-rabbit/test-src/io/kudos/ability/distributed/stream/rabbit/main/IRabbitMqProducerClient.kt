@@ -1,20 +1,18 @@
 package io.kudos.ability.distributed.stream.rabbit.main
 
-import org.springframework.cloud.openfeign.FeignClient
-import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.service.annotation.GetExchange
 import org.springframework.web.bind.annotation.RequestParam
 
 /**
- * RabbitMQ producer Feign client.
+ * RabbitMQ producer client (interface client; target set by the test via spring.http.serviceclient).
  *
  * @author shane
  * @author K
  * @since 1.0.0
  */
-@FeignClient(name = "rabbit-ms-p", url = "localhost:53122")
 interface IRabbitMqProducerClient {
 
-    @RequestMapping("/producer/send")
+    @GetExchange("/producer/send")
     fun send(@RequestParam("message") message: String?)
 
 }

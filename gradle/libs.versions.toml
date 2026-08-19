@@ -168,7 +168,13 @@ flyway-core = { module = "org.flywaydb:flyway-core"}
 # Version is aligned by the spring-boot BOM.
 flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql"}
 spring-cloud-loadbalancer = { module = "org.springframework.cloud:spring-cloud-loadbalancer"}
-spring-cloud-starter-openfeign = { module = "org.springframework.cloud:spring-cloud-starter-openfeign"}
+# Spring Boot 4 内置声明式 HTTP 客户端（interface clients）的自动装配：RestClient 版
+# HttpServiceProxyFactory + HttpServiceClientAutoConfiguration。
+# 全仓已于 2026-08-19 从 OpenFeign 迁移到这里，spring-cloud-starter-openfeign 坐标随之删除。
+spring-boot-restclient = { module = "org.springframework.boot:spring-boot-restclient"}
+# @HttpServiceFallback 由 CommonsClientAutoConfiguration 的 CircuitBreakerInterfaceClientsAutoConfiguration 装配，
+# 而后者 @ConditionalOnBean(CircuitBreakerFactory)——没有这个 starter 提供实现，降级会静默失效。
+spring-cloud-starter-circuitbreaker-resilience4j = { module = "org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j"}
 spring-cloud-stream = { module = "org.springframework.cloud:spring-cloud-stream"}
 spring-cloud-starter-stream-kafka = { module = "org.springframework.cloud:spring-cloud-starter-stream-kafka"}
 spring-cloud-starter-stream-rabbit = { module = "org.springframework.cloud:spring-cloud-starter-stream-rabbit"}

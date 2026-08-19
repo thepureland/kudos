@@ -5,7 +5,7 @@ spring-cloud-alibaba 的 `alibaba.cloud.nacos.discovery` starter；本模块补�
 
 1. **Zone-aware 负载均衡**：`HintZoneServiceInstanceListSupplier` 让 client 通过请求头 hint
    选目标服务实例所在 zone
-2. **Provider 端上下文反向适配**（`FeignContextWebFilter`）：把 Feign client 透传过来的
+2. **Provider 端上下文反向适配**（`FeignContextWebFilter`）：把上游客户端透传过来的
    `TENANT_ID` / `TRACE_KEY` / `DATASOURCE_ID` 等 header **写回 provider 进程的 `KudosContext`**——
    已在 `NacosDiscoveryAutoConfiguration` 中注册为 `FilterRegistrationBean`，默认开启
 3. **Provider 端扩展 SPI**（`IFeignProviderContextProcess`）：业务侧可注册自定义 processor
@@ -17,7 +17,7 @@ spring-cloud-alibaba 的 `alibaba.cloud.nacos.discovery` starter；本模块补�
 
 | 步骤 | 模块 | 类 |
 |---|---|---|
-| ① client 把 KudosContext 写到 Feign 请求头 | `kudos-ability-distributed-client-feign` | `GlobalHeaderRequestInterceptor` |
+| ① client 把 KudosContext 写到出站请求头 | `kudos-ability-distributed-client-http` | `KudosContextRequestInterceptor` |
 | ② client 走 Spring Cloud LoadBalancer 选实例（可按 hint zone） | 本模块 | `HintZoneServiceInstanceListSupplier` |
 | ③ 网络传输 | — | — |
 | ④ provider 端 web filter 把 header 写回 KudosContext | 本模块 | `FeignContextWebFilter` ✅ 已注册 |
@@ -56,7 +56,7 @@ if (!isFeign && !isNotify) {
 
 普通浏览器 / curl 请求不带这两个 header，filter 不会修改其上下文——避免外部不可信请求
 "伪造租户 ID"等头来污染服务端状态。**这要求 client 端必须显式打这两个标记 header 之一**——
-`GlobalHeaderRequestInterceptor` 已经强制写 `FEIGN_REQUEST=true`。
+`KudosContextRequestInterceptor` 已经强制写 `FEIGN_REQUEST=true`。
 
 开发期如需用 Postman / curl 手动透传上下文，可显式打开：
 
@@ -66,7 +66,7 @@ kudos:
     distributed:
       discovery:
         nacos:
-          feign-context-filter:
+          rpc-context-filter:
             allow-unmarked-context-headers: true
 ```
 
@@ -83,7 +83,7 @@ kudos:
     distributed:
       discovery:
         nacos:
-          feign-context-filter:
+          rpc-context-filter:
             context-signature-secret: ${KUDOS_CONTEXT_SIGNATURE_SECRET}   # 与 client 的 contextSignatureSecret 同值
             context-signature-timestamp-window-millis: 300000             # 可选，默认 ±5 分钟
             context-signature-nonce-cache-max-size: 100000                # 可选，nonce 缓存上限
@@ -153,7 +153,7 @@ Nacos 端到端测试仍只验证 discovery 客户端可用；filter / zone 逻�
 - ✅ **`FeignContextWebFilter` 已通过 `NacosDiscoveryAutoConfiguration` 注册为
   `FilterRegistrationBean`**，order 为 `HIGHEST_PRECEDENCE+1`、urlPatterns `/*`、
   受 `@ConditionalOnClass(FilterRegistrationBean::class)` 保护以兼容非 servlet 应用；
-  可用 `kudos.ability.distributed.discovery.nacos.feign-context-filter.enabled=false`
+  可用 `kudos.ability.distributed.discovery.nacos.rpc-context-filter.enabled=false`
   关闭。Filter 本体在请求头无 `FEIGN_REQUEST` / `NOTIFY_REQUEST` 标记时不修改上下文，
   对普通浏览器请求安全
 - ℹ️ `NacosDiscoveryAutoConfiguration` 除 kudos 自有 filter / properties 外不装配 Nacos
@@ -165,7 +165,7 @@ Nacos 端到端测试仍只验证 discovery 客户端可用；filter / zone 逻�
   `kudos.ability.distributed.discovery.nacos.loadbalancer.service-instance-supplier-order`；
   不配置时 blocking / reactive 默认值仍分别保持与 NacosLoadBalancerClientConfiguration 一致
 - ✅ `FeignContextWebFilter` 已支持开发期调试开关
-  `kudos.ability.distributed.discovery.nacos.feign-context-filter.allow-unmarked-context-headers=true`；
+  `kudos.ability.distributed.discovery.nacos.rpc-context-filter.allow-unmarked-context-headers=true`；
   默认关闭，生产仍要求 `FEIGN_REQUEST` / `NOTIFY_REQUEST` 显式标记以避免外部请求伪造上下文
 - ✅ 已补无容器单测覆盖 zone preference、`FeignContextWebFilter` 注册、上下文回写和 provider
   扩展 SPI 调用；Nacos 端到端测试仍只覆盖 discovery 客户端可用
@@ -189,7 +189,7 @@ testImplementation(libs.spring.boot.starter.web)
 
 - ✅ 已修复（2026-06-11）**【安全】`FeignContextWebFilter` 未校验客户端的 HMAC 签名头**：
   新增 `filter/FeignContextSignatureVerifier`，配置
-  `kudos.ability.distributed.discovery.nacos.feign-context-filter.context-signature-secret`
+  `kudos.ability.distributed.discovery.nacos.rpc-context-filter.context-signature-secret`
   （与 client-feign 的 `contextSignatureSecret` 同值）后，filter 对
   `X-Kudos-Context-Timestamp/Nonce/Signature` 做共享密钥 HMAC-SHA256 验签 + 时间戳窗口
   （`context-signature-timestamp-window-millis`，默认 ±5 分钟）+ nonce 防重放（进程内有界

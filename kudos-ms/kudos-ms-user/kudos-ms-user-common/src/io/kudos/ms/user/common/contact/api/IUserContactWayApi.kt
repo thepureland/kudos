@@ -1,6 +1,6 @@
 package io.kudos.ms.user.common.contact.api
 
-import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.service.annotation.PostExchange
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestParam
 
@@ -28,7 +28,7 @@ interface IUserContactWayApi {
      * @author K
      * @since 1.0.0
      */
-    @PostMapping("/api/internal/user/contactWay/getActiveContactValuesByUserIds")
+    @PostExchange("/api/internal/user/contactWay/getActiveContactValuesByUserIds")
     fun getActiveContactValuesByUserIds(
         @RequestBody userIds: Collection<String>,
         @RequestParam contactWayDictCode: String,

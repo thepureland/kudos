@@ -51,7 +51,7 @@ servlet container
 > **为什么公开头优先**：它是响应里对外宣告的那个名字。这样"改名"时读写两侧**由构造保证**同步移动,
 > 而不是靠两个配置项碰巧取了相同的值——读写不对称正是这里修掉的问题,修法本身不能留下再次跑偏的口子。
 >
-> **`_UUID` 必须保留**：`GlobalHeaderRequestInterceptor` 在每个出向 Feign 调用上设置它,
+> **`_UUID` 必须保留**：`KudosContextRequestInterceptor` 在每个出向 Feign 调用上设置它,
 > `FeignContextSignatureVerifier` 还把它纳入请求签名计算。所有既有内部调用的解析结果与改动前完全一致；
 > 公开头只是把同样的能力延伸给外部调用方——不能指望他们使用带下划线前缀的内部头名。
 

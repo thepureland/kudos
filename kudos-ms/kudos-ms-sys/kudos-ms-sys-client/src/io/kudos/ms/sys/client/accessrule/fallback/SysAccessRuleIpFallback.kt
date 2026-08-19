@@ -1,23 +1,21 @@
 package io.kudos.ms.sys.client.accessrule.fallback
 
-import io.kudos.ability.distributed.client.feign.fallback.AbstractFeignFallbackSupport
+import io.kudos.ability.distributed.client.http.fallback.AbstractHttpFallbackSupport
 import io.kudos.ms.sys.client.accessrule.proxy.ISysAccessRuleIpProxy
 import io.kudos.ms.sys.common.accessrule.vo.SysAccessRuleIpCacheEntry
 import io.kudos.ms.sys.common.accessrule.vo.response.SysAccessRuleIpRow
-import org.springframework.stereotype.Component
 import java.math.BigDecimal
 
 
 /**
- * IP access rule Feign fallback implementation.
+ * IP access rule fallback implementation.
  *
  * Note: [checkIpAccess] returns `false` (deny) when the remote is unreachable, which is a security-side default — better safe than sorry.
  *
  * @author K
  * @since 1.0.0
  */
-@Component
-open class SysAccessRuleIpFallback : AbstractFeignFallbackSupport("SysAccessRuleIpFallback"), ISysAccessRuleIpProxy {
+open class SysAccessRuleIpFallback : AbstractHttpFallbackSupport("SysAccessRuleIpFallback"), ISysAccessRuleIpProxy {
 
     override fun getIpsByRuleId(ruleId: String): List<SysAccessRuleIpRow> {
         warnRead("getIpsByRuleId", ruleId)

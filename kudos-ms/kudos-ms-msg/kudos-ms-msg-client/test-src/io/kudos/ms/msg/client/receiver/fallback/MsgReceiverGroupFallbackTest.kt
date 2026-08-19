@@ -8,12 +8,13 @@ import kotlin.test.assertTrue
 internal class MsgReceiverGroupFallbackTest {
 
     private val fallback = MsgReceiverGroupFallback()
-    private val fallbackWithCause = MsgReceiverGroupFallback(RuntimeException("remote down"))
+    /** 传给 Throwable 首参重载——Spring Cloud 在降级时优先解析的就是这个签名。 */
+    private val cause = RuntimeException("remote down")
 
     @Test
     fun getReceiverGroupById_returnsNullOnFallback() {
         assertNull(fallback.getReceiverGroupById("group-1"))
-        assertNull(fallbackWithCause.getReceiverGroupById("群組-😀"))
+        assertNull(fallback.getReceiverGroupById(cause, "群組-😀"))
     }
 
     @Test
@@ -24,7 +25,7 @@ internal class MsgReceiverGroupFallbackTest {
     @Test
     fun listActiveReceiverGroups_acceptsNullTypeCode() {
         assertTrue(fallback.listActiveReceiverGroups(null).isEmpty())
-        assertTrue(fallbackWithCause.listActiveReceiverGroups(null).isEmpty())
+        assertTrue(fallback.listActiveReceiverGroups(cause, null).isEmpty())
     }
 
 }

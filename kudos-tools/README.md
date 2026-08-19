@@ -85,15 +85,18 @@
 | `<E>Row` | 实现 `IIdEntity<PK>` | user / auth / msg 都实现；sys 的 `Detail`/`Edit` 也都实现，只有 `Row` 不实现，属 sys 内部不一致 |
 | `serialVersionUID` | 固定 `1L` | 该行在 region 外，随机值会让每次重新生成都变，击穿 Redis 里已有的缓存条目 |
 | `i18nKeyPrefix` | `<module>.error-msg.<bizModule>` | sys 是四家里唯一自洽的（前缀 ↔ 业务模块一一对应） |
-| Fallback 基类 | `AbstractFeignFallbackSupport` | 四个 ms 模块现已全部直接继承；sys 原有的 `SysClientFallbackSupport` 别名已删除 |
-| `*-common` 的 `KotlinCompile` 块 | 不生成 | 全仓库只有 sys-common 有；`javaParameters` 对 `jackson-module-kotlin` 无必要，`-Xjvm-default=all` 在 Kotlin 2.2+ 已是默认且该 flag 已废弃 |
+| 客户端传输 | Spring Interface Clients（`@HttpExchange` + `RestClient`） | OpenFeign 官方已 feature-complete；`lb://` 服务发现与 `@HttpServiceFallback` 降级两个缺口在 Spring Cloud 2025.1 已补齐。sys 已完成迁移，模板随之切换 |
+| Fallback 基类 | `AbstractHttpFallbackSupport` | 随传输切换；必须 `open` 且**不能**加 `@Component`（见模板内注释） |
+| 客户端注册 | 每实体一个 `<E>ClientConfiguration` | 同名 group 的多个 `@ImportHttpServices` 会合并，所以生成器不需要聚合"某模块的全部实体"——这正好绕开了模型是按表构建的限制 |
+| `*-common` 的 `KotlinCompile` 块 | 不生成 | 全仓库只有 sys-common 有；`-Xjvm-default=all` 在 Kotlin 2.2+ 已是默认且该 flag 已废弃。**注意**：`javaParameters` 现已在**根 build 全局开启**，interface client 解析不具名 `@RequestParam` 依赖它——外部工程（`project != "kudos"`）必须自行开启，模板已在 `<Module>ClientAutoConfiguration` 的注释里写明 |
 | init 类名 | `<Module>ApiInternalApplication` / `<Module>ApiPublicApplication` | gradle 模块名（`-api-internal` / `-api-public`）和 `getComponentName()` 早已是 internal/public，只有类名停在 `Provider` / `Web`；四个 ms 模块已同步改名 |
 
 未定（模板暂时保持现状）：
 
-- **Feign 服务名**：sys 全小写拼接 vs 其余三家 kebab。但 `kudos-ms` 下**没有任何 `spring.application.name`**，
-  而部署单元是 `<module>-api-internal`——这批"每实体一个服务名"很可能压根注册不上，属设计问题而非风格问题，
-  需先确认线上注册名再决定
+~~**Feign 服务名**：sys 全小写拼接 vs 其余三家 kebab~~ — **已随迁移消解**。这个疑虑是对的：那批
+"每实体一个服务名"（`sys-dict` / `sys-out-line` …）从来就不是服务名，所有路径都指向同一个原子服务。
+interface client 下服务名不再写在接口上，一个模块一个 group，目标由部署配置的
+`spring.http.serviceclient.<module>.base-url` 决定，命名风格问题不复存在。
 
 #### 合并标记约定
 

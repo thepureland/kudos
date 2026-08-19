@@ -59,8 +59,8 @@ internal class ClientCacheHelperTest {
 
         helper.afterPropertiesSet()
 
-        val config = cacheManager.initializedConfigs[ClientCacheKey.FEIGN_CACHE_PREFIX]
-        assertEquals(ClientCacheKey.FEIGN_CACHE_PREFIX, config?.name)
+        val config = cacheManager.initializedConfigs[ClientCacheKey.RPC_CACHE_PREFIX]
+        assertEquals(ClientCacheKey.RPC_CACHE_PREFIX, config?.name)
         assertEquals(true, config?.ignoreVersion)
         assertEquals(42, config?.ttl)
     }
@@ -185,7 +185,7 @@ internal class ClientCacheHelperTest {
      * @since 1.0.0
      */
     private class RecordingCacheManager : IKeyValueCacheManager<ConcurrentMapCache> {
-        val cache = ConcurrentMapCache(ClientCacheKey.FEIGN_CACHE_PREFIX)
+        val cache = ConcurrentMapCache(ClientCacheKey.RPC_CACHE_PREFIX)
         var initializedConfigs: Map<String, CacheConfig> = emptyMap()
         var cacheAvailable = true
 

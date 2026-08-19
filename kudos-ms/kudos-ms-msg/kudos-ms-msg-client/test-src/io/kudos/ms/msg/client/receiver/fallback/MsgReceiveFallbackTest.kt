@@ -15,29 +15,30 @@ import kotlin.test.assertTrue
 internal class MsgReceiveFallbackTest {
 
     private val fallback = MsgReceiveFallback()
-    private val fallbackWithCause = MsgReceiveFallback(RuntimeException("remote down"))
+    /** 传给 Throwable 首参重载——Spring Cloud 在降级时优先解析的就是这个签名。 */
+    private val cause = RuntimeException("remote down")
 
     @Test
     fun getReceivesByUserId_returnsEmptyList() {
         assertTrue(fallback.getReceivesByUserId("u-1").isEmpty())
-        assertTrue(fallbackWithCause.getReceivesByUserId("實體-😀").isEmpty())
+        assertTrue(fallback.getReceivesByUserId(cause, "實體-😀").isEmpty())
     }
 
     @Test
     fun getUnreadCountByUserId_returnsZero() {
         assertEquals(0, fallback.getUnreadCountByUserId("u-1"))
-        assertEquals(0, fallbackWithCause.getUnreadCountByUserId(""))
+        assertEquals(0, fallback.getUnreadCountByUserId(cause, ""))
     }
 
     @Test
     fun markRead_returnsFalse() {
         assertFalse(fallback.markRead("id-1"))
-        assertFalse(fallbackWithCause.markRead(""))
+        assertFalse(fallback.markRead(cause, ""))
     }
 
     @Test
     fun markAllReadByUserId_returnsZero() {
         assertEquals(0, fallback.markAllReadByUserId("u-1"))
-        assertEquals(0, fallbackWithCause.markAllReadByUserId("u-2"))
+        assertEquals(0, fallback.markAllReadByUserId(cause, "u-2"))
     }
 }

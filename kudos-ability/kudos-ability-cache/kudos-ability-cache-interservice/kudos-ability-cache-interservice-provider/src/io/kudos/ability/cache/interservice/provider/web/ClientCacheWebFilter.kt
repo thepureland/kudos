@@ -21,10 +21,10 @@ class ClientCacheWebFilter(
     private val wrapAllRequests: Boolean = false,
     /**
      * Require the internal Feign marker before a request may take part in cache negotiation; see
-     * [io.kudos.ability.cache.interservice.provider.init.InterServiceCacheProviderProperties.requireFeignMarker]
+     * [io.kudos.ability.cache.interservice.provider.init.InterServiceCacheProviderProperties.requireRpcMarker]
      * for why this defaults to off.
      */
-    private val requireFeignMarker: Boolean = false
+    private val requireRpcMarker: Boolean = false
 ) : Filter {
 
     override fun doFilter(
@@ -42,7 +42,7 @@ class ClientCacheWebFilter(
     }
 
     private fun shouldWrap(request: HttpServletRequest): Boolean {
-        if (requireFeignMarker && request.getHeader(Consts.RequestHeader.FEIGN_REQUEST).isNullOrBlank()) {
+        if (requireRpcMarker && request.getHeader(Consts.RequestHeader.RPC_REQUEST).isNullOrBlank()) {
             // No internal-call marker: stay out of the negotiation entirely, so the response carries no
             // content fingerprint for this caller.
             return false
