@@ -31,23 +31,28 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Pure-logic unit test for [AuthRoleUserService] (DAO/cache/event/exclusion collaborators mocked
+ * Pure-logic unit test for [AuthRoleUserService] (DAO/cache/event/policy collaborators mocked
  * with Mockito; no Spring container and no DB) — complements the container-backed
- * [AuthRoleUserServiceTest] by exercising the SoD-aware bind logic deterministically:
+ * [AuthRoleUserServiceTest] by exercising the bind/unbind bookkeeping deterministically.
  *
- *  - [AuthRoleUserService.batchBind]: empty-input short-circuit; the role-not-found guard; the
- *    all-already-bound short-circuit (candidates empty ⇒ no insert/event); a happy path that
- *    inserts only the not-yet-bound users and
- *    publishes one change event; and the violation path where one candidate's effective role set
- *    conflicts (whole batch rejected with a message naming the user and the conflicting pair).
- *  - [AuthRoleUserService.findSodViolationMessage] (internal): null when allowed, formatted message
- *    when the exclusion service reports a violation; and the effective-role-set expansion fed to the
- *    exclusion service (direct + group-derived + ancestor chain, de-duplicated).
+ * Admission is split between two collaborators, and both are mocked here: role existence,
+ * separation-of-duties and the effective-role expansion those run against live in
+ * [IAuthGrantPolicyService], while tenant scope stays in this class, in the private
+ * `assertCanManageRole` guard every public path opens with. What is asserted is therefore that the
+ * service consults them and honours their verdict — plus the bookkeeping around that:
+ *
+ *  - [AuthRoleUserService.batchBind]: empty-input short-circuit (the policy is never consulted); a
+ *    policy rejection aborting the whole batch, both when the role does not exist and when a
+ *    candidate trips an SoD exclusion (all-or-nothing: no insert, no event); the all-already-bound
+ *    short-circuit (candidates empty ⇒ no insert/event); and a happy path that inserts only the
+ *    not-yet-bound users and publishes one change event.
  *  - [AuthRoleUserService.unbind]: success (delete>0 ⇒ event) and no-op (delete==0 ⇒ false, no event).
  *  - [AuthRoleUserService.exists] / getUserIdsByRoleId / getRoleIdsByUserId: delegation + Set conv.
  *
  * The DAO is supplied through the [io.kudos.base.support.service.impl.BaseCrudService] constructor;
- * the `@Autowired`/`@Resource lateinit var` collaborators are injected by reflection.
+ * the `@Autowired`/`@Resource lateinit var` collaborators are injected by reflection. The
+ * [TenantAdministrationGuard] mock permits throughout and `authRoleDao.get` always resolves, so the
+ * guard is only kept off the path here; a refusal by it is not covered yet.
  *
  * @author K
  * @author AI: Codex
@@ -90,12 +95,6 @@ internal class AuthRoleUserServiceUnitTest {
     @Suppress("UNCHECKED_CAST")
     private fun anyRelationCollection(): Collection<Any> =
         (ArgumentMatchers.any(Collection::class.java) as Collection<Any>?) ?: emptyList()
-
-    // dao.searchRoleIdsByUserId has a `now: LocalDateTime = now()` default arg that the service
-    // fills implicitly, so an exact-value stub never matches (the two `now()` instants differ).
-    // Stub both positions with matchers; the time matcher coalesces the null Mockito returns.
-
-
 
     // ---------------------------------------------------------------- batchBind guards
 
