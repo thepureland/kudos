@@ -4,7 +4,11 @@ dependencies {
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-common"))
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-flyway"))
-    
+
+    // Auth security metrics are optional. Applications without Micrometer keep the domain event
+    // and enforcement behavior without pulling an observability runtime onto the classpath.
+    compileOnly(libs.micrometer.core)
+
     api(project(":kudos-ms:kudos-ms-user:kudos-ms-user-core"))
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-local:kudos-ability-cache-local-caffeine"))
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-remote:kudos-ability-cache-remote-redis"))
@@ -24,4 +28,5 @@ dependencies {
 
 
     testImplementation(project(":kudos-test:kudos-test-rdb"))
+    testImplementation(libs.micrometer.core)
 }

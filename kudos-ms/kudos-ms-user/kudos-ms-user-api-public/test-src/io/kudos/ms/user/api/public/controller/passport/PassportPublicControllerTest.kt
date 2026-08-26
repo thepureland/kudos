@@ -2,6 +2,7 @@ package io.kudos.ms.user.api.public.controller.passport
 
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextHolder
+import io.kudos.base.net.IpKit
 import io.kudos.ms.user.common.passport.enums.ChangePasswordResultEnum
 import io.kudos.ms.user.common.passport.enums.PassportLoginStatusEnum
 import io.kudos.ms.user.common.passport.vo.SessionUserPrincipal
@@ -27,6 +28,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNull
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
@@ -84,7 +86,33 @@ internal class PassportPublicControllerTest {
             loginTime = LocalDateTime.of(2026, 1, 2, 3, 4, 5),
         )
 
-    private fun loginReq() = PassportLoginRequest(tenantId = "t-1", username = "alice", plainPassword = "pwd")
+    private fun loginReq() = PassportLoginRequest(
+        tenantId = "t-1",
+        username = "alice",
+        plainPassword = "pwd",
+        // Deliberately forged; the public controller must replace all four values.
+        loginIp = 1L,
+        loginDevice = "forged-device",
+        loginBrowser = "forged-browser",
+        loginOs = "forged-os",
+        userAgent = "forged-agent",
+    )
+
+    private fun clientRequest(): MockHttpServletRequest = MockHttpServletRequest().apply {
+        setRemoteAddr("203.0.113.8")
+        addHeader(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36"
+        )
+    }
+
+    private fun observedLoginReq() = loginReq().copy(
+        loginIp = IpKit.ipv4StringToLong("203.0.113.8"),
+        loginDevice = "PC",
+        loginBrowser = "Chrome 126.0.0.0",
+        loginOs = "Windows NT 10.0",
+        userAgent = "Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/126.0.0.0 Safari/537.36",
+    )
 
     // ---------------- login ----------------
 
@@ -92,8 +120,8 @@ internal class PassportPublicControllerTest {
     fun login_success_withUserInfo_writesPrincipalIntoSession() {
         val info = sampleUserInfo()
         val result = PassportLoginResult.success(info)
-        `when`(service.login(loginReq())).thenReturn(result)
-        val request = MockHttpServletRequest()
+        `when`(service.login(observedLoginReq())).thenReturn(result)
+        val request = clientRequest()
 
         val res = controller.login(loginReq(), request)
 
@@ -103,14 +131,29 @@ internal class PassportPublicControllerTest {
         assertEquals("u-1", stored.id)
         assertEquals("t-1", stored.tenantId)
         assertEquals("alice", stored.username)
+        verify(service).login(observedLoginReq())
+    }
+
+    @Test
+    fun login_success_rotatesExistingSessionId() {
+        val result = PassportLoginResult.success(sampleUserInfo())
+        `when`(service.login(observedLoginReq())).thenReturn(result)
+        val request = clientRequest()
+        val session = MockHttpSession()
+        request.setSession(session)
+        val previousId = session.id
+
+        controller.login(loginReq(), request)
+
+        assertNotEquals(previousId, session.id)
     }
 
     @Test
     fun login_success_butNullUserInfo_returnsEarlyWithoutSession() {
         // status SUCCESS but userInfo == null -> hits the `?: return res` branch, no session created
         val result = PassportLoginResult(status = PassportLoginStatusEnum.SUCCESS, userInfo = null)
-        `when`(service.login(loginReq())).thenReturn(result)
-        val request = MockHttpServletRequest()
+        `when`(service.login(observedLoginReq())).thenReturn(result)
+        val request = clientRequest()
 
         val res = controller.login(loginReq(), request)
 
@@ -120,21 +163,48 @@ internal class PassportPublicControllerTest {
     }
 
     @Test
-    fun login_failure_doesNotWriteSession() {
-        val result = PassportLoginResult.wrongPassword(3)
-        `when`(service.login(loginReq())).thenReturn(result)
-        val request = MockHttpServletRequest()
+    fun login_accountRevealingFailures_collapseToOnePublicResultWithoutSession() {
+        val internalResults = listOf(
+            PassportLoginResult.userNotFound(),
+            PassportLoginResult.wrongPassword(3),
+            PassportLoginResult.inactive(),
+            PassportLoginResult.locked(5),
+            PassportLoginResult.accountFrozen("Investigation in progress"),
+        )
 
-        val res = controller.login(loginReq(), request)
+        internalResults.forEach { internalResult ->
+            `when`(service.login(observedLoginReq())).thenReturn(internalResult)
+            val request = clientRequest()
 
-        assertSame(result, res)
-        assertNull(request.getSession(false))
+            val res = controller.login(loginReq(), request)
+
+            assertEquals(PassportLoginResult.invalidCredentials(), res)
+            assertNull(res.loginErrorTimes)
+            assertNull(res.userInfo)
+            assertNull(request.getSession(false))
+        }
+    }
+
+    @Test
+    fun login_challengeAndRateLimitResults_remainActionable() {
+        val publicResults = listOf(
+            PassportLoginResult.otpRequired(),
+            PassportLoginResult.otpWrong(),
+            PassportLoginResult.rateLimited(23),
+        )
+
+        publicResults.forEach { result ->
+            `when`(service.login(observedLoginReq())).thenReturn(result)
+
+            assertSame(result, controller.login(loginReq(), clientRequest()))
+        }
     }
 
     // ---------------- logout ----------------
 
     @Test
     fun logout_withExplicitUserId_callsServiceAndInvalidatesSession() {
+        bindPrincipal(SessionUserPrincipal(id = "u-7", tenantId = "t-1", username = "bob"))
         `when`(service.logout("u-7")).thenReturn(true)
         val request = MockHttpServletRequest()
         val session = MockHttpSession()
@@ -145,6 +215,17 @@ internal class PassportPublicControllerTest {
         assertTrue(ok)
         verify(service).logout("u-7")
         assertTrue(session.isInvalid)
+    }
+
+    @Test
+    fun logout_withDifferentExplicitUserId_isRejected() {
+        bindPrincipal(SessionUserPrincipal(id = "u-current", tenantId = "t-1", username = "bob"))
+        val request = MockHttpServletRequest()
+
+        val ok = controller.logout("u-other", request)
+
+        assertFalse(ok)
+        verify(service, never()).logout(anyString())
     }
 
     @Test
@@ -172,6 +253,7 @@ internal class PassportPublicControllerTest {
 
     @Test
     fun logout_serviceReturnsFalse_stillInvalidatesSession() {
+        bindPrincipal(SessionUserPrincipal(id = "u-7", tenantId = "t-1", username = "bob"))
         `when`(service.logout("u-7")).thenReturn(false)
         val request = MockHttpServletRequest()
         val session = MockHttpSession()
@@ -186,6 +268,7 @@ internal class PassportPublicControllerTest {
 
     @Test
     fun logout_withNoExistingSession_doesNotThrow() {
+        bindPrincipal(SessionUserPrincipal(id = "u-7", tenantId = "t-1", username = "bob"))
         // getSession(false) == null -> safe-call chain `?.invalidate()` is a no-op
         `when`(service.logout("u-7")).thenReturn(true)
         val request = MockHttpServletRequest()
@@ -228,6 +311,7 @@ internal class PassportPublicControllerTest {
     @Test
     fun verifyPassword_delegatesToService() {
         val req = VerifyPasswordRequest(userId = "u-1", plainPassword = "p")
+        bindPrincipal(SessionUserPrincipal(id = "u-1", tenantId = "t-1", username = "alice"))
         `when`(service.verifyPassword(req)).thenReturn(true)
         assertTrue(controller.verifyPassword(req))
         verify(service).verifyPassword(req)
@@ -236,13 +320,25 @@ internal class PassportPublicControllerTest {
     @Test
     fun verifyPassword_returnsFalseWhenServiceFalse() {
         val req = VerifyPasswordRequest(userId = "u-1", plainPassword = "p")
+        bindPrincipal(SessionUserPrincipal(id = "u-1", tenantId = "t-1", username = "alice"))
         `when`(service.verifyPassword(req)).thenReturn(false)
         assertFalse(controller.verifyPassword(req))
     }
 
     @Test
+    fun verifyPassword_forAnotherUser_isRejectedWithoutServiceCall() {
+        val req = VerifyPasswordRequest(userId = "u-other", plainPassword = "p")
+        bindPrincipal(SessionUserPrincipal(id = "u-1", tenantId = "t-1", username = "alice"))
+
+        assertFalse(controller.verifyPassword(req))
+
+        verify(service, never()).verifyPassword(req)
+    }
+
+    @Test
     fun verifySecurityPassword_delegatesToService() {
         val req = VerifyPasswordRequest(userId = "u-1", plainPassword = "p")
+        bindPrincipal(SessionUserPrincipal(id = "u-1", tenantId = "t-1", username = "alice"))
         `when`(service.verifySecurityPassword(req)).thenReturn(true)
         assertTrue(controller.verifySecurityPassword(req))
         verify(service).verifySecurityPassword(req)
@@ -251,6 +347,7 @@ internal class PassportPublicControllerTest {
     @Test
     fun changePassword_delegatesToService() {
         val req = ChangePasswordRequest(userId = "u-1", oldPlainPassword = "old", newPlainPassword = "new")
+        bindPrincipal(SessionUserPrincipal(id = "u-1", tenantId = "t-1", username = "alice"))
         `when`(service.changePassword(req)).thenReturn(ChangePasswordResultEnum.SUCCESS)
         assertEquals(ChangePasswordResultEnum.SUCCESS, controller.changePassword(req))
         verify(service).changePassword(req)
@@ -259,13 +356,25 @@ internal class PassportPublicControllerTest {
     @Test
     fun changePassword_propagatesOldPasswordWrong() {
         val req = ChangePasswordRequest(userId = "u-1", oldPlainPassword = "old", newPlainPassword = "new")
+        bindPrincipal(SessionUserPrincipal(id = "u-1", tenantId = "t-1", username = "alice"))
         `when`(service.changePassword(req)).thenReturn(ChangePasswordResultEnum.OLD_PASSWORD_WRONG)
         assertEquals(ChangePasswordResultEnum.OLD_PASSWORD_WRONG, controller.changePassword(req))
     }
 
     @Test
+    fun changePassword_forAnotherUser_returnsNotFoundWithoutServiceCall() {
+        val req = ChangePasswordRequest(userId = "u-other", oldPlainPassword = "old", newPlainPassword = "new")
+        bindPrincipal(SessionUserPrincipal(id = "u-1", tenantId = "t-1", username = "alice"))
+
+        assertEquals(ChangePasswordResultEnum.USER_NOT_FOUND, controller.changePassword(req))
+
+        verify(service, never()).changePassword(req)
+    }
+
+    @Test
     fun changeSecurityPassword_delegatesToService() {
         val req = ChangePasswordRequest(userId = "u-1", oldPlainPassword = "old", newPlainPassword = "new")
+        bindPrincipal(SessionUserPrincipal(id = "u-1", tenantId = "t-1", username = "alice"))
         `when`(service.changeSecurityPassword(req)).thenReturn(ChangePasswordResultEnum.USER_NOT_FOUND)
         assertEquals(ChangePasswordResultEnum.USER_NOT_FOUND, controller.changeSecurityPassword(req))
         verify(service).changeSecurityPassword(req)

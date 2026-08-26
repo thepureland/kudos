@@ -3,6 +3,8 @@ package io.kudos.ability.data.rdb.ktorm.datasource
 import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextHolder
 import org.ktorm.database.Database
+import org.springframework.context.event.ContextClosedEvent
+import org.springframework.context.support.StaticApplicationContext
 import org.springframework.jdbc.datasource.DriverManagerDataSource
 import javax.sql.DataSource
 import kotlin.test.AfterTest
@@ -70,6 +72,24 @@ internal class KtormDatabaseCacheTest {
         val first = KudosContextHolder.currentDatabase()
         clearKtormDatabaseCache()
         assertNotSame(first, KudosContextHolder.currentDatabase())
+    }
+
+    @Test
+    fun aClosingContextDropsEntriesThatWouldOutliveTheirPool() {
+        // The failure this prevents: an entry survives the context whose pool its Database was built over,
+        // and the next caller gets connections from a pool that has been shut down — which shows up much
+        // later as ProxyConnection.close() failing with a null delegate, inside an unrelated query.
+        // Weak keys do not prevent it, because a WeakHashMap holds values strongly and this value can
+        // reference its own key.
+        bind(dataSource("ktorm_db_cache_f"))
+        val beforeClose = KudosContextHolder.currentDatabase()
+
+        val context = StaticApplicationContext()
+        context.refresh()
+        KtormDatabaseCacheEvictor().onApplicationEvent(ContextClosedEvent(context))
+        context.close()
+
+        assertNotSame(beforeClose, KudosContextHolder.currentDatabase())
     }
 
     @Test

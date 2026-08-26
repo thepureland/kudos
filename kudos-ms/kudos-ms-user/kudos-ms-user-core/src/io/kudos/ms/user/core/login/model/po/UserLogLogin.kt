@@ -16,7 +16,7 @@ interface UserLogLogin : IDbEntity<String, UserLogLogin> {
     companion object : DbEntityFactory<UserLogLogin>()
 
     /** User ID */
-    var userId: String
+    var userId: String?
 
     /** Username */
     var username: String

@@ -1,11 +1,8 @@
 package io.kudos.ms.user.api.admin.controller.account
 
-import io.kudos.ability.web.springmvc.controller.BaseCrudController
-import io.kudos.ms.user.common.account.vo.request.UserAccountThirdFormCreate
-import io.kudos.ms.user.common.account.vo.request.UserAccountThirdFormUpdate
+import io.kudos.ability.web.springmvc.controller.BaseReadOnlyController
 import io.kudos.ms.user.common.account.vo.request.UserAccountThirdQuery
 import io.kudos.ms.user.common.account.vo.response.UserAccountThirdDetail
-import io.kudos.ms.user.common.account.vo.response.UserAccountThirdEdit
 import io.kudos.ms.user.common.account.vo.response.UserAccountThirdRow
 import io.kudos.ms.user.core.account.model.po.UserAccountThird
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountThirdService
@@ -24,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/admin/user/accountThird")
 class UserAccountThirdAdminController :
-    BaseCrudController<String, IUserAccountThirdService, UserAccountThirdQuery, UserAccountThirdRow, UserAccountThirdDetail, UserAccountThirdEdit, UserAccountThirdFormCreate, UserAccountThirdFormUpdate>() {
+    BaseReadOnlyController<String, IUserAccountThirdService, UserAccountThirdQuery, UserAccountThirdRow, UserAccountThirdDetail>() {
 
     /** List all third-party bindings of the specified user. */
     @GetMapping("/listByUserId")

@@ -1,6 +1,7 @@
 package io.kudos.ms.user.core.login.service
 
 import io.kudos.ms.user.core.login.dao.UserLogLoginDao
+import io.kudos.ms.user.core.login.model.UserLoginAttempt
 import io.kudos.ms.user.core.login.model.po.UserLogLogin
 import io.kudos.ms.user.core.login.service.impl.UserLogLoginService
 import org.mockito.ArgumentMatchers.eq
@@ -10,6 +11,7 @@ import org.mockito.Mockito.`when` as whenCalled
 import java.time.LocalDateTime
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 /**
  * Pure unit test for [UserLogLoginService] — verifies the in-memory sort (descending by loginTime)
@@ -29,6 +31,46 @@ internal class UserLogLoginServicePureTest {
     private val iface: io.kudos.ms.user.core.login.service.iservice.IUserLogLoginService = service
 
     private val base = LocalDateTime.of(2024, 1, 10, 12, 0, 0)
+
+    @Test
+    fun recordLoginAttempt_mapsFieldsAndCapsDatabaseLengths() {
+        lateinit var captured: UserLogLogin
+        val recordingDao = object : UserLogLoginDao() {
+            override fun insert(any: Any): String {
+                captured = any as UserLogLogin
+                return "log-1"
+            }
+        }
+        val recordingService = UserLogLoginService(recordingDao)
+        val id = recordingService.recordLoginAttempt(
+            UserLoginAttempt(
+                userId = null,
+                username = "u".repeat(40),
+                tenantId = "t".repeat(40),
+                loginTime = base,
+                loginIp = 0x7F000001L,
+                loginDevice = "d".repeat(70),
+                loginBrowser = "Chrome 126",
+                loginOs = "Linux",
+                userAgent = "a".repeat(600),
+                loginSuccess = false,
+                failureReason = "USER_NOT_FOUND",
+            )
+        )
+
+        assertEquals("log-1", id)
+        assertNull(captured.userId)
+        assertEquals(32, captured.username.length)
+        assertEquals(36, captured.tenantId.length)
+        assertEquals(base, captured.loginTime)
+        assertEquals(0x7F000001L, captured.loginIp)
+        assertEquals(64, captured.loginDevice?.length)
+        assertEquals("Chrome 126", captured.loginBrowser)
+        assertEquals("Linux", captured.loginOs)
+        assertEquals(512, captured.userAgent?.length)
+        assertEquals(false, captured.loginSuccess)
+        assertEquals("USER_NOT_FOUND", captured.failureReason)
+    }
 
     private fun log(userId: String, tenantId: String, minutesOffset: Long): UserLogLogin {
         val po = mock(UserLogLogin::class.java)

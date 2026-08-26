@@ -18,4 +18,10 @@ enum class ChangePasswordResultEnum {
 
     /** Old password is incorrect */
     OLD_PASSWORD_WRONG,
+
+    /** New password does not satisfy the configured password policy */
+    PASSWORD_POLICY_VIOLATION,
+
+    /** New password is the same as the current password */
+    PASSWORD_REUSED,
 }

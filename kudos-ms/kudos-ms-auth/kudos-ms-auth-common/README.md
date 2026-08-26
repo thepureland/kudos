@@ -18,6 +18,8 @@
 |--------|------|
 | `group` | 用户组及组-用户、组-角色关联的 `vo` / `enums`（原 `groupuser` / `grouprole` 已并入） |
 | `role`  | 角色契约与 `vo` / `enums`（原 `roleresource` / `roleuser` 已并入） |
+| `authentication` | 认证事务、认证动作、上下文、`@RequiresAuthenticationAssurance` 与 Step-up challenge 契约 |
+| `provider` | 外部 Provider 策略枚举、ExternalPrincipal，以及目录、管理、JIT 与 claim mapping VO |
 | `platform` | 跨模块横切契约 |
 
 **第二层**按类型分子包（若模块暂无该类内容则省略目录）：

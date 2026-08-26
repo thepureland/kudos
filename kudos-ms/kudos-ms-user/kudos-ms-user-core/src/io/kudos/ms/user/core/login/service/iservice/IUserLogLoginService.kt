@@ -1,6 +1,7 @@
 package io.kudos.ms.user.core.login.service.iservice
 
 import io.kudos.base.support.service.iservice.IBaseCrudService
+import io.kudos.ms.user.core.login.model.UserLoginAttempt
 import io.kudos.ms.user.core.login.model.po.UserLogLogin
 import java.time.LocalDateTime
 
@@ -13,6 +14,16 @@ import java.time.LocalDateTime
  */
 interface IUserLogLoginService : IBaseCrudService<String, UserLogLogin> {
 
+    /**
+     * Persist one terminal login attempt.
+     *
+     * Implementations isolate this write from the authentication transaction so audit storage
+     * failure cannot roll back account state changes.
+     *
+     * @param attempt normalized login attempt
+     * @return generated login-log id
+     */
+    fun recordLoginAttempt(attempt: UserLoginAttempt): String
 
     /**
      * Query login logs by user id.

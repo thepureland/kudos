@@ -25,7 +25,8 @@ io.kudos.ms.user.core
 │   ├── schedule/AutoUnfreezeScheduler    每小时清过期冻结（仅 @EnableScheduling 时生效）
 │   ├── cache/                            UserAccountHashCache + AccountThirdByUserIdAndProviderCodeCache
 │   ├── dao/UserAccount{Protection,Third}Dao
-│   └── service/                          UserAccountService 含密码 / 登录错误次数 / 冻结管理
+│   └── service/                          UserAccountService + ExternalAccountProvisioningService
+│                                         （JIT 账号与首条外部身份绑定的原子事务）
 ├── passport/                             登录通行证 - 真正"鉴权"逻辑落在这里
 │   ├── service/impl/PassportService      login / logout / verify / changePassword
 │   └── api/PassportApi                   IPassportApi 实现
@@ -64,6 +65,62 @@ login(req) ──► getUserByTenantIdAndUsername
 - `AccountThirdByUserIdAndProviderCodeCache`：第三方账号绑定缓存——一个用户在每个 provider 下
   最多绑定一个第三方账号，按 (userId, providerCode) 唯一
 
+## 外部账号 JIT 预配
+
+`ExternalAccountProvisioningService.provision` 使用 `REQUIRES_NEW` 创建无本地密码账号，并强制调用
+`jitBindExternalIdentity` 写入首条身份绑定。两步共享事务，任何用户名或外部身份唯一约束冲突都会
+回滚整个账号；成功事件在审计表中标记为 `JIT_BIND`。配置默认组织时还会在同一事务建立
+`user_org_user` 成员关系，使账号主组织与数据范围一致。服务同时接受经 Auth 域校验的直属上级、
+账号类型/状态、locale、IANA 时区和货币默认值。重复请求若已能看到活动绑定则直接幂等返回。
+
+## 本地密码策略与写入边界
+
+`IPasswordPolicy` 是可替换的密码策略 SPI；应用未提供实现时由 `DefaultPasswordPolicy` 生效。默认配置：
+
+```yaml
+kudos:
+  ms:
+    user:
+      password-policy:
+        enabled: true
+        min-length: 12
+        max-length: 64
+        reject-username: true
+        reject-repeated-character: true
+        require-uppercase: false
+        require-lowercase: false
+        require-digit: false
+        require-special: false
+```
+
+账号创建、通用更新、登录密码/安全密码重置都在 `UserAccountService` 的持久化边界统一校验，并由
+`DelegatingPasswordEncoder` 写成 `{bcrypt}`。无论策略的 `max-length` 如何配置，原始密码都不得超过
+72 个 UTF-8 字节，以免当前默认 BCrypt
+静默截断后产生等价密码。JIT 账号的空登录密码仍表示没有本地密码；仅可信的内部 `UserAccount`
+迁移对象可携带已有的受支持版本化编码或历史无前缀 BCrypt，表单传入类似哈希的字符串仍按普通密码
+处理。通用更新禁止改变
+租户，并保留现有 TOTP secret 与 session key，相关字段只能走各自的专用维护入口。
+
+所有改密入口都会拒绝复用当前密码，并用稳定的 `PASSWORD_POLICY_VIOLATION` / `PASSWORD_REUSED`
+表达自助改密失败。`PasswordPolicyContext` 包含租户、用户和密码用途，业务可据此实现租户级字典或
+泄露密码库策略。可选的 `IPasswordHistory` 列表用于历史校验与旧哈希归档；同进程引入 Auth Core
+时默认接入其 `auth_password_history`（默认最近 5 个），单独部署 User Core 时列表为空，仍保留当前
+密码复用保护。
+
+### 登录密码的归属：`IAccountCredentialStore`
+
+登录密码的最终归属是 Auth 域的 `auth_credential`，本模块通过 `IAccountCredentialStore` 端口访问它。
+依赖方向是 auth → user，反向会成环，所以由本模块声明端口、Auth 侧实现、同进程部署时 Spring 组合
+——与 `IPasswordHistory` 同一套模式。
+
+- **存在实现时**：`user_account.login_password` 既不读也不写（写入空串），校验、改密、登录时哈希
+  升级和退役哈希归档全部发生在 Auth 侧。
+- **不存在实现时**：仍按原样读写该列，本模块可独立部署。该列已由 `V1.0.0.35` 置为可空并废弃。
+
+端口只交换明文与布尔结论，从不返回密码哈希：校验哈希需要明文和哈希同时在场，把哈希递回本模块
+比较没有任何收益，只会让存储凭证多跨一道边界。租户或用户缺失按接线错误抛出，而不是返回 false
+——后者在调用方读起来等同于"密码错误"。
+
 ## 调度
 
 `AutoUnfreezeScheduler`：每小时整点清理过期冻结（cron 可覆盖）：
@@ -94,17 +151,16 @@ login(req) ──► getUserByTenantIdAndUsername
 
 ## 已知限制 / 安全考量
 
-- ❗ **用户枚举漏洞**：`PassportService.login` 返回 `USER_NOT_FOUND` vs `WRONG_PASSWORD` /
-  `INACTIVE` / `ACCOUNT_FROZEN` 四种不同状态——外部攻击者可凭响应区分用户是否存在 / 是否
-  被冻结。OWASP 推荐合并成单一 `INVALID_CREDENTIALS` 返回。当前设计便于业务侧给出友好
-  错误提示，与安全做了权衡
+- ✅ **公网用户枚举响应已收敛**：`PassportService.login` 仍保留细分状态供可信内部逻辑和审计使用，
+  `PassportPublicController` 与 Auth 密码适配器统一对外返回 `INVALID_CREDENTIALS`，并移除错误次数、
+  冻结标题等差异字段；不存在、停用和冻结账号分支执行 BCrypt 校验以缓解明显的时序快路径。
 - ❗ **登录错误次数自增 ≠ 强一致**：`incrementLoginErrorTimes` 后又走 `getUserRecord` 读
   实际值——并发同账号登录场景下错误次数可能不严格累加（DB UPDATE 是原子的，但读 + 返回
   的"累计"可能不是最新）
 - ❗ **`changePassword` 没有"旧密码错误次数"限制**：连续暴力试旧密码不会触发冻结。建议
   对接 `incrementLoginErrorTimes` 同款保护
-- ❗ **OTP 校验失败也累加错误次数**：用户证明了密码正确但 OTP 输错两次仍可能被冻结。可
-  考虑分开 password / OTP 两条错误计数线
+- ✅ **密码与 OTP 失败窗口已分离**：错误 TOTP 只消费 TOTP 限流桶，不再累计旧密码错误次数或
+  触发账号自动冻结。
 - ❗ **`verifyPassword` 直查 DAO 绕过缓存**：单次开销大；高频场景（如风控查询）应增加
   短 TTL 缓存或限流
 - ❗ **`AutoUnfreezeScheduler` 无观测**：异常吞掉到 log.error——没有 metrics / alarm。
@@ -120,7 +176,8 @@ login(req) ──► getUserByTenantIdAndUsername
 - `kudos-ability-data-rdb-ktorm`（ORM）/ `kudos-ability-data-rdb-flyway`（迁移）
 - `kudos-ability-cache-common` / `kudos-ability-cache-local-caffeine` / `kudos-ability-cache-remote-redis`（多层缓存）
 - `kudos-ms-sys-core`（**同进程**依赖，非 Feign client；详见上文跨服务依赖小节）
-- `kudos-base`（GoogleAuthenticator / PasswordKit / BCrypt）
+- `kudos-base`（GoogleAuthenticator / 历史 BCrypt 兼容）
+- `kudos-ability-security-common`（版本化 `PasswordEncoder` / 密码编码兼容工具）
 
 ## 改进建议（自动分析 2026-06-11）
 
@@ -131,11 +188,16 @@ login(req) ──► getUserByTenantIdAndUsername
   窗口内一律返回 `LOCKED`（含正确密码），窗口到期由 `AutoUnfreezeScheduler` 自动清理；登录成功重置计数；
   已有的人工冻结（manual / admin / scheduled）不会被自动锁覆盖。
   **剩余工作**：`user_account_protection` 保护策略表（按用户/租户差异化阈值）的接入仍为待办，当前为全局配置项。
-- ❗ **登录审计未落库**（`passport/service/impl/PassportService.kt`）：login 成功 / 失败、logout 均不写 `user_log_login`，
-  `UserLogLoginService` 成了无人投喂的只读统计层。建议在 login 各分支异步落一条审计记录（含 IP / 结果状态）。
-- ❗ **admin 创建账号不哈希密码**（`account/service/impl/UserAccountService.kt#insert`）：`insert` 直接落库，
-  `UserAccountFormCreate.loginPassword` 由调用方决定是否已哈希——一旦前端误传明文即明文入库。建议在 insert/update
-  路径对密码字段统一做"已是 BCrypt 格式则跳过、否则 hash"的防御性处理。
+- ✅ **登录审计已落库**（`passport/service/impl/PassportService.kt`）：login 成功及终态失败写入
+  `user_log_login`，公共控制器使用服务端观测的 IP、终端、浏览器、OS 和 User-Agent；审计写入失败
+  不改变认证结果。
+- ✅ **安全状态变更使用专用事件**：登录密码、安全密码、停用、冻结和 TOTP 认证器变更发布
+  `UserAuthenticationInvalidated(id, tenantId, reason)`；账号删除事件在删除前携带租户快照。普通的
+  登录时间、退出时间和失败计数仍只发布 `UserAccountUpdated`，不会误触发全端下线。
+- ✅ **账号创建/通用更新不会明文落库**：所有普通表单中的非空密码先执行策略再写为 `{bcrypt}`；
+  可信迁移实体可保留受支持编码，JIT 空密码保持无本地密码语义。历史无前缀 BCrypt 在完整登录成功
+  后通过 CAS 透明升级，且不写密码历史、不撤销会话。通用更新同时禁止跨租户移动及直接覆盖
+  TOTP secret/session key，密码改变后发布专用全端失效事件。
 - ❗ **remember-me token 明文存储**（`login/model/po/UserLoginRememberMe.kt` + `RememberMeByTenantIdAndUsernameCache`）：
   长效 token 明文存 DB 并整表加载进缓存，DB / Redis 泄露即可重放登录。建议参照 Spring Security 持久化 token 的
   series + hashed-token 方案。
@@ -147,5 +209,7 @@ login(req) ──► getUserByTenantIdAndUsername
   再查一轮缓存——可直接返回第一次结果。
 - **代码组织小项**（`account/service/impl/UserAccountService.kt`）：companion object 位于类中部、其后仍有实例方法；
   构造器注入与 `@Resource` 字段注入混用——建议统一为构造器注入并把 companion 移至类尾。
-- **可扩展性**：OTP 实现硬绑定 `GoogleAuthenticator`（PassportService / UserAccountService 直接 new），
-  密码策略（强度校验、历史密码）无 SPI 扩展点；若需支持短信 OTP / WebAuthn 需先抽象 `IOtpVerifier` 接口。
+- **可扩展性**：OTP 实现仍硬绑定 `GoogleAuthenticator`（PassportService / UserAccountService 直接 new）；
+  密码强度已有 `IPasswordPolicy`，同进程密码历史已有 Auth `IPasswordHistory` 实现，登录密码本身也已
+  经 `IAccountCredentialStore` 收归 `auth_credential`（V61），但独立部署和租户级策略持久化仍需随改密
+  命令迁往 Auth。短信 OTP / WebAuthn 仍需抽象 `IOtpVerifier` 并迁移到 Auth 凭证模型。

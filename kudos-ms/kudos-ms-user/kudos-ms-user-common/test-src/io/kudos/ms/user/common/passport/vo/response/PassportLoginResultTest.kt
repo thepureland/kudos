@@ -92,10 +92,26 @@ internal class PassportLoginResultTest {
 
     @Test
     fun otpWrong() {
-        val r = PassportLoginResult.otpWrong(4)
+        val r = PassportLoginResult.otpWrong()
         assertEquals(PassportLoginStatusEnum.OTP_WRONG, r.status)
-        assertEquals(4, r.loginErrorTimes)
+        assertNull(r.loginErrorTimes)
         assertEquals("Incorrect dynamic verification code", r.message)
+    }
+
+    @Test
+    fun recoveryCodeWrong() {
+        val result = PassportLoginResult.recoveryCodeWrong()
+        assertEquals(PassportLoginStatusEnum.RECOVERY_CODE_WRONG, result.status)
+        assertEquals("Incorrect recovery code", result.message)
+        assertNull(result.loginErrorTimes)
+    }
+
+    @Test
+    fun rateLimited() {
+        val r = PassportLoginResult.rateLimited(17)
+        assertEquals(PassportLoginStatusEnum.RATE_LIMITED, r.status)
+        assertEquals(17, r.retryAfterSeconds)
+        assertNull(r.loginErrorTimes)
     }
 
     @Test
@@ -114,6 +130,16 @@ internal class PassportLoginResultTest {
     @Test
     fun accountFrozenWithNullTitle_fallsBackToDefault() {
         assertEquals("Account is frozen", PassportLoginResult.accountFrozen(null).message)
+    }
+
+    @Test
+    fun invalidCredentials_doesNotExposeAccountOrFailureDetails() {
+        val r = PassportLoginResult.invalidCredentials()
+        assertEquals(PassportLoginStatusEnum.INVALID_CREDENTIALS, r.status)
+        assertEquals("Invalid username or password", r.message)
+        assertNull(r.userInfo)
+        assertNull(r.loginErrorTimes)
+        assertNull(r.retryAfterSeconds)
     }
 
     @Test

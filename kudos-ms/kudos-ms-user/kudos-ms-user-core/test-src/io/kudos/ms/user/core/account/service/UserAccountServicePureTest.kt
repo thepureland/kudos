@@ -1,5 +1,9 @@
 package io.kudos.ms.user.core.account.service
 
+import io.kudos.base.query.Criteria
+import io.kudos.base.security.PasswordKit
+import io.kudos.ability.security.common.init.SecurityCommonAutoConfiguration
+import io.kudos.ability.security.common.support.PasswordEncodingKit
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
@@ -8,8 +12,15 @@ import io.kudos.ms.user.core.account.event.UserAccountBatchDeleted
 import io.kudos.ms.user.core.account.event.UserAccountDeleted
 import io.kudos.ms.user.core.account.event.UserAccountInserted
 import io.kudos.ms.user.core.account.event.UserAccountUpdated
+import io.kudos.ms.user.core.account.event.UserAuthenticationInvalidated
 import io.kudos.ms.user.core.account.model.po.UserAccount
 import io.kudos.ms.user.core.account.service.impl.UserAccountService
+import io.kudos.ms.user.core.account.security.DefaultPasswordPolicy
+import io.kudos.ms.user.core.account.security.IPasswordHistory
+import io.kudos.ms.user.core.account.security.PasswordPolicyContext
+import io.kudos.ms.user.core.account.security.PasswordPolicyException
+import io.kudos.ms.user.core.account.security.PasswordPolicyProperties
+import io.kudos.ms.user.core.account.security.PasswordReusedException
 import io.kudos.ms.user.core.org.cache.OrgIdsByUserIdCache
 import io.kudos.ms.user.core.org.cache.UserOrgHashCache
 import org.mockito.ArgumentMatchers
@@ -49,9 +60,12 @@ internal class UserAccountServicePureTest {
     private val userOrgHashCache = mock(UserOrgHashCache::class.java)
     private val userAccountHashCache = mock(UserAccountHashCache::class.java)
     private val orgIdsByUserIdCache = mock(OrgIdsByUserIdCache::class.java)
+    private val passwordPolicy = DefaultPasswordPolicy(PasswordPolicyProperties())
+    private val passwordHistory = mock(IPasswordHistory::class.java)
+    private val passwordEncoder = SecurityCommonAutoConfiguration().passwordEncoder()
 
     private fun build(publisher: org.springframework.context.ApplicationEventPublisher = recordingPublisher): UserAccountService {
-        val svc = UserAccountService(dao, publisher)
+        val svc = UserAccountService(dao, publisher, passwordPolicy, listOf(passwordHistory), passwordEncoder)
         inject(svc, "userOrgHashCache", userOrgHashCache)
         inject(svc, "userAccountHashCache", userAccountHashCache)
         inject(svc, "orgIdsByUserIdCache", orgIdsByUserIdCache)
@@ -69,6 +83,16 @@ internal class UserAccountServicePureTest {
     private fun anyAccount(): UserAccount =
         ArgumentMatchers.any(UserAccount::class.java) ?: UserAccount { id = "x" }
 
+    private fun anyPasswordContext(): PasswordPolicyContext =
+        ArgumentMatchers.any(PasswordPolicyContext::class.java)
+            ?: PasswordPolicyContext(io.kudos.ms.user.core.account.security.PasswordPurpose.LOGIN)
+
+    /**
+     * [UserAccount] is a managed entity, so deletes go through `batchDeleteCriteria` with `builtIn = false`
+     * appended rather than through `deleteById` / `batchDelete`.
+     */
+    private fun anyCriteria(): Criteria = ArgumentMatchers.any(Criteria::class.java) ?: Criteria()
+
     @Suppress("UNCHECKED_CAST")
     private fun anyMapArg(): Map<String, *> =
         (ArgumentMatchers.any(Map::class.java) as Map<String, *>?) ?: emptyMap<String, Any?>()
@@ -76,6 +100,19 @@ internal class UserAccountServicePureTest {
     /** ArgumentCaptor.capture() returns null, which a non-null Kotlin param rejects; coalesce to a real value. */
     private fun captureAccount(captor: org.mockito.ArgumentCaptor<UserAccount>): UserAccount =
         captor.capture() ?: UserAccount { id = "x" }
+
+    private fun existingAccount(
+        tenantId: String = "t1",
+        username: String = "alice",
+        loginPassword: String = PasswordKit.hash("existing password value", 4),
+    ): UserAccount = mock(UserAccount::class.java).also {
+        whenCalled(it.tenantId).thenReturn(tenantId)
+        whenCalled(it.username).thenReturn(username)
+        whenCalled(it.loginPassword).thenReturn(loginPassword)
+        whenCalled(it.securityPassword).thenReturn(null)
+        whenCalled(it.authenticationKey).thenReturn("existing-totp")
+        whenCalled(it.sessionKey).thenReturn("existing-session-key")
+    }
 
     /** eq() also returns null; coalesce so a non-null Kotlin String param accepts it. */
     private fun eqStr(value: String): String = eq(value) ?: value
@@ -146,9 +183,23 @@ internal class UserAccountServicePureTest {
 
     @Test
     fun updateActive_success_publishesUpdatedEvent() {
+        val existing = mock(UserAccount::class.java)
+        whenCalled(existing.tenantId).thenReturn("t1")
+        whenCalled(dao.get("u1")).thenReturn(existing)
         whenCalled(dao.update(anyAccount())).thenReturn(true)
         assertTrue(build().updateActive("u1", false))
         assertEquals(1, publishedEvents.count { it is UserAccountUpdated && it.id == "u1" })
+        val invalidated = publishedEvents.filterIsInstance<UserAuthenticationInvalidated>().single()
+        assertEquals("t1", invalidated.tenantId)
+        assertEquals(UserAuthenticationInvalidated.Reason.ACCOUNT_DISABLED, invalidated.reason)
+    }
+
+    @Test
+    fun updateActive_enablingAccountDoesNotInvalidateAuthentication() {
+        whenCalled(dao.update(anyAccount())).thenReturn(true)
+        assertTrue(build().updateActive("u1", true))
+        assertTrue(publishedEvents.none { it is UserAuthenticationInvalidated })
+        verify(dao, never()).get("u1")
     }
 
     @Test
@@ -160,24 +211,40 @@ internal class UserAccountServicePureTest {
 
     @Test
     fun resetPassword_hashesAndResetsErrorCount_andPublishes() {
+        val existing = existingAccount()
+        whenCalled(dao.get("u1")).thenReturn(existing)
         whenCalled(dao.update(anyAccount())).thenReturn(true)
-        assertTrue(build().resetPassword("u1", "secret"))
+        assertTrue(build().resetPassword("u1", "correct horse battery staple"))
         // Verify the entity passed to dao carries a hashed (not plaintext) password and zeroed error count.
         val captor = org.mockito.ArgumentCaptor.forClass(UserAccount::class.java)
         verify(dao).update(captureAccount(captor))
         val entity = captor.value
         assertEquals(0, entity.loginErrorTimes)
-        assertTrue(entity.loginPassword.isNotBlank() && entity.loginPassword != "secret")
+        assertTrue(entity.loginPassword.isNotBlank() && entity.loginPassword != "correct horse battery staple")
+        assertTrue(entity.loginPassword.startsWith("{bcrypt}"))
+        assertTrue(PasswordEncodingKit.matches(passwordEncoder, "correct horse battery staple", entity.loginPassword))
+        val invalidated = publishedEvents.filterIsInstance<UserAuthenticationInvalidated>().single()
+        assertEquals(UserAuthenticationInvalidated.Reason.LOGIN_PASSWORD_CHANGED, invalidated.reason)
+        verify(passwordHistory).record(
+            eqStr(existing.loginPassword),
+            anyPasswordContext(),
+        )
     }
 
     @Test
-    fun resetSecurityPassword_hashesAndResetsErrorCount() {
+    fun resetSecurityPassword_hashesAndResetsErrorCount_andPublishes() {
         whenCalled(dao.update(anyAccount())).thenReturn(true)
-        assertTrue(build().resetSecurityPassword("u1", "secret"))
+        val existing = mock(UserAccount::class.java)
+        whenCalled(existing.tenantId).thenReturn("t1")
+        whenCalled(existing.username).thenReturn("alice")
+        whenCalled(dao.get("u1")).thenReturn(existing)
+        assertTrue(build().resetSecurityPassword("u1", "another strong security password"))
         val captor = org.mockito.ArgumentCaptor.forClass(UserAccount::class.java)
         verify(dao).update(captureAccount(captor))
         assertEquals(0, captor.value.securityPasswordErrorTimes)
-        assertTrue(captor.value.securityPassword != "secret")
+        assertTrue(captor.value.securityPassword != "another strong security password")
+        val invalidated = publishedEvents.filterIsInstance<UserAuthenticationInvalidated>().single()
+        assertEquals(UserAuthenticationInvalidated.Reason.SECURITY_PASSWORD_CHANGED, invalidated.reason)
     }
 
     @Test
@@ -277,8 +344,42 @@ internal class UserAccountServicePureTest {
     }
 
     @Test
+    fun insert_plaintextPasswordIsValidatedAndHashedAtPersistenceBoundary() {
+        val po = UserAccount {
+            id = "new-id"
+            username = "alice"
+            tenantId = "t1"
+            loginPassword = "correct horse battery staple"
+        }
+        whenCalled(dao.insert(po)).thenReturn("new-id")
+
+        build().insert(po)
+
+        assertTrue(po.loginPassword.startsWith("{bcrypt}"))
+        assertTrue(PasswordEncodingKit.matches(passwordEncoder, "correct horse battery staple", po.loginPassword))
+    }
+
+    @Test
+    fun insert_trustedExistingBcryptIsNotHashedAgain() {
+        val hash = PasswordKit.hash("trusted migration password", 4)
+        val po = UserAccount {
+            id = "new-id"
+            username = "alice"
+            tenantId = "t1"
+            loginPassword = hash
+        }
+        whenCalled(dao.insert(po)).thenReturn("new-id")
+
+        build().insert(po)
+
+        assertEquals(hash, po.loginPassword)
+    }
+
+    @Test
     fun update_success_publishesUpdatedEvent() {
         val po = UserAccount { id = "u1" }
+        val existing = existingAccount()
+        whenCalled(dao.get("u1")).thenReturn(existing)
         whenCalled(dao.update(po)).thenReturn(true)
         assertTrue(build().update(po))
         assertEquals(1, publishedEvents.count { it is UserAccountUpdated && it.id == "u1" })
@@ -287,9 +388,120 @@ internal class UserAccountServicePureTest {
     @Test
     fun update_failure_publishesNothing() {
         val po = UserAccount { id = "u1" }
+        val existing = existingAccount()
+        whenCalled(dao.get("u1")).thenReturn(existing)
         whenCalled(dao.update(po)).thenReturn(false)
         assertFalse(build().update(po))
         assertTrue(publishedEvents.none { it is UserAccountUpdated })
+    }
+
+    @Test
+    fun update_plaintextPasswordHashesPreservesDedicatedSecretsAndInvalidatesAuthentication() {
+        val po = UserAccount {
+            id = "u1"
+            loginPassword = "a newly chosen strong password"
+            authenticationKey = "caller-controlled-totp"
+            sessionKey = "caller-controlled-session"
+        }
+        val existing = existingAccount()
+        whenCalled(dao.get("u1")).thenReturn(existing)
+        whenCalled(dao.update(po)).thenReturn(true)
+
+        assertTrue(build().update(po))
+
+        assertTrue(PasswordEncodingKit.matches(passwordEncoder, "a newly chosen strong password", po.loginPassword))
+        assertEquals("existing-totp", po.authenticationKey)
+        assertEquals("existing-session-key", po.sessionKey)
+        assertEquals(
+            UserAuthenticationInvalidated.Reason.LOGIN_PASSWORD_CHANGED,
+            publishedEvents.filterIsInstance<UserAuthenticationInvalidated>().single().reason,
+        )
+    }
+
+    @Test
+    fun update_rejectsCrossTenantAccountMove() {
+        val po = UserAccount {
+            id = "u1"
+            tenantId = "t-other"
+        }
+        val existing = existingAccount()
+        whenCalled(dao.get("u1")).thenReturn(existing)
+
+        assertFailsWith<IllegalArgumentException> { build().update(po) }
+
+        verify(dao, never()).update(po)
+    }
+
+    @Test
+    fun weakPasswordIsRejectedBeforeDatabaseWrite() {
+        val existing = existingAccount()
+        whenCalled(dao.get("u1")).thenReturn(existing)
+
+        assertFailsWith<PasswordPolicyException> { build().resetPassword("u1", "password") }
+
+        verify(dao, never()).update(anyAccount())
+    }
+
+    @Test
+    fun currentPasswordReuseIsRejectedForEveryResetCaller() {
+        val existing = existingAccount()
+        whenCalled(dao.get("u1")).thenReturn(existing)
+
+        assertFailsWith<PasswordReusedException> {
+            build().resetPassword("u1", "existing password value")
+        }
+
+        verify(dao, never()).update(anyAccount())
+    }
+
+    @Test
+    fun historicalPasswordReuseIsRejectedBeforeDatabaseWrite() {
+        val existing = existingAccount()
+        whenCalled(dao.get("u1")).thenReturn(existing)
+        whenCalled(passwordHistory.isReused(eqStr("previously used strong password"), anyPasswordContext()))
+            .thenReturn(true)
+
+        assertFailsWith<PasswordReusedException> {
+            build().resetPassword("u1", "previously used strong password")
+        }
+
+        verify(dao, never()).update(anyAccount())
+    }
+
+    @Test
+    fun upgradeLoginPasswordEncoding_successPublishesOnlyCacheEvictionEvent() {
+        val legacyHash = PasswordKit.hash("legacy password value", 4)
+        val upgradedHash = requireNotNull(passwordEncoder.encode("legacy password value"))
+        whenCalled(dao.upgradeLoginPasswordEncoding("u1", legacyHash, upgradedHash)).thenReturn(true)
+
+        assertTrue(build().upgradeLoginPasswordEncoding("u1", legacyHash, upgradedHash))
+
+        assertEquals(1, publishedEvents.size)
+        assertEquals("u1", publishedEvents.filterIsInstance<UserAccountUpdated>().single().id)
+        verify(passwordHistory, never()).record(anyString(), anyPasswordContext())
+    }
+
+    @Test
+    fun upgradeLoginPasswordEncoding_compareAndSetMissPublishesNothing() {
+        val legacyHash = PasswordKit.hash("legacy password value", 4)
+        val upgradedHash = requireNotNull(passwordEncoder.encode("legacy password value"))
+        whenCalled(dao.upgradeLoginPasswordEncoding("u1", legacyHash, upgradedHash)).thenReturn(false)
+
+        assertFalse(build().upgradeLoginPasswordEncoding("u1", legacyHash, upgradedHash))
+
+        assertTrue(publishedEvents.isEmpty())
+    }
+
+    @Test
+    fun passwordExceedingBcryptByteLimitIsRejectedBeforeDatabaseWrite() {
+        val existing = existingAccount()
+        whenCalled(dao.get("u1")).thenReturn(existing)
+        val password = "密".repeat(25)
+
+        val exception = assertFailsWith<IllegalArgumentException> { build().resetPassword("u1", password) }
+
+        assertTrue(exception.message.orEmpty().contains("72 UTF-8 bytes"))
+        verify(dao, never()).update(anyAccount())
     }
 
     @Test
@@ -306,7 +518,7 @@ internal class UserAccountServicePureTest {
         whenCalled(user.tenantId).thenReturn("t1")
         whenCalled(user.username).thenReturn("alice")
         whenCalled(dao.get("u1")).thenReturn(user)
-        whenCalled(dao.deleteById("u1")).thenReturn(true)
+        whenCalled(dao.batchDeleteCriteria(anyCriteria())).thenReturn(1)
         assertTrue(build().deleteById("u1"))
         val ev = publishedEvents.filterIsInstance<UserAccountDeleted>().single()
         assertEquals("u1", ev.id)
@@ -326,10 +538,11 @@ internal class UserAccountServicePureTest {
     }
 
     @Test
-    fun batchDelete_empty_returnsZeroAndPublishesNothing() {
-        // empty -> snapshots = emptyList; super.batchDelete(empty) -> dao.batchDelete(empty)
-        whenCalled(dao.batchDelete(emptyList())).thenReturn(0)
-        assertEquals(0, build().batchDelete(emptyList()))
+    fun batchDelete_empty_isRejectedRatherThanTreatedAsANoOp() {
+        // Both the DAO and the built-in-aware service path `require` a non-empty collection, so deleting
+        // "nothing" is a caller mistake rather than a zero-row delete. Asserting it here keeps that contract
+        // from being softened by accident.
+        assertFailsWith<IllegalArgumentException> { build().batchDelete(emptyList()) }
         assertTrue(publishedEvents.none { it is UserAccountBatchDeleted })
     }
 
@@ -340,7 +553,7 @@ internal class UserAccountServicePureTest {
         val u2 = mock(UserAccount::class.java)
         whenCalled(u2.id).thenReturn("u2"); whenCalled(u2.tenantId).thenReturn("t1"); whenCalled(u2.username).thenReturn("b")
         whenCalled(dao.getByIds(listOf("u1", "u2"))).thenReturn(listOf(u1, u2))
-        whenCalled(dao.batchDelete(listOf("u1", "u2"))).thenReturn(2)
+        whenCalled(dao.batchDeleteCriteria(anyCriteria())).thenReturn(2)
         val count = build().batchDelete(listOf("u1", "u2"))
         assertEquals(2, count)
         val ev = publishedEvents.filterIsInstance<UserAccountBatchDeleted>().single()
@@ -358,6 +571,9 @@ internal class UserAccountServicePureTest {
 
     @Test
     fun resetAuthKey_success_returnsSetupAndPublishes() {
+        val existing = mock(UserAccount::class.java)
+        whenCalled(existing.tenantId).thenReturn("t1")
+        whenCalled(dao.get("u1")).thenReturn(existing)
         whenCalled(dao.update(anyAccount())).thenReturn(true)
         val setup = build().resetAuthKey("u1", "alice", "kudos")!!
         assertTrue(setup.secret.isNotBlank())
@@ -365,13 +581,24 @@ internal class UserAccountServicePureTest {
         assertTrue(setup.otpauthUrl.contains("issuer=kudos"))
         assertTrue(setup.otpauthUrl.contains("secret=${setup.secret}"))
         assertEquals(1, publishedEvents.count { it is UserAccountUpdated })
+        assertEquals(
+            UserAuthenticationInvalidated.Reason.AUTHENTICATOR_CHANGED,
+            publishedEvents.filterIsInstance<UserAuthenticationInvalidated>().single().reason,
+        )
     }
 
     @Test
     fun cleanAuthKey_success_publishes() {
+        val existing = mock(UserAccount::class.java)
+        whenCalled(existing.tenantId).thenReturn("t1")
+        whenCalled(dao.get("u1")).thenReturn(existing)
         whenCalled(dao.updateProperties(eqStr("u1"), anyMapArg())).thenReturn(true)
         assertTrue(build().cleanAuthKey("u1"))
         assertEquals(1, publishedEvents.count { it is UserAccountUpdated })
+        assertEquals(
+            UserAuthenticationInvalidated.Reason.AUTHENTICATOR_CHANGED,
+            publishedEvents.filterIsInstance<UserAuthenticationInvalidated>().single().reason,
+        )
     }
 
     @Test
@@ -408,9 +635,41 @@ internal class UserAccountServicePureTest {
 
     @Test
     fun freezeAccount_success_publishes() {
+        val existing = mock(UserAccount::class.java)
+        whenCalled(existing.tenantId).thenReturn("t1")
+        whenCalled(dao.get("u1")).thenReturn(existing)
         whenCalled(dao.updateProperties(eqStr("u1"), anyMapArg())).thenReturn(true)
         assertTrue(build().freezeAccount("u1", "manual", "t", "c", null, null))
         assertEquals(1, publishedEvents.count { it is UserAccountUpdated })
+        assertEquals(
+            UserAuthenticationInvalidated.Reason.ACCOUNT_FROZEN,
+            publishedEvents.filterIsInstance<UserAuthenticationInvalidated>().single().reason,
+        )
+    }
+
+    @Test
+    fun activateVerifiedAuthKey_rejectsInvalidSecretBeforeDatabaseWrite() {
+        assertFailsWith<IllegalArgumentException> {
+            build().activateVerifiedAuthKey("u1", "caller supplied secret")
+        }
+
+        verify(dao, never()).activateAuthenticationKeyIfAbsent(anyString(), anyString())
+    }
+
+    @Test
+    fun activateVerifiedAuthKey_persistsAndInvalidatesAuthentication() {
+        val existing = mock(UserAccount::class.java)
+        whenCalled(existing.tenantId).thenReturn("t1")
+        whenCalled(dao.get("u1")).thenReturn(existing)
+        whenCalled(dao.activateAuthenticationKeyIfAbsent("u1", "JBSWY3DPEHPK3PXP")).thenReturn(true)
+
+        assertTrue(build().activateVerifiedAuthKey("u1", "JBSWY3DPEHPK3PXP"))
+
+        assertEquals(1, publishedEvents.count { it is UserAccountUpdated })
+        assertEquals(
+            UserAuthenticationInvalidated.Reason.AUTHENTICATOR_CHANGED,
+            publishedEvents.filterIsInstance<UserAuthenticationInvalidated>().single().reason,
+        )
     }
 
     @Test

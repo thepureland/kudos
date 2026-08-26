@@ -1,6 +1,7 @@
 package io.kudos.ms.user.core.account.model.table
 
 import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
+import io.kudos.ability.data.rdb.ktorm.support.encryptedVarchar
 import io.kudos.ms.user.core.account.model.po.UserAccount
 import org.ktorm.schema.*
 
@@ -59,8 +60,8 @@ object UserAccounts : ManagedTable<UserAccount>("user_account") {
     /** Session key */
     var sessionKey = varchar("session_key").bindTo { it.sessionKey }
 
-    /** Authentication key */
-    var authenticationKey = varchar("authentication_key").bindTo { it.authenticationKey }
+    /** TOTP shared secret; legacy plaintext rows are read compatibly and all new writes are AES-GCM encrypted. */
+    var authenticationKey = encryptedVarchar("authentication_key").bindTo { it.authenticationKey }
 
     /** Owning org ID */
     var orgId = varchar("org_id").bindTo { it.orgId }

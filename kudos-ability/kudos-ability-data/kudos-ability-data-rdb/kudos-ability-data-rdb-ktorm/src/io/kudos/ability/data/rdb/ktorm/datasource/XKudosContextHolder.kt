@@ -5,6 +5,8 @@ import io.kudos.context.core.KudosContext
 import io.kudos.context.core.KudosContextHolder
 import io.kudos.context.kit.SpringKit
 import org.ktorm.database.Database
+import org.ktorm.logging.detectLoggerImplementation
+import io.kudos.ability.data.rdb.ktorm.support.RedactingKtormLogger
 import java.util.Collections
 import java.util.WeakHashMap
 import javax.sql.DataSource
@@ -53,12 +55,20 @@ fun KudosContextHolder.currentDataSource(): DataSource {
  * Paying that on every request means a connection checkout and a round trip per request for values
  * that cannot change.
  *
- * **Weak keys**, so that a datasource replaced at runtime — `DsContextProcessor.refreshDatasource`
- * rebuilds them when an admin edits `sys_datasource` — takes its cached `Database` with it once
- * nothing else references it. The alternative was a listener subscribed to the same cache-clean
- * signal the jdbc module uses, which buys the same cleanup at the cost of a new module dependency
- * and a hook to keep in sync; weak keys need neither and also cover replacements that arrive by
- * some other route.
+ * **Weak keys** let a datasource replaced at runtime — `DsContextProcessor.refreshDatasource` rebuilds them
+ * when an admin edits `sys_datasource` — take its cached `Database` with it once nothing else references it.
+ *
+ * They are not sufficient on their own, and it took a recurring test failure to show why. A `WeakHashMap`
+ * holds keys weakly but **values strongly**, and the value here captures the routing datasource passed to
+ * `connectWithSpringSupport` while the key is whatever that routing resolved to. With nothing routing they are
+ * the same object, so the value strongly references its own key and the entry is immortal; with routing, the
+ * key can be a long-lived inner datasource while the value still points at one context's routing datasource.
+ * Either way an entry can outlive the pool behind it, and the failure lands far from here — a
+ * `ProxyConnection.close()` with a null delegate, inside an unrelated query.
+ *
+ * [KtormDatabaseCacheEvictor] therefore clears the cache when a context closes, which is exactly when the
+ * pools an entry could be holding go away. [clearKtormDatabaseCache] remains available for tests and for code
+ * that replaces datasources by some other route.
  *
  * The synchronisation this costs is a monitor around a map lookup on a path whose next act is a
  * database round trip, and the map holds one entry per physical datasource — single digits in every
@@ -88,10 +98,15 @@ private val databaseCache: MutableMap<DataSource, Database> =
  * the ambient transaction. Handing ktorm the resolved datasource instead is the historical bug
  * described on [currentDataSource].
  *
- * **Invalidation is not needed and not offered as a hook.** A refresh replaces datasource
- * *instances*, so a refreshed datasource is a new key that gets its own `Database` — a stale one can
- * never be served. The old entry then has a weakly-held key and goes away with it. [clearKtormDatabaseCache]
- * exists for tests, not as something production has to remember to call.
+ * **Invalidation on refresh is not needed.** A refresh replaces datasource *instances*, so a refreshed
+ * datasource is a new key that gets its own `Database` — a stale one can never be served on that path.
+ *
+ * **Invalidation on context close is needed**, and used to be missing. The old entry is not reliably collected
+ * with its weak key, because the value can reference the key or outlive the pool the key resolved to; a
+ * `Database` bound to a closed context's routing datasource then hands out connections from a pool that has
+ * been shut down. [KtormDatabaseCacheEvictor] clears the cache on `ContextClosedEvent` for exactly that
+ * reason. [clearKtormDatabaseCache] stays available for tests and for datasource replacements that arrive by
+ * some other route.
  *
  * @return the Database for the current thread's datasource
  * @author K
@@ -109,7 +124,11 @@ fun KudosContextHolder.currentDatabase(): Database {
     // Built outside the map so the metadata round trip does not run while holding the lock. Two
     // threads racing here may both build one; the loser's copy is discarded and Database is a
     // stateless wrapper, so that costs one extra metadata read rather than correctness.
-    val database = Database.connectWithSpringSupport(routingDataSource, alwaysQuoteIdentifiers = true)
+    val database = Database.connectWithSpringSupport(
+        routingDataSource,
+        logger = RedactingKtormLogger(detectLoggerImplementation()),
+        alwaysQuoteIdentifiers = true,
+    )
     return databaseCache.putIfAbsent(key, database) ?: database
 }
 

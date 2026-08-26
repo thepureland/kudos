@@ -57,5 +57,28 @@ open class UserAccountThirdDao : BaseCrudDao<String, UserAccountThird, UserAccou
         return search(criteria).firstOrNull()
     }
 
+    fun searchActiveByUserId(userId: String): List<UserAccountThird> = search(
+        Criteria(UserAccountThird::userId eq userId)
+            .addAnd(UserAccountThird::active eq true)
+    )
+
+    /** Exact lookup used by the provider catalog; provider instance id is part of identity. */
+    fun fetchByIdentityProviderSubject(
+        tenantId: String,
+        identityProviderId: String,
+        accountProviderIssuer: String?,
+        subject: String,
+    ): UserAccountThird? {
+        val criteria = Criteria(UserAccountThird::tenantId eq tenantId)
+            .addAnd(UserAccountThird::identityProviderId eq identityProviderId)
+            .addAnd(UserAccountThird::subject eq subject)
+        if (accountProviderIssuer == null) {
+            criteria.addAnd(UserAccountThird::accountProviderIssuer.isNull())
+        } else {
+            criteria.addAnd(UserAccountThird::accountProviderIssuer eq accountProviderIssuer)
+        }
+        return search(criteria).firstOrNull()
+    }
+
 
 }

@@ -3,9 +3,11 @@ package io.kudos.ms.user.core.login.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.core.login.dao.UserLogLoginDao
+import io.kudos.ms.user.core.login.model.UserLoginAttempt
 import io.kudos.ms.user.core.login.model.po.UserLogLogin
 import io.kudos.ms.user.core.login.service.iservice.IUserLogLoginService
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
@@ -24,6 +26,24 @@ open class UserLogLoginService(
 
 
     private val log = LogFactory.getLog(this::class)
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    override fun recordLoginAttempt(attempt: UserLoginAttempt): String = dao.insert(
+        UserLogLogin {
+            userId = attempt.userId
+            username = attempt.username.take(USERNAME_MAX_LENGTH)
+            tenantId = attempt.tenantId.take(TENANT_ID_MAX_LENGTH)
+            loginTime = attempt.loginTime
+            loginIp = attempt.loginIp
+            loginDevice = attempt.loginDevice?.take(CLIENT_INFO_MAX_LENGTH)
+            loginBrowser = attempt.loginBrowser?.take(CLIENT_INFO_MAX_LENGTH)
+            loginOs = attempt.loginOs?.take(CLIENT_INFO_MAX_LENGTH)
+            userAgent = attempt.userAgent?.take(USER_AGENT_MAX_LENGTH)
+            loginSuccess = attempt.loginSuccess
+            failureReason = attempt.failureReason?.take(FAILURE_REASON_MAX_LENGTH)
+            createTime = LocalDateTime.now()
+        }
+    )
 
     @Transactional(readOnly = true)
     override fun getLoginsByUserId(userId: String, limit: Int): List<UserLogLogin> =
@@ -62,5 +82,12 @@ open class UserLogLoginService(
         startTime: LocalDateTime?, endTime: LocalDateTime?,
     ): Long = dao.countByLoginSuccess(false, tenantId, userId, startTime, endTime).toLong()
 
+    companion object {
+        private const val USERNAME_MAX_LENGTH = 32
+        private const val TENANT_ID_MAX_LENGTH = 36
+        private const val CLIENT_INFO_MAX_LENGTH = 64
+        private const val USER_AGENT_MAX_LENGTH = 512
+        private const val FAILURE_REASON_MAX_LENGTH = 256
+    }
 
 }

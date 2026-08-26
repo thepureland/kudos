@@ -1,9 +1,12 @@
 package io.kudos.ms.user.core.account.service
 
+import io.kudos.ability.security.common.support.PasswordEncodingKit
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
+import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.security.crypto.password.PasswordEncoder
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.test.*
@@ -22,6 +25,9 @@ class UserAccountServiceTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var userAccountService: IUserAccountService
+
+    @Resource
+    private lateinit var passwordEncoder: PasswordEncoder
 
     @Test
     fun getUserByTenantIdAndUsername() {
@@ -90,6 +96,10 @@ class UserAccountServiceTest : RdbAndRedisCacheTestBase() {
         assertNotNull(user)
         // Verify the login error count is reset.
         assertTrue(user.loginErrorTimes == 0)
+        val persisted = assertNotNull(userAccountService.get(id))
+        assertNotEquals(newPassword, persisted.loginPassword)
+        assertTrue(persisted.loginPassword.startsWith("{bcrypt}"))
+        assertTrue(PasswordEncodingKit.matches(passwordEncoder, newPassword, persisted.loginPassword))
     }
 
     @Test
@@ -101,6 +111,10 @@ class UserAccountServiceTest : RdbAndRedisCacheTestBase() {
         assertNotNull(user)
         // Verify the security password error count is reset.
         assertTrue(user.securityPasswordErrorTimes == 0)
+        val persisted = assertNotNull(userAccountService.get(id))
+        assertNotEquals(newPassword, persisted.securityPassword)
+        assertTrue(persisted.securityPassword?.startsWith("{bcrypt}") == true)
+        assertTrue(PasswordEncodingKit.matches(passwordEncoder, newPassword, persisted.securityPassword))
     }
 
     @Test
@@ -190,6 +204,15 @@ class UserAccountServiceTest : RdbAndRedisCacheTestBase() {
         val user = userAccountService.get(id)
         assertNotNull(user)
         assertEquals(setup.secret, user.authenticationKey)
+        val rawStoredSecret = assertNotNull(
+            JdbcTemplate(dataSource).queryForObject(
+                "select \"authentication_key\" from \"user_account\" where \"id\" = ?",
+                String::class.java,
+                id,
+            ),
+        )
+        assertNotEquals(setup.secret, rawStoredSecret)
+        assertTrue(rawStoredSecret.length > 64)
     }
 
     /** resetAuthKey should return null for a non-existent user (dao.update fails). */
@@ -199,6 +222,25 @@ class UserAccountServiceTest : RdbAndRedisCacheTestBase() {
             "00000000-0000-0000-0000-000000000000", "alice", "kudos"
         )
         assertNull(res)
+    }
+
+    @Test
+    fun activateVerifiedAuthKey_isEncryptedAndCannotOverwriteConcurrentEnrollment() {
+        val id = "a970f8c0-0000-0000-0000-000000000017"
+        val secret = "JBSWY3DPEHPK3PXP"
+
+        assertTrue(userAccountService.activateVerifiedAuthKey(id, secret))
+        assertFalse(userAccountService.activateVerifiedAuthKey(id, "GEZDGNBVGY3TQOJQ"))
+        assertEquals(secret, userAccountService.get(id)?.authenticationKey)
+
+        val rawStoredSecret = assertNotNull(
+            JdbcTemplate(dataSource).queryForObject(
+                "select \"authentication_key\" from \"user_account\" where \"id\" = ?",
+                String::class.java,
+                id,
+            ),
+        )
+        assertNotEquals(secret, rawStoredSecret)
     }
 
     /** cleanAuthKey clears an existing secret. */

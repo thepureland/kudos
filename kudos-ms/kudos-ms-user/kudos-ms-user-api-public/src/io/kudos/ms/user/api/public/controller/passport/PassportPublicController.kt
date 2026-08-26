@@ -1,6 +1,10 @@
 package io.kudos.ms.user.api.public.controller.passport
 
 import io.kudos.base.security.BarcodeKit
+import io.kudos.base.net.IpKit
+import io.kudos.ability.web.springmvc.support.getBrowserInfo
+import io.kudos.ability.web.springmvc.support.getClientTerminal
+import io.kudos.ability.web.springmvc.support.getOsInfo
 import io.kudos.context.core.KudosContext
 import io.kudos.ms.user.common.passport.CurrentUserKit
 import io.kudos.ms.user.common.passport.enums.ChangePasswordResultEnum
@@ -31,11 +35,8 @@ import org.springframework.web.bind.annotation.RestController
  * `KudosContext.user` on subsequent requests. `CurrentUserKit` is the standard
  * entry point for reading the current user from controllers/services.
  *
- * **`@RequestParam userId` endpoints are still retained** (verifyPassword /
- * changePassword / logout / etc.): they support cross-service RPC calls (which
- * have no session context) and act as a fallback when no session scheme is
- * active. The gateway layer must ensure these public endpoints, when invoked
- * with a `userId`, cannot operate across users.
+ * Public self-service operations always bind the request user id to the current session principal.
+ * Trusted cross-service calls belong on an internal API and must not reuse this public boundary.
  *
  * @author K
  * @since 1.0.0
@@ -48,7 +49,19 @@ class PassportPublicController(
 
     @PostMapping("/login")
     fun login(@RequestBody @Valid req: PassportLoginRequest, request: HttpServletRequest): PassportLoginResult {
-        val res = passportService.login(req)
+        // Never trust client-supplied audit metadata on the public boundary. Forwarded headers are
+        // deliberately not parsed here; a trusted proxy/container should normalize remoteAddr.
+        val browser = request.getBrowserInfo().asClientDescription()
+        val os = request.getOsInfo().asClientDescription()
+        val observedIp = IpKit.ipv4StringToLong(request.remoteAddr).takeIf { it >= 0 }
+        val observedReq = req.copy(
+            loginIp = observedIp,
+            loginDevice = request.getClientTerminal(),
+            loginBrowser = browser,
+            loginOs = os,
+            userAgent = request.getHeader("User-Agent"),
+        )
+        val res = passportService.login(observedReq)
         if (res.status == PassportLoginStatusEnum.SUCCESS) {
             val info = res.userInfo ?: return res
             // Write into HttpSession; UserContextWebFilter reads it back into KudosContext.user on subsequent requests
@@ -57,25 +70,29 @@ class PassportPublicController(
                 tenantId = info.tenantId,
                 username = info.username,
             )
-            request.session.setAttribute(KudosContext.SESSION_KEY_USER, principal)
+            val session = request.getSession(true)
+            // Rotate the id after credential verification to prevent session fixation.
+            request.changeSessionId()
+            session.setAttribute(KudosContext.SESSION_KEY_USER, principal)
         }
-        return res
+        return res.toPublicLoginResult()
     }
 
     /**
      * Logout: writes the last-logout time for audit, and invalidates the session so
      * [UserContextWebFilter] can no longer resolve the user on subsequent requests.
      *
-     * If [userId] is not provided, it is resolved from the current session, allowing
-     * the frontend to "log myself out" without re-supplying the id.
+     * [userId] remains optional for wire compatibility, but when supplied it must match the
+     * current principal. It can never select another user's account.
      */
     @PostMapping("/logout")
     fun logout(
         @RequestParam(required = false) userId: String?,
         request: HttpServletRequest,
     ): Boolean {
-        val effectiveUserId = userId ?: CurrentUserKit.currentUserIdOrNull() ?: return false
-        val ok = passportService.logout(effectiveUserId)
+        val currentUserId = CurrentUserKit.currentUserIdOrNull() ?: return false
+        if (userId != null && userId != currentUserId) return false
+        val ok = passportService.logout(currentUserId)
         // Drop the session regardless of service-call outcome — the client wants to log out
         request.getSession(false)?.invalidate()
         return ok
@@ -104,23 +121,31 @@ class PassportPublicController(
 
     /** Verify the current user's login password (does not consume the error counter). Used for re-authentication before sensitive operations. */
     @PostMapping("/verifyPassword")
-    fun verifyPassword(@RequestBody @Valid req: VerifyPasswordRequest): Boolean =
-        passportService.verifyPassword(req)
+    fun verifyPassword(@RequestBody @Valid req: VerifyPasswordRequest): Boolean {
+        if (!isCurrentUser(req.userId)) return false
+        return passportService.verifyPassword(req)
+    }
 
     /** Verify the current user's security password (does not consume the error counter). */
     @PostMapping("/verifySecurityPassword")
-    fun verifySecurityPassword(@RequestBody @Valid req: VerifyPasswordRequest): Boolean =
-        passportService.verifySecurityPassword(req)
+    fun verifySecurityPassword(@RequestBody @Valid req: VerifyPasswordRequest): Boolean {
+        if (!isCurrentUser(req.userId)) return false
+        return passportService.verifySecurityPassword(req)
+    }
 
     /** User changes their own login password: verifies the old password first. */
     @PostMapping("/changePassword")
-    fun changePassword(@RequestBody @Valid req: ChangePasswordRequest): ChangePasswordResultEnum =
-        passportService.changePassword(req)
+    fun changePassword(@RequestBody @Valid req: ChangePasswordRequest): ChangePasswordResultEnum {
+        if (!isCurrentUser(req.userId)) return ChangePasswordResultEnum.USER_NOT_FOUND
+        return passportService.changePassword(req)
+    }
 
     /** User changes their own security password. */
     @PostMapping("/changeSecurityPassword")
-    fun changeSecurityPassword(@RequestBody @Valid req: ChangePasswordRequest): ChangePasswordResultEnum =
-        passportService.changeSecurityPassword(req)
+    fun changeSecurityPassword(@RequestBody @Valid req: ChangePasswordRequest): ChangePasswordResultEnum {
+        if (!isCurrentUser(req.userId)) return ChangePasswordResultEnum.USER_NOT_FOUND
+        return passportService.changeSecurityPassword(req)
+    }
 
     /**
      * Renders any short text (typically `otpauth://...`) as a PNG QR code.
@@ -143,6 +168,25 @@ class PassportPublicController(
 
         /** Maximum QR code side length in pixels (caps per-request image memory on this public endpoint). */
         private const val MAX_QR_SIZE = 1024
+    }
+
+    private fun isCurrentUser(userId: String): Boolean = CurrentUserKit.currentUserIdOrNull() == userId
+
+    private fun Pair<String, String>.asClientDescription(): String =
+        if (second == "unknown") first else "$first $second"
+
+    /**
+     * Keep the detailed result inside the Passport domain for audit, but do not disclose whether
+     * the username exists or whether its account is disabled, locked, or administratively frozen.
+     */
+    private fun PassportLoginResult.toPublicLoginResult(): PassportLoginResult = when (status) {
+        PassportLoginStatusEnum.USER_NOT_FOUND,
+        PassportLoginStatusEnum.WRONG_PASSWORD,
+        PassportLoginStatusEnum.INACTIVE,
+        PassportLoginStatusEnum.LOCKED,
+        PassportLoginStatusEnum.ACCOUNT_FROZEN -> PassportLoginResult.invalidCredentials()
+
+        else -> this
     }
 
 }

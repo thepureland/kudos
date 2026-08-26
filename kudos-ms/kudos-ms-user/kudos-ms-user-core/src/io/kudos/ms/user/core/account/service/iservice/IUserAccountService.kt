@@ -136,6 +136,16 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
     fun resetSecurityPassword(id: String, newPassword: String): Boolean
 
     /**
+     * Atomically replace a legacy/outdated login-password encoding after successful authentication.
+     * The update succeeds only while the persisted value still equals [expectedEncodedPassword].
+     */
+    fun upgradeLoginPasswordEncoding(
+        id: String,
+        expectedEncodedPassword: String,
+        upgradedEncodedPassword: String,
+    ): Boolean
+
+    /**
      * Update last-login info.
      *
      * @param id user id
@@ -210,6 +220,13 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
      * @return [AuthKeySetup] containing secret + otpauthUrl; null when the user is missing or the DB write fails
      */
     fun resetAuthKey(id: String, accountName: String, issuer: String): AuthKeySetup?
+
+    /**
+     * Persist a TOTP secret that the trusted authentication enrollment flow has already verified.
+     * This is an internal credential boundary; public clients must never choose or submit a secret
+     * directly to a controller.
+     */
+    fun activateVerifiedAuthKey(id: String, secret: String): Boolean
 
     /**
      * Clear the user's TOTP secret (disable two-factor auth).

@@ -1,7 +1,9 @@
 package io.kudos.ability.security.common.init
 
 import io.kudos.ability.security.common.support.Authenticator
+import io.kudos.ability.security.common.support.PasswordEncodingKit
 import io.kudos.ability.security.common.support.TotpAuthenticator
+import io.kudos.base.security.PasswordKit
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -9,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -38,6 +41,26 @@ internal class SecurityCommonAutoConfigurationTest {
             assertTrue(hash.startsWith("{bcrypt}"), "encoder should prefix with the delegating id")
             assertTrue(encoder.matches("hunter2", hash))
         }
+    }
+
+    @Test
+    fun defaults_matchLegacyBcryptAndMarkItForUpgrade() {
+        runner.run { ctx ->
+            val encoder = ctx.getBean(PasswordEncoder::class.java)
+            val legacyHash = PasswordKit.hash("legacy password", 4)
+
+            assertTrue(encoder.matches("legacy password", legacyHash))
+            assertTrue(PasswordEncodingKit.matches(encoder, "legacy password", legacyHash))
+            assertTrue(PasswordEncodingKit.upgradeEncoding(encoder, legacyHash))
+        }
+    }
+
+    @Test
+    fun compatibilityHelper_rejectsMalformedAndUnknownEncodingsWithoutThrowing() {
+        val encoder = SecurityCommonAutoConfiguration().passwordEncoder()
+
+        assertFalse(PasswordEncodingKit.matches(encoder, "password", "not-an-encoding"))
+        assertFalse(PasswordEncodingKit.matches(encoder, "password", "{unknown}value"))
     }
 
     @Test

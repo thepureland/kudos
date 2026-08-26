@@ -72,12 +72,24 @@
 ## 关键概念
 
 - **账号（`user_account`）**：用户主数据（含 `login_password` / `security_password` / `authentication_key` / freeze* 等敏感字段）
-- **第三方账号（`user_account_third`）**：OAuth / SSO 登录的第三方身份绑定；按 `(user_id, provider_code)` 唯一
+  - `authentication_key` 使用透明 AES-GCM 加密，兼容历史明文读取；加密列的 Ktorm 参数日志会被脱敏
+- **第三方账号（`user_account_third`）**：OAuth / SSO 外部身份绑定；以租户 Provider 实例的
+  `issuer + subject` 定位身份，并限制一个用户在同一 Provider 实例只有一个绑定
+- **第三方账号审计（`user_account_third_audit`）**：绑定/解绑成功与拒绝的追加式日志，外部
+  `subject` 仅保存 SHA-256
+- **外部账号 JIT 预配**：原子创建无本地密码的 `user_account` 与首条外部身份绑定；并发失败
+  整体回滚，不遗留孤儿账号，首次绑定审计动作是 `JIT_BIND`；Provider 默认组织会同时建立
+  `user_org_user` 成员关系，其他经校验的账号默认值一并写入
 - **账号保护（`user_account_protection`）**：登录错误次数 / 冻结策略等保护字段
 - **联系方式（`user_contact_way`）**：手机 / 邮箱，可多条
 - **登录日志（`user_log_login`）**：每次登录的审计记录
 - **记住登录（`user_login_remember_me`）**：长效 token 持久化（区别于 passport 的瞬时鉴权）
-- **通行证（passport）**：登录鉴权状态机——`PassportService` 跑 user_account 校验 + 冻结判定 + OTP 校验
+- **通行证（passport）**：`PassportService` 执行请求限流、账号/冻结判定、密码/TOTP/恢复码独立失败
+  窗口及登录审计；恢复码通过 User 定义、Auth 实现的消费端口接入，不把恢复码存入 User 域
+- **本地密码策略**：账号创建、通用更新、管理员重置和用户自助改密共用 `IPasswordPolicy`；默认采用
+  长度优先策略（12～64 个 Unicode 字符），拒绝常见密码、单字符重复和包含用户名的密码，大小写、
+  数字及特殊字符组合规则可选启用。BCrypt 输入统一限制为最多 72 个 UTF-8 字节，避免静默截断；
+  与 Auth Core 同进程时还会拒绝并归档最近 5 个登录/安全历史密码哈希
 - **组织（`user_org`） + 组织用户（`user_org_user`）**：树形组织结构 + 用户归属
   - `user_org.path` 列做祖先链，方便查"某组织及全部后代"
   - 与 `auth_group` 配合：组织树是物理隶属，`auth_group` 是权限分组，二者独立
@@ -96,8 +108,9 @@
   admin / internal 默认无 session→KudosContext 转换；切 admin 进程跑用户 API 会拿不到 context
 - ❗ **`api-admin` 当前是孤岛模块** — 未被任何 build 拉入，仅靠 `settings.gradle.kts` 注册；
   CI 上能编译但生产部署需要业务方主动决定是否启用
-- ❗ **passport 内部状态机文档化不足** — 登录鉴权（密码 / OTP / 冻结判定 / 错误次数）的实际流程
-  分散在 `PassportService` + `UserAccountProtectionService`，README 仅提及"状态机"未图示
+- ✅ **passport 防爆破已分层** — 服务端 IP 与租户+用户名承担请求频率限制，密码/TOTP 分桶承担
+  因素失败窗口，旧 `login_error_times` + `autoLoginLock` 继续承担账号级密码连续失败冻结；详细流程及
+  配置见 `docs/authentication-and-federated-login-design.md` 的“登录防护”章节
 - ❗ **组织树 path 列没有触发器维护** — `user_org.path` 为祖先链字符串，靠 service 层手动维护；
   绕过 service 直接 DML 改 parent 不会同步 path，会导致树查询错乱
 
@@ -129,8 +142,26 @@
   `kudos.ms.user.passport.login-lock.lock-minutes`（默认 30，≤0 表示锁定至人工解冻）分钟，
   期间一律返回 `LOCKED`（含正确密码），登录成功重置计数；`user_account_protection`
   保护策略表（按用户/租户差异化阈值）的接入仍为待办。
-- ❗ **登录审计未落库**：`user_log_login` 表 + `UserLogLoginService` 完整存在，但 `PassportService.login/logout`
-  不写任何登录日志记录——安全审计（异地登录、爆破检测）无数据来源。
+- ✅ **Passport 登录审计已接通**：成功与终态失败由 `PassportService` 投喂 `user_log_login`，
+  IP、终端、浏览器、OS 和 User-Agent 由公共控制器从服务端请求提取；更完整的 auth 域风险事件、
+  不存在用户标识哈希和集中检索仍属后续工作。
+- ✅ **认证尝试限流已接通**：按服务端 IP、租户+用户名限制请求频率，密码和 TOTP 失败独立计数；
+  多节点使用 Redis Lua 原子检查/消费，无 Redis 回退单机内存，存储故障默认 fail-closed。响应新增
+  `RATE_LIMITED` 和 `retryAfterSeconds`，旧状态及账号自动锁定语义不变。
+- ✅ **公网用户名枚举防护已接通**：公共 Passport 登录将用户不存在、密码错误、停用、自动锁定及
+  管理员冻结统一返回 `INVALID_CREDENTIALS`，不暴露错误次数或冻结原因；核心审计保留真实状态，
+  快速拒绝分支执行 BCrypt 虚拟校验以缓解明显的时序差异。
+- ✅ **认证生命周期事件已接通**：登录密码/安全密码变更、账号停用、冻结和 TOTP 认证器变更发布专用
+  `UserAuthenticationInvalidated`，账号删除沿用带租户快照的单删/批删事件；不复用同时覆盖登录时间、
+  失败次数的通用更新事件。Auth 同进程部署会在提交后递增 token epoch，并撤销全部 Refresh family
+  与逻辑会话；独立进程部署必须用可靠消息/Outbox 转发这些事件。
+- ✅ **TOTP 正式密钥已加密落库**：`authentication_key` 使用迁移友好的 AES-GCM 字段，历史明文可继续
+  读取，新写入只保存随机 IV 的认证密文；Flyway 已将列扩为 512 字符。Auth 自助注册只通过
+  `activateVerifiedAuthKey` 写入验证码已确认的密钥，普通账号更新仍不能覆盖该字段。
+- ✅ **密码持久化边界已收口**：普通创建/编辑表单中的非空密码必须先通过策略并统一写为
+  `{bcrypt}` 版本化编码；历史无前缀 BCrypt 可继续登录并在完整认证成功后以 CAS 透明升级。通用
+  更新不能跨租户移动账号，也不能直接覆盖 TOTP secret 或 session key。JIT 的空登录密码继续表示
+  “未登记本地密码”；仅可信的内部 `UserAccount` 迁移对象允许原样携带受支持编码，避免二次哈希。
 
 ### API 契约 / 分层
 
@@ -142,6 +173,6 @@
 
 ### 测试覆盖
 
-- `kudos-ms-user-core` 覆盖良好（25+ 测试类，passport 状态机全枚举）；但 `api-admin` / `api-public` / `api-internal` /
-  `client` 四个模块 **0 个测试**：`PassportPublicController` 的 session 写入与 logout 失效、`UserContextWebFilter` 的
-  Order 语义、各 Fallback 的安全默认值均无回归保护。建议至少为 public 控制器补 MockMvc 测试。
+- `kudos-ms-user-core` 覆盖 cache / dao / service / passport；`PassportPublicController` 已有纯单元测试覆盖
+  session 写入与轮换、logout 失效、当前主体归属校验以及公网登录错误收敛。其余 public/internal/client
+  边界仍应继续补充契约与安全默认值测试。

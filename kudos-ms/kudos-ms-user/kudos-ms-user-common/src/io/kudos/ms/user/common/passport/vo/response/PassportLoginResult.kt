@@ -5,8 +5,9 @@ import java.io.Serializable
 
 
 /**
- * Login result. All outcomes (success / user not found / wrong password / inactive) are returned
- * via this class; the HTTP layer always returns 200, with [status] distinguishing the result.
+ * Login result. The core service may return detailed account outcomes for trusted internal use and
+ * audit. Public authentication APIs must replace account-revealing outcomes with
+ * [PassportLoginStatusEnum.INVALID_CREDENTIALS].
  *
  * @author K
  * @since 1.0.0
@@ -24,6 +25,9 @@ data class PassportLoginResult(
 
     /** Additional error description, may be null */
     val message: String? = null,
+
+    /** Earliest suggested retry delay for a temporary rate limit; absent for other outcomes. */
+    val retryAfterSeconds: Long? = null,
 
 ) : Serializable {
 
@@ -63,12 +67,25 @@ data class PassportLoginResult(
         fun otpRequired(): PassportLoginResult =
             PassportLoginResult(status = PassportLoginStatusEnum.OTP_REQUIRED, message = "Please enter the dynamic verification code")
 
-        /** OTP code is incorrect; the server has incremented login_error_times. */
-        fun otpWrong(loginErrorTimes: Int): PassportLoginResult =
+        /** OTP code is incorrect; its failure window is independent from the password counter. */
+        fun otpWrong(): PassportLoginResult =
             PassportLoginResult(
                 status = PassportLoginStatusEnum.OTP_WRONG,
-                loginErrorTimes = loginErrorTimes,
                 message = "Incorrect dynamic verification code",
+            )
+
+        /** Recovery-code failures are counted separately from password and TOTP failures. */
+        fun recoveryCodeWrong(): PassportLoginResult =
+            PassportLoginResult(
+                status = PassportLoginStatusEnum.RECOVERY_CODE_WRONG,
+                message = "Incorrect recovery code",
+            )
+
+        fun rateLimited(retryAfterSeconds: Long?): PassportLoginResult =
+            PassportLoginResult(
+                status = PassportLoginStatusEnum.RATE_LIMITED,
+                message = "Too many authentication attempts; please retry later",
+                retryAfterSeconds = retryAfterSeconds?.coerceAtLeast(1),
             )
 
         /**
@@ -80,6 +97,13 @@ data class PassportLoginResult(
             PassportLoginResult(
                 status = PassportLoginStatusEnum.ACCOUNT_FROZEN,
                 message = freezeTitle?.takeIf { it.isNotBlank() } ?: "Account is frozen",
+            )
+
+        /** Public response that deliberately reveals neither account existence nor account state. */
+        fun invalidCredentials(): PassportLoginResult =
+            PassportLoginResult(
+                status = PassportLoginStatusEnum.INVALID_CREDENTIALS,
+                message = "Invalid username or password",
             )
     }
 }

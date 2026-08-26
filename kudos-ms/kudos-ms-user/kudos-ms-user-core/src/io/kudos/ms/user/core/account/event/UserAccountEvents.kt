@@ -21,6 +21,27 @@ data class UserAccountInserted(override val id: String) : UserAccountEvent
 /** Covers generic update, updateActive, and partial-field updates (password, login error count, login/logout time, etc.). */
 data class UserAccountUpdated(override val id: String) : UserAccountEvent
 
+/**
+ * Announces a committed account change after which existing authentication state must no longer be trusted.
+ *
+ * This is deliberately separate from [UserAccountUpdated]: login timestamps and error counters also publish that
+ * broad cache-invalidation event, and must never sign a user out.
+ */
+data class UserAuthenticationInvalidated(
+    override val id: String,
+    val tenantId: String,
+    val reason: Reason,
+) : UserAccountEvent {
+    enum class Reason {
+        LOGIN_PASSWORD_CHANGED,
+        SECURITY_PASSWORD_CHANGED,
+        ACCOUNT_DISABLED,
+        ACCOUNT_FROZEN,
+        AUTHENTICATOR_CHANGED,
+        WEBAUTHN_CREDENTIAL_CHANGED,
+    }
+}
+
 data class UserAccountDeleted(
     override val id: String,
     val tenantId: String,

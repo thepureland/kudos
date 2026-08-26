@@ -1,7 +1,10 @@
 package io.kudos.ms.user.core.account.service.iservice
 
-import io.kudos.base.support.service.iservice.IBaseCrudService
+import io.kudos.base.support.service.iservice.IBaseReadOnlyService
+import io.kudos.ms.user.core.account.model.AdminExternalAccountBindingCommand
+import io.kudos.ms.user.core.account.model.ExternalAccountBindingCommand
 import io.kudos.ms.user.core.account.model.po.UserAccountThird
+import java.time.LocalDateTime
 
 
 /**
@@ -11,7 +14,7 @@ import io.kudos.ms.user.core.account.model.po.UserAccountThird
  * @author AI: Codex
  * @since 1.0.0
  */
-interface IUserAccountThirdService : IBaseCrudService<String, UserAccountThird> {
+interface IUserAccountThirdService : IBaseReadOnlyService<String, UserAccountThird> {
 
 
     /**
@@ -21,6 +24,26 @@ interface IUserAccountThirdService : IBaseCrudService<String, UserAccountThird> 
      * @return binding list
      */
     fun getByUserAccountId(userId: String): List<UserAccountThird>
+
+    fun getActiveByUserAccountId(userId: String): List<UserAccountThird>
+
+    fun bindExternalIdentity(command: ExternalAccountBindingCommand): UserAccountThird
+
+    /** First binding created as part of an atomic JIT account provision. */
+    fun jitBindExternalIdentity(command: ExternalAccountBindingCommand): UserAccountThird
+
+    fun unbindExternalIdentity(bindingId: String, userId: String, tenantId: String): Boolean
+
+    fun prebindExternalIdentity(command: AdminExternalAccountBindingCommand): UserAccountThird
+
+    fun adminUnbindExternalIdentity(
+        bindingId: String,
+        tenantId: String,
+        actorUserId: String,
+        operationReason: String,
+    ): Boolean
+
+    fun updateLastLoginTime(bindingId: String, lastLoginTime: LocalDateTime): Boolean
 
     /**
      * Look up a binding record by third-party identity.
@@ -36,6 +59,13 @@ interface IUserAccountThirdService : IBaseCrudService<String, UserAccountThird> 
         accountProviderDictCode: String,
         accountProviderIssuer: String?,
         subject: String
+    ): UserAccountThird?
+
+    fun getByIdentityProviderSubject(
+        tenantId: String,
+        identityProviderId: String,
+        accountProviderIssuer: String?,
+        subject: String,
     ): UserAccountThird?
 
 

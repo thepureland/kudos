@@ -21,6 +21,9 @@ interface UserAccountThird : IManagedDbEntity<String, UserAccountThird> {
     /** Third-party provider dict code. */
     var accountProviderDictCode: String
 
+    /** Tenant identity-provider instance id; null only for bindings created before provider catalog migration. */
+    var identityProviderId: String?
+
     /** Issuer / provider tenant. */
     var accountProviderIssuer: String?
 

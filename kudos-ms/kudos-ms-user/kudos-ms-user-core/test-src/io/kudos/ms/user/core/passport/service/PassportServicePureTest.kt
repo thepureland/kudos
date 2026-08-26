@@ -1,6 +1,7 @@
 package io.kudos.ms.user.core.passport.service
 
 import io.kudos.base.security.PasswordKit
+import io.kudos.ability.security.common.init.SecurityCommonAutoConfiguration
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.common.account.vo.response.UserAccountRow
 import io.kudos.ms.user.common.passport.enums.ChangePasswordResultEnum
@@ -10,7 +11,17 @@ import io.kudos.ms.user.common.passport.vo.request.PassportLoginRequest
 import io.kudos.ms.user.common.passport.vo.request.VerifyPasswordRequest
 import io.kudos.ms.user.core.account.dao.UserAccountDao
 import io.kudos.ms.user.core.account.model.po.UserAccount
+import io.kudos.ms.user.core.account.security.PasswordPolicyException
+import io.kudos.ms.user.core.account.security.PasswordPolicyViolation
+import io.kudos.ms.user.core.account.security.PasswordReusedException
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
+import io.kudos.ms.user.core.login.service.iservice.IUserLogLoginService
+import io.kudos.ms.user.core.login.model.UserLoginAttempt
+import io.kudos.ms.user.core.passport.security.AuthenticationAttemptContext
+import io.kudos.ms.user.core.passport.security.AuthenticationAttemptDecision
+import io.kudos.ms.user.core.passport.security.AuthenticationAttemptFactorEnum
+import io.kudos.ms.user.core.passport.security.IAuthenticationAttemptLimiter
+import io.kudos.ms.user.core.passport.security.IRecoveryCodeVerifier
 import io.kudos.ms.user.core.passport.service.impl.PassportService
 import org.apache.commons.codec.binary.Base32
 import org.mockito.ArgumentMatchers.any
@@ -18,6 +29,7 @@ import org.mockito.ArgumentMatchers.anyLong
 import org.mockito.ArgumentMatchers.anyString
 import org.mockito.ArgumentMatchers.eq
 import org.mockito.ArgumentMatchers.isNull
+import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.never
 import org.mockito.Mockito.verify
@@ -51,7 +63,9 @@ internal class PassportServicePureTest {
 
     private val userAccountService = mock(IUserAccountService::class.java)
     private val userAccountDao = mock(UserAccountDao::class.java)
-    private val service = PassportService(userAccountService, userAccountDao)
+    private val userLogLoginService = mock(IUserLogLoginService::class.java)
+    private val passwordEncoder = SecurityCommonAutoConfiguration().passwordEncoder()
+    private val service = PassportService(userAccountService, userAccountDao, userLogLoginService, passwordEncoder)
 
     private val plain = "secret-pwd-123"
     private val hash = PasswordKit.hash(plain, strength = 4)
@@ -126,6 +140,18 @@ internal class PassportServicePureTest {
     private fun eqStr(value: String): String = eq(value) ?: value
     private fun eqLong(value: Long): Long = eq(value) ?: value
     private fun anyDateTime(): LocalDateTime = any(LocalDateTime::class.java) ?: LocalDateTime.now()
+    private fun anyAttempt(): UserLoginAttempt = any(UserLoginAttempt::class.java) ?: fallbackAttempt()
+    private fun captureAttempt(captor: ArgumentCaptor<UserLoginAttempt>): UserLoginAttempt =
+        captor.capture() ?: fallbackAttempt()
+    private fun captureString(captor: ArgumentCaptor<String>): String = captor.capture() ?: "fallback"
+
+    private fun fallbackAttempt() = UserLoginAttempt(
+        userId = null,
+        username = "fallback",
+        tenantId = "fallback",
+        loginTime = LocalDateTime.MIN,
+        loginSuccess = false,
+    )
 
     // ---- login: lookup / status gates -----------------------------------------------------
 
@@ -136,6 +162,12 @@ internal class PassportServicePureTest {
         assertEquals(PassportLoginStatusEnum.USER_NOT_FOUND, res.status)
         assertNull(res.userInfo)
         verify(userAccountService, never()).incrementLoginErrorTimes(anyString())
+        val captor = ArgumentCaptor.forClass(UserLoginAttempt::class.java)
+        verify(userLogLoginService).recordLoginAttempt(captureAttempt(captor))
+        assertNull(captor.value.userId)
+        assertEquals("ghost", captor.value.username)
+        assertFalse(captor.value.loginSuccess)
+        assertEquals("USER_NOT_FOUND", captor.value.failureReason)
     }
 
     @Test
@@ -303,16 +335,73 @@ internal class PassportServicePureTest {
         assertEquals("org1", info.orgId)
         verify(userAccountService).resetLoginErrorTimes("u1")
         verify(userAccountService, never()).updateLastLoginInfo(anyString(), anyLong(), anyDateTime())
+        val upgradedHash = ArgumentCaptor.forClass(String::class.java)
+        verify(userAccountService).upgradeLoginPasswordEncoding(
+            eqStr("u1"),
+            eqStr(hash),
+            captureString(upgradedHash),
+        )
+        assertTrue(upgradedHash.value.startsWith("{bcrypt}"))
+        assertTrue(passwordEncoder.matches(plain, upgradedHash.value))
+    }
+
+    @Test
+    fun login_success_versionedEncodingDoesNotWriteAgain() {
+        val versionedHash = requireNotNull(passwordEncoder.encode(plain))
+        stub("t1", "alice", entry(loginPassword = versionedHash))
+
+        val res = service.login(PassportLoginRequest("t1", "alice", plain))
+
+        assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
+        verify(userAccountService, never()).upgradeLoginPasswordEncoding(anyString(), anyString(), anyString())
+    }
+
+    @Test
+    fun login_success_encodingUpgradeFailureDoesNotChangeAuthenticationResult() {
+        val failingEncoder = object : org.springframework.security.crypto.password.PasswordEncoder {
+            override fun encode(rawPassword: CharSequence?): String = error("encoder unavailable")
+            override fun matches(rawPassword: CharSequence?, encodedPassword: String?): Boolean = false
+        }
+        val resilientService = PassportService(
+            userAccountService,
+            userAccountDao,
+            userLogLoginService,
+            failingEncoder,
+        )
+        stub("t1", "alice", entry())
+
+        val result = resilientService.login(PassportLoginRequest("t1", "alice", plain))
+
+        assertEquals(PassportLoginStatusEnum.SUCCESS, result.status)
+        verify(userAccountService, never()).upgradeLoginPasswordEncoding(anyString(), anyString(), anyString())
     }
 
     @Test
     fun login_success_withIp_updatesLastLoginInfo() {
         stub("t1", "alice", entry())
         val ip = 0x7F000001L
-        val res = service.login(PassportLoginRequest("t1", "alice", plain, loginIp = ip))
+        val req = PassportLoginRequest(
+            "t1", "alice", plain,
+            loginIp = ip,
+            loginDevice = "PC",
+            loginBrowser = "Chrome 126",
+            loginOs = "Linux",
+            userAgent = "agent",
+        )
+        val res = service.login(req)
         assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
         verify(userAccountService).resetLoginErrorTimes("u1")
         verify(userAccountService).updateLastLoginInfo(eqStr("u1"), eqLong(ip), anyDateTime())
+        val captor = ArgumentCaptor.forClass(UserLoginAttempt::class.java)
+        verify(userLogLoginService).recordLoginAttempt(captureAttempt(captor))
+        assertEquals("u1", captor.value.userId)
+        assertEquals(ip, captor.value.loginIp)
+        assertEquals("PC", captor.value.loginDevice)
+        assertEquals("Chrome 126", captor.value.loginBrowser)
+        assertEquals("Linux", captor.value.loginOs)
+        assertEquals("agent", captor.value.userAgent)
+        assertTrue(captor.value.loginSuccess)
+        assertNull(captor.value.failureReason)
     }
 
     @Test
@@ -333,29 +422,82 @@ internal class PassportServicePureTest {
         val res = service.login(PassportLoginRequest("t1", "alice", plain, authCode = null))
         assertEquals(PassportLoginStatusEnum.OTP_REQUIRED, res.status)
         // OTP_REQUIRED must not consume the error counter
+        verify(userAccountService, never()).upgradeLoginPasswordEncoding(anyString(), anyString(), anyString())
         verify(userAccountService, never()).incrementLoginErrorTimes(anyString())
         verify(userAccountService, never()).resetLoginErrorTimes(anyString())
+        verify(userLogLoginService, never()).recordLoginAttempt(anyAttempt())
     }
 
     @Test
-    fun login_otpEnabled_wrongCode_returnsOtpWrongAndIncrements() {
+    fun login_auditFailure_doesNotChangeAuthenticationResult() {
+        stub("t1", "alice", entry())
+        whenCalled(userLogLoginService.recordLoginAttempt(anyAttempt())).thenThrow(IllegalStateException("audit down"))
+
+        val res = service.login(PassportLoginRequest("t1", "alice", plain))
+
+        assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
+        assertNotNull(res.userInfo)
+    }
+
+    @Test
+    fun login_otpEnabled_wrongCode_returnsOtpWrongWithoutConsumingPasswordCounter() {
         stub("t1", "alice", entry(authenticationKey = "JBSWY3DPEHPK3PXP", loginErrorTimes = 0))
-        whenCalled(userAccountService.getUserRecord("u1")).thenReturn(UserAccountRow(id = "u1", loginErrorTimes = 1))
         val res = service.login(PassportLoginRequest("t1", "alice", plain, authCode = 1L))
         assertEquals(PassportLoginStatusEnum.OTP_WRONG, res.status)
-        assertEquals(1, res.loginErrorTimes)
-        verify(userAccountService).incrementLoginErrorTimes("u1")
+        assertNull(res.loginErrorTimes)
+        verify(userAccountService, never()).incrementLoginErrorTimes("u1")
     }
 
     @Test
-    fun login_otpEnabled_wrongCode_reachingThreshold_returnsLocked() {
+    fun login_otpEnabled_wrongCode_doesNotArmPasswordAccountLock() {
         stub("t1", "alice", entry(authenticationKey = "JBSWY3DPEHPK3PXP", loginErrorTimes = 4, freezeType = null))
-        whenCalled(userAccountService.getUserRecord("u1")).thenReturn(UserAccountRow(id = "u1", loginErrorTimes = 5))
         val res = service.login(PassportLoginRequest("t1", "alice", plain, authCode = 1L))
-        assertEquals(PassportLoginStatusEnum.LOCKED, res.status)
-        verify(userAccountService).freezeAccount(
-            eqStr("u1"), eqStr(PassportService.LOGIN_LOCK_FREEZE_TYPE), anyString(), anyString(), isNull(), any()
+        assertEquals(PassportLoginStatusEnum.OTP_WRONG, res.status)
+        verify(userAccountService, never()).freezeAccount(
+            anyString(), anyString(), anyString(), anyString(), any(), any()
         )
+    }
+
+    @Test
+    fun login_rateLimited_stopsBeforeAccountLookupAndReturnsRetryDelay() {
+        val limiter = RecordingAttemptLimiter(
+            requestDecision = AuthenticationAttemptDecision(allowed = false, retryAfterSeconds = 12),
+        )
+        val limitedService = PassportService(userAccountService, userAccountDao, userLogLoginService, passwordEncoder, limiter)
+
+        val res = limitedService.login(PassportLoginRequest("t1", "alice", plain))
+
+        assertEquals(PassportLoginStatusEnum.RATE_LIMITED, res.status)
+        assertEquals(12, res.retryAfterSeconds)
+        verify(userAccountService, never()).getUserByTenantIdAndUsername(anyString(), anyString())
+    }
+
+    @Test
+    fun login_passwordFailureRateLimited_stopsBeforeAccountLookupForEveryPrincipalState() {
+        val limiter = RecordingAttemptLimiter(
+            failureDecision = AuthenticationAttemptDecision(allowed = false, retryAfterSeconds = 19),
+        )
+        val limitedService = PassportService(userAccountService, userAccountDao, userLogLoginService, passwordEncoder, limiter)
+
+        val res = limitedService.login(PassportLoginRequest("t1", "alice", plain))
+
+        assertEquals(PassportLoginStatusEnum.RATE_LIMITED, res.status)
+        assertEquals(19, res.retryAfterSeconds)
+        verify(userAccountService, never()).getUserByTenantIdAndUsername(anyString(), anyString())
+    }
+
+    @Test
+    fun login_wrongOtp_recordsOnlyTotpFailureAndClearsPasswordFailures() {
+        val limiter = RecordingAttemptLimiter()
+        val limitedService = PassportService(userAccountService, userAccountDao, userLogLoginService, passwordEncoder, limiter)
+        stub("t1", "alice", entry(authenticationKey = "JBSWY3DPEHPK3PXP"))
+
+        val res = limitedService.login(PassportLoginRequest("t1", "alice", plain, authCode = 1L))
+
+        assertEquals(PassportLoginStatusEnum.OTP_WRONG, res.status)
+        assertEquals(listOf(AuthenticationAttemptFactorEnum.TOTP), limiter.recordedFailures)
+        assertTrue(AuthenticationAttemptFactorEnum.PASSWORD in limiter.clearedFailures)
+        verify(userAccountService, never()).incrementLoginErrorTimes(anyString())
     }
 
     @Test
@@ -366,6 +508,52 @@ internal class PassportServicePureTest {
         val res = service.login(PassportLoginRequest("t1", "alice", plain, authCode = code))
         assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
         verify(userAccountService).resetLoginErrorTimes("u1")
+    }
+
+    @Test
+    fun login_validRecoveryCodeConsumesItAndReturnsSuccess() {
+        val verifier = mock(IRecoveryCodeVerifier::class.java)
+        val recoveryService = PassportService(
+            userAccountService,
+            userAccountDao,
+            userLogLoginService,
+            passwordEncoder,
+            recoveryCodeVerifier = verifier,
+        )
+        stub("t1", "alice", entry(authenticationKey = "JBSWY3DPEHPK3PXP"))
+        whenCalled(verifier.consumeRecoveryCode("t1", "u1", "2345-6789-ABCD-EFGH")).thenReturn(true)
+
+        val result = recoveryService.login(
+            PassportLoginRequest("t1", "alice", plain, recoveryCode = "2345-6789-ABCD-EFGH")
+        )
+
+        assertEquals(PassportLoginStatusEnum.SUCCESS, result.status)
+        verify(verifier).consumeRecoveryCode("t1", "u1", "2345-6789-ABCD-EFGH")
+        verify(userAccountService).resetLoginErrorTimes("u1")
+    }
+
+    @Test
+    fun login_wrongRecoveryCodeUsesItsOwnFailureBucket() {
+        val verifier = mock(IRecoveryCodeVerifier::class.java)
+        val limiter = RecordingAttemptLimiter()
+        val recoveryService = PassportService(
+            userAccountService,
+            userAccountDao,
+            userLogLoginService,
+            passwordEncoder,
+            limiter,
+            verifier,
+        )
+        stub("t1", "alice", entry(authenticationKey = "JBSWY3DPEHPK3PXP"))
+
+        val result = recoveryService.login(
+            PassportLoginRequest("t1", "alice", plain, recoveryCode = "2345-6789-ABCD-EFGH")
+        )
+
+        assertEquals(PassportLoginStatusEnum.RECOVERY_CODE_WRONG, result.status)
+        assertEquals(listOf(AuthenticationAttemptFactorEnum.RECOVERY_CODE), limiter.recordedFailures)
+        assertTrue(AuthenticationAttemptFactorEnum.PASSWORD in limiter.clearedFailures)
+        verify(userAccountService, never()).incrementLoginErrorTimes(anyString())
     }
 
     @Test
@@ -462,9 +650,48 @@ internal class PassportServicePureTest {
         val po = mock(UserAccount::class.java)
         whenCalled(po.loginPassword).thenReturn(hash)
         whenCalled(userAccountDao.get("u1")).thenReturn(po)
+        whenCalled(userAccountService.resetPassword("u1", "new-pwd")).thenReturn(true)
         val res = service.changePassword(ChangePasswordRequest("u1", plain, "new-pwd"))
         assertEquals(ChangePasswordResultEnum.SUCCESS, res)
         verify(userAccountService).resetPassword("u1", "new-pwd")
+    }
+
+    @Test
+    fun changePassword_rejectsCurrentPasswordReuse() {
+        val po = mock(UserAccount::class.java)
+        whenCalled(po.loginPassword).thenReturn(hash)
+        whenCalled(userAccountDao.get("u1")).thenReturn(po)
+
+        val res = service.changePassword(ChangePasswordRequest("u1", plain, plain))
+
+        assertEquals(ChangePasswordResultEnum.PASSWORD_REUSED, res)
+        verify(userAccountService, never()).resetPassword(anyString(), anyString())
+    }
+
+    @Test
+    fun changePassword_mapsPolicyFailureToStableResult() {
+        val po = mock(UserAccount::class.java)
+        whenCalled(po.loginPassword).thenReturn(hash)
+        whenCalled(userAccountDao.get("u1")).thenReturn(po)
+        whenCalled(userAccountService.resetPassword("u1", "weak"))
+            .thenThrow(PasswordPolicyException(setOf(PasswordPolicyViolation.TOO_SHORT)))
+
+        val res = service.changePassword(ChangePasswordRequest("u1", plain, "weak"))
+
+        assertEquals(ChangePasswordResultEnum.PASSWORD_POLICY_VIOLATION, res)
+    }
+
+    @Test
+    fun changePassword_mapsHistoricalReuseToStableResult() {
+        val po = mock(UserAccount::class.java)
+        whenCalled(po.loginPassword).thenReturn(hash)
+        whenCalled(userAccountDao.get("u1")).thenReturn(po)
+        whenCalled(userAccountService.resetPassword("u1", "historical-password"))
+            .thenThrow(PasswordReusedException())
+
+        val res = service.changePassword(ChangePasswordRequest("u1", plain, "historical-password"))
+
+        assertEquals(ChangePasswordResultEnum.PASSWORD_REUSED, res)
     }
 
     // ---- changeSecurityPassword ------------------------------------------------------------
@@ -492,6 +719,7 @@ internal class PassportServicePureTest {
         val po = mock(UserAccount::class.java)
         whenCalled(po.securityPassword).thenReturn(hash)
         whenCalled(userAccountDao.get("u1")).thenReturn(po)
+        whenCalled(userAccountService.resetSecurityPassword("u1", "new-spwd")).thenReturn(true)
         val res = service.changeSecurityPassword(ChangePasswordRequest("u1", plain, "new-spwd"))
         assertEquals(ChangePasswordResultEnum.SUCCESS, res)
         verify(userAccountService).resetSecurityPassword("u1", "new-spwd")
@@ -520,5 +748,34 @@ internal class PassportServicePureTest {
                 ((h[offset + 2].toInt() and 0xFF).toLong() shl 8) or
                 (h[offset + 3].toInt() and 0xFF).toLong()
         return truncated % 1_000_000L
+    }
+
+    private class RecordingAttemptLimiter(
+        private val requestDecision: AuthenticationAttemptDecision = AuthenticationAttemptDecision.ALLOWED,
+        private val failureDecision: AuthenticationAttemptDecision = AuthenticationAttemptDecision.ALLOWED,
+    ) : IAuthenticationAttemptLimiter {
+        val recordedFailures = mutableListOf<AuthenticationAttemptFactorEnum>()
+        val clearedFailures = mutableSetOf<AuthenticationAttemptFactorEnum>()
+
+        override fun consumeRequest(context: AuthenticationAttemptContext) = requestDecision
+
+        override fun checkFailureLimit(
+            context: AuthenticationAttemptContext,
+            factor: AuthenticationAttemptFactorEnum,
+        ) = failureDecision
+
+        override fun recordFailure(
+            context: AuthenticationAttemptContext,
+            factor: AuthenticationAttemptFactorEnum,
+        ) {
+            recordedFailures += factor
+        }
+
+        override fun clearFailures(
+            context: AuthenticationAttemptContext,
+            factors: Set<AuthenticationAttemptFactorEnum>,
+        ) {
+            clearedFailures += factors
+        }
     }
 }

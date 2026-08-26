@@ -4,6 +4,8 @@ import io.kudos.ability.log.audit.common.annotation.WebAudit
 import io.kudos.ability.log.audit.common.enums.OperationTypeEnum
 import io.kudos.ms.auth.common.authz.api.IPermissionVersionApi
 import io.kudos.ms.auth.common.authz.vo.SubjectRef
+import io.kudos.ms.auth.core.authentication.lifecycle.service.iservice.IAuthenticationLifecycleService
+import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
 import jakarta.annotation.Resource
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -29,6 +31,12 @@ class PermissionVersionAdminController {
     @Resource
     private lateinit var permissionVersionApi: IPermissionVersionApi
 
+    @Resource
+    private lateinit var authenticationLifecycleService: IAuthenticationLifecycleService
+
+    @Resource
+    private lateinit var userAccountService: IUserAccountService
+
     /**
      * The principal's current permission version — what a token minted right now would carry.
      *
@@ -51,9 +59,17 @@ class PermissionVersionAdminController {
     fun revokeAllTokens(
         @RequestParam userId: String,
         @RequestParam(required = false) reason: String?,
-    ): Long = permissionVersionApi.revokeAllTokens(userId, reason)
+    ): Long {
+        val user = requireNotNull(userAccountService.getUserRecord(userId)) { "User does not exist: $userId" }
+        return authenticationLifecycleService.invalidateAll(
+            requireNotNull(user.tenantId) { "User tenant id is missing: $userId" },
+            userId,
+            reason ?: ADMIN_REVOKE_ALL,
+        ).tokenEpoch
+    }
 
     companion object {
         private const val MODULE_CODE = "auth-version"
+        private const val ADMIN_REVOKE_ALL = "ADMIN_REVOKE_ALL"
     }
 }

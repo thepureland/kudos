@@ -39,6 +39,8 @@ alibabacloud-dysmsapi = "4.0.11"
 alibaba-fastjson2 = "2.0.64"
 apache-seata = "2.6.0"
 amazon-awssdk = "2.52.0"
+google-cloud-secretmanager = "2.95.0"
+azure-security-keyvault-secrets = "4.11.0"
 apache-common-pool2 = "2.13.1"
 baomidou-dynamic-datasource = "4.5.0"
 redisson = "4.7.0"
@@ -52,6 +54,7 @@ servlet-api = "6.1.0"
 springdoc-openapi = "3.1.0"
 clickhouse-jdbc = "0.9.8"
 influxdb-client = "8.0.0"
+yubico-webauthn-server = "2.9.0"
 
 
 [libraries]
@@ -135,6 +138,9 @@ spring-security-oauth2-jose = { module = "org.springframework.security:spring-se
 # Spring Security web filter chain + DSL. Versions managed by spring-boot BOM.
 spring-security-config = { module = "org.springframework.security:spring-security-config" }
 spring-security-web = { module = "org.springframework.security:spring-security-web" }
+# Optional WebAuthn/Passkey protocol verification. Account/session policy remains in kudos-ms-auth-core.
+yubico-webauthn-server-core = { module = "com.yubico:webauthn-server-core", version.ref = "yubico-webauthn-server" }
+yubico-webauthn-server-attestation = { module = "com.yubico:webauthn-server-attestation", version.ref = "yubico-webauthn-server" }
 # OAuth2 Resource Server — gives us the `oauth2ResourceServer.jwt(...)` DSL on HttpSecurity.
 spring-security-oauth2-resource-server = { module = "org.springframework.security:spring-security-oauth2-resource-server" }
 # Spring Boot's security starter — provides SecurityAutoConfiguration bundles for tests + apps.
@@ -178,6 +184,7 @@ spring-cloud-starter-circuitbreaker-resilience4j = { module = "org.springframewo
 spring-cloud-stream = { module = "org.springframework.cloud:spring-cloud-stream"}
 spring-cloud-starter-stream-kafka = { module = "org.springframework.cloud:spring-cloud-starter-stream-kafka"}
 spring-cloud-starter-stream-rabbit = { module = "org.springframework.cloud:spring-cloud-starter-stream-rabbit"}
+spring-vault-core = { module = "org.springframework.vault:spring-vault-core" }
 # Jackson 3 Kotlin 模块，供 Spring Cloud Function 等使用（与 Spring Boot 4 的 tools.jackson 一致）
 jackson-module-kotlin = { module = "tools.jackson.module:jackson-module-kotlin" }
 # Jackson 3 databind，版本由 spring-boot-bom 管理
@@ -192,6 +199,9 @@ seata-spring-boot-starter = { module = "org.apache.seata:seata-spring-boot-start
 apache-commons-pool2 = { module = "org.apache.commons:commons-pool2", version.ref = "apache-common-pool2"}
 github-caffeine = { module = "com.github.ben-manes.caffeine:caffeine", version.ref = "github-caffeine"}
 amazon-awssdk-sns = { module = "software.amazon.awssdk:sns", version.ref = "amazon-awssdk"}
+amazon-awssdk-secretsmanager = { module = "software.amazon.awssdk:secretsmanager", version.ref = "amazon-awssdk"}
+google-cloud-secretmanager = { module = "com.google.cloud:google-cloud-secretmanager", version.ref = "google-cloud-secretmanager"}
+azure-security-keyvault-secrets = { module = "com.azure:azure-security-keyvault-secrets", version.ref = "azure-security-keyvault-secrets"}
 amazon-awssdk-apache-client = { module = "software.amazon.awssdk:apache-client", version.ref = "amazon-awssdk"}
 h2database-h2 = { module = "com.h2database:h2" }
 postgresql = { module = "org.postgresql:postgresql" }

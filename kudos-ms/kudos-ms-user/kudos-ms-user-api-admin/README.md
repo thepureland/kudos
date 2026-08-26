@@ -7,7 +7,7 @@ User 服务的**管理端 REST 控制器层**。路径前缀 `/api/admin/user/..
 | 控制器 | 路由前缀 | 委托 Service |
 |---|---|---|
 | `UserAccountAdminController` | `/api/admin/user/account` | `IUserAccountService`——账号 CRUD、改密、冻结/解冻、激活态、内置位 |
-| `UserAccountThirdAdminController` | `/api/admin/user/accountThird` | `IUserAccountThirdService`——第三方账号绑定/解绑（OAuth / SSO） |
+| `UserAccountThirdAdminController` | `/api/admin/user/accountThird` | 第三方账号只读查询；写入统一转移到 Auth Admin 显式生命周期 API |
 | `UserAccountProtectionAdminController` | `/api/admin/user/accountProtection` | `IUserAccountProtectionService`——错误次数 / 冻结策略查询 |
 | `UserContactWayAdminController` | `/api/admin/user/contactWay` | `IUserContactWayService`——联系方式（手机 / 邮箱）多条管理 |
 | `UserOrgAdminController` | `/api/admin/user/org` | `IUserOrgService`——组织树 + 组织 ↔ 用户绑定 |
@@ -21,6 +21,8 @@ User 服务的**管理端 REST 控制器层**。路径前缀 `/api/admin/user/..
 - 控制器只调用 `user-core` 的 `IUser*Service`，**不直接接触 DAO** / 缓存层
 - 返回类型直接用 `user-common` 的 VO（`*Detail` / `*Row` / `*Edit`），不在 controller 层
   做额外组装
+- `accountThird` 只读控制器不继承 `BaseCrudController`，不暴露 `save/update/delete/batchDelete`；
+  管理员预绑定/代解绑位于 `/api/admin/auth/externalIdentity/**`
 - 入参用 `user-common` 的 `*FormCreate` / `*FormUpdate` / `*Query`，由 `kudos-ability-web-springmvc`
   的统一参数解析 / 校验器处理
 

@@ -1,8 +1,26 @@
 # kudos-ms-auth-core
 
 Auth 原子服务的**领域实现层**：在 `auth-common` 契约 + `auth-sql` 表结构上实现
-`IAuth*Api`，提供 Ktorm DAO / 业务 Service / 多级缓存 / 事件订阅。**不含 HTTP 控制器**
+`IAuth*Api`，提供统一认证事务、身份提供方目录、Ktorm DAO / 业务 Service / 多级缓存 /
+事件订阅。**不含 HTTP 控制器**
 （控制器在 `auth-api-admin` / `auth-api-internal` / `auth-api-public`）。
+
+认证域当前包含：
+
+- `authentication/`：认证状态机、认证方式注册表、密码认证适配器和事务存储 SPI；
+  其中 `authentication/mfa/recovery` 提供恢复码整组轮换、hash-only 持久化、原子单次消费及认证器
+  生命周期联动，`authentication/mfa/policy` 提供租户 MFA 配置、账号类型/角色条件、宽限期决策及
+  登录强制器；`authentication/mfa/webauthn` 提供租户隔离的公钥凭证仓储、软撤销、签名计数 CAS、
+  账号生命周期清理、方法无关的 MFA 注册查询，以及 attestation format、AAGUID 和可信证明的租户
+  准入策略；本地密码和第三方登录共用该强制器，第三方第一因素
+  可在原事务继续 TOTP/恢复码验证；协议中立的第二因素 registry 允许可选模块贡献 Passkey 等 action，
+  密码或第三方第一因素成功后只保存主体与 AMR/ACR，再继续验证，不保存第一因素凭证；
+- `provider/`：Provider 模板/租户实例 DAO、无密钥目录、租户实例管理，`INVITE_ONLY` 一次性邀请的
+  哈希存储/吊销/原子消费，Provider 一对一的 JIT 用户名/邮箱准入/账号默认值配置，以及类型化
+  claim mapping 的校验与持久化；
+- 存在 Kudos Redis 运行时则自动使用 Lua CAS + TTL 的共享事务存储；无 Redis 时回退进程内实现；
+- OAuth2/OIDC 协议适配位于可选的 `kudos-ms-auth-provider-oauth2`，避免核心模块强制引入
+  Spring Security OAuth2 Client。
 
 本文档分两部分：**总体设计**（作为通用框架的权限系统目标架构）与**当前实现**（代码现状）。
 设计中的条目均已落地并带回归测试；若后续新增规划项，仍以 🚧 标注。
@@ -636,6 +654,292 @@ A14 这条性质本身(跨线程、跨事务)在回滚式集成测试里观察�
 ---
 
 # 二、当前实现
+
+## 认证会话
+
+`authentication/session` 提供协议无关的 `AuthenticationSessionService` 与乐观版本存储接口。
+密码/TOTP 和 OAuth2/OIDC 成功路径登记同一种逻辑会话记录，保存 `authTime/amr/acr`、客户端观测
+信息、凭证版本、闲置/绝对过期和撤销原因。Redis 可用时使用 Lua CAS 与绝对 TTL；无 Redis 时
+回退单机内存。存储同时维护租户用户会话索引，支持活动会话列表和严格归属校验的远程撤销；
+Redis 索引键不暴露原始租户或用户标识。逻辑会话 ID 不是 bearer 凭证，公开事务中禁止保存
+servlet Session ID。
+
+`authentication/assurance` 提供可替换的 `IAuthenticationAssurancePolicy`。默认实现将
+`password/federated < webauthn < mfa < phishing-resistant`，未知行业 ACR 只接受精确匹配。`STEP_UP` 事务固定
+当前用户、租户和源逻辑会话，拒绝认证主体替换或强度不足；成功后 `AuthenticationSessionService`
+通过乐观版本 CAS 提升同一会话，合并 `amr`、刷新 `authTime`，但保持原绝对到期时间。
+
+业务 Controller 或服务入口使用 `@RequiresAuthenticationAssurance(acr = ..., maxAgeSeconds = ...)`
+声明最低 ACR 和可选的新鲜度上限；`maxAgeSeconds=-1` 为默认值，仅校验强度。类级声明提供默认要求，
+方法级声明优先。AOP 校验器只读取浏览器/JWT Filter 写入 request attribute 的权威
+`AuthenticationSession`，在非 HTTP 调用、无会话、会话失效、强度不足或认证过旧时 fail-closed。
+统一异常处理返回 HTTP 403 `AUTHENTICATION_ASSURANCE_REQUIRED`，并提供
+`reason/requiredAcr/maxAgeSeconds/stepUpEndpoint`，供客户端接续 Step-up 事务。
+
+`authentication/mfa` 提供 TOTP 两阶段注册。创建时生成的 secret 只返回一次，服务端待确认快照保存
+AES-GCM 密文并绑定用户、租户、TTL、失败次数和乐观版本；Redis 实现以 Lua 保证 CAS 与一次性消费，
+无 Redis 时使用相同语义的内存实现。Redis 侧的过期由 `PEXPIREAT` 在服务端完成，内存实现则在 `get` 时按注入的
+`Clock`（默认 `systemUTC`）做等价的惰性过期——它读注入时钟而非 `Instant.now()`，否则持有固定时钟的调用方与 store
+对"是否过期"永远无法达成一致。窗口是左闭右开：到期瞬间即不可读，与 Redis 键被丢弃的时点一致。只有正确 TOTP code 成功消费快照后才调用 User 凭证边界激活，
+随后由 `AUTHENTICATOR_CHANGED` 事件统一撤销旧 Session/Refresh Token。已有 TOTP 不允许通过注册接口
+静默覆盖，轮换必须先走明确撤销/恢复策略。
+
+租户 REQUIRED/CONDITIONAL MFA 策略默认要求允许方法包含 TOTP。完整部署 WebAuthn provider 和公开
+自助注册入口后，可显式设置 `kudos.ms.auth.mfa.policy.allow-webauthn-only=true`，使 WebAuthn 成为
+强制策略唯一可部署方法；默认 `false`，防止只部署 core 或部分公开节点时保存无法满足的策略。
+
+`authentication/mfa/policy/exemption` 提供逐用户的 MFA **注册**临时豁免，是宽限期已过、尚未注册账号的受控救援
+入口，替代"调整整个租户策略"这种过宽做法。它只解除"必须先注册"这一阻断：`AuthenticationMfaPolicyEnforcer` 把
+"已注册 → 要求第二因素"排在豁免判断之前，因此豁免永远不能替代用户仍持有的因素。执行点放在 enforcer 而不是
+`evaluate()` 内部——策略判定回答"租户策略对该账号怎么说"，豁免是执行时的覆盖；这个方向同时避免了与豁免服务的
+循环依赖（授予时需要判定策略）。豁免只在其他分支都已判定为拒绝时才查询，正常登录路径不增加查询。
+
+授予有三条硬边界：已注册账号不能被豁免；不能豁免自己；窗口必须在未来且不超过
+`kudos.ms.auth.mfa.policy.max-enrollment-exemption-days`（默认 7，服务层收敛到 1..30，部署无法配置出无限期救援）。
+租户策略并不要求 MFA 的账号也拒绝授予。每次授予是新行，历史保留；撤销只作用于当前确实生效的授予，已自然到期的
+行保持原样，避免把"到期"记成"被撤销"。并发授予被容忍而不是靠数据库过滤唯一索引（H2 不便表达）：有效窗口取活动
+授予中最晚的到期时间，撤销一次性作用于全部生效授予。
+
+WebAuthn 凭证显示名可按租户、用户和 credential ID 联合限定后更新；名称裁剪首尾空白，并拒绝空值、
+超过 100 字符及控制字符。它属于展示元数据，更新只推进凭证乐观版本，不发布认证失效事件；注册和
+撤销仍会发布 `WEBAUTHN_CREDENTIAL_CHANGED`。
+
+WebAuthn attestation 策略按租户一对一持久化。未配置时兼容已有部署：接受任意 attestation format，
+不限制 AAGUID，也不要求可信证明。配置后可选择 AAGUID `ALLOW_LIST` / `DENY_LIST`、限制 format，
+并在协议验证成功但凭证落库前执行准入；拒绝会消费当前 ceremony 且不写入凭证。AAGUID 统一规范化为
+UUID，format 统一为小写。只有部署提供唯一、可用的 attestation trust source 时，策略才允许保存
+`requireTrustedAttestation=true`，避免创建运行时永远无法满足的租户策略。
+
+`listForAudit` 提供租户/用户双重限定的只读历史视图，包含活动及已撤销凭证并按创建时间倒序。审计
+DTO 只暴露认证器公开属性和原始 credential bytes 的 SHA-256 Base64url 指纹，结构上不包含原始
+credential ID、COSE 公钥、user handle 或签名计数；Admin API 再以可信账号记录验证目标租户。
+`IWebAuthnAuthenticatorRiskEvaluator` 允许 FIDO MDS、企业 PKI 或行业设备目录贡献只读风险结果；多个
+结果取最严重级别并合并稳定来源/状态码。无 AAGUID 或无评估器时为 `NOT_EVALUATED`；单个评估器异常
+记录错误并返回 `EVALUATION_FAILED`，不使整个审计报告失败。该 SPI 不允许在审计请求内执行网络 I/O。
+
+`WebAuthnAuthenticatorRiskService` 将上述聚合结果同时提供给审计和认证执行链。表
+`auth_webauthn_authenticator_risk_policy` 按租户一对一保存 `blockedRiskLevels` 及创建/更新审计字段；未配置或
+空集合时保持默认的只审计行为。租户可阻断 `NOT_EVALUATED`、`WARNING`、`CRITICAL`，但不能阻断
+`NORMAL`；部署没有任何风险评估器时拒绝保存非空策略，避免产生看似生效、实际无法评估的安全配置。
+WebAuthn assertion 在协议签名、凭证归属、user handle 与账号校验全部通过后执行策略，并在命中时停止
+签名计数/最近使用时间更新及后续会话签发。该策略不会自动撤销凭证，也不会追溯撤销既有会话。
+
+阻断时同步发布 `WebAuthnAuthenticatorRiskPolicyBlocked`。事件包含租户、内部用户、发生时间、风险级别、
+来源/状态码和 credential SHA-256 Base64url 指纹，结构上不包含原始 credential ID、AAGUID、断言载荷或
+公钥；监听器异常会被记录但不能替换或绕过阻断结果。Micrometer 保持 `compileOnly`：应用存在
+`MeterRegistry` 时自动注册 `kudos.auth.webauthn.risk.policy.blocked`，并为 `NOT_EVALUATED`、`WARNING`、
+`CRITICAL` 预建计数器。指标只使用 `level` 标签，租户、用户、设备、来源及状态码留在事件中，避免
+高基数指标。框架提供稳定信号，具体告警阈值和通知渠道由部署侧配置。
+
+`WebAuthnRiskSecurityEventListener` 同时将阻断事件写入 `auth_security_event`。记录只保留内部用户、
+credential 指纹、风险级别/来源/状态码和 UTC 时间，不保留 WebAuthn 原始材料。相同租户、事件类型、
+稳定去重键和 5 分钟 UTC 窗口由唯一约束聚合，原子更新 `occurrenceCount` 及首末发生时间。首次写入与
+并发唯一冲突的败者重试均使用 `REQUIRES_NEW`，因此外层认证必然抛出并回滚时事件仍可提交；事件
+库故障只记错不改变认证阻断结果。`IAuthSecurityEventService.listRecent` 是租户必填、用户/风险级别可选、
+状态可选、最多 500 条的降序查询。处置状态机严格为 `OPEN → ACKNOWLEDGED → CLOSED`：确认只允许在
+5 分钟聚合窗口结束后发生，关闭只接受已确认事件。两个转换都以 `workflowVersion` 参与 SQL CAS，记录操作人、
+UTC 时间和原因；关闭分类固定为 `MITIGATED` / `FALSE_POSITIVE` / `ACCEPTED_RISK` / `DUPLICATE` / `OTHER`。
+不存在、跨租户、陈旧版本和非法状态都不会覆盖现有处置记录。状态转换本身不触发强制替代因素、凭证撤销或会话恢复；
+这些高风险动作需要后续独立授权工作流。
+
+首次事件的 `dueAt` 由 `IAuthSecurityEventSlaPolicy` 计算。内置策略通过
+`kudos.ms.auth.security-event.sla` 配置：`critical=1h`、`warning=4h`、`normal=24h`、
+`not-evaluated=24h`，也可用 `enabled=false` 关闭；行业部署可替换整个 SPI 实现租户、事件类型或营业日规则。
+活动事件可分派/重新分派负责人，SQL 同时校验租户、非 `CLOSED` 状态和 `workflowVersion`，分派字段保持全有或全无。
+查询支持负责人和 `overdueOnly`；超时严格表示 `status != CLOSED && dueAt < 当前 UTC 时间`。事务提交后发布
+`AuthSecurityEventAssigned`，包含前负责人、新负责人和截止时间，供部署侧连接通知或工单系统；core 不内置调度器或渠道。
+
+`IAuthSecurityEventEscalationService.scanDue` 为部署侧调度提供有界扫描入口。候选查询不持有长读事务，每个事件在独立
+事务中按当前 `escalationLevel` 做 SQL CAS；只有竞争胜者才推进级别，并在同一事务写入
+`auth_security_event_notification`。升级不占用人工处置的 `workflowVersion`，关闭事件不会再次升级。默认策略通过
+`kudos.ms.auth.security-event.escalation` 配置最多 3 级、每 4 小时重复一次；可替换
+`IAuthSecurityEventEscalationPolicy` 实现行业规则。outbox 保存升级时的负责人快照，未分派时为 `null`，渠道可路由到
+租户默认安全队列。
+
+`IAuthSecurityEventNotificationService` 以短租约提供 `claimPending` / `complete` / `fail`。多节点只会由 CAS 成功者领取；
+租约过期可重新领取，失败按指数退避回到 `PENDING`，达到最大尝试次数进入 `DEAD`。配置前缀为
+`kudos.ms.auth.security-event.notification`，默认租约 1 分钟、最多 8 次、退避 30 秒至 1 小时。该边界提供的是
+至少一次交付，渠道适配器必须以 `notificationId` 做幂等；core 不主动启用调度，也不承担邮件、短信、IM 或工单发送。
+
+渠道接入实现 `IAuthSecurityEventNotificationPublisher`，由
+`IAuthSecurityEventNotificationDispatcher.dispatchPending` 完成领取、事务外发布和逐条确认。**投递单位是渠道而不是行**：
+publisher 通过 `supports(destination, channel)` 声明能力，dispatcher 按渠道选择并对每个渠道单独结算，因此多渠道部署
+只需分别注册各自的 publisher，不再需要自己写组合器和部分交付账本。同一 destination+channel 被两个 publisher 同时
+声明属于部署错误，直接报错而不是任选其一；完全没有 publisher 时在领取任何行之前失败。
+publisher 可抛出带稳定错误码的 `AuthSecurityEventNotificationPublishException`：可重试错误使该渠道保持未结算并进入行
+级退避，永久错误把该渠道结算为 `DEAD`；未知异常只保存固定错误码，不把厂商响应或敏感消息写入数据库。
+
+`auth_security_event_notification_channel` 是逐渠道终态账本，按 `(notificationId, channel)` 唯一，**只记录终态**：
+可重试失败不写行，于是账本读起来只有一个含义——这些渠道不能再发。重试只挑未结算的渠道；某个渠道被永久拒绝不会
+拖住其它渠道，也不再消耗行级尝试次数。行级结果由渠道结果聚合：仍有可重试失败则整行退避重试；至少一个渠道已交付
+则整行 `DELIVERED`（被永久拒绝的渠道以 `DEAD` 留在账本里）；只有当每个渠道都被永久拒绝时整行才 `DEAD`。渠道结算写在
+独立事务中，避免后续渠道失败回滚掉"某人已经收到消息"这一事实。管理员重放会清空该通知的账本——重放的前提正是认为
+之前的判定不对，保留旧结算会让重放什么也发不出去。
+
+交付语义仍是**至少一次**：worker 在发送成功与结算之间宕机会再次尝试该渠道，因此适配器必须以 `notificationId` 加
+渠道做幂等。账本消除的是"一个渠道失败导致其它渠道被重发"，不是进程崩溃窗口。
+
+`IAuthSecurityEventNotificationAdminService` 按租户和可选事件 ID 有界查询 `DEAD`。重放只接受 `DEAD` 行的 SQL CAS，
+清除错误和租约、重置本轮尝试次数并立即回到 `PENDING`。每次成功重放都会在同一事务追加
+`auth_security_event_notification_replay`，保留操作者、原因和 UTC 时间；并发重放只有一个请求成功。
+
+发布前由 `IAuthSecurityEventNotificationRoutePolicy` 按当前 notification attempt 解析路由，因此租户规则在重试或重放后
+可以生效。内置默认策略对升级时已有负责人生成 `ASSIGNEE / USER / SITE_MESSAGE`，对未分派事件生成
+`TENANT_SECURITY_QUEUE / EVENT_BUS`，不猜测任何租户管理员账号。路由码、渠道、目标和最多 500 个用户标识在调用
+publisher 前统一校验；非法路由直接进入 `DEAD`，路由服务异常则进入常规退避。部署可以替换 SPI 接入租户目录、
+值班表、营业日或风险等级渠道规则。
+
+装配的默认实现是 `PersistentAuthSecurityEventNotificationRoutePolicy`，它按 `(tenantId, notificationType, appliesTo)`
+读取 `auth_security_event_notification_route`，未配置或规则被停用时完全退回上述内置默认，不改变 V52 行为。
+`appliesTo` 取自 outbox 行是否带有负责人快照：`ASSIGNED` 与 `UNASSIGNED` 是两条独立规则，各自拥有路由码、目标、
+渠道集合、固定响应人、`includeAssignee` 和降级行为。收件人为固定响应人加上（可选的）负责人快照；当目标为 `USER`
+且最终无人可寻址时，按规则上的 `fallbackBehavior` 处理：`DEFAULT_ROUTE` 回到内置默认、`TENANT_SECURITY_QUEUE` 降级为
+安全队列 + 事件总线、`FAIL` 直接抛出使该通知进入 `DEAD`。三种降级都不会替换成任何没有被显式配置过的收件人。
+
+`IAuthSecurityEventNotificationRouteConfigService` 负责写入：租户与操作者由调用方从可信管理员上下文固定，命令体
+不含也不接受这两个字段。保存对 `configVersion` 做 SQL CAS（`0` 表示创建），陈旧版本、并发 CAS 失败和并发创建同一
+scope 统一返回 `AUTH_SECURITY_EVENT_NOTIFICATION_ROUTE_VERSION_CONFLICT`。校验与 dispatcher 发布前的校验同形，因此
+能保存的规则不会在投递时才被判为非法；此外拒绝永远无法寻址的组合（`UNASSIGNED` 规则不允许 `includeAssignee`，
+目标为 `USER` 时必须至少有一个可寻址来源）。每次成功保存在同一事务追加
+`auth_security_event_notification_route_audit`，保留操作者、原因、版本号以及变更前后快照。
+
+路由规则还可以指定 `responderRosterCode`，把租户值班表当前的值班人并入收件人。值班领域位于
+`authentication/securityevent/oncall`：`auth_security_event_oncall_roster` 按租户和值班表编码唯一，
+`auth_security_event_oncall_shift` 保存显式 UTC 时间窗的班次，`tier` 取 1..5。保存是整份轮值替换而不是逐条增删——
+轮值只有作为集合才有意义，一次保存一个版本也使两名管理员无法交错编辑出谁都没写过的排班；每份轮值最多 100 条班次，
+班次窗口左闭右开，交接时刻不会同时命中前后两班。保存同样固定租户与操作者、做 `configVersion` CAS，并在同一事务
+追加带变更前后完整排班快照的审计。
+
+`IAuthSecurityEventResponderResolver` 是协议中立的解析边界：入参是租户、值班表编码、升级级别和时刻，出参是本地
+用户 ID 集合。内置 `OnCallScheduleResponderResolver` 读取上述持久化轮值，升级级别 N 命中 `tier <= N` 的班次——
+升级是**追加**更高层级而不是移交，因为一线响应人联系不上时，正是他仍然需要看到该事件的场景。返回空集表示"当前无人
+值班"，由路由规则的 fallback 决定；抛出异常表示"轮值读不出来"，由 dispatcher 退避重试，临时的目录故障不会被记录成
+一次路由决策。把轮值放在 PagerDuty、HR 系统或值班表格里的部署替换该 Bean，core 不引入任何厂商依赖。
+
+值班读取走 `AUTH_SECURITY_EVENT_ONCALL_ROSTER_BY_TENANT_ID`（`LOCAL_REMOTE`）。缓存的是**排班计划**而不是"当前
+值班人"：计划只在管理员编辑时变化，时间过滤由读取方按当前时刻施加，因此既不需要按时刻建条目，也不需要选一个谁都
+说不清的过期时间。保存提交后由只含租户 ID 的 `AuthSecurityEventOnCallRosterChanged` 驱逐并跨节点广播。
+
+投递路径的读取走 `AUTH_SECURITY_EVENT_NOTIFICATION_ROUTE_BY_TENANT_ID`（`LOCAL_REMOTE`，按租户缓存整份规则集，
+空结果同样缓存）。保存提交后发布只携带 `tenantId` 的 `AuthSecurityEventNotificationRouteChanged`，缓存处理器在
+`AFTER_COMMIT` 阶段驱逐该租户条目，并由缓存层广播到其它节点；事件不携带响应人、渠道或路由内容。管理端查询
+故意绕过缓存直接读库，保证管理界面看到的始终是权威值。
+
+dispatcher 在每次状态 CAS 后发布不含租户、用户、worker、route 或厂商错误的
+`AuthSecurityEventNotificationDeliveryEvent`。Micrometer 可用时注册
+`kudos.auth.security.event.notification.delivery{type,outcome}`；`type` 与 `outcome` 都来自固定枚举，适合对
+`DEAD` 和持续 `RETRY_SCHEDULED` 配置告警，不产生高基数时序。每个渠道另发布
+`AuthSecurityEventNotificationChannelDeliveryEvent` 并注册
+`kudos.auth.security.event.notification.channel.delivery{type,channel,outcome}`；三个标签都是固定枚举，部署可以对
+"短信一直失败"告警而不会把租户、收件人或厂商错误文本带进时序。事件监听失败只记录告警，不回滚已经确定的通知状态。
+
+具体 `kudos-ms-msg` 接入位于可选 `kudos-ms-auth-notification-msg`，core 不依赖消息微服务。
+
+`authentication/credentialrevocation` 是管理员发起的凭证吊销。它复用既有的 WebAuthn 撤销与 TOTP 停用原语,自身负责
+授权边界、审计与后果说明:调用方传的是**凭证审计视图里的行 id**,原始 credential ID 始终不出 core;解析前先按租户与
+用户限定,来自别处的 id 只会解析不到,而不会解析到别人的凭证。撤销沿用既有生命周期事件,旧 Session 与 Token 照常失效。
+
+**不因"这是最后一个因子"而拒绝**:自助解绑拒绝移除唯一登录方式是对的——用户在做选择;而这里的前提是凭证已被认为
+泄露,为用户方便留着它等于保护攻击者。因此吊销执行,并在**吊销之后**重新评估 MFA 策略,把 `leftWithoutFactor` 与
+`enrollmentBlocked` 一并返回:后者为真表示租户要求 MFA、账号已无因子且宽限期已过,此时需要 V57 的注册豁免把人放回来。
+两批因此构成一个闭环——一边能安全地拿走凭证,一边能受控地把人放回来。吊销记录追加式保存,含操作者、原因、可选的
+安全事件关联,以及吊销当时账号是否已无因子(事后判断按当时已知信息,而不是按现在的状态)。
+
+`authentication/loginevent` 是认证结果审计。投喂点放在 `AuthenticationTransactionService.save()` ——事务状态的唯一
+写入口,因此密码、TOTP、恢复码、Passkey、第三方回调、Step-up 全部路径都会经过它,**以后新增的认证路径也无法忘记
+上报**。事务存储的 CAS 保证一次终态转换只发生一次,配合 `auth_login_event` 上 `transaction_id` 的唯一约束,一次认证
+只会留下一行。只记录 `COMPLETED` 与 `FAILED`:被取消或过期的事务是有人离开了表单,不是对身份的判定,记下来只会淹没
+真正需要排查的行。
+
+尝试标识**只以 SHA-256 存储**。不存在账号的失败尝试恰恰是运维最需要的行,也是攻击者最想读的行——明文列会攒成一份
+可以拿去别处试的用户名清单。服务在查询时用同样方式哈希搜索词(先 trim 再转小写),所以"同一个名字被试了多少次"这类
+问题依然能回答。写入在**独立事务**中进行且不向外抛异常:认证决定此时已经做出并落库,让审计故障回滚一次成功登录,或
+让审计库故障拒绝所有人服务,都不比记一条错误日志更安全。审计写失败只记 error,不改变认证结果。
+
+管理端只读查询固定当前租户;从未解析出租户的失败尝试以空 `tenant_id` 记录,不进入任何租户视图。
+
+注意本批只完成了**登录结果**这一条投喂线。设计文档 12.2 列出的其他审计对象——Provider 配置变更、账号绑定/解绑、
+MFA 注册/移除、密码与恢复信息变更、Session 撤销、管理员代操作、风险策略命中——各自已有领域审计表或 Web 审计,
+尚未汇入统一视图;`user_log_login` 也仍在 User 域按原样写入,本批没有迁移或废弃它。
+
+`authentication/lifecycle` 是账号安全状态的统一失效边界：挂起调用方事务并先在独立事务中递增 token epoch，按租户与
+用户撤销全部 Refresh Token family 和逻辑会话。它订阅 User 域专用认证失效事件以及单删/批删快照，
+避免把登录时间、失败次数等普通 `UserAccountUpdated` 误当成全端下线。用户 logout-all 和 Auth Admin
+强制失效也复用该服务。
+
+## Refresh Token
+
+`token/refresh` 提供数据库持久化的 opaque Refresh Token family。原文为 256-bit 随机值且只返回
+一次，`auth_refresh_token` 仅保存 SHA-256。轮换通过条件更新保证同一父令牌只有一个消费者成功；
+重放会撤销整个 family 和对应逻辑 API Session。family 不在轮换时延长绝对期限，并保存签发时
+主体 token epoch，防止管理员强制失效后用旧 Refresh Token 换取新 Access Token。
+
+## 密码历史
+
+`credential/password` 提供 Auth 持有的 `auth_password_history`，只归档被替换的密码编码，不保存明文；
+读取同时支持历史无前缀 BCrypt 与当前 `{bcrypt}` 格式。
+`AuthPasswordHistoryService` 实现 User 域的 `IPasswordHistory` SPI；Auth 与 User Core 同进程时，Spring
+会将它自动组合进账号创建/更新及登录密码、安全密码重置边界。候选密码先与当前哈希及保留历史逐一
+比较，命中统一抛出 `PasswordReusedException`，Passport 映射为稳定的 `PASSWORD_REUSED`。
+
+```yaml
+kudos:
+  ms:
+    auth:
+      credential:
+        password-history:
+          enabled: true
+          history-size: 5
+```
+
+`history-size` 为 0 或 `enabled=false` 可关闭，框架硬限制最多保留 24 个；每次成功改密在同一数据库
+事务中归档旧哈希并裁剪，写库失败不会提前形成历史。账号单删/批删提交后会删除相应历史记录。
+这是同进程桥接能力：独立部署的 User 进程不会跨网络传输原始密码，需要后续将改密命令整体迁到
+Auth，而不是实现一个携带明文的远程 `IPasswordHistory`。
+
+自 V61 起归档的触发点搬到了 `AuthAccountCredentialStore`：登录密码收归 `auth_credential` 后
+`user_account.login_password` 为空，User 域原来那次归档调用会静默变成空操作，历史复用检查也就
+永远放行。现在轮换密文与归档退役哈希在同一次 `rotateWith` 内完成，退役哈希不必为此被交回调用方。
+
+## 登录密码凭证（`authentication/credential`）
+
+`auth_credential` 是登录密码的归属地（`V1.0.0.58` 建表，`V1.0.0.59` 从 `user_account` 幂等回填）。
+`IAuthCredentialService` 不提供密文 getter：任何读操作返回的 `AuthCredentialSummary` 都没有密文字段，
+需要密文的两个操作把判定送进服务内部——`verifyWith` 交出布尔结论，`rotateWith` 交出替换值并在读到的
+version 上做 CAS。引用型密钥（如 TOTP）用恒定时间比较的 `matches`。
+
+```yaml
+# 无需配置：同进程部署时 AuthAccountCredentialStore 自动实现 User 域的 IAccountCredentialStore 端口
+```
+
+失败语义：
+
+- 并发改密由先落地者获胜，落败方得到 `AUTH_CREDENTIAL_VERSION_CONFLICT`，绝不覆盖。
+- 登录时的哈希升级同样条件更新；升级失败只是放弃升级，不改变本次认证结果。
+- 租户或用户缺失按接线错误抛出，而不是返回 false——后者在调用方读起来等同于"密码错误"。
+- 账号删除后 `AuthCredentialLifecycleListener` 物理删除其凭证；撤销记录只对存续账号有保留意义。
+- 缺少本模块时 User 域回退到 `login_password` 列，`kudos-ms-user-core` 仍可独立部署。
+
+security_password 不在迁移范围内，TOTP secret 迁移留待后续批次。
+
+❗ **`RecoveryCodeLoginIntegrationTest` 已临时 `@Disabled`。** 它不稳定（约 1/3 失败），但问题在**共享测试
+基础设施**，不在被测逻辑。V61 之前登录密码由夹具 SQL 写进 `user_account.login_password`，该测试是稳定的；
+密码迁入 `auth_credential` 后只能经凭证存储播种，而这样播下的行在同 JVM 有其他测试类时会**间歇性读不到**。
+
+排查结论（均有证据）：
+
+- **不是删除**：`AuthCredentialLifecycleListener` 每次清理都会打日志，该日志从未出现。
+- **不是升级写错值**：`AuthAccountCredentialStoreTest.v61KeepsAPasswordSeededAsALegacyHashVerifiableAcrossTheUpgrade`
+  独立复现同一 播种→校验→升级→校验 序列，稳定通过。
+- **不是读错库**：全程 `committedAccountVisible=true`，已提交的 `user_account` 行一直可见，只有凭证消失。
+- **两侧确实不一致**：写在夹具 `DataSource` 连接上的凭证，在该连接读回是 1 行，经 Ktorm DAO 读是 0 行。
+- **两种修法都无效**：提交测试事务（`TestTransaction`）与重建 Ktorm `Database` 缓存都只是让失败点位移，
+  没有让它稳定。
+
+剩下的嫌疑是 `XKudosContextHolder` 里那个**进程级全局**的 Ktorm `Database` 缓存：
+`Database.connectWithSpringSupport` 绑定的是创建它的那个 Spring 上下文，而本套件按 `@TestPropertySource`
+会产生多个上下文并共用容器，于是 B 上下文可能拿到 A 建的 `Database`。这与既有的 `databaseCache` 待办是
+同一个根因，应在那一批里一并修复——修好后本测试无需改动即可重新启用。
 
 ## 分层
 

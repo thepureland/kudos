@@ -5,7 +5,7 @@
 业务工程把本模块作为依赖加入即可获得：
 
 1. **`PasswordEncoder`** —— Spring Security `DelegatingPasswordEncoder` + BCrypt 默认，写入新
-   hash 时自动打 `{bcrypt}` 前缀，未来切 Argon2 / SCrypt 不需要数据库迁移
+   hash 时自动打 `{bcrypt}` 前缀，同时兼容历史无前缀 BCrypt；未来切 Argon2 / SCrypt 不需要数据库迁移
 2. **`Authenticator`** —— `TotpAuthenticator`，标准 RFC 6238 TOTP 实现，兼容 Google
    Authenticator / Microsoft Authenticator / Authy / 1Password 等所有标准 TOTP app
 
@@ -32,8 +32,8 @@ return rs;
 
 kudos-base 已经有 `PasswordKit`：直接 BCrypt，自带随机 salt，自描述格式（不需要单独存 salt），
 设计上比 PasswordTool 更现代。本模块不再 port `PasswordTool` —— 业务侧直接用
-`PasswordKit.hash()` / `PasswordKit.matches()`（静态调用，不需要 DI），或者注入本模块装配的
-`PasswordEncoder` bean。
+`PasswordKit.hash()` / `PasswordKit.matches()`（仅建议用于旧代码），新业务应注入本模块装配的
+`PasswordEncoder` bean，并通过 `PasswordEncodingKit` 安全兼容历史编码。
 
 ### 为什么把 GoogleAuthenticator / MicrosoftAuthenticator 合并成一个 TotpAuthenticator
 
@@ -134,7 +134,8 @@ class UserService(private val passwordEncoder: PasswordEncoder) {
 }
 ```
 
-不需要 DI 的场景直接用 kudos-base 的 `PasswordKit.hash()` / `PasswordKit.matches()`。
+读取既有凭证时使用 `PasswordEncodingKit.matches(passwordEncoder, raw, encoded)`；它兼容历史无前缀
+BCrypt，并将损坏或未知编码视为不匹配而不是让异常进入认证流程。
 
 ### 双因素 (TOTP)
 

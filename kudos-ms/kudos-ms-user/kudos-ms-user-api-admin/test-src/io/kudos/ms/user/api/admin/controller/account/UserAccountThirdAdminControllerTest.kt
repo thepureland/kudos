@@ -45,4 +45,14 @@ internal class UserAccountThirdAdminControllerTest {
         verify(service).getByUserAccountId("none")
     }
 
+    @Test
+    fun legacyControllerDoesNotExposeGenericWriteMethods() {
+        val methodNames = controller.javaClass.methods.map { it.name }.toSet()
+
+        assertTrue("save" !in methodNames)
+        assertTrue("update" !in methodNames)
+        assertTrue("delete" !in methodNames)
+        assertTrue("batchDelete" !in methodNames)
+    }
+
 }

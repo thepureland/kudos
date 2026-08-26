@@ -1,5 +1,6 @@
 package io.kudos.ms.user.core.org.service
 
+import io.kudos.base.query.Criteria
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.core.account.cache.UserAccountHashCache
@@ -21,6 +22,7 @@ import org.mockito.Mockito.`when` as whenCalled
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -319,7 +321,7 @@ internal class UserOrgServicePureTest {
     fun deleteById_success_publishesDeletedWithParentSnapshot() {
         val po = cachePo("o1", parentId = "p1")
         whenCalled(dao.get("o1")).thenReturn(po)
-        whenCalled(dao.deleteById("o1")).thenReturn(true)
+        whenCalled(dao.batchDeleteCriteria(anyCriteria())).thenReturn(1)
         assertTrue(build().deleteById("o1"))
         val ev = publishedEvents.filterIsInstance<UserOrgDeleted>().single()
         assertEquals("o1", ev.id)
@@ -330,15 +332,17 @@ internal class UserOrgServicePureTest {
     fun deleteById_daoFalse_noEvent() {
         val po = cachePo("o1", parentId = "p1")
         whenCalled(dao.get("o1")).thenReturn(po)
-        whenCalled(dao.deleteById("o1")).thenReturn(false)
+        whenCalled(dao.batchDeleteCriteria(anyCriteria())).thenReturn(0)
         assertFalse(build().deleteById("o1"))
         assertTrue(publishedEvents.none { it is UserOrgDeleted })
     }
 
     @Test
-    fun batchDelete_empty_returnsZeroNoEvent() {
-        whenCalled(dao.batchDelete(emptyList())).thenReturn(0)
-        assertEquals(0, build().batchDelete(emptyList()))
+    fun batchDelete_empty_isRejectedRatherThanTreatedAsANoOp() {
+        // Both the DAO and the built-in-aware service path `require` a non-empty collection, so deleting
+        // "nothing" is a caller mistake rather than a zero-row delete. Asserting it here keeps that contract
+        // from being softened by accident.
+        assertFailsWith<IllegalArgumentException> { build().batchDelete(emptyList()) }
         assertTrue(publishedEvents.none { it is UserOrgBatchDeleted })
     }
 
@@ -347,11 +351,18 @@ internal class UserOrgServicePureTest {
         val o1 = cachePo("o1", parentId = "p1")
         val o2 = cachePo("o2", parentId = null)
         whenCalled(dao.getByIds(listOf("o1", "o2"))).thenReturn(listOf(o1, o2))
-        whenCalled(dao.batchDelete(listOf("o1", "o2"))).thenReturn(2)
+        whenCalled(dao.batchDeleteCriteria(anyCriteria())).thenReturn(2)
         assertEquals(2, build().batchDelete(listOf("o1", "o2")))
         val ev = publishedEvents.filterIsInstance<UserOrgBatchDeleted>().single()
         assertEquals(listOf("o1", "o2"), ev.ids.toList())
     }
+
+    /**
+     * [UserOrg] is a managed entity, so deletes go through `batchDeleteCriteria` with `builtIn = false`
+     * appended rather than through `deleteById` / `batchDelete`. The matcher's null is swapped for a real
+     * [Criteria] because Mockito's matchers return null and the parameter is not nullable in Kotlin.
+     */
+    private fun anyCriteria(): Criteria = ArgumentMatchers.any(Criteria::class.java) ?: Criteria()
 
     /** A mock UserOrg PO exposing id + parentId (used by the snapshot-then-publish paths). */
     private fun cachePo(id: String, parentId: String?): UserOrg {

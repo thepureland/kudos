@@ -4,6 +4,7 @@ dependencies {
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-common"))
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-ktorm"))
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-flyway"))
+    api(project(":kudos-ability:kudos-ability-security:kudos-ability-security-common"))
 
     api(project(":kudos-ms:kudos-ms-sys:kudos-ms-sys-core"))
     api(project(":kudos-ability:kudos-ability-cache:kudos-ability-cache-local:kudos-ability-cache-local-caffeine"))

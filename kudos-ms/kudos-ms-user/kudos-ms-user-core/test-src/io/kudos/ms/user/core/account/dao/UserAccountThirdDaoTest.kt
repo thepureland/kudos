@@ -66,4 +66,24 @@ class UserAccountThirdDaoTest : RdbTestBase() {
         )
         assertNull(binding)
     }
+
+    @Test
+    fun fetchByIdentityProviderSubject_requiresExactProviderInstance() {
+        val binding = userAccountThirdDao.fetchByIdentityProviderSubject(
+            tenantId,
+            "33333333-0000-0000-0000-000000000001",
+            "https://github.com",
+            "github-user-001",
+        )
+        assertNotNull(binding)
+        assertEquals(userId, binding.userId)
+        assertNull(
+            userAccountThirdDao.fetchByIdentityProviderSubject(
+                tenantId,
+                "33333333-0000-0000-0000-000000000099",
+                "https://github.com",
+                "github-user-001",
+            )
+        )
+    }
 }

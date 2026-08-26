@@ -31,8 +31,8 @@ import org.springframework.security.crypto.password.PasswordEncoder
  * Ported from soul's `SecurityCommonConfiguration` with these changes:
  *  - Drop `@Import(SecurityJwtConfiguration.class)`. JWT lives in `kudos-ability-security-jwt`,
  *    a separate sub-module. Apps that want JWT add that module to their build directly.
- *  - Drop the `PasswordTool` bean. kudos-base's `PasswordKit` already covers this with a cleaner
- *    API. Apps just use `PasswordKit.hash()` / `PasswordKit.matches()` statically.
+ *  - Drop the `PasswordTool` bean. Applications inject [PasswordEncoder]; compatibility with
+ *    historical bare BCrypt values is provided by the delegating encoder below.
  *  - Drop `@ComponentScan`. Explicit `@Bean` declarations only.
  *  - Drop field-injected `@Autowired` props. Use constructor params on `@Bean` methods.
  *
@@ -52,8 +52,13 @@ open class SecurityCommonAutoConfiguration : IComponentInitializer {
     @ConditionalOnMissingBean
     open fun passwordEncoder(): PasswordEncoder {
         val idForEncode = "bcrypt"
-        val encoders = mapOf<String, PasswordEncoder>(idForEncode to BCryptPasswordEncoder())
-        return DelegatingPasswordEncoder(idForEncode, encoders)
+        val legacyBcryptEncoder = BCryptPasswordEncoder()
+        val encoders = mapOf<String, PasswordEncoder>(idForEncode to legacyBcryptEncoder)
+        return DelegatingPasswordEncoder(idForEncode, encoders).apply {
+            // kudos historically persisted bare BCrypt values. Keep those accounts readable while
+            // all newly encoded values carry an algorithm id for future rotations.
+            setDefaultPasswordEncoderForMatches(legacyBcryptEncoder)
+        }
     }
 
     @Bean

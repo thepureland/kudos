@@ -84,7 +84,7 @@ object DefaultStringEncryptionCodec : IStringEncryptionCodec {
  */
 class EncryptedVarcharSqlType(
     private val codec: IStringEncryptionCodec = DefaultStringEncryptionCodec,
-) : SqlType<String>(Types.VARCHAR, "varchar") {
+) : SqlType<String>(Types.VARCHAR, ENCRYPTED_TYPE_NAME) {
 
     /** See [IStringEncryptionCodec.deterministic]; decides whether this column can be looked up. */
     val deterministic: Boolean get() = codec.deterministic
@@ -103,6 +103,10 @@ class EncryptedVarcharSqlType(
     override fun doGetResult(rs: ResultSet, index: Int): String? {
         val raw = rs.getString(index) ?: return null
         return codec.decrypt(raw)
+    }
+
+    companion object {
+        const val ENCRYPTED_TYPE_NAME = "encrypted_varchar"
     }
 }
 

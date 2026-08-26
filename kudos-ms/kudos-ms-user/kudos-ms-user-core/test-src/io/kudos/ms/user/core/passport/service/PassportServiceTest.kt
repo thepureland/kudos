@@ -1,6 +1,7 @@
 package io.kudos.ms.user.core.passport.service
 
 import io.kudos.base.security.PasswordKit
+import io.kudos.ability.security.common.support.PasswordEncodingKit
 import io.kudos.ms.user.common.passport.enums.ChangePasswordResultEnum
 import io.kudos.ms.user.common.passport.enums.PassportLoginStatusEnum
 import io.kudos.ms.user.common.passport.vo.request.ChangePasswordRequest
@@ -17,8 +18,11 @@ import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import org.apache.commons.codec.binary.Base32
 import org.junit.jupiter.api.BeforeEach
+import org.springframework.test.context.TestPropertySource
+import org.springframework.security.crypto.password.PasswordEncoder
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -40,6 +44,7 @@ import kotlin.test.assertTrue
  * @since 1.0.0
  */
 @EnabledIfDockerInstalled
+@TestPropertySource(properties = ["kudos.ms.user.passport.attempt-limit.enabled=false"])
 class PassportServiceTest : RdbAndRedisCacheTestBase() {
 
     @Resource
@@ -53,6 +58,9 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
 
     @Resource
     private lateinit var userAccountService: IUserAccountService
+
+    @Resource
+    private lateinit var passwordEncoder: PasswordEncoder
 
     private val tenantId = "svc-tenant-passport-test"
     private val activeUserId = "b970f8c0-0000-0000-0000-000000000001"
@@ -89,6 +97,49 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
         assertEquals(activeUsername, info.username)
         assertEquals(tenantId, info.tenantId)
         assertNull(res.loginErrorTimes)
+    }
+
+    @Test
+    fun login_legacyPassword_transparentlyUpgradesEncoding() {
+        // A unique account avoids cross-test cache messages for the fixed seed users.
+        val userId = UUID.randomUUID().toString()
+        val username = "legacy-${userId.take(12)}"
+        userAccountDao.insert(
+            UserAccount {
+                id = userId
+                this.username = username
+                this.tenantId = this@PassportServiceTest.tenantId
+                loginPassword = PasswordKit.hash(plainPassword, strength = 4)
+                supervisorId = "00000000-0000-0000-0000-000000000000"
+                loginErrorTimes = 0
+                active = true
+                builtIn = false
+            }
+        )
+        userAccountHashCache.reloadAll(clear = true)
+
+        val result = passportService.login(PassportLoginRequest(tenantId, username, plainPassword))
+
+        assertEquals(PassportLoginStatusEnum.SUCCESS, result.status)
+        val upgradedHash = assertNotNull(userAccountDao.get(userId)?.loginPassword)
+        assertTrue(upgradedHash.startsWith("{bcrypt}"))
+        assertTrue(PasswordEncodingKit.matches(passwordEncoder, plainPassword, upgradedHash))
+    }
+
+    @Test
+    fun passwordEncodingUpgrade_compareAndSetMissPreservesConcurrentValue() {
+        val currentHash = assertNotNull(userAccountDao.get(activeUserId)?.loginPassword)
+        val concurrentHash = requireNotNull(passwordEncoder.encode("a concurrent strong password"))
+        userAccountDao.updateProperties(activeUserId, mapOf(UserAccount::loginPassword.name to concurrentHash))
+
+        assertFalse(
+            userAccountDao.upgradeLoginPasswordEncoding(
+                activeUserId,
+                currentHash,
+                requireNotNull(passwordEncoder.encode(plainPassword)),
+            )
+        )
+        assertEquals(concurrentHash, userAccountDao.get(activeUserId)?.loginPassword)
     }
 
     @Test
@@ -293,7 +344,7 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
     }
 
     @Test
-    fun login_otpEnabledWrongCode_returnsOtpWrongAndIncrementsCounter() {
+    fun login_otpEnabledWrongCode_returnsOtpWrongWithoutIncrementingPasswordCounter() {
         userAccountService.resetAuthKey(activeUserId, activeUsername, "kudos")
         userAccountHashCache.reloadAll(clear = true)
 
@@ -301,8 +352,8 @@ class PassportServiceTest : RdbAndRedisCacheTestBase() {
             PassportLoginRequest(tenantId, activeUsername, plainPassword, authCode = 0L)
         )
         assertEquals(PassportLoginStatusEnum.OTP_WRONG, res.status)
-        assertEquals(1, res.loginErrorTimes)
-        assertEquals(1, userAccountDao.get(activeUserId)?.loginErrorTimes)
+        assertNull(res.loginErrorTimes)
+        assertEquals(0, userAccountDao.get(activeUserId)?.loginErrorTimes)
     }
 
     @Test

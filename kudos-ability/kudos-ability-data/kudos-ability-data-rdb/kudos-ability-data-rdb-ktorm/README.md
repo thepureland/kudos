@@ -25,6 +25,17 @@ Spring 容器里的 `dataSource` bean——**不再二次套 Seata 代理**。�
 > Ktorm 执行 SQL 的连接互不相通——Seata 收不到 `BranchRegister`，Ktorm 写下的数据所在
 > 孤儿连接被 Hikari 还池时回滚，业务数据无声地消失。
 
+构造出的 `Database` 按**路由到的**物理 DataSource 缓存(一个物理库一个,因为 Ktorm 构造时读的元数据
+描述的是连接真正到达的那个库)。缓存用 `WeakHashMap`,但**弱键不足以自行清理**:`WeakHashMap` 只弱引用 key,
+value 是强引用,而 value(`Database`)捕获的是**外层 routing DataSource**,key 却是路由解析出的**内层** DataSource——
+无路由时两者同一对象,value 于是强引用了自己的 key,该条目永不回收;有路由时 key 可能是长寿的内层 DataSource,
+value 却仍指向某个上下文的 routing DataSource。两种情形下条目都可能比它背后的连接池活得久,后果是查询从已关闭的
+池里取连接,表现为 `ProxyConnection.close()` 报 delegate 为空,且现场离成因很远。
+
+`KtormDatabaseCacheEvictor` 因此在 `ContextClosedEvent` 时清空缓存——上下文关闭正是这些池消失的时刻。
+重建一条缓存的代价是下一次查询多一次元数据往返。`clearKtormDatabaseCache()` 仍保留,供测试及其他途径的
+DataSource 替换使用。
+
 Seata 兼容请通过 `spring.datasource.dynamic.seata=true` 让 baomidou dynamic-datasource
 在 bean 层做代理；详见 `kudos-ability-data-rdb-jdbc` README 的 "Seata 兼容关键"。
 
@@ -263,7 +274,7 @@ Seata 历史 bug。`KudosContext` 里显式放入的 `Database` 仍然优先（�
 
 | 路径 | 角色 |
 |---|---|
-| `datasource/` | `KudosContextHolder.currentDataSource()` / `.currentDatabase()` 扩展函数 |
+| `datasource/` | `KudosContextHolder.currentDataSource()` / `.currentDatabase()` 扩展函数，及上下文关闭时清空 Database 缓存的 `KtormDatabaseCacheEvictor` |
 | `init/KtormAutoConfiguration` | 装配入口（`IComponentInitializer`，按 `@AutoConfigureAfter(JdbcAutoConfiguration::class)` 排在 jdbc 之后） |
 | `kit/XRdbKit` | `RdbKit.getDatabase()` 扩展，便于在 jdbc 层 API 旁直接拿 Database |
 | `metadata/XColumn` | `Column.getKtormSqlTypeFunName()` 扩展（代码生成用） |

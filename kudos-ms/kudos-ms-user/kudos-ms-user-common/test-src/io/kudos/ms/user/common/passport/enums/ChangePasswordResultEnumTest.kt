@@ -13,9 +13,15 @@ internal class ChangePasswordResultEnumTest {
 
     @Test
     fun entriesAndOrder() {
-        assertEquals(3, ChangePasswordResultEnum.entries.size)
+        assertEquals(5, ChangePasswordResultEnum.entries.size)
         assertEquals(
-            listOf("SUCCESS", "USER_NOT_FOUND", "OLD_PASSWORD_WRONG"),
+            listOf(
+                "SUCCESS",
+                "USER_NOT_FOUND",
+                "OLD_PASSWORD_WRONG",
+                "PASSWORD_POLICY_VIOLATION",
+                "PASSWORD_REUSED",
+            ),
             ChangePasswordResultEnum.entries.map { it.name },
         )
     }

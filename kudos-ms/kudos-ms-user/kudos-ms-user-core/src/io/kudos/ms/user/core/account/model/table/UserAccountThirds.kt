@@ -21,6 +21,9 @@ object UserAccountThirds : ManagedTable<UserAccountThird>("user_account_third") 
     /** Third-party provider dict code */
     var accountProviderDictCode = varchar("account_provider_dict_code").bindTo { it.accountProviderDictCode }
 
+    /** Tenant identity-provider instance ID */
+    var identityProviderId = varchar("identity_provider_id").bindTo { it.identityProviderId }
+
     /** Issuer / provider tenant */
     var accountProviderIssuer = varchar("account_provider_issuer").bindTo { it.accountProviderIssuer }
 
