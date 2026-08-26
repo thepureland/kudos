@@ -81,15 +81,57 @@ internal class KtormDatabaseCacheTest {
         // later as ProxyConnection.close() failing with a null delegate, inside an unrelated query.
         // Weak keys do not prevent it, because a WeakHashMap holds values strongly and this value can
         // reference its own key.
-        bind(dataSource("ktorm_db_cache_f"))
+        val owned = dataSource("ktorm_db_cache_f")
+        bind(owned)
         val beforeClose = KudosContextHolder.currentDatabase()
 
+        closeContextOwning(owned)
+
+        assertNotSame(beforeClose, KudosContextHolder.currentDatabase())
+    }
+
+    @Test
+    fun aClosingContextLeavesAnotherContextsEntriesAlone() {
+        // The reason eviction is per-datasource rather than a blanket clear: two contexts share a JVM in
+        // every multi-context test suite, and one of them shutting down must not invalidate the other's
+        // Database — nor, worse, hand its callers one built over a pool that is going away.
+        val mine = dataSource("ktorm_db_cache_g")
+        val theirs = dataSource("ktorm_db_cache_h")
+        bind(theirs)
+        val theirDatabase = KudosContextHolder.currentDatabase()
+
+        closeContextOwning(mine)
+
+        KudosContextHolder.clear()
+        bind(theirs)
+        assertSame(theirDatabase, KudosContextHolder.currentDatabase())
+    }
+
+    @Test
+    fun aQueryRacingTheCloseDoesNotRepopulateTheCache() {
+        // ContextClosedEvent is published before the context destroys its singletons, so a query already in
+        // flight can rebuild an entry over a pool that is about to shut down. It may have its Database; what
+        // it must not do is leave one behind, or the close it raced would have removed nothing.
+        val owned = dataSource("ktorm_db_cache_i")
+        bind(owned)
+        KudosContextHolder.currentDatabase()
+
+        closeContextOwning(owned)
+
+        val rebuiltDuringShutdown = KudosContextHolder.currentDatabase()
+        assertNotSame(
+            rebuiltDuringShutdown, KudosContextHolder.currentDatabase(),
+            "a Database built for a retired datasource must not be cached for the next caller",
+        )
+    }
+
+    /** Closes a context that owns [dataSource] as a bean, which is how the evictor learns what to retire. */
+    private fun closeContextOwning(dataSource: DataSource) {
         val context = StaticApplicationContext()
+        context.beanFactory.registerSingleton("dataSource", dataSource)
         context.refresh()
         KtormDatabaseCacheEvictor().onApplicationEvent(ContextClosedEvent(context))
         context.close()
-
-        assertNotSame(beforeClose, KudosContextHolder.currentDatabase())
     }
 
     @Test

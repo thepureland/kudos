@@ -9,6 +9,7 @@ import io.kudos.test.rdb.RdbAndRedisCacheTestBase
 import jakarta.annotation.Resource
 import org.springframework.dao.DataIntegrityViolationException
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -120,7 +121,17 @@ internal class AuthMfaEnrollmentExemptionDaoTest : RdbAndRedisCacheTestBase() {
     }
 
     private companion object {
-        /** Fixed instants only: the rows carry their own windows, so nothing here races the wall clock. */
-        val NOW: LocalDateTime = LocalDateTime.of(2026, 8, 25, 10, 0)
+        /**
+         * Anchored to the wall clock, because the service is.
+         *
+         * This used to be a literal date, on the belief that the rows carrying their own windows kept the
+         * test off the clock. Only [AuthMfaEnrollmentExemptionDao.findActive] takes the instant as an
+         * argument; [IMfaEnrollmentExemptionService] reads its injected `Clock`, so it compared those windows
+         * against the real today. The grant written at `NOW.plusDays(1)` therefore stopped being active a day
+         * after the literal was written, and revocation started finding one row where the test expects two.
+         *
+         * Truncated to seconds so the stored timestamp round-trips exactly through H2.
+         */
+        val NOW: LocalDateTime = LocalDateTime.now().truncatedTo(ChronoUnit.SECONDS)
     }
 }

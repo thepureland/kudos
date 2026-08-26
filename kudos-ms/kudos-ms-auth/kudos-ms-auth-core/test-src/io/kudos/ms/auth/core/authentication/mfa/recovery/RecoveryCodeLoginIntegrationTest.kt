@@ -39,11 +39,20 @@ import kotlin.test.assertTrue
  * - Neither committing the test transaction (`TestTransaction`) nor rebuilding the Ktorm `Database` cache
  *   fixes it; each only moves which assertion fails.
  *
- * The remaining suspect is the JVM-global Ktorm `Database` cache in `XKudosContextHolder` combined with the
- * per-`@TestPropertySource` Spring contexts and shared containers this suite uses — the same root cause as the
- * open `databaseCache` item. Re-enable this test once that is fixed; it needs no changes of its own.
+ * Two further suspects have since been measured and ruled out, so nobody repeats them:
+ *
+ * - **Not `SpringKit` handing back another context's datasource.** `SpringContextInitializer` overwrites a
+ *   JVM-global `applicationContext`, so this looked likely. Comparing the datasource `SpringKit` resolves
+ *   against the one injected into this context gave `same=true` on every failing run.
+ * - **Not the ktorm `Database` cache's scope.** That cache used to be cleared wholesale whenever any context
+ *   closed, taking still-running contexts' entries with it; it is now retired per owning datasource
+ *   (`retireKtormDatabases`). The failure rate did not move — still roughly one run in three.
+ *
+ * What is established: no delete occurs, the encoding upgrade is not at fault, committed rows stay visible
+ * throughout, and a credential committed on the fixture connection reads back present there and absent
+ * through the Ktorm DAO. Re-enable this test once the cause is found; it needs no changes of its own.
  */
-@Disabled("Unstable via the shared Ktorm Database cache across test Spring contexts; see the KDoc above")
+@Disabled("Unstable through shared test infrastructure, cause still open; see the KDoc above")
 @EnabledIfDockerInstalled
 @TestPropertySource(properties = ["kudos.ms.user.passport.attempt-limit.enabled=false"])
 internal class RecoveryCodeLoginIntegrationTest : RdbAndRedisCacheTestBase() {

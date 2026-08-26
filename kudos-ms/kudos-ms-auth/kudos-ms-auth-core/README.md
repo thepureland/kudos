@@ -936,10 +936,16 @@ security_password 不在迁移范围内，TOTP secret 迁移留待后续批次�
 - **两种修法都无效**：提交测试事务（`TestTransaction`）与重建 Ktorm `Database` 缓存都只是让失败点位移，
   没有让它稳定。
 
-剩下的嫌疑是 `XKudosContextHolder` 里那个**进程级全局**的 Ktorm `Database` 缓存：
-`Database.connectWithSpringSupport` 绑定的是创建它的那个 Spring 上下文，而本套件按 `@TestPropertySource`
-会产生多个上下文并共用容器，于是 B 上下文可能拿到 A 建的 `Database`。这与既有的 `databaseCache` 待办是
-同一个根因，应在那一批里一并修复——修好后本测试无需改动即可重新启用。
+此后又实测排除了两条线索，别再重走：
+
+- **不是 `SpringKit` 返回了别的上下文的数据源。** `SpringContextInitializer` 会覆盖一个进程级全局的
+  `applicationContext`，这条线索看着很像。但把 `SpringKit` 解析到的数据源和本上下文注入的那个对比，
+  每一次失败运行都是 `same=true`。
+- **不是 ktorm `Database` 缓存的作用域。** 该缓存原先在任意上下文关闭时整体清空，会连带清掉仍在运行的
+  上下文的条目；现已改为按所属数据源退役（`retireKtormDatabases`）。失败率没有变化，仍约 1/3。
+
+已确立的事实不变：没有删除发生、升级逻辑无误、已提交数据全程可见、同一行在夹具连接上读得到而经
+Ktorm DAO 读不到。根因仍未找到——修好后本测试无需改动即可重新启用。
 
 ## 分层
 

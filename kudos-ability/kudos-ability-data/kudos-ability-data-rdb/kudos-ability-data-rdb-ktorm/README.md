@@ -32,9 +32,23 @@ value 是强引用,而 value(`Database`)捕获的是**外层 routing DataSource*
 value 却仍指向某个上下文的 routing DataSource。两种情形下条目都可能比它背后的连接池活得久,后果是查询从已关闭的
 池里取连接,表现为 `ProxyConnection.close()` 报 delegate 为空,且现场离成因很远。
 
-`KtormDatabaseCacheEvictor` 因此在 `ContextClosedEvent` 时清空缓存——上下文关闭正是这些池消失的时刻。
-重建一条缓存的代价是下一次查询多一次元数据往返。`clearKtormDatabaseCache()` 仍保留,供测试及其他途径的
-DataSource 替换使用。
+`KtormDatabaseCacheEvictor` 因此在 `ContextClosedEvent` 时清理——上下文关闭正是这些池消失的时刻。
+重建一条缓存的代价是下一次查询多一次元数据往返。
+
+**只清关闭者自己的条目。** 早先的实现是整体清空,理由是"key 是路由解析出的内层 DataSource,不一定是关闭
+上下文的 bean,归属无法回答"。换个方向就能回答:向关闭中的上下文要它的 `DataSource` bean,把其中的路由
+数据源展开成它委托的成员,退役这一组;条目按 key 与它所包裹的 routing DataSource **两侧**匹配。整体清空
+会连带清掉仍在运行的上下文的条目——只要一个 JVM 里有两个上下文就不对,而多上下文测试套件正是这种形态。
+
+**是"退役"而不只是"移除"。** `ContextClosedEvent` 在上下文销毁单例**之前**发布,所以一个已在途的查询可能
+把条目重建在一个即将关闭的池上,于是这条目反而比它本该被移除的那次关闭活得更久。退役标记让移除生效:
+该查询照样拿到它的 `Database`,但不会再给后来的调用方留下一个。
+
+`clearKtormDatabaseCache()` 是全量重置(同时清除退役标记),供测试及其他途径的 DataSource 替换使用;
+`retireKtormDatabases(dataSources)` 是按数据源的定向退役。
+
+> 注:这一改动**没有**修复 `RecoveryCodeLoginIntegrationTest` 的抖动,失败率实测无变化。那个问题另有成因,
+> 记在 `kudos-ms-auth-core` README 里。
 
 Seata 兼容请通过 `spring.datasource.dynamic.seata=true` 让 baomidou dynamic-datasource
 在 bean 层做代理；详见 `kudos-ability-data-rdb-jdbc` README 的 "Seata 兼容关键"。

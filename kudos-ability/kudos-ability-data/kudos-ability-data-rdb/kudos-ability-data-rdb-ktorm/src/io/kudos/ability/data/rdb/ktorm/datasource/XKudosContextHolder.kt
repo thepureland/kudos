@@ -66,16 +66,41 @@ fun KudosContextHolder.currentDataSource(): DataSource {
  * Either way an entry can outlive the pool behind it, and the failure lands far from here — a
  * `ProxyConnection.close()` with a null delegate, inside an unrelated query.
  *
- * [KtormDatabaseCacheEvictor] therefore clears the cache when a context closes, which is exactly when the
- * pools an entry could be holding go away. [clearKtormDatabaseCache] remains available for tests and for code
- * that replaces datasources by some other route.
+ * **Each entry therefore records the routing datasource it was built over**, which is what makes an entry's
+ * owner answerable. [KtormDatabaseCacheEvictor] retires the datasources of a closing context, and an entry
+ * matching on either side — the key it was filed under or the routing datasource it wraps — goes with them.
+ * An earlier version cleared the whole cache instead, because the key alone could not say which entries
+ * belonged to the closing context; that also threw away entries belonging to contexts still running, which is
+ * wrong as soon as more than one context shares a JVM.
+ *
+ * [clearKtormDatabaseCache] remains available for tests and for code that replaces datasources by some other
+ * route.
  *
  * The synchronisation this costs is a monitor around a map lookup on a path whose next act is a
  * database round trip, and the map holds one entry per physical datasource — single digits in every
  * deployment this framework targets.
  */
-private val databaseCache: MutableMap<DataSource, Database> =
-    Collections.synchronizedMap(WeakHashMap<DataSource, Database>())
+private val databaseCache: MutableMap<DataSource, CachedDatabase> =
+    Collections.synchronizedMap(WeakHashMap<DataSource, CachedDatabase>())
+
+/** A cached [Database] together with the routing datasource it takes connections from. */
+private class CachedDatabase(val database: Database, val routingDataSource: DataSource)
+
+/**
+ * Datasources whose pools are going away, so nothing may be cached against them again.
+ *
+ * Clearing the cache on close is not enough on its own: `ContextClosedEvent` is published *before* the
+ * context destroys its singletons, so a query already in flight can rebuild an entry over a pool that is
+ * about to shut down, and that entry then outlives the close it was supposed to be removed by. Marking the
+ * datasource instead makes the removal stick — the in-flight query still gets a `Database` and still races
+ * the shutdown, but it can no longer leave one behind for the callers that come after.
+ *
+ * Weak, so a retired datasource stops being tracked once nothing else holds it, and identity-based, because
+ * two pools are the same pool only if they are the same object. A datasource rebuilt by
+ * `DsContextProcessor.refreshDatasource` is a new instance and therefore not retired.
+ */
+private val retiredDataSources: MutableSet<DataSource> =
+    Collections.synchronizedSet(Collections.newSetFromMap(WeakHashMap<DataSource, Boolean>()))
 
 /**
  * Returns the Ktorm [Database] for the datasource the current thread routes to.
@@ -119,7 +144,8 @@ fun KudosContextHolder.currentDatabase(): Database {
 
     val routingDataSource = currentDataSource()
     val key = routedDataSourceOf(routingDataSource)
-    databaseCache[key]?.let { return it }
+    val retired = isRetired(key) || isRetired(routingDataSource)
+    if (!retired) databaseCache[key]?.let { return it.database }
 
     // Built outside the map so the metadata round trip does not run while holding the lock. Two
     // threads racing here may both build one; the loser's copy is discarded and Database is a
@@ -129,7 +155,35 @@ fun KudosContextHolder.currentDatabase(): Database {
         logger = RedactingKtormLogger(detectLoggerImplementation()),
         alwaysQuoteIdentifiers = true,
     )
-    return databaseCache.putIfAbsent(key, database) ?: database
+    // Retired between the check above and here, or already retired on entry: hand this caller its Database
+    // and leave nothing behind, so the shutdown it is racing does not become the next caller's problem.
+    if (retired || isRetired(key) || isRetired(routingDataSource)) return database
+    return (databaseCache.putIfAbsent(key, CachedDatabase(database, routingDataSource)))?.database ?: database
+}
+
+private fun isRetired(dataSource: DataSource): Boolean = retiredDataSources.contains(dataSource)
+
+/**
+ * Drops the cached [Database] objects belonging to [dataSources] and refuses to cache against them again.
+ *
+ * Called when a context closes, with the datasources that context owns. Entries are matched on both the key
+ * they were filed under and the routing datasource they wrap, because routing means those are not the same
+ * object: the key is what the routing resolved to, and either side going away makes the entry unusable.
+ *
+ * @author K
+ * @author AI: Claude
+ * @since 1.0.0
+ */
+fun retireKtormDatabases(dataSources: Collection<DataSource>) {
+    if (dataSources.isEmpty()) return
+    val retiring = Collections.newSetFromMap(java.util.IdentityHashMap<DataSource, Boolean>())
+    retiring.addAll(dataSources)
+    retiredDataSources.addAll(retiring)
+    synchronized(databaseCache) {
+        databaseCache.entries.removeIf { (key, cached) ->
+            key in retiring || cached.routingDataSource in retiring
+        }
+    }
 }
 
 /**
@@ -141,8 +195,11 @@ private fun routedDataSourceOf(dataSource: DataSource): DataSource =
     runCatching { (dataSource as? DynamicRoutingDataSource)?.determineDataSource() }.getOrNull() ?: dataSource
 
 /**
- * Drops every cached [Database]. Call after replacing datasource instances at runtime; the next
- * query rebuilds what it needs.
+ * Drops every cached [Database] and un-retires every datasource. Call after replacing datasource instances at
+ * runtime; the next query rebuilds what it needs.
+ *
+ * A full reset, unlike [retireKtormDatabases]: it makes no claim about which pools are going away, so it must
+ * not leave retirement marks that would stop a still-live datasource from ever being cached again.
  *
  * @author K
  * @author AI: Claude
@@ -150,4 +207,5 @@ private fun routedDataSourceOf(dataSource: DataSource): DataSource =
  */
 fun clearKtormDatabaseCache() {
     databaseCache.clear()
+    retiredDataSources.clear()
 }
