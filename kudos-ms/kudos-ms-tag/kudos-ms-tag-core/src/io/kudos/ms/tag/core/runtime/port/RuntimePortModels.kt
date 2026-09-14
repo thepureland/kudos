@@ -1,6 +1,7 @@
 package io.kudos.ms.tag.core.runtime.port
 
 import io.kudos.ms.tag.common.assignment.model.TagMembershipSource
+import io.kudos.ms.tag.common.attribute.model.TagAttributeCardinality
 import io.kudos.ms.tag.common.attribute.model.TagAttributeValue
 import io.kudos.ms.tag.common.subject.model.TagSubjectKey
 import java.time.Instant
@@ -14,7 +15,8 @@ data class AttributeApplyResult(
 data class TagEvaluationContext(
     val subjectKey: TagSubjectKey,
     val attributes: Map<String, List<TagAttributeValue>>,
-    val activeTagCodes: Set<String>,
+    val attributeCardinalities: Map<String, TagAttributeCardinality> = emptyMap(),
+    val activeTagCodes: Set<String> = emptySet(),
 )
 
 data class TagMembershipView(
