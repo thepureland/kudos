@@ -7,7 +7,7 @@ spring:
       datasource:
         h2:
           driver-class-name: org.h2.Driver
-          url: jdbc:h2:~/h2/tag-admin;DATABASE_TO_LOWER=TRUE
+          url: jdbc:h2:~/h2/tag;DATABASE_TO_LOWER=TRUE;AUTO_SERVER=TRUE
           username: sa
           password: sa
 
@@ -15,4 +15,4 @@ kudos:
   ability:
     flyway:
       datasource-config:
-        tag: h2
+        h2: tag
