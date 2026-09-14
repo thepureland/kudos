@@ -13,6 +13,9 @@ import io.kudos.ms.tag.core.runtime.rdb.RdbRecalculationQueue
 import io.kudos.ms.tag.core.runtime.rdb.RdbTagAssignmentIndex
 import io.kudos.ms.tag.core.runtime.rdb.RdbTagMembershipStore
 import io.kudos.ms.tag.core.runtime.job.dao.TagRecalculationJobDao
+import io.kudos.ms.tag.core.runtime.attribute.dao.TagAttributeStateDao
+import io.kudos.ms.tag.core.catalog.attribute.dao.TagAttributeDefinitionDao
+import io.kudos.ms.tag.core.runtime.subject.dao.TagSubjectDao
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
@@ -32,7 +35,11 @@ open class TagAutoConfiguration : IComponentInitializer {
 
     @Bean
     @ConditionalOnMissingBean(AttributeStateStore::class)
-    open fun attributeStateStore(): AttributeStateStore = RdbAttributeStateStore()
+    open fun attributeStateStore(
+        stateDao: TagAttributeStateDao,
+        attributeDao: TagAttributeDefinitionDao,
+        subjectDao: TagSubjectDao,
+    ): AttributeStateStore = RdbAttributeStateStore(stateDao, attributeDao, subjectDao)
 
     @Bean
     @ConditionalOnMissingBean(TagMembershipStore::class)

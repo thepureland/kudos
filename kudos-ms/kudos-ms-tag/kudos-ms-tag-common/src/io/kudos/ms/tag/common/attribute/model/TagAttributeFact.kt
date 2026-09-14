@@ -46,8 +46,8 @@ data class TagAttributeFact(
         }
     }
 
-    private companion object {
-        val CODE_PATTERN = Regex("^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)*$")
+    companion object {
+        private val CODE_PATTERN = Regex("^[a-z][a-z0-9_-]*(\\.[a-z][a-z0-9_-]*)*$")
     }
 }
 
