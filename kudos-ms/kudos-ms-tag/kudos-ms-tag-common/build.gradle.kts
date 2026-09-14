@@ -1,8 +1,13 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+plugins {
+    alias(libs.plugins.kotlinPluginSerialization)
+}
+
 dependencies {
     api(project(":kudos-context"))
+    api(libs.kotlinxSerialization)
     compileOnly(platform(libs.spring.boot.bom))
     compileOnly("com.fasterxml.jackson.core:jackson-annotations")
     compileOnly("org.springframework:spring-web")
