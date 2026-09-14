@@ -92,7 +92,7 @@ create table tag_rule (
     update_user_id varchar(64), update_user_name varchar(128), update_time timestamp(6) not null,
     constraint uk_tag_rule_version unique (tag_id, rule_version),
     constraint fk_tag_rule_tag foreign key (tag_id) references tag_definition (id),
-    constraint ck_tag_rule_status check (status in ('DRAFT', 'REBUILDING', 'PUBLISHED', 'RETIRED')),
+    constraint ck_tag_rule_status check (status in ('DRAFT', 'VALIDATING', 'REBUILDING', 'PUBLISHED', 'RETIRED')),
     constraint ck_tag_rule_versions check (rule_version > 0 and expression_version > 0 and version >= 0)
 );
 

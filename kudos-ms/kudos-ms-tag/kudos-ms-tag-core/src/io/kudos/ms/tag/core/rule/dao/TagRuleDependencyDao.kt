@@ -14,4 +14,7 @@ open class TagRuleDependencyDao : BaseCrudDao<String, TagRuleDependency, TagRule
     open fun listByRule(ruleId: String): List<TagRuleDependency> =
         entitySequence().filter { TagRuleDependencies.ruleId eq ruleId }
             .sortedBy { TagRuleDependencies.id }.toList()
+
+    open fun listByTenant(tenantId: String): List<TagRuleDependency> =
+        entitySequence().filter { TagRuleDependencies.tenantId eq tenantId }.toList()
 }

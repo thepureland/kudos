@@ -95,7 +95,7 @@ create table tag_rule (
     tenant_id varchar(64) not null,
     tag_id char(36) not null,
     rule_version bigint not null,
-    status enum('DRAFT', 'REBUILDING', 'PUBLISHED', 'RETIRED') not null,
+    status enum('DRAFT', 'VALIDATING', 'REBUILDING', 'PUBLISHED', 'RETIRED') not null,
     root_node_id char(36),
     expression_version integer not null,
     checksum varchar(64) not null,

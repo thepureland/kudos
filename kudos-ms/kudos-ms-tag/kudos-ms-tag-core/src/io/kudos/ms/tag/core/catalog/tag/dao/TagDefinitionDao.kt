@@ -13,6 +13,11 @@ import org.springframework.stereotype.Repository
 
 @Repository
 open class TagDefinitionDao : BaseCrudDao<String, TagDefinition, TagDefinitions>() {
+    open fun listByTenantAndCode(tenantId: String, code: String): List<TagDefinition> =
+        entitySequence().filter {
+            (TagDefinitions.tenantId eq tenantId) and (TagDefinitions.code eq code)
+        }.sortedBy { TagDefinitions.subjectType }.toList()
+
     open fun findByCode(tenantId: String, subjectTypeCode: String, code: String): TagDefinition? =
         entitySequence().firstOrNull {
             (TagDefinitions.tenantId eq tenantId) and
