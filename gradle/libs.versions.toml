@@ -173,6 +173,8 @@ flyway-core = { module = "org.flywaydb:flyway-core"}
 # adapter, and without it Flyway throws "Unsupported Database" on PostgreSQL (incl. 18).
 # Version is aligned by the spring-boot BOM.
 flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql"}
+# Flyway keeps MySQL support in a separate database module. Version is managed by the Spring Boot BOM.
+flyway-mysql = { module = "org.flywaydb:flyway-mysql"}
 spring-cloud-loadbalancer = { module = "org.springframework.cloud:spring-cloud-loadbalancer"}
 # Spring Boot 4 内置声明式 HTTP 客户端（interface clients）的自动装配：RestClient 版
 # HttpServiceProxyFactory + HttpServiceClientAutoConfiguration。
@@ -206,6 +208,7 @@ amazon-awssdk-apache-client = { module = "software.amazon.awssdk:apache-client",
 h2database-h2 = { module = "com.h2database:h2" }
 postgresql = { module = "org.postgresql:postgresql" }
 ktorm-support-postgresql = { module = "org.ktorm:ktorm-support-postgresql", version.ref = "ktorm"}
+ktorm-support-mysql = { module = "org.ktorm:ktorm-support-mysql", version.ref = "ktorm"}
 ktorm-core = { module = "org.ktorm:ktorm-core", version.ref = "ktorm"}
 ktorm-jackson = { module = "org.ktorm:ktorm-jackson", version.ref = "ktorm"}
 baomidou-dynamic-datasource-starter = { module = "com.baomidou:dynamic-datasource-spring-boot4-starter", version.ref = "baomidou-dynamic-datasource"}
