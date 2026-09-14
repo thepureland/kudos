@@ -22,6 +22,7 @@
 | [kudos-ms-auth-api-internal](kudos-ms-auth-api-internal/README.md) | 对内 Provider 启动入口 + `AuthRoleInternalController`（Nacos / interservice 缓存） |
 | [kudos-ms-auth-client](kudos-ms-auth-client/README.md) | `IAuthRoleProxy` Feign 代理 + `AuthRoleFallback` 降级 |
 | [kudos-ms-auth-provider-oauth2](kudos-ms-auth-provider-oauth2/README.md) | 可选的 Spring Security OAuth2/OIDC 动态客户端注册适配层 |
+| [kudos-ms-auth-provider-email-otp](kudos-ms-auth-provider-email-otp/README.md) | 可选的无密码邮箱验证码、Redis 原子一次性 challenge 与 Kudos 用户即时建号适配层 |
 | [kudos-ms-auth-provider-webauthn](kudos-ms-auth-provider-webauthn/README.md) | 可选的 Yubico WebAuthn/Passkey ceremony 及 FIDO MDS trust source 适配层 |
 | [kudos-ms-auth-token-jwt](kudos-ms-auth-token-jwt/README.md) | 可选的短期 JWT、Refresh Token Rotation 与 Bearer Filter 适配层 |
 | [kudos-ms-auth-notification-msg](kudos-ms-auth-notification-msg/README.md) | 可选的安全事件 outbox 到 `kudos-ms-msg` 模板/渠道发送适配层 |

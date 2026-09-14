@@ -10,12 +10,15 @@ import io.kudos.ms.user.core.account.service.iservice.IExternalAccountProvisioni
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountThirdService
 import io.kudos.ms.user.core.account.service.iservice.IUserOrgUserService
+import io.kudos.ms.user.core.contact.model.po.UserContactWay
+import io.kudos.ms.user.core.contact.service.iservice.IUserContactWayService
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.sql.SQLIntegrityConstraintViolationException
 import java.time.LocalDateTime
+import java.util.Locale
 
 /** Transaction boundary for JIT account creation plus its mandatory first identity binding. */
 @Service
@@ -23,6 +26,7 @@ open class ExternalAccountProvisioningService(
     private val userAccountService: IUserAccountService,
     private val userAccountThirdService: IUserAccountThirdService,
     private val userOrgUserService: IUserOrgUserService,
+    private val userContactWayService: IUserContactWayService,
 ) : IExternalAccountProvisioningService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -64,6 +68,24 @@ open class ExternalAccountProvisioningService(
 
         try {
             user.id = userAccountService.insert(user)
+            command.email
+                ?.trim()
+                ?.lowercase(Locale.ROOT)
+                ?.takeIf { command.emailVerified && it.isNotBlank() }
+                ?.let { verifiedEmail ->
+                    userContactWayService.insert(UserContactWay {
+                        userId = user.id
+                        contactWayDictCode = EMAIL_CONTACT_WAY_CODE
+                        contactWayValue = verifiedEmail.take(MAX_EMAIL_LENGTH)
+                        contactWayStatusDictCode = VERIFIED_CONTACT_WAY_STATUS
+                        priority = 0
+                        active = true
+                        builtIn = false
+                        createUserName = JIT_ACTOR_NAME
+                        createTime = now
+                        remark = "Verified by ${command.providerCode.take(32)}"
+                    })
+                }
             command.defaultOrgId?.takeIf { it.isNotBlank() }?.let { orgId ->
                 userOrgUserService.batchBind(orgId, listOf(user.id))
             }
@@ -114,7 +136,10 @@ open class ExternalAccountProvisioningService(
 
     private companion object {
         const val MAX_USERNAME_LENGTH = 32
+        const val MAX_EMAIL_LENGTH = 254
         const val ROOT_SUPERVISOR_ID = "00000000-0000-0000-0000-000000000000"
         const val JIT_ACTOR_NAME = "external-jit"
+        const val EMAIL_CONTACT_WAY_CODE = "201"
+        const val VERIFIED_CONTACT_WAY_STATUS = "10"
     }
 }

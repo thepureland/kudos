@@ -157,6 +157,7 @@ open class ExternalIdentityAuthenticationService(
                 unionId = principal.unionId,
                 displayName = principal.displayName,
                 email = principal.email,
+                emailVerified = principal.emailVerified == true,
                 avatarUrl = principal.avatarUrl,
                 defaultLocale = config.defaultLocale ?: normalizeLocale(principal.locale),
                 defaultTimezone = config.defaultTimezone,

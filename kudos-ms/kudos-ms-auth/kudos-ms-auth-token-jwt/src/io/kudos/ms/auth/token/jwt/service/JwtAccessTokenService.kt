@@ -66,7 +66,10 @@ open class JwtAccessTokenService(
         try {
             val jwt = decoder.decode(token)
             val now = Instant.now()
-            if (jwt.issuer?.toString() != properties.issuer || properties.audience !in jwt.audience.orEmpty() ||
+            // RFC 7519 defines iss as StringOrURI: a plain deployment identifier is valid. Spring's
+            // JwtClaimAccessor.issuer coerces it to URL and throws for values such as "party-games".
+            if (jwt.getClaimAsString(CLAIM_ISSUER) != properties.issuer ||
+                properties.audience !in jwt.audience.orEmpty() ||
                 jwt.expiresAt?.isAfter(now) != true || jwt.notBefore?.isAfter(now) == true ||
                 jwt.getClaimAsString(CLAIM_TOKEN_USE) != ACCESS_TOKEN_USE
             ) invalid()
@@ -93,6 +96,7 @@ open class JwtAccessTokenService(
         const val ACCESS_TOKEN_TYPE = "JWT"
         const val ACCESS_TOKEN_USE = "access"
         const val CLAIM_TOKEN_USE = "token_use"
+        const val CLAIM_ISSUER = "iss"
         const val CLAIM_SESSION_ID = "sid"
         const val CLAIM_TENANT_ID = "tenant_id"
         const val CLAIM_PERMISSION_VERSION = "pv"

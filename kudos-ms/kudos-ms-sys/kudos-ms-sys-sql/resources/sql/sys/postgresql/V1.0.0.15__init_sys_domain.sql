@@ -1,0 +1,43 @@
+--region DDL
+create table if not exists "sys_domain"
+(
+    "id"              character(36) default gen_random_uuid()::text not null primary key,
+    "domain"          character varying(256)               not null,
+    "system_code"     character varying(32)               not null,
+    "tenant_id"       character varying(36),
+    "remark"          character varying(128),
+    "active"          boolean       default TRUE          not null,
+    "built_in"        boolean       default FALSE         not null,
+    "create_user_id"  character varying(36),
+    "create_user_name" character varying(32),
+    "create_time"     timestamp(6)     default now()         not null,
+    "update_user_id"  character varying(36),
+    "update_user_name" character varying(32),
+    "update_time"     timestamp(6)
+);
+
+create unique index if not exists "uq_sys_domain" on "sys_domain" ("domain");
+
+-- alter table "sys_domain"
+--     add constraint "fk_sys_domain_system"
+--         foreign key ("system_code") references "sys_system" ("code");
+--
+-- alter table "sys_domain"
+--     add constraint "fk_sys_domain_tenant"
+--         foreign key ("tenant_id") references "sys_tenant" ("id");
+
+comment on table "sys_domain" is '域名';
+comment on column "sys_domain"."id" is '主键';
+comment on column "sys_domain"."domain" is '域名';
+comment on column "sys_domain"."system_code" is '系统编码';
+comment on column "sys_domain"."tenant_id" is '租户id';
+comment on column "sys_domain"."remark" is '备注';
+comment on column "sys_domain"."active" is '是否启用';
+comment on column "sys_domain"."built_in" is '是否内置';
+comment on column "sys_domain"."create_user_id" is '创建者id';
+comment on column "sys_domain"."create_user_name" is '创建者名称';
+comment on column "sys_domain"."create_time" is '创建时间';
+comment on column "sys_domain"."update_user_id" is '更新者id';
+comment on column "sys_domain"."update_user_name" is '更新者名称';
+comment on column "sys_domain"."update_time" is '更新时间';
+--endregion DDL

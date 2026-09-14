@@ -8,6 +8,8 @@ import io.kudos.ms.user.core.account.service.impl.ExternalAccountProvisioningSer
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountThirdService
 import io.kudos.ms.user.core.account.service.iservice.IUserOrgUserService
+import io.kudos.ms.user.core.contact.model.po.UserContactWay
+import io.kudos.ms.user.core.contact.service.iservice.IUserContactWayService
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.mock
@@ -23,7 +25,13 @@ internal class ExternalAccountProvisioningServicePureTest {
     private val userAccountService = mock(IUserAccountService::class.java)
     private val thirdService = mock(IUserAccountThirdService::class.java)
     private val userOrgUserService = mock(IUserOrgUserService::class.java)
-    private val service = ExternalAccountProvisioningService(userAccountService, thirdService, userOrgUserService)
+    private val userContactWayService = mock(IUserContactWayService::class.java)
+    private val service = ExternalAccountProvisioningService(
+        userAccountService,
+        thirdService,
+        userOrgUserService,
+        userContactWayService,
+    )
 
     @Test
     fun provisionCreatesExternalOnlyAccountAndMandatoryJitBinding() {
@@ -64,6 +72,33 @@ internal class ExternalAccountProvisioningServicePureTest {
     }
 
     @Test
+    fun provisionPersistsVerifiedEmailAsNormalContactWay() {
+        val command = command().copy(emailVerified = true)
+        `when`(
+            thirdService.getByIdentityProviderSubject(
+                command.tenantId, command.identityProviderId, command.issuer, command.subject,
+            )
+        ).thenReturn(null)
+        `when`(userAccountService.insert(any(UserAccount::class.java) ?: fallbackAccount())).thenReturn("u-jit")
+        `when`(userContactWayService.insert(any(UserContactWay::class.java) ?: fallbackContact())).thenReturn("contact-1")
+        `when`(
+            thirdService.jitBindExternalIdentity(
+                any(ExternalAccountBindingCommand::class.java) ?: fallbackBinding()
+            )
+        ).thenReturn(UserAccountThird { id = "binding-jit"; userId = "u-jit"; active = true })
+
+        service.provision(command)
+
+        val captor = ArgumentCaptor.forClass(UserContactWay::class.java)
+        verify(userContactWayService).insert(captor.capture() ?: fallbackContact())
+        assertEquals("u-jit", captor.value.userId)
+        assertEquals("201", captor.value.contactWayDictCode)
+        assertEquals("alice@example.com", captor.value.contactWayValue)
+        assertEquals("10", captor.value.contactWayStatusDictCode)
+        assertTrue(captor.value.active)
+    }
+
+    @Test
     fun provisionIsIdempotentWhenBindingAlreadyExists() {
         val command = command()
         val existing = UserAccountThird { id = "binding-existing"; userId = "u-existing"; active = true }
@@ -92,6 +127,8 @@ internal class ExternalAccountProvisioningServicePureTest {
     )
 
     private fun fallbackAccount() = UserAccount { id = "fallback" }
+
+    private fun fallbackContact() = UserContactWay { id = "fallback" }
 
     private fun fallbackBinding() = ExternalAccountBindingCommand(
         userId = "fallback",

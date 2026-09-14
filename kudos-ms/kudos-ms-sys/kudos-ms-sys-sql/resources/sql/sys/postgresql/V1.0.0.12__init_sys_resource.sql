@@ -1,0 +1,90 @@
+--region DDL
+create table if not exists "sys_resource"
+(
+    "id"                      char(36)  default gen_random_uuid()::text not null primary key,
+    "name"                    character varying(64)           not null,
+    "permission_code"         character varying(128),
+    "url"                     character varying(256),
+    "resource_type_dict_code" char(1)                         not null,
+    "parent_id"               char(36),
+    "order_num"               smallint,
+    "icon"                    character varying(256),
+    "sub_system_code"         character varying(32) default 'default-sub-system'  not null,
+    "remark"                  character varying(256),
+    "active"                  boolean   default TRUE          not null,
+    "built_in"                boolean   default FALSE         not null,
+    "create_user_id"          character varying(36),
+    "create_user_name"        character varying(32),
+    "create_time"             timestamp(6) default now()         not null,
+    "update_user_id"          character varying(36),
+    "update_user_name"        character varying(32),
+    "update_time"             timestamp(6)
+);
+
+create unique index if not exists "uq_sys_resource" on "sys_resource" ("name", "sub_system_code");
+
+-- A permission code identifies one permission point within a subsystem. NULLs compare as distinct,
+-- so rows that have not been assigned a code yet do not collide.
+create unique index if not exists "uq_sys_resource_permission_code" on "sys_resource" ("permission_code", "sub_system_code");
+
+create index if not exists "idx_sys_resource_parent_id" on "sys_resource" ("parent_id");
+
+create index if not exists "idx_sys_resource_sub_system_code" on "sys_resource" ("sub_system_code");
+
+-- alter table "sys_resource"
+--     add constraint "fk_sys_resource_sub_system"
+--         foreign key ("sub_system_code") references "sys_system" ("code");
+--
+-- alter table "sys_resource"
+--     add constraint "fk_sys_resource_parent"
+--         foreign key ("parent_id") references "sys_resource" ("id");
+--
+-- alter table "sys_resource"
+--     add constraint "chk_sys_resource_no_self_reference"
+--         check ("parent_id" is null or "parent_id" != "id");
+
+comment on table "sys_resource" is '资源';
+comment on column "sys_resource"."id" is '主键';
+comment on column "sys_resource"."name" is '名称';
+-- This table is the permission-point REGISTRY. A row's durable identity is its permission_code
+-- (`域:资源类型:动作`, e.g. `sys:user:delete`), not its primary key: the code survives环境重建 and
+-- can be granted with wildcards. The menu attributes (icon/order_num/parent_id) are merely how a
+-- permission projects onto the UI — MENU rows are one projection, FUNCTION/ACTION rows have none.
+comment on column "sys_resource"."permission_code" is '权限编码，如 sys:user:delete，授权与鉴权的稳定标识';
+comment on column "sys_resource"."url" is 'url';
+comment on column "sys_resource"."resource_type_dict_code" is '资源类型字典代码';
+comment on column "sys_resource"."parent_id" is '父id';
+comment on column "sys_resource"."order_num" is '在同父节点下的排序号';
+comment on column "sys_resource"."icon" is '图标';
+comment on column "sys_resource"."sub_system_code" is '子系统编码';
+comment on column "sys_resource"."remark" is '备注';
+comment on column "sys_resource"."active" is '是否启用';
+comment on column "sys_resource"."built_in" is '是否内置';
+comment on column "sys_resource"."create_user_id" is '创建者id';
+comment on column "sys_resource"."create_user_name" is '创建者名称';
+comment on column "sys_resource"."create_time" is '创建时间';
+comment on column "sys_resource"."update_user_id" is '更新者id';
+comment on column "sys_resource"."update_user_name" is '更新者名称';
+comment on column "sys_resource"."update_time" is '更新时间';
+--endregion DDL
+
+
+--region DML
+
+insert into "sys_resource" ("id", "name", "url", "resource_type_dict_code", "parent_id", "order_num", "icon", "sub_system_code", "built_in") values
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee000', 'view.menu.home', '/home', '1', null, 1, 'HomeFilled', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee001', 'view.menu.sys', '/sys', '1', null, 2, 'Setting', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee002', 'view.menu.system', '/sys/system', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 1, 'Mouse', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee003', 'view.menu.microService', '/sys/microService', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 2, 'Cpu', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee004', 'view.menu.tenant', '/sys/tenant', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 3, 'Phone', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee005', 'view.menu.dataSource', '/sys/dataSource', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 4, 'Coin', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee006', 'view.menu.domain', '/sys/domain', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 5, 'Link', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee007', 'view.menu.resource', '/sys/resource', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 6, 'Document', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee008', 'view.menu.dict', '/sys/dict', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 7, 'Collection', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee009', 'view.menu.cache', '/sys/cache', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 8, 'CopyDocument', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee010', 'view.menu.param', '/sys/param', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 9, 'Operation', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee011', 'view.menu.i18n', '/sys/i18n', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 10, 'Location', 'default-sub-system', true),
+    ('68139ed2-kres-47fa-ac0d-2932fb0ee012', 'view.menu.accessRule', '/sys/accessRule', '1', '68139ed2-kres-47fa-ac0d-2932fb0ee001', 11, 'Umbrella', 'default-sub-system', true)
+    on conflict ("name", "sub_system_code") do nothing;
+
+--endregion DML

@@ -13,7 +13,8 @@ data class AuthenticationActionRequest(
     val tenantId: String? = null,
     @get:MaxLength(32)
     val method: String? = null,
-    @get:MaxLength(64)
+    // Authentication methods may use an RFC-length email address as the login identifier.
+    @get:MaxLength(254)
     val username: String? = null,
     val plainPassword: String? = null,
     @get:MaxLength(32)

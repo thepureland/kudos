@@ -38,7 +38,8 @@ internal class JwtAccessTokenServiceTest {
     private val versions = TestPermissionVersionApi()
     private val properties = JwtTokenProperties().apply {
         enabled = true
-        issuer = "https://auth.example.test"
+        // RFC 7519 also permits a plain StringOrURI value; deployments need not invent a URL.
+        issuer = "party-games"
         audience = "kudos-api-test"
     }
     private val service = JwtAccessTokenService(
@@ -75,6 +76,7 @@ internal class JwtAccessTokenServiceTest {
         assertEquals("t-1", jwt.getClaimAsString("tenant_id"))
         assertEquals("7:fingerprint", jwt.getClaimAsString("pv"))
         assertEquals("access", jwt.getClaimAsString("token_use"))
+        assertEquals("party-games", jwt.getClaimAsString("iss"))
         assertTrue("kudos-api-test" in jwt.audience.orEmpty())
     }
 

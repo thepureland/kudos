@@ -17,4 +17,6 @@ open class AuthenticationAttemptLimitProperties {
     var totpFailureWindowSeconds: Long = 300
     var recoveryCodeFailureMaxAttempts: Int = 5
     var recoveryCodeFailureWindowSeconds: Long = 900
+    var emailOtpFailureMaxAttempts: Int = 5
+    var emailOtpFailureWindowSeconds: Long = 900
 }

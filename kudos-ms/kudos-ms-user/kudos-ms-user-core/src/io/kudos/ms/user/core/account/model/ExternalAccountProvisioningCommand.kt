@@ -11,6 +11,8 @@ data class ExternalAccountProvisioningCommand(
     val unionId: String? = null,
     val displayName: String? = null,
     val email: String? = null,
+    /** True only when the upstream authentication ceremony proved ownership of [email]. */
+    val emailVerified: Boolean = false,
     val avatarUrl: String? = null,
     val defaultLocale: String? = null,
     val defaultTimezone: String? = null,

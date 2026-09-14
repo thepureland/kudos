@@ -5,6 +5,7 @@ enum class AuthenticationAttemptFactorEnum {
     PASSWORD,
     TOTP,
     RECOVERY_CODE,
+    EMAIL_OTP,
 }
 
 /** Secret-free dimensions used to derive opaque attempt-counter keys. */
@@ -19,6 +20,7 @@ enum class AuthenticationAttemptDecisionReasonEnum {
     PASSWORD_FAILURE_LIMIT,
     TOTP_FAILURE_LIMIT,
     RECOVERY_CODE_FAILURE_LIMIT,
+    EMAIL_OTP_FAILURE_LIMIT,
     INFRASTRUCTURE_UNAVAILABLE,
 }
 

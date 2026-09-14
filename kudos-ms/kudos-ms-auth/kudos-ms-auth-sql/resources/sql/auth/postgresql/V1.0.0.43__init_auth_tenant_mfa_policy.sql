@@ -1,0 +1,21 @@
+CREATE TABLE IF NOT EXISTS "auth_tenant_mfa_policy" (
+    "id" VARCHAR(36) NOT NULL,
+    "tenant_id" VARCHAR(36) NOT NULL,
+    "mode" VARCHAR(16) NOT NULL,
+    "grace_period_days" INT NOT NULL,
+    "allowed_methods" VARCHAR(128) NOT NULL,
+    "recovery_codes_enabled" BOOLEAN NOT NULL,
+    "required_account_type_codes" text,
+    "required_role_codes" text,
+    "create_user_id" VARCHAR(36) NOT NULL,
+    "create_reason" VARCHAR(512) NOT NULL,
+    "create_time" TIMESTAMP NOT NULL,
+    "update_user_id" VARCHAR(36) NOT NULL,
+    "update_reason" VARCHAR(512) NOT NULL,
+    "update_time" TIMESTAMP NOT NULL,
+    CONSTRAINT "pk_auth_tenant_mfa_policy" PRIMARY KEY ("id"),
+    CONSTRAINT "uk_auth_tenant_mfa_policy_tenant" UNIQUE ("tenant_id"),
+    CONSTRAINT "ck_auth_tenant_mfa_policy_id_tenant" CHECK ("id" = "tenant_id"),
+    CONSTRAINT "ck_auth_tenant_mfa_policy_mode" CHECK ("mode" IN ('OPTIONAL', 'REQUIRED', 'CONDITIONAL')),
+    CONSTRAINT "ck_auth_tenant_mfa_policy_grace" CHECK ("grace_period_days" BETWEEN 0 AND 90)
+);

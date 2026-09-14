@@ -86,6 +86,13 @@ open class DefaultAuthenticationAttemptLimiter(
             properties.recoveryCodeFailureMaxAttempts,
             properties.recoveryCodeFailureWindowSeconds,
         )
+
+        AuthenticationAttemptFactorEnum.EMAIL_OTP -> enabledBucket(
+            "failure-email-otp",
+            principal(context),
+            properties.emailOtpFailureMaxAttempts,
+            properties.emailOtpFailureWindowSeconds,
+        )
     }
 
     private fun enabledBucket(
@@ -134,6 +141,8 @@ open class DefaultAuthenticationAttemptLimiter(
         AuthenticationAttemptFactorEnum.TOTP -> AuthenticationAttemptDecisionReasonEnum.TOTP_FAILURE_LIMIT
         AuthenticationAttemptFactorEnum.RECOVERY_CODE ->
             AuthenticationAttemptDecisionReasonEnum.RECOVERY_CODE_FAILURE_LIMIT
+        AuthenticationAttemptFactorEnum.EMAIL_OTP ->
+            AuthenticationAttemptDecisionReasonEnum.EMAIL_OTP_FAILURE_LIMIT
     }
 
     private companion object {
