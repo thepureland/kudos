@@ -1,5 +1,7 @@
 package io.kudos.ms.tag.common.query.model
 
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import io.kudos.ms.tag.common.error.TagErrorCode
 import io.kudos.ms.tag.common.error.requireTag
 import kotlinx.serialization.SerialName
@@ -7,6 +9,12 @@ import kotlinx.serialization.Serializable
 
 /** Boolean expression over materialized tags only; attribute predicates are intentionally absent. */
 @Serializable
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes(
+    JsonSubTypes.Type(TagQueryExpression.AllTags::class, name = "allTags"),
+    JsonSubTypes.Type(TagQueryExpression.AnyTags::class, name = "anyTags"),
+    JsonSubTypes.Type(TagQueryExpression.NotTags::class, name = "notTags"),
+)
 sealed interface TagQueryExpression {
 
     @Serializable

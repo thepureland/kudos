@@ -24,6 +24,15 @@ open class TagCatalogService(
     private val tagDao: TagDefinitionDao,
 ) : ITagCatalogService {
 
+    @Transactional(readOnly = true)
+    override fun listTags(tenantId: String, subjectType: String): List<TagDefinitionView> {
+        require(tenantId.isNotBlank()) { "Tenant id must not be blank." }
+        require(SUBJECT_TYPE_CODE.matches(subjectType)) { "Subject type must be a lowercase dotted namespace." }
+        return tagDao.listBySubjectType(tenantId, subjectType)
+            .filter { it.active }
+            .map(TagDefinition::toView)
+    }
+
     override fun registerSubjectType(command: RegisterTagSubjectTypeCommand): TagSubjectTypeView {
         require(SUBJECT_TYPE_CODE.matches(command.code)) { "Subject type code must be a lowercase dotted namespace." }
         require(subjectTypeDao.findByCode(command.code) == null) { "Subject type [${command.code}] already exists." }

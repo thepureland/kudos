@@ -1,5 +1,7 @@
 package io.kudos.ms.tag.common.attribute.model
 
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import io.kudos.ms.tag.common.error.TagErrorCode
 import io.kudos.ms.tag.common.error.requireTag
 import kotlinx.serialization.SerialName
@@ -11,6 +13,15 @@ import java.time.OffsetDateTime
 
 /** A typed attribute value with an unambiguous wire representation. */
 @Serializable
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes(
+    JsonSubTypes.Type(TagAttributeValue.StringValue::class, name = "string"),
+    JsonSubTypes.Type(TagAttributeValue.IntegerValue::class, name = "integer"),
+    JsonSubTypes.Type(TagAttributeValue.DecimalValue::class, name = "decimal"),
+    JsonSubTypes.Type(TagAttributeValue.BooleanValue::class, name = "boolean"),
+    JsonSubTypes.Type(TagAttributeValue.DateValue::class, name = "date"),
+    JsonSubTypes.Type(TagAttributeValue.DateTimeValue::class, name = "datetime"),
+)
 sealed interface TagAttributeValue {
 
     @Serializable
