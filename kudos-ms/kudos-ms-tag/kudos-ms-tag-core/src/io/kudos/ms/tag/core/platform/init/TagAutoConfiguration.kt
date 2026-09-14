@@ -21,8 +21,10 @@ import io.kudos.ms.tag.core.runtime.assignment.dao.TagAssignmentDao
 import io.kudos.ms.tag.core.runtime.assignment.dao.TagAssignmentEventDao
 import io.kudos.ms.tag.core.catalog.tag.dao.TagDefinitionDao
 import io.kudos.ms.tag.core.catalog.tagset.dao.TagSetDao
+import io.kudos.ms.tag.core.runtime.job.TagRecalculationProperties
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
@@ -36,6 +38,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ComponentScan(basePackages = ["io.kudos.ms.tag.core"])
 @AutoConfigureAfter(KtormAutoConfiguration::class)
+@EnableConfigurationProperties(TagRecalculationProperties::class)
 open class TagAutoConfiguration : IComponentInitializer {
 
     @Bean
@@ -65,7 +68,10 @@ open class TagAutoConfiguration : IComponentInitializer {
 
     @Bean
     @ConditionalOnMissingBean(RecalculationQueue::class)
-    open fun recalculationQueue(jobDao: TagRecalculationJobDao): RecalculationQueue = RdbRecalculationQueue(jobDao)
+    open fun recalculationQueue(
+        jobDao: TagRecalculationJobDao,
+        properties: TagRecalculationProperties,
+    ): RecalculationQueue = RdbRecalculationQueue(jobDao, maximumAttempts = properties.maximumAttempts)
 
     override fun getComponentName() = "kudos-ms-tag-core"
 }

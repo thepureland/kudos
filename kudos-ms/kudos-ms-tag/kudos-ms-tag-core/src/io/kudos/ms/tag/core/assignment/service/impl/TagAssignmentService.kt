@@ -105,6 +105,50 @@ open class TagAssignmentService(
         }
     }
 
+    override fun applyRuleResult(
+        key: TagSubjectKey,
+        tagId: String,
+        ruleId: String,
+        ruleVersion: Long,
+        matched: Boolean,
+        causeRef: String,
+    ): AssignmentDelta {
+        require(ruleVersion > 0) { "Rule version must be positive." }
+        require(ruleId.isNotBlank()) { "Rule ID must not be blank." }
+        require(causeRef.isNotBlank()) { "Rule assignment cause reference must not be blank." }
+        val tag = tagDao.get(tagId)
+            ?.takeIf { it.active && it.tenantId == key.tenantId && it.subjectType == key.subjectType }
+            ?: throw IllegalArgumentException("Tag [$tagId] does not exist in the subject scope.")
+        return transactionExecutor.execute {
+            ensureAndLockSubject(key)
+            membershipStore.listActive(key)
+                .filter {
+                    it.tagId == tag.id && it.source == TagMembershipSource.RULE && it.sourceRef != ruleId
+                }
+                .forEach { previous ->
+                    membershipStore.replace(
+                        key = key,
+                        tagId = tag.id,
+                        source = TagMembershipSource.RULE,
+                        sourceRef = previous.sourceRef,
+                        active = false,
+                        version = membershipStore.nextVersion(key),
+                        ruleVersion = previous.ruleVersion,
+                    )
+                }
+            membershipStore.replace(
+                key = key,
+                tagId = tag.id,
+                source = TagMembershipSource.RULE,
+                sourceRef = ruleId,
+                active = matched,
+                version = membershipStore.nextVersion(key),
+                ruleVersion = ruleVersion,
+            )
+            reconcile(key, tag.tagSetId, "RULE", causeRef)
+        }
+    }
+
     private fun reconcile(key: TagSubjectKey, tagSetId: String?, causeType: String, causeRef: String): AssignmentDelta {
         val tagSet = tagSetId?.let { requireNotNull(tagSetDao.get(it)) }
         tagSet?.defaultTagId?.let { defaultTagId ->

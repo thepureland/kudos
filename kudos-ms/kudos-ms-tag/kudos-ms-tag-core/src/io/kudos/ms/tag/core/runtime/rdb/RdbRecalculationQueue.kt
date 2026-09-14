@@ -19,10 +19,15 @@ open class RdbRecalculationQueue(
     private val jobDao: TagRecalculationJobDao,
     private val retryPolicy: RecalculationRetryPolicy = RecalculationRetryPolicy(),
     private val clock: Clock = Clock.systemUTC(),
+    private val maximumAttempts: Int = 10,
     private val leaseDialects: List<RecalculationLeaseDialect> = listOf(
         H2RecalculationLeaseDialect(), MySqlRecalculationLeaseDialect(), PostgreSqlRecalculationLeaseDialect(),
     ),
 ) : RecalculationQueue {
+    init {
+        require(maximumAttempts > 0) { "Maximum recalculation attempts must be positive." }
+    }
+
     override fun request(command: RecalculationRequest): String {
         require(command.ruleVersion > 0) { "Recalculation rule version must be positive." }
         require(command.priority >= 0) { "Recalculation priority must be non-negative." }
@@ -59,7 +64,7 @@ open class RdbRecalculationQueue(
             requestedVersion = command.requestedVersion
             processedVersion = 0
             attemptCount = 0
-            maxAttempts = 10
+            maxAttempts = maximumAttempts
             availableTime = now
             leaseOwner = null
             leaseUntil = null
