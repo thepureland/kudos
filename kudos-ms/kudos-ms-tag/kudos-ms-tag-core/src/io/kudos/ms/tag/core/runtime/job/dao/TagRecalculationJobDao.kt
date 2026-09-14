@@ -195,4 +195,44 @@ open class TagRecalculationJobDao : BaseCrudDao<String, TagRecalculationJob, Tag
             statement.executeUpdate() == 1
         }
     }
+
+    open fun advanceFullRebuild(
+        id: String,
+        workerId: String,
+        cursorSubjectId: String?,
+        processedCount: Long,
+        exhausted: Boolean,
+        now: LocalDateTime,
+    ): Boolean = database().useConnection { connection ->
+        connection.prepareStatement(
+            """update tag_recalculation_job set cursor_subject_id = ?, processed_count = processed_count + ?,
+                status = ?, lease_owner = ?, lease_until = ?, update_time = ?, version = version + 1
+                where id = ? and job_type = 'RULE_FULL_REBUILD' and status = 'RUNNING' and lease_owner = ?
+                    and lease_until > ?""".trimIndent()
+        ).use { statement ->
+            statement.setString(1, cursorSubjectId)
+            statement.setLong(2, processedCount)
+            statement.setString(3, if (exhausted) "RUNNING" else "PENDING")
+            statement.setString(4, if (exhausted) workerId else null)
+            if (exhausted) statement.setTimestamp(5, get(id)?.leaseUntil?.let(Timestamp::valueOf)) else statement.setNull(5, Types.TIMESTAMP)
+            statement.setTimestamp(6, Timestamp.valueOf(now))
+            statement.setString(7, id)
+            statement.setString(8, workerId)
+            statement.setTimestamp(9, Timestamp.valueOf(now))
+            statement.executeUpdate() == 1
+        }
+    }
+
+    open fun completePromotion(id: String, now: LocalDateTime): Boolean = database().useConnection { connection ->
+        connection.prepareStatement(
+            """update tag_recalculation_job set status = 'SUCCEEDED', processed_version = requested_version,
+                lease_owner = null, lease_until = null, complete_time = ?, update_time = ?, version = version + 1
+                where id = ? and job_type = 'RULE_FULL_REBUILD' and status = 'RUNNING'""".trimIndent()
+        ).use { statement ->
+            statement.setTimestamp(1, Timestamp.valueOf(now))
+            statement.setTimestamp(2, Timestamp.valueOf(now))
+            statement.setString(3, id)
+            statement.executeUpdate() == 1
+        }
+    }
 }

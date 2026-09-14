@@ -9,6 +9,7 @@ import java.time.Clock
 open class TagRecalculationWorker(
     private val queue: RecalculationQueue,
     private val service: ITagRecalculationService,
+    private val fullRecalculationService: FullRecalculationService,
     private val properties: TagRecalculationProperties,
     private val clock: Clock = Clock.systemUTC(),
 ) {
@@ -16,16 +17,22 @@ open class TagRecalculationWorker(
         val jobs = queue.lease(workerId, properties.batchSize, clock.instant().plus(properties.leaseDuration))
         jobs.forEach { job ->
             try {
-                val summary = service.process(job)
-                check(
-                    queue.complete(
-                        job.id,
-                        workerId,
-                        job.version,
-                        job.requestedVersion,
-                        summary.subjectsProcessed.toLong(),
-                    )
-                ) { "Recalculation job [${job.id}] lost its lease before completion." }
+                when (job.jobType) {
+                    io.kudos.ms.tag.core.runtime.port.RecalculationJobType.SUBJECT_INCREMENTAL -> {
+                        val summary = service.process(job)
+                        check(
+                            queue.complete(
+                                job.id,
+                                workerId,
+                                job.version,
+                                job.requestedVersion,
+                                summary.subjectsProcessed.toLong(),
+                            )
+                        ) { "Recalculation job [${job.id}] lost its lease before completion." }
+                    }
+                    io.kudos.ms.tag.core.runtime.port.RecalculationJobType.RULE_FULL_REBUILD ->
+                        fullRecalculationService.process(job, properties.batchSize)
+                }
             } catch (error: Exception) {
                 queue.fail(
                     job.id,

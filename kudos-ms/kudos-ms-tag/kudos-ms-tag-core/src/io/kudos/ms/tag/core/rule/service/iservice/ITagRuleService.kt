@@ -9,4 +9,5 @@ interface ITagRuleService {
     fun replaceDraft(tenantId: String, ruleId: String, expression: TagRuleExpression): TagRuleView
     fun requestPublication(tenantId: String, ruleId: String): TagRulePublication
     fun getPublished(tenantId: String, tagCode: String): TagRuleView?
+    fun getVersion(tenantId: String, ruleId: String, ruleVersion: Long): TagRuleView?
 }

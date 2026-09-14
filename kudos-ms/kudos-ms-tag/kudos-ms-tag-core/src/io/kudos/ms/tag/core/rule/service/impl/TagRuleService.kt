@@ -145,6 +145,18 @@ open class TagRuleService(
         return rule.toView(tag, restoreExpression(tree))
     }
 
+    @Transactional(readOnly = true)
+    override fun getVersion(tenantId: String, ruleId: String, ruleVersion: Long): TagRuleView? {
+        val rule = ruleDao.findByTenantAndId(tenantId, ruleId)
+            ?.takeIf { it.ruleVersion == ruleVersion }
+            ?: return null
+        val tag = tagDao.get(rule.tagId)
+            ?.takeIf { it.tenantId == tenantId }
+            ?: return null
+        val tree = ruleDao.loadTree(tenantId, ruleId, ruleVersion) ?: return null
+        return rule.toView(tag, restoreExpression(tree))
+    }
+
     private fun persistTree(
         rule: TagRule,
         expression: TagRuleExpression,

@@ -13,9 +13,12 @@ import io.kudos.ms.tag.core.catalog.subjecttype.dao.TagSubjectTypeDao
 import io.kudos.ms.tag.core.catalog.tag.dao.TagDefinitionDao
 import io.kudos.ms.tag.core.catalog.tagset.dao.TagSetDao
 import io.kudos.ms.tag.core.runtime.job.dao.TagRecalculationJobDao
+import io.kudos.ms.tag.core.runtime.job.dao.TagRecalculationCandidateDao
+import io.kudos.ms.tag.core.runtime.job.model.po.TagRecalculationCandidate
 import io.kudos.ms.tag.core.runtime.port.RecalculationJobType
 import io.kudos.ms.tag.core.runtime.port.RecalculationRequest
 import io.kudos.ms.tag.core.runtime.rdb.RdbRecalculationQueue
+import io.kudos.ms.tag.core.runtime.subject.dao.TagSubjectDao
 import io.kudos.test.container.annotations.EnabledIfDockerInstalled
 import io.kudos.test.container.containers.MySqlTestContainer
 import io.kudos.test.container.containers.PostgresTestContainer
@@ -26,6 +29,7 @@ import java.sql.DriverManager
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.util.UUID
 import javax.sql.DataSource
@@ -192,6 +196,12 @@ internal class RecalculationQueueContractTest : TagDaoTestSupport() {
                        values ('00000000-0000-0000-0000-000000000001', '$SUBJECT_TYPE', 'Person', 'hr', true, false, 0, current_timestamp, current_timestamp)""".trimIndent()
                 )
                 statement.executeUpdate(
+                    """insert into tag_subject
+                       (subject_id, tenant_id, subject_type, state_version, first_seen_time, update_time)
+                       values ('person-a', '$TENANT', '$SUBJECT_TYPE', 0, current_timestamp, current_timestamp),
+                              ('person-b', '$TENANT', '$SUBJECT_TYPE', 0, current_timestamp, current_timestamp)""".trimIndent()
+                )
+                statement.executeUpdate(
                     """insert into tag_definition
                        (id, tenant_id, subject_type, code, name, set_priority, manual_assignable, active, built_in, version, create_time, update_time)
                        values ('$dialectTagId', '$TENANT', '$SUBJECT_TYPE', 'dialect', 'Dialect', 0, true, true, false, 0, current_timestamp, current_timestamp)""".trimIndent()
@@ -211,6 +221,38 @@ internal class RecalculationQueueContractTest : TagDaoTestSupport() {
         val lease = dialectQueue.lease("dialect-worker", 1, clock.instant().plusSeconds(30)).single()
 
         assertTrue(dialectQueue.complete(id, "dialect-worker", lease.version, lease.requestedVersion, 1))
+
+        val fullId = dialectQueue.request(
+            request().copy(
+                jobType = RecalculationJobType.RULE_FULL_REBUILD,
+                tagId = dialectTagId,
+                subjectId = null,
+            )
+        )
+        val fullLease = dialectQueue.lease("rebuild-worker", 1, clock.instant().plusSeconds(30)).single()
+        assertEquals(listOf("person-a"), TagSubjectDao().listKeysAfter(TENANT, SUBJECT_TYPE, null, 1).map { it.subjectId })
+        assertTrue(
+            TagRecalculationJobDao().advanceFullRebuild(
+                fullId,
+                "rebuild-worker",
+                "person-a",
+                1,
+                exhausted = false,
+                LocalDateTime.ofInstant(clock.instant(), ZoneId.of("UTC")),
+            )
+        )
+        assertEquals("PENDING", TagRecalculationJobDao().get(fullLease.id)?.status)
+        val candidateDao = TagRecalculationCandidateDao()
+        assertTrue(candidateDao.insertCandidate(TagRecalculationCandidate().apply {
+            runId = fullId
+            tenantId = TENANT
+            subjectType = SUBJECT_TYPE
+            subjectId = "person-a"
+            tagId = dialectTagId
+            ruleVersion = 1
+            evaluatedTime = LocalDateTime.ofInstant(clock.instant(), ZoneId.of("UTC"))
+        }))
+        assertEquals(listOf("person-a"), candidateDao.listByRun(fullId).map { it.subjectId })
     }
 
     private fun suffix() = UUID.randomUUID().toString().replace("-", "")

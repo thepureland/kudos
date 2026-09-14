@@ -14,6 +14,37 @@ import java.time.LocalDateTime
 
 @Repository
 open class TagSubjectDao : BaseCrudDao<String, TagSubject, TagSubjects>() {
+    open fun listKeysAfter(
+        tenantId: String,
+        subjectType: String,
+        afterSubjectId: String?,
+        limit: Int,
+    ): List<TagSubjectKey> {
+        require(limit in 1..1000) { "Subject scan limit must be between 1 and 1000." }
+        return database().useConnection { connection ->
+            val sql = if (afterSubjectId == null) {
+                "select subject_id from tag_subject where tenant_id = ? and subject_type = ? order by subject_id limit ?"
+            } else {
+                "select subject_id from tag_subject where tenant_id = ? and subject_type = ? and subject_id > ? order by subject_id limit ?"
+            }
+            connection.prepareStatement(sql).use { statement ->
+                statement.setString(1, tenantId)
+                statement.setString(2, subjectType)
+                if (afterSubjectId == null) {
+                    statement.setInt(3, limit)
+                } else {
+                    statement.setString(3, afterSubjectId)
+                    statement.setInt(4, limit)
+                }
+                statement.executeQuery().use { rows ->
+                    buildList {
+                        while (rows.next()) add(TagSubjectKey(tenantId, subjectType, rows.getString(1)))
+                    }
+                }
+            }
+        }
+    }
+
     open fun find(key: TagSubjectKey): TagSubject? = entitySequence().firstOrNull {
         (TagSubjects.tenantId eq key.tenantId) and
             (TagSubjects.subjectType eq key.subjectType) and
