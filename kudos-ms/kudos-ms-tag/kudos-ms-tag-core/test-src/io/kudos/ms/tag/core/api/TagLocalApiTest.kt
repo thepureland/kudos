@@ -1,5 +1,6 @@
 package io.kudos.ms.tag.core.api
 
+import io.kudos.context.core.KudosContextHolder
 import io.kudos.ms.tag.common.assignment.model.AssignManualTagRequest
 import io.kudos.ms.tag.common.assignment.model.ManualTagAssignmentStatus
 import io.kudos.ms.tag.common.attribute.model.TagAttributeFact
@@ -25,9 +26,13 @@ import io.kudos.ms.tag.core.runtime.port.AssignmentDelta
 import io.kudos.ms.tag.core.runtime.port.LeasedRecalculationJob
 import io.kudos.ms.tag.core.runtime.service.iservice.ITagRecalculationService
 import io.kudos.ms.tag.core.runtime.service.iservice.RecalculationSummary
+import io.kudos.ms.tag.core.security.TagSubjectWriteGuard
+import io.kudos.ms.tag.core.security.TagAccessDeniedException
+import io.kudos.ms.tag.core.security.TagTenantAccessGuard
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 class TagLocalApiTest {
     private val key = TagSubjectKey("tenant", "estate.house", "house-1")
@@ -38,7 +43,7 @@ class TagLocalApiTest {
             override fun submitFact(fact: TagAttributeFact) = AttributeFactResult(fact.eventId, AttributeFactStatus.APPLIED, 8)
             override fun submitFacts(facts: List<TagAttributeFact>, sliceSize: Int) =
                 facts.map { submitFact(it) }
-        })
+        }, NoopSubjectWriteGuard)
 
         val fact = TagAttributeFact("fact-1", key, "area", TagAttributeOperation.CLEAR, null, Instant.EPOCH, "test")
         val result = api.submitFacts(listOf(fact))
@@ -63,7 +68,7 @@ class TagLocalApiTest {
             override fun removeManual(command: RemoveManualTagCommand) = error("unused")
             override fun applyRuleResult(key: TagSubjectKey, tagId: String, ruleId: String, ruleVersion: Long, matched: Boolean, causeRef: String) = error("unused")
         }
-        val api = TagAssignmentApi(assignment, recalculationSummary())
+        val api = TagAssignmentApi(assignment, recalculationSummary(), NoopTenantGuard)
 
         val response = api.assignManual(
             AssignManualTagRequest("event-1", "request-1", key, "tag-1", "operator", "K", "reason", null, Instant.EPOCH)
@@ -79,9 +84,9 @@ class TagLocalApiTest {
     fun `query and recalculation delegate to the local services`() {
         val queryApi = TagQueryApi(object : ITagQueryService {
             override fun findSubjects(request: TagQueryRequest) = TagSubjectPage(listOf(request.tenantId))
-        })
+        }, NoopTenantGuard)
         val request = TagQueryRequest("tenant", "estate.house", TagQueryExpression.AllTags(setOf("online")))
-        val assignmentApi = TagAssignmentApi(unusedAssignment(), recalculationSummary())
+        val assignmentApi = TagAssignmentApi(unusedAssignment(), recalculationSummary(), NoopTenantGuard)
 
         assertEquals(listOf("tenant"), queryApi.findSubjects(request).subjectIds)
         assertEquals(
@@ -105,10 +110,27 @@ class TagLocalApiTest {
             override fun setDefaultTag(tenantId: String, tagSetId: String, tagId: String) = error("unused")
         }
 
-        val tag = TagCatalogApi(service).listTags("tenant", "estate.house").single()
+        val tag = TagCatalogApi(service, NoopTenantGuard).listTags("tenant", "estate.house").single()
 
         assertEquals("tenant", tag.tenantId)
         assertEquals("estate.house", tag.subjectType)
+    }
+
+    @Test
+    fun `embedded API fails closed before a contextless query reaches the service`() {
+        KudosContextHolder.clear()
+        var called = false
+        val api = TagQueryApi(object : ITagQueryService {
+            override fun findSubjects(request: TagQueryRequest): TagSubjectPage {
+                called = true
+                return TagSubjectPage(emptyList())
+            }
+        }, TagTenantAccessGuard())
+
+        assertFailsWith<TagAccessDeniedException> {
+            api.findSubjects(TagQueryRequest("tenant", "estate.house", TagQueryExpression.AllTags(setOf("online"))))
+        }
+        assertEquals(false, called)
     }
 
     private fun recalculationSummary() = object : ITagRecalculationService {
@@ -122,5 +144,13 @@ class TagLocalApiTest {
         override fun assignManual(command: AssignManualTagCommand) = error("unused")
         override fun removeManual(command: RemoveManualTagCommand) = error("unused")
         override fun applyRuleResult(key: TagSubjectKey, tagId: String, ruleId: String, ruleVersion: Long, matched: Boolean, causeRef: String) = error("unused")
+    }
+
+    private object NoopTenantGuard : TagTenantAccessGuard() {
+        override fun requireTenant(tenantId: String) = Unit
+    }
+
+    private object NoopSubjectWriteGuard : TagSubjectWriteGuard() {
+        override fun requireWrite(key: TagSubjectKey) = Unit
     }
 }

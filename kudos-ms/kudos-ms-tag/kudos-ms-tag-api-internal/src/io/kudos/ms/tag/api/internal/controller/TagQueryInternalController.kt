@@ -1,21 +1,19 @@
-package io.kudos.ms.tag.core.api
+package io.kudos.ms.tag.api.internal.controller
 
 import io.kudos.ms.tag.common.query.api.ITagQueryApi
 import io.kudos.ms.tag.common.query.model.TagQueryRequest
 import io.kudos.ms.tag.common.query.model.TagSubjectPage
-import io.kudos.ms.tag.core.query.service.iservice.ITagQueryService
 import io.kudos.ms.tag.core.security.TagTenantAccessGuard
-import org.springframework.context.annotation.Primary
-import org.springframework.stereotype.Component
+import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.web.bind.annotation.RestController
 
-@Primary
-@Component
-open class TagQueryApi(
-    private val service: ITagQueryService,
+@RestController
+open class TagQueryInternalController(
+    @Qualifier("tagQueryApi") private val delegate: ITagQueryApi,
     private val tenantAccessGuard: TagTenantAccessGuard,
 ) : ITagQueryApi {
     override fun findSubjects(request: TagQueryRequest): TagSubjectPage {
         tenantAccessGuard.requireTenant(request.tenantId)
-        return service.findSubjects(request)
+        return delegate.findSubjects(request)
     }
 }

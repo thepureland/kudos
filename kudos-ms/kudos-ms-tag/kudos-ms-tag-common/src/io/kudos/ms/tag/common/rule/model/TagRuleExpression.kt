@@ -1,5 +1,7 @@
 package io.kudos.ms.tag.common.rule.model
 
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
 import io.kudos.ms.tag.common.attribute.model.TagAttributeValue
 import io.kudos.ms.tag.common.error.TagErrorCode
 import io.kudos.ms.tag.common.error.requireTag
@@ -8,6 +10,14 @@ import kotlinx.serialization.Serializable
 
 /** Versionable rule tree used by administrators to define a materialized segment. */
 @Serializable
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes(
+    JsonSubTypes.Type(TagRuleExpression.AllOf::class, name = "all"),
+    JsonSubTypes.Type(TagRuleExpression.AnyOf::class, name = "any"),
+    JsonSubTypes.Type(TagRuleExpression.Not::class, name = "not"),
+    JsonSubTypes.Type(TagRuleExpression.AttributePredicate::class, name = "attribute"),
+    JsonSubTypes.Type(TagRuleExpression.HasTag::class, name = "hasTag"),
+)
 sealed interface TagRuleExpression {
 
     @Serializable

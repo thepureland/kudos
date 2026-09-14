@@ -13,6 +13,7 @@ import io.kudos.ms.tag.core.assignment.model.RemoveManualTagCommand
 import io.kudos.ms.tag.core.assignment.service.iservice.ITagAssignmentService
 import io.kudos.ms.tag.core.runtime.service.iservice.ITagRecalculationService
 import io.kudos.ms.tag.core.runtime.service.iservice.RecalculationSummary
+import io.kudos.ms.tag.core.security.TagTenantAccessGuard
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Component
 
@@ -21,9 +22,11 @@ import org.springframework.stereotype.Component
 open class TagAssignmentApi(
     private val assignmentService: ITagAssignmentService,
     private val recalculationService: ITagRecalculationService,
+    private val tenantAccessGuard: TagTenantAccessGuard,
 ) : ITagAssignmentApi {
-    override fun assignManual(request: AssignManualTagRequest): ManualTagAssignmentResponse =
-        assignmentService.assignManual(
+    override fun assignManual(request: AssignManualTagRequest): ManualTagAssignmentResponse {
+        tenantAccessGuard.requireTenant(request.subjectKey.tenantId)
+        return assignmentService.assignManual(
             AssignManualTagCommand(
                 request.eventId,
                 request.requestId,
@@ -36,9 +39,11 @@ open class TagAssignmentApi(
                 request.occurredAt,
             )
         ).toApiResponse()
+    }
 
-    override fun removeManual(request: RemoveManualTagRequest): ManualTagAssignmentResponse =
-        assignmentService.removeManual(
+    override fun removeManual(request: RemoveManualTagRequest): ManualTagAssignmentResponse {
+        tenantAccessGuard.requireTenant(request.subjectKey.tenantId)
+        return assignmentService.removeManual(
             RemoveManualTagCommand(
                 request.eventId,
                 request.requestId,
@@ -51,9 +56,12 @@ open class TagAssignmentApi(
                 request.occurredAt,
             )
         ).toApiResponse()
+    }
 
-    override fun recalculateSubjects(request: TagRecalculateSubjectsRequest): TagRecalculationResult =
-        recalculationService.recalculateSubjectNow(request.subjectKeys, request.directRuleLimit).toApiResult()
+    override fun recalculateSubjects(request: TagRecalculateSubjectsRequest): TagRecalculationResult {
+        request.subjectKeys.map { it.tenantId }.distinct().forEach(tenantAccessGuard::requireTenant)
+        return recalculationService.recalculateSubjectNow(request.subjectKeys, request.directRuleLimit).toApiResult()
+    }
 }
 
 private fun ManualAssignmentResult.toApiResponse() = ManualTagAssignmentResponse(
