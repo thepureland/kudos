@@ -572,6 +572,18 @@ operation, cause_type, cause_ref, assignment_version, occurred_time
 
 作為審計與未來外部投影來源；未來 Kafka/ClickHouse adapter 消費這一語義事件，而不是侵入核心 Service。
 
+#### tag_manual_assignment_event
+
+```text
+event_id PK, payload_checksum, request_id,
+tenant_id, subject_type, subject_id, tag_id,
+operation, manual_source_ref NULL,
+operator_id, operator_name, reason, effective_until NULL,
+occurred_time, received_time, process_status
+```
+
+人工賦標命令以 caller-supplied eventId 做冪等；相同 eventId 但不同 checksum 拒絕為衝突。這張表只保存人工操作審計元資料，不保存任何屬性值；`tag_assignment_event` 仍只表達最終物化結果的 ADD/REMOVE delta，兩種事件語義不混用。
+
 #### tag_recalculation_candidate
 
 ```text

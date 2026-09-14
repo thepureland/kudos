@@ -16,6 +16,11 @@ import io.kudos.ms.tag.core.runtime.job.dao.TagRecalculationJobDao
 import io.kudos.ms.tag.core.runtime.attribute.dao.TagAttributeStateDao
 import io.kudos.ms.tag.core.catalog.attribute.dao.TagAttributeDefinitionDao
 import io.kudos.ms.tag.core.runtime.subject.dao.TagSubjectDao
+import io.kudos.ms.tag.core.runtime.membership.dao.TagMembershipDao
+import io.kudos.ms.tag.core.runtime.assignment.dao.TagAssignmentDao
+import io.kudos.ms.tag.core.runtime.assignment.dao.TagAssignmentEventDao
+import io.kudos.ms.tag.core.catalog.tag.dao.TagDefinitionDao
+import io.kudos.ms.tag.core.catalog.tagset.dao.TagSetDao
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.context.annotation.Bean
@@ -43,11 +48,16 @@ open class TagAutoConfiguration : IComponentInitializer {
 
     @Bean
     @ConditionalOnMissingBean(TagMembershipStore::class)
-    open fun tagMembershipStore(): TagMembershipStore = RdbTagMembershipStore()
+    open fun tagMembershipStore(membershipDao: TagMembershipDao): TagMembershipStore = RdbTagMembershipStore(membershipDao)
 
     @Bean
     @ConditionalOnMissingBean(TagAssignmentIndex::class)
-    open fun tagAssignmentIndex(): TagAssignmentIndex = RdbTagAssignmentIndex()
+    open fun tagAssignmentIndex(
+        assignmentDao: TagAssignmentDao,
+        assignmentEventDao: TagAssignmentEventDao,
+        tagDao: TagDefinitionDao,
+        tagSetDao: TagSetDao,
+    ): TagAssignmentIndex = RdbTagAssignmentIndex(assignmentDao, assignmentEventDao, tagDao, tagSetDao)
 
     @Bean
     @ConditionalOnMissingBean(TagRuleEvaluator::class)

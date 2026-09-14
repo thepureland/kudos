@@ -26,6 +26,8 @@ enum class TagErrorCode {
     RULE_DEPENDENCY_CYCLE,
     EMPTY_QUERY_GROUP,
     IDEMPOTENCY_CONFLICT,
+    INVALID_MANUAL_ASSIGNMENT,
+    MANUAL_ASSIGNMENT_NOT_ALLOWED,
 }
 
 /** Raised when a shared tag contract violates a structural invariant. */

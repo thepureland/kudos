@@ -149,6 +149,27 @@ create table tag_assignment_event (
     constraint ck_tag_assignment_event_version check (assignment_version >= 0)
 );
 
+create table tag_manual_assignment_event (
+    event_id char(36) primary key,
+    payload_checksum char(64) not null,
+    request_id varchar(128),
+    tenant_id varchar(64) not null,
+    subject_type varchar(128) not null,
+    subject_id varchar(128) not null,
+    tag_id char(36) not null,
+    operation enum('ASSIGN', 'REMOVE') not null,
+    manual_source_ref varchar(128),
+    operator_id varchar(128) not null,
+    operator_name varchar(128),
+    reason varchar(1000),
+    effective_until timestamp(6),
+    occurred_time timestamp(6) not null,
+    received_time timestamp(6) not null,
+    process_status enum('RECEIVED', 'APPLIED') not null,
+    constraint fk_tag_manual_event_subject foreign key (tenant_id, subject_type, subject_id) references tag_subject (tenant_id, subject_type, subject_id),
+    constraint fk_tag_manual_event_tag foreign key (tag_id) references tag_definition (id)
+);
+
 create table tag_recalculation_job (
     id char(36) primary key,
     job_key varchar(512) not null,

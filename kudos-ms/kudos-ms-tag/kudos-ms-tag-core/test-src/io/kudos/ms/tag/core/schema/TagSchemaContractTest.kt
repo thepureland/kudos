@@ -287,6 +287,7 @@ internal class TagSchemaContractTest {
             "tag_membership",
             "tag_assignment",
             "tag_assignment_event",
+            "tag_manual_assignment_event",
             "tag_recalculation_candidate",
             "tag_recalculation_job",
         )

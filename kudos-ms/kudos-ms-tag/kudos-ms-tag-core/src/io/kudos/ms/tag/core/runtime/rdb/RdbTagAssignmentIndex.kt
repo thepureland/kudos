@@ -7,14 +7,60 @@ import io.kudos.ms.tag.core.runtime.port.AssignmentSearchResult
 import io.kudos.ms.tag.core.runtime.port.ResolvedAssignment
 import io.kudos.ms.tag.core.runtime.port.TagAssignmentIndex
 import io.kudos.ms.tag.core.runtime.port.TagKeysetPage
+import io.kudos.ms.tag.core.runtime.assignment.dao.TagAssignmentDao
+import io.kudos.ms.tag.core.runtime.assignment.dao.TagAssignmentEventDao
+import io.kudos.ms.tag.core.runtime.assignment.model.po.TagAssignment
+import io.kudos.ms.tag.common.attribute.model.TagAttributeCardinality
+import io.kudos.ms.tag.core.catalog.tag.dao.TagDefinitionDao
+import io.kudos.ms.tag.core.catalog.tagset.dao.TagSetDao
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
-/** Default RDB adapter boundary; materialized querying is implemented in Task 11. */
-open class RdbTagAssignmentIndex : TagAssignmentIndex {
+/** Default RDB materialization adapter; expression search is added in Task 11. */
+open class RdbTagAssignmentIndex(
+    private val assignmentDao: TagAssignmentDao,
+    private val assignmentEventDao: TagAssignmentEventDao,
+    private val tagDao: TagDefinitionDao,
+    private val tagSetDao: TagSetDao,
+) : TagAssignmentIndex {
     override fun replaceForSet(
         key: TagSubjectKey,
         tagSetId: String?,
         winners: List<ResolvedAssignment>,
-    ): AssignmentDelta = error("RDB assignment mutation is not initialized yet.")
+    ): AssignmentDelta {
+        require(winners.all { it.tagSetId == tagSetId }) { "Every winner must belong to the set being replaced." }
+        val cardinality = tagSetId?.let { requireNotNull(tagSetDao.get(it)).cardinality }
+        val current = assignmentDao.list(key).filter { assignment ->
+            tagDao.get(assignment.tagId)?.tagSetId == tagSetId
+        }
+        val oldIds = current.mapTo(linkedSetOf()) { it.tagId }
+        val newIds = winners.mapTo(linkedSetOf()) { it.tagId }
+        val assigned = newIds - oldIds
+        val removed = oldIds - newIds
+        val latestVersion = maxOf(
+            assignmentDao.list(key).maxOfOrNull { it.assignmentVersion } ?: 0,
+            assignmentEventDao.list(key).maxOfOrNull { it.assignmentVersion } ?: 0,
+        )
+        val version = if (assigned.isEmpty() && removed.isEmpty()) latestVersion else latestVersion + 1
+        current.forEach { check(assignmentDao.deleteAssignment(key, it.tagId)) }
+        val now = LocalDateTime.now(ZoneOffset.UTC)
+        winners.forEach { winner ->
+            check(assignmentDao.insertAssignment(TagAssignment().apply {
+                tagId = winner.tagId
+                tenantId = key.tenantId
+                subjectType = key.subjectType
+                subjectId = key.subjectId
+                exclusiveSetId = winner.tagSetId.takeIf { cardinality == TagAttributeCardinality.SINGLE }
+                assignmentVersion = version
+                evaluatedRuleVersion = winner.evaluatedRuleVersion
+                materializedTime = now
+                effectiveFrom = winner.effectiveFrom?.atOffset(ZoneOffset.UTC)?.toLocalDateTime()
+                effectiveUntil = winner.effectiveUntil?.atOffset(ZoneOffset.UTC)?.toLocalDateTime()
+                updateTime = now
+            }))
+        }
+        return AssignmentDelta(assigned, removed, version)
+    }
 
     override fun search(
         tenantId: String,

@@ -48,4 +48,14 @@ open class TagSubjectDao : BaseCrudDao<String, TagSubject, TagSubjects>() {
                 (TagSubjects.stateVersion eq expectedVersion)
         }
     } == 1
+
+    /** Serializes assignment resolution for one subject using its composite-key row as the lock. */
+    open fun lockAssignments(key: TagSubjectKey, updateTime: LocalDateTime): Boolean = database().update(TagSubjects) {
+        set(TagSubjects.updateTime, updateTime)
+        where {
+            (TagSubjects.tenantId eq key.tenantId) and
+                (TagSubjects.subjectType eq key.subjectType) and
+                (TagSubjects.subjectId eq key.subjectId)
+        }
+    } == 1
 }

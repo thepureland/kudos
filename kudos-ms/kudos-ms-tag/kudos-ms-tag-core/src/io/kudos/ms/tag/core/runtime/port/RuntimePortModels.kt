@@ -33,7 +33,8 @@ data class TagMembershipView(
 data class ResolvedAssignment(
     val tagId: String,
     val tagSetId: String?,
-    val assignmentVersion: Long,
+    val winningSource: TagMembershipSource,
+    val membershipVersion: Long,
     val evaluatedRuleVersion: Long?,
     val effectiveFrom: Instant? = null,
     val effectiveUntil: Instant? = null,

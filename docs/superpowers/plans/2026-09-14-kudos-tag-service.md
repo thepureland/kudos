@@ -696,6 +696,8 @@ git commit -m "feat(tag): evaluate typed tag rules"
 
 - Create: `kudos-ms/kudos-ms-tag/kudos-ms-tag-core/src/io/kudos/ms/tag/core/runtime/rdb/RdbTagMembershipStore.kt`
 - Create: `kudos-ms/kudos-ms-tag/kudos-ms-tag-core/src/io/kudos/ms/tag/core/runtime/rdb/RdbTagAssignmentIndex.kt`
+- Create: `kudos-ms/kudos-ms-tag/kudos-ms-tag-core/src/io/kudos/ms/tag/core/runtime/assignment/model/{po,table}/TagManualAssignmentEvent*.kt`
+- Create: `kudos-ms/kudos-ms-tag/kudos-ms-tag-core/src/io/kudos/ms/tag/core/runtime/assignment/dao/TagManualAssignmentEventDao.kt`
 - Create: `kudos-ms/kudos-ms-tag/kudos-ms-tag-core/src/io/kudos/ms/tag/core/assignment/service/iservice/ITagAssignmentService.kt`
 - Create: `kudos-ms/kudos-ms-tag/kudos-ms-tag-core/src/io/kudos/ms/tag/core/assignment/service/impl/TagAssignmentService.kt`
 - Create: `kudos-ms/kudos-ms-tag/kudos-ms-tag-core/src/io/kudos/ms/tag/core/assignment/service/impl/TagAssignmentResolver.kt`
