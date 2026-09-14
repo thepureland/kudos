@@ -4,6 +4,7 @@ import io.kudos.ability.data.rdb.ktorm.support.BaseCrudDao
 import io.kudos.ms.tag.core.runtime.assignment.model.po.TagAssignment
 import io.kudos.ms.tag.core.runtime.assignment.model.table.TagAssignments
 import io.kudos.ms.tag.common.subject.model.TagSubjectKey
+import io.kudos.ms.tag.core.runtime.rdb.CompiledTagAssignmentQuery
 import org.ktorm.dsl.and
 import org.ktorm.dsl.delete
 import org.ktorm.dsl.eq
@@ -15,6 +16,15 @@ import org.springframework.stereotype.Repository
 
 @Repository
 open class TagAssignmentDao : BaseCrudDao<String, TagAssignment, TagAssignments>() {
+    open fun searchSubjectIds(query: CompiledTagAssignmentQuery): List<String> = database().useConnection { connection ->
+        connection.prepareStatement(query.sql).use { statement ->
+            query.parameters.forEachIndexed { index, value -> statement.setObject(index + 1, value) }
+            statement.executeQuery().use { rows ->
+                buildList { while (rows.next()) add(rows.getString(1)) }
+            }
+        }
+    }
+
     open fun list(key: TagSubjectKey): List<TagAssignment> = entitySequence().filter {
         (TagAssignments.tenantId eq key.tenantId) and
             (TagAssignments.subjectType eq key.subjectType) and

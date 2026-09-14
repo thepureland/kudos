@@ -5,6 +5,7 @@ import io.kudos.ms.tag.core.catalog.tag.model.po.TagDefinition
 import io.kudos.ms.tag.core.catalog.tag.model.table.TagDefinitions
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
+import org.ktorm.dsl.inList
 import org.ktorm.entity.filter
 import org.ktorm.entity.firstOrNull
 import org.ktorm.entity.sortedBy
@@ -17,6 +18,13 @@ open class TagDefinitionDao : BaseCrudDao<String, TagDefinition, TagDefinitions>
         entitySequence().filter {
             (TagDefinitions.tenantId eq tenantId) and (TagDefinitions.code eq code)
         }.sortedBy { TagDefinitions.subjectType }.toList()
+
+    open fun listByTenantAndCodes(tenantId: String, codes: Collection<String>): List<TagDefinition> {
+        if (codes.isEmpty()) return emptyList()
+        return entitySequence().filter {
+            (TagDefinitions.tenantId eq tenantId) and (TagDefinitions.code inList codes.distinct().sorted())
+        }.sortedBy { TagDefinitions.code }.toList()
+    }
 
     open fun findByCode(tenantId: String, subjectTypeCode: String, code: String): TagDefinition? =
         entitySequence().firstOrNull {

@@ -16,12 +16,13 @@ import io.kudos.ms.tag.core.catalog.tagset.dao.TagSetDao
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
-/** Default RDB materialization adapter; expression search is added in Task 11. */
+/** Default RDB adapter for assignment materialization and tag-only subject queries. */
 open class RdbTagAssignmentIndex(
     private val assignmentDao: TagAssignmentDao,
     private val assignmentEventDao: TagAssignmentEventDao,
     private val tagDao: TagDefinitionDao,
     private val tagSetDao: TagSetDao,
+    private val queryCompiler: TagAssignmentQueryCompiler = TagAssignmentQueryCompiler(),
 ) : TagAssignmentIndex {
     override fun replaceForSet(
         key: TagSubjectKey,
@@ -67,5 +68,27 @@ open class RdbTagAssignmentIndex(
         subjectType: String,
         expression: TagQueryExpression,
         page: TagKeysetPage,
-    ): AssignmentSearchResult = error("RDB assignment search is not initialized yet.")
+    ): AssignmentSearchResult {
+        val codes = expression.tagCodes()
+        val tagIdsByCode = tagDao.listByTenantAndCodes(tenantId, codes)
+            .filter { it.subjectType == subjectType }
+            .associate { it.code to it.id }
+        require(tagIdsByCode.keys.containsAll(codes)) {
+            "Every query tag must exist for tenant [$tenantId] and subject type [$subjectType]."
+        }
+        val rows = assignmentDao.searchSubjectIds(
+            queryCompiler.compile(tenantId, subjectType, expression, tagIdsByCode, page)
+        )
+        val subjectIds = rows.take(page.size)
+        return AssignmentSearchResult(
+            subjectIds,
+            subjectIds.lastOrNull().takeIf { rows.size > page.size },
+        )
+    }
+
+    private fun TagQueryExpression.tagCodes(): Set<String> = when (this) {
+        is TagQueryExpression.AllTags -> tagCodes + nested.flatMapTo(linkedSetOf()) { it.tagCodes() }
+        is TagQueryExpression.AnyTags -> tagCodes + nested.flatMapTo(linkedSetOf()) { it.tagCodes() }
+        is TagQueryExpression.NotTags -> child.tagCodes()
+    }
 }
