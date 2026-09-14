@@ -6,6 +6,10 @@ dependencies {
     api(project(":kudos-ability:kudos-ability-data:kudos-ability-data-rdb:kudos-ability-data-rdb-flyway"))
     api(libs.flyway.mysql)
 
+    // Runtime observability remains optional for embedded consumers.
+    compileOnly(libs.micrometer.core)
+    compileOnly("org.springframework.boot:spring-boot-health")
+
     testImplementation(libs.kotlin.test.junit5)
     testImplementation(libs.h2database.h2)
     testImplementation(libs.postgresql)
@@ -14,4 +18,6 @@ dependencies {
     testImplementation(libs.ktorm.support.mysql)
     testImplementation(project(":kudos-test:kudos-test-rdb"))
     testImplementation(project(":kudos-test:kudos-test-container"))
+    testImplementation(libs.micrometer.core)
+    testImplementation("org.springframework.boot:spring-boot-health")
 }

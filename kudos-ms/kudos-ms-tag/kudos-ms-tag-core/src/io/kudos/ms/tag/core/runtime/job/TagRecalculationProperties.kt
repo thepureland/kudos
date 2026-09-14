@@ -12,6 +12,9 @@ data class TagRecalculationProperties(
     val maximumAttempts: Int = 10,
     val synchronousSubjectLimit: Int = 100,
     val synchronousDirectRuleLimit: Int = 200,
+    val expirySchedulingEnabled: Boolean = false,
+    val expiryBatchSize: Int = 100,
+    val expiryPollDelay: Duration = Duration.ofMinutes(1),
 ) {
     init {
         require(batchSize in 1..100) { "Recalculation batch size must be between 1 and 100." }
@@ -20,5 +23,7 @@ data class TagRecalculationProperties(
         require(maximumAttempts > 0) { "Recalculation maximum attempts must be positive." }
         require(synchronousSubjectLimit in 1..100) { "Synchronous subject limit must be between 1 and 100." }
         require(synchronousDirectRuleLimit in 1..200) { "Synchronous direct-rule limit must be between 1 and 200." }
+        require(expiryBatchSize in 1..1000) { "Expiry batch size must be between 1 and 1000." }
+        require(!expiryPollDelay.isNegative && !expiryPollDelay.isZero) { "Expiry poll delay must be positive." }
     }
 }

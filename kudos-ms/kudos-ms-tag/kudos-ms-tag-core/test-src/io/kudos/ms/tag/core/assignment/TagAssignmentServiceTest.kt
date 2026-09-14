@@ -54,6 +54,7 @@ internal class TagAssignmentServiceTest : TagDaoTestSupport() {
         tagDao,
         tagSetDao,
         TagSubjectDao(),
+        membershipDao,
         membershipStore,
         assignmentIndex,
         TagAssignmentResolver(),

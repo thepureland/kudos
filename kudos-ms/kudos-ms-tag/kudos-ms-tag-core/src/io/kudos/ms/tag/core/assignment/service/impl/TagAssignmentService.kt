@@ -11,6 +11,7 @@ import io.kudos.ms.tag.core.assignment.model.ManualAssignmentValidationException
 import io.kudos.ms.tag.core.assignment.model.RemoveManualTagCommand
 import io.kudos.ms.tag.core.assignment.model.TagResolutionCandidate
 import io.kudos.ms.tag.core.assignment.service.iservice.ITagAssignmentService
+import io.kudos.ms.tag.core.assignment.service.iservice.MembershipExpiryHandler
 import io.kudos.ms.tag.core.catalog.tag.dao.TagDefinitionDao
 import io.kudos.ms.tag.core.catalog.tag.model.po.TagDefinition
 import io.kudos.ms.tag.core.catalog.tagset.dao.TagSetDao
@@ -18,6 +19,7 @@ import io.kudos.ms.tag.core.runtime.assignment.dao.TagAssignmentEventDao
 import io.kudos.ms.tag.core.runtime.assignment.dao.TagManualAssignmentEventDao
 import io.kudos.ms.tag.core.runtime.assignment.model.po.TagAssignmentEvent
 import io.kudos.ms.tag.core.runtime.assignment.model.po.TagManualAssignmentEvent
+import io.kudos.ms.tag.core.runtime.membership.dao.TagMembershipDao
 import io.kudos.ms.tag.core.runtime.port.AssignmentDelta
 import io.kudos.ms.tag.core.runtime.port.TagAssignmentIndex
 import io.kudos.ms.tag.core.runtime.port.TagMembershipStore
@@ -35,13 +37,14 @@ open class TagAssignmentService(
     private val tagDao: TagDefinitionDao,
     private val tagSetDao: TagSetDao,
     private val subjectDao: TagSubjectDao,
+    private val membershipDao: TagMembershipDao,
     private val membershipStore: TagMembershipStore,
     private val assignmentIndex: TagAssignmentIndex,
     private val resolver: TagAssignmentResolver,
     private val assignmentEventDao: TagAssignmentEventDao,
     private val manualEventDao: TagManualAssignmentEventDao,
     private val transactionExecutor: TagAssignmentTransactionExecutor,
-) : ITagAssignmentService {
+) : ITagAssignmentService, MembershipExpiryHandler {
 
     override fun assignManual(command: AssignManualTagCommand): ManualAssignmentResult {
         val checksum = checksum(
@@ -147,6 +150,29 @@ open class TagAssignmentService(
             )
             reconcile(key, tag.tagSetId, "RULE", causeRef)
         }
+    }
+
+    override fun expireMembership(membershipId: String, expiredAt: Instant): AssignmentDelta? = transactionExecutor.execute {
+        val initial = membershipDao.get(membershipId) ?: return@execute null
+        val key = TagSubjectKey(initial.tenantId, initial.subjectType, initial.subjectId)
+        ensureAndLockSubject(key)
+        val membership = membershipDao.get(membershipId) ?: return@execute null
+        val effectiveUntil = membership.effectiveUntil?.toInstant(ZoneOffset.UTC) ?: return@execute null
+        if (!membership.active || effectiveUntil > expiredAt) return@execute null
+        val tag = requireNotNull(tagDao.get(membership.tagId)) { "Tag [${membership.tagId}] does not exist." }
+        membershipStore.replace(
+            key = key,
+            tagId = membership.tagId,
+            source = TagMembershipSource.valueOf(membership.sourceType),
+            sourceRef = membership.sourceRef,
+            active = false,
+            version = membershipStore.nextVersion(key),
+            ruleVersion = membership.ruleVersion,
+            effectiveFrom = membership.effectiveFrom?.toInstant(ZoneOffset.UTC),
+            effectiveUntil = effectiveUntil,
+            sourceEventId = membership.sourceEventId,
+        )
+        reconcile(key, tag.tagSetId, "EXPIRY", "expiry:$membershipId")
     }
 
     private fun reconcile(key: TagSubjectKey, tagSetId: String?, causeType: String, causeRef: String): AssignmentDelta {

@@ -6,6 +6,8 @@ import io.kudos.ms.tag.common.rule.model.TagRuleOperator
 import io.kudos.ms.tag.core.catalog.tag.dao.TagDefinitionDao
 import io.kudos.ms.tag.core.catalog.tag.model.po.TagDefinition
 import io.kudos.ms.tag.core.catalog.attribute.dao.TagAttributeDefinitionDao
+import io.kudos.ms.tag.core.catalog.cache.PublishedRuleCache
+import io.kudos.ms.tag.core.catalog.cache.PublishedRulePointer
 import io.kudos.ms.tag.core.rule.dao.TagRuleDao
 import io.kudos.ms.tag.core.rule.dao.TagRuleDependencyDao
 import io.kudos.ms.tag.core.rule.dao.TagRuleNodeDao
@@ -44,6 +46,7 @@ open class TagRuleService(
     private val dependencyDao: TagRuleDependencyDao,
     private val validator: TagRuleValidator,
     private val recalculationQueue: RecalculationQueue,
+    private val publishedRuleCache: PublishedRuleCache = PublishedRuleCache(),
 ) : ITagRuleService {
 
     override fun createDraft(tenantId: String, tagCode: String, expression: TagRuleExpression): TagRuleView {
@@ -132,21 +135,38 @@ open class TagRuleService(
         tag.publishedRuleId = rule.id
         tag.version += 1
         check(tagDao.updateCatalog(tag)) { "Tag [${tag.id}] could not switch its published rule." }
-        return rule.toView(tag, restoreExpression(requireNotNull(ruleDao.loadTree(tenantId, rule.id, rule.ruleVersion))))
+        val published = rule.toView(tag, restoreExpression(requireNotNull(ruleDao.loadTree(tenantId, rule.id, rule.ruleVersion))))
+        publishedRuleCache.putVersion(published)
+        publishedRuleCache.updateCurrentPointer(tenantId, tag.code, PublishedRulePointer(rule.id, rule.ruleVersion))
+        return published
     }
 
     @Transactional(readOnly = true)
     override fun getPublished(tenantId: String, tagCode: String): TagRuleView? {
-        val tag = findTag(tenantId, tagCode) ?: return null
-        val ruleId = tag.publishedRuleId ?: return null
-        val rule = ruleDao.findByTenantAndId(tenantId, ruleId) ?: return null
-        if (rule.status != TagRuleStatus.PUBLISHED.name) return null
-        val tree = ruleDao.loadTree(tenantId, rule.id, rule.ruleVersion) ?: return null
-        return rule.toView(tag, restoreExpression(tree))
+        val pointer = publishedRuleCache.currentPointer(tenantId, tagCode) { requestedTenant, requestedCode ->
+            val tag = findTag(requestedTenant, requestedCode) ?: return@currentPointer null
+            val ruleId = tag.publishedRuleId ?: return@currentPointer null
+            val rule = ruleDao.findByTenantAndId(requestedTenant, ruleId)
+                ?.takeIf { it.status == TagRuleStatus.PUBLISHED.name }
+                ?: return@currentPointer null
+            PublishedRulePointer(rule.id, rule.ruleVersion)
+        } ?: return null
+        return publishedRuleCache.getVersion(tenantId, pointer.ruleId, pointer.ruleVersion, ::loadVersion)
     }
 
     @Transactional(readOnly = true)
     override fun getVersion(tenantId: String, ruleId: String, ruleVersion: Long): TagRuleView? {
+        val rule = ruleDao.findByTenantAndId(tenantId, ruleId)
+            ?.takeIf { it.ruleVersion == ruleVersion }
+            ?: return null
+        return if (rule.status == TagRuleStatus.PUBLISHED.name || rule.status == TagRuleStatus.RETIRED.name) {
+            publishedRuleCache.getVersion(tenantId, ruleId, ruleVersion, ::loadVersion)
+        } else {
+            loadVersion(tenantId, ruleId, ruleVersion)
+        }
+    }
+
+    private fun loadVersion(tenantId: String, ruleId: String, ruleVersion: Long): TagRuleView? {
         val rule = ruleDao.findByTenantAndId(tenantId, ruleId)
             ?.takeIf { it.ruleVersion == ruleVersion }
             ?: return null

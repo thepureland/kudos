@@ -83,6 +83,7 @@ internal class TagIncrementalRecalculationTest : TagDaoTestSupport() {
         tagDao,
         tagSetDao,
         subjectDao,
+        TagMembershipDao(),
         membershipStore,
         RdbTagAssignmentIndex(assignmentDao, assignmentEventDao, tagDao, tagSetDao),
         TagAssignmentResolver(),

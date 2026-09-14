@@ -82,6 +82,7 @@ internal class FullRecalculationServiceTest : TagDaoTestSupport() {
         tagDao,
         tagSetDao,
         subjectDao,
+        TagMembershipDao(),
         RdbTagMembershipStore(TagMembershipDao()),
         RdbTagAssignmentIndex(assignmentDao, assignmentEventDao, tagDao, tagSetDao),
         TagAssignmentResolver(),

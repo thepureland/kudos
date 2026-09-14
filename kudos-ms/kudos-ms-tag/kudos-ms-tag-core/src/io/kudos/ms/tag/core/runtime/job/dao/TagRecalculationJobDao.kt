@@ -51,6 +51,8 @@ open class TagRecalculationJobDao : BaseCrudDao<String, TagRecalculationJob, Tag
     open fun listByTenant(tenantId: String): List<TagRecalculationJob> =
         entitySequence().filter { TagRecalculationJobs.tenantId eq tenantId }.toList()
 
+    open fun listAll(): List<TagRecalculationJob> = entitySequence().toList()
+
     open fun databaseProductName(): String = database().useConnection { it.metaData.databaseProductName }
 
     open fun failExhaustedLeases(now: LocalDateTime): Int = database().useConnection { connection ->

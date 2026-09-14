@@ -7,10 +7,13 @@ import io.kudos.ms.tag.common.assignment.model.TagMembershipSource
 import io.kudos.ms.tag.common.subject.model.TagSubjectKey
 import org.ktorm.dsl.and
 import org.ktorm.dsl.eq
+import org.ktorm.dsl.lessEq
 import org.ktorm.entity.filter
 import org.ktorm.entity.firstOrNull
+import org.ktorm.entity.sortedBy
 import org.ktorm.entity.toList
 import org.springframework.stereotype.Repository
+import java.time.LocalDateTime
 
 @Repository
 open class TagMembershipDao : BaseCrudDao<String, TagMembership, TagMemberships>() {
@@ -32,5 +35,14 @@ open class TagMembershipDao : BaseCrudDao<String, TagMembership, TagMemberships>
             (TagMemberships.tagId eq tagId) and
             (TagMemberships.sourceType eq source.name) and
             (TagMemberships.sourceRef eq sourceRef)
+    }
+
+    open fun listExpiredActive(now: LocalDateTime, limit: Int): List<TagMembership> {
+        require(limit > 0) { "Expiry batch limit must be positive." }
+        return entitySequence()
+            .filter { (TagMemberships.active eq true) and (TagMemberships.effectiveUntil lessEq now) }
+            .sortedBy { TagMemberships.effectiveUntil }
+            .toList()
+            .take(limit)
     }
 }

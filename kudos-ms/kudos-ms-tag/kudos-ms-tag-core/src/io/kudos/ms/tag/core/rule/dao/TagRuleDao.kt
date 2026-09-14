@@ -30,6 +30,10 @@ open class TagRuleDao : BaseCrudDao<String, TagRule, TagRules>() {
             (TagRules.tenantId eq tenantId) and (TagRules.status notEq "RETIRED")
         }.toList()
 
+    open fun listPublished(): List<TagRule> = entitySequence()
+        .filter { TagRules.status eq "PUBLISHED" }
+        .toList()
+
     open fun loadTree(tenantId: String, ruleId: String, version: Long): PersistedRuleTree? {
         val rule = entitySequence().firstOrNull {
             (TagRules.id eq ruleId) and (TagRules.tenantId eq tenantId) and (TagRules.ruleVersion eq version)
