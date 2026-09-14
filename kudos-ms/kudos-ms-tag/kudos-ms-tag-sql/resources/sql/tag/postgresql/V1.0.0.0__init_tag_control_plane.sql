@@ -1,9 +1,3 @@
-create type tag_value_type as enum ('STRING', 'INTEGER', 'DECIMAL', 'BOOLEAN', 'DATE', 'DATETIME');
-create type tag_cardinality as enum ('SINGLE', 'MULTIPLE');
-create type tag_rule_status as enum ('DRAFT', 'REBUILDING', 'PUBLISHED', 'RETIRED');
-create type tag_rule_node_kind as enum ('ALL_OF', 'ANY_OF', 'NOT', 'ATTRIBUTE_PREDICATE', 'HAS_TAG');
-create type tag_dependency_type as enum ('ATTRIBUTE', 'TAG');
-
 create table tag_subject_type (
     id char(36) primary key,
     code varchar(128) not null,
@@ -26,8 +20,8 @@ create table tag_attribute_definition (
     code varchar(128) not null,
     name varchar(128) not null,
     description varchar(1000),
-    value_type tag_value_type not null,
-    cardinality tag_cardinality not null,
+    value_type varchar(16) not null,
+    cardinality varchar(16) not null,
     active boolean not null,
     built_in boolean not null,
     version bigint not null,
@@ -35,6 +29,8 @@ create table tag_attribute_definition (
     update_user_id varchar(64), update_user_name varchar(128), update_time timestamp(6) not null,
     constraint uk_tag_attribute_definition_code unique (tenant_id, subject_type, code),
     constraint fk_tag_attribute_definition_subject_type foreign key (subject_type) references tag_subject_type (code),
+    constraint ck_tag_attribute_definition_value_type check (value_type in ('STRING', 'INTEGER', 'DECIMAL', 'BOOLEAN', 'DATE', 'DATETIME')),
+    constraint ck_tag_attribute_definition_cardinality check (cardinality in ('SINGLE', 'MULTIPLE')),
     constraint ck_tag_attribute_definition_version check (version >= 0)
 );
 
@@ -44,7 +40,7 @@ create table tag_set (
     subject_type varchar(128) not null,
     code varchar(128) not null,
     name varchar(128) not null,
-    cardinality tag_cardinality not null,
+    cardinality varchar(16) not null,
     default_tag_id char(36),
     active boolean not null,
     built_in boolean not null,
@@ -53,6 +49,7 @@ create table tag_set (
     update_user_id varchar(64), update_user_name varchar(128), update_time timestamp(6) not null,
     constraint uk_tag_set_code unique (tenant_id, subject_type, code),
     constraint fk_tag_set_subject_type foreign key (subject_type) references tag_subject_type (code),
+    constraint ck_tag_set_cardinality check (cardinality in ('SINGLE', 'MULTIPLE')),
     constraint ck_tag_set_default check (default_tag_id is null or cardinality = 'SINGLE'),
     constraint ck_tag_set_version check (version >= 0)
 );
@@ -85,7 +82,7 @@ create table tag_rule (
     tenant_id varchar(64) not null,
     tag_id char(36) not null,
     rule_version bigint not null,
-    status tag_rule_status not null,
+    status varchar(16) not null,
     root_node_id char(36),
     expression_version integer not null,
     checksum varchar(64) not null,
@@ -95,6 +92,7 @@ create table tag_rule (
     update_user_id varchar(64), update_user_name varchar(128), update_time timestamp(6) not null,
     constraint uk_tag_rule_version unique (tag_id, rule_version),
     constraint fk_tag_rule_tag foreign key (tag_id) references tag_definition (id),
+    constraint ck_tag_rule_status check (status in ('DRAFT', 'REBUILDING', 'PUBLISHED', 'RETIRED')),
     constraint ck_tag_rule_versions check (rule_version > 0 and expression_version > 0 and version >= 0)
 );
 
@@ -102,13 +100,14 @@ create table tag_rule_node (
     id char(36) primary key,
     rule_id char(36) not null,
     parent_id char(36),
-    node_kind tag_rule_node_kind not null,
+    node_kind varchar(32) not null,
     order_num integer not null,
     attribute_id char(36), referenced_tag_id char(36), operator varchar(16),
     constraint fk_tag_rule_node_rule foreign key (rule_id) references tag_rule (id) on delete cascade,
     constraint fk_tag_rule_node_parent foreign key (parent_id) references tag_rule_node (id),
     constraint fk_tag_rule_node_attribute foreign key (attribute_id) references tag_attribute_definition (id),
     constraint fk_tag_rule_node_referenced_tag foreign key (referenced_tag_id) references tag_definition (id),
+    constraint ck_tag_rule_node_kind check (node_kind in ('ALL_OF', 'ANY_OF', 'NOT', 'ATTRIBUTE_PREDICATE', 'HAS_TAG')),
     constraint ck_tag_rule_node_order check (order_num >= 0)
 );
 create index idx_tag_rule_node_parent on tag_rule_node (rule_id, parent_id, order_num);
@@ -117,7 +116,7 @@ create table tag_rule_operand (
     id char(36) primary key,
     node_id char(36) not null,
     order_num integer not null,
-    value_type tag_value_type not null,
+    value_type varchar(16) not null,
     string_value varchar(2000), integer_value bigint, decimal_value decimal(38, 12),
     boolean_value boolean, date_value date, datetime_value timestamp(6),
     constraint uk_tag_rule_operand_order unique (node_id, order_num),
@@ -138,7 +137,7 @@ create table tag_rule_dependency (
     tenant_id varchar(64) not null,
     rule_id char(36) not null,
     tag_id char(36) not null,
-    dependency_type tag_dependency_type not null,
+    dependency_type varchar(16) not null,
     attribute_id char(36), referenced_tag_id char(36),
     constraint uk_tag_rule_dependency unique (rule_id, dependency_type, attribute_id, referenced_tag_id),
     constraint fk_tag_rule_dependency_rule foreign key (rule_id) references tag_rule (id) on delete cascade,

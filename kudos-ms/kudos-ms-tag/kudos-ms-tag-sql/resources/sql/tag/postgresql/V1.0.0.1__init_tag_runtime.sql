@@ -1,10 +1,3 @@
-create type tag_attribute_operation as enum ('SET', 'ADD', 'APPEND', 'REMOVE', 'CLEAR');
-create type tag_event_status as enum ('RECEIVED', 'APPLIED', 'DUPLICATE', 'REJECTED', 'RETRYABLE_FAILED');
-create type tag_membership_source as enum ('RULE', 'MANUAL', 'IMPORT', 'DEFAULT');
-create type tag_assignment_operation as enum ('ASSIGNED', 'REMOVED');
-create type tag_recalculation_job_type as enum ('SUBJECT_INCREMENTAL', 'RULE_FULL_REBUILD');
-create type tag_recalculation_status as enum ('PENDING', 'RUNNING', 'SUCCEEDED', 'RETRY_WAIT', 'FAILED', 'CANCELLED');
-
 create table tag_subject (
     tenant_id varchar(64) not null,
     subject_type varchar(128) not null,
@@ -27,18 +20,20 @@ create table tag_attribute_event (
     subject_type varchar(128) not null,
     subject_id varchar(128) not null,
     attribute_id char(36) not null,
-    operation tag_attribute_operation not null,
+    operation varchar(16) not null,
     source_code varchar(128) not null,
     source_version bigint,
     occurred_time timestamp(6) not null,
     received_time timestamp(6) not null,
-    process_status tag_event_status not null,
+    process_status varchar(16) not null,
     error_code varchar(64), error_message varchar(1000),
-    value_type tag_value_type,
+    value_type varchar(16),
     string_value varchar(2000), integer_value bigint, decimal_value decimal(38, 12),
     boolean_value boolean, date_value date, datetime_value timestamp(6),
     constraint fk_tag_attribute_event_attribute foreign key (attribute_id) references tag_attribute_definition (id),
     constraint fk_tag_attribute_event_subject foreign key (tenant_id, subject_type, subject_id) references tag_subject (tenant_id, subject_type, subject_id),
+    constraint ck_tag_attribute_event_operation check (operation in ('SET', 'ADD', 'APPEND', 'REMOVE', 'CLEAR')),
+    constraint ck_tag_attribute_event_status check (process_status in ('RECEIVED', 'APPLIED', 'DUPLICATE', 'REJECTED', 'RETRYABLE_FAILED')),
     constraint ck_tag_attribute_event_source_version check (source_version is null or source_version >= 0)
 );
 create index idx_tag_attribute_event_subject on tag_attribute_event (tenant_id, subject_type, subject_id, received_time);
@@ -50,7 +45,7 @@ create table tag_attribute_state (
     subject_id varchar(128) not null,
     attribute_id char(36) not null,
     value_key varchar(64) not null,
-    value_type tag_value_type not null,
+    value_type varchar(16) not null,
     string_value varchar(2000), integer_value bigint, decimal_value decimal(38, 12),
     boolean_value boolean, date_value date, datetime_value timestamp(6),
     source_event_id char(36) not null,
@@ -87,7 +82,7 @@ create table tag_membership (
     subject_type varchar(128) not null,
     subject_id varchar(128) not null,
     tag_id char(36) not null,
-    source_type tag_membership_source not null,
+    source_type varchar(16) not null,
     source_ref varchar(128) not null,
     active boolean not null,
     rule_version bigint,
@@ -98,6 +93,7 @@ create table tag_membership (
     constraint fk_tag_membership_subject foreign key (tenant_id, subject_type, subject_id) references tag_subject (tenant_id, subject_type, subject_id),
     constraint fk_tag_membership_tag foreign key (tag_id) references tag_definition (id),
     constraint fk_tag_membership_event foreign key (source_event_id) references tag_attribute_event (event_id),
+    constraint ck_tag_membership_source check (source_type in ('RULE', 'MANUAL', 'IMPORT', 'DEFAULT')),
     constraint ck_tag_membership_versions check ((rule_version is null or rule_version > 0) and membership_version >= 0),
     constraint ck_tag_membership_effective check (effective_until is null or effective_from is null or effective_until > effective_from)
 );
@@ -129,13 +125,14 @@ create table tag_assignment_event (
     subject_type varchar(128) not null,
     subject_id varchar(128) not null,
     tag_id char(36) not null,
-    operation tag_assignment_operation not null,
+    operation varchar(16) not null,
     cause_type varchar(32) not null,
     cause_ref varchar(128),
     assignment_version bigint not null,
     occurred_time timestamp(6) not null,
     constraint fk_tag_assignment_event_subject foreign key (tenant_id, subject_type, subject_id) references tag_subject (tenant_id, subject_type, subject_id),
     constraint fk_tag_assignment_event_tag foreign key (tag_id) references tag_definition (id),
+    constraint ck_tag_assignment_event_operation check (operation in ('ASSIGNED', 'REMOVED')),
     constraint ck_tag_assignment_event_version check (assignment_version >= 0)
 );
 
@@ -143,12 +140,12 @@ create table tag_recalculation_job (
     id char(36) primary key,
     job_key varchar(512) not null,
     tenant_id varchar(64) not null,
-    job_type tag_recalculation_job_type not null,
+    job_type varchar(32) not null,
     tag_id char(36) not null,
     rule_version bigint not null,
     subject_type varchar(128) not null,
     subject_id varchar(128), cursor_subject_id varchar(128),
-    status tag_recalculation_status not null,
+    status varchar(16) not null,
     priority integer not null,
     requested_version bigint not null, processed_version bigint not null,
     attempt_count integer not null, max_attempts integer not null,
@@ -160,6 +157,8 @@ create table tag_recalculation_job (
     version bigint not null,
     constraint uk_tag_recalculation_job_key unique (job_key),
     constraint fk_tag_recalculation_job_tag foreign key (tag_id) references tag_definition (id),
+    constraint ck_tag_recalculation_job_type check (job_type in ('SUBJECT_INCREMENTAL', 'RULE_FULL_REBUILD')),
+    constraint ck_tag_recalculation_job_status check (status in ('PENDING', 'RUNNING', 'SUCCEEDED', 'RETRY_WAIT', 'FAILED', 'CANCELLED')),
     constraint ck_tag_recalculation_job_priority check (priority >= 0),
     constraint ck_tag_recalculation_job_versions check (requested_version >= processed_version and processed_version >= 0 and rule_version > 0 and version >= 0),
     constraint ck_tag_recalculation_job_attempts check (attempt_count >= 0 and max_attempts > 0 and attempt_count <= max_attempts),
