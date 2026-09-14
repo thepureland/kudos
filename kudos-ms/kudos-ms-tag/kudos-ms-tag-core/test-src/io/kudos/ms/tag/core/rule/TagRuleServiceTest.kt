@@ -21,6 +21,8 @@ import io.kudos.ms.tag.core.rule.dao.TagRuleOperandDao
 import io.kudos.ms.tag.core.rule.model.TagRuleStatus
 import io.kudos.ms.tag.core.rule.service.impl.TagRuleService
 import io.kudos.ms.tag.core.rule.validation.TagRuleValidator
+import io.kudos.ms.tag.core.runtime.job.dao.TagRecalculationJobDao
+import io.kudos.ms.tag.core.runtime.rdb.RdbRecalculationQueue
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -35,6 +37,7 @@ internal class TagRuleServiceTest : TagDaoTestSupport() {
     private val nodeDao = TagRuleNodeDao()
     private val operandDao = TagRuleOperandDao()
     private val dependencyDao = TagRuleDependencyDao()
+    private val jobDao = TagRecalculationJobDao()
     private val catalog = TagCatalogService(TagSubjectTypeDao(), attributeDao, TagSetDao(), tagDao)
     private val service = TagRuleService(
         tagDao,
@@ -44,6 +47,7 @@ internal class TagRuleServiceTest : TagDaoTestSupport() {
         operandDao,
         dependencyDao,
         TagRuleValidator(attributeDao, tagDao, ruleDao, dependencyDao),
+        RdbRecalculationQueue(jobDao),
     )
 
     @Test
@@ -65,6 +69,7 @@ internal class TagRuleServiceTest : TagDaoTestSupport() {
         val publication = service.requestPublication(TENANT, draft.id)
         assertEquals(TagRuleStatus.REBUILDING, publication.rule.status)
         assertEquals(64, publication.rule.checksum.length)
+        assertEquals("RULE_FULL_REBUILD", jobDao.get(publication.rebuildJobId)?.jobType)
         assertFailsWith<IllegalArgumentException> {
             service.replaceDraft(TENANT, draft.id, between(32, 42))
         }

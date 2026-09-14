@@ -21,6 +21,9 @@ import io.kudos.ms.tag.core.rule.model.po.TagRuleOperand
 import io.kudos.ms.tag.core.rule.service.iservice.ITagRuleService
 import io.kudos.ms.tag.core.rule.validation.ResolvedRuleReferences
 import io.kudos.ms.tag.core.rule.validation.TagRuleValidator
+import io.kudos.ms.tag.core.runtime.port.RecalculationJobType
+import io.kudos.ms.tag.core.runtime.port.RecalculationQueue
+import io.kudos.ms.tag.core.runtime.port.RecalculationRequest
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.springframework.stereotype.Service
@@ -40,6 +43,7 @@ open class TagRuleService(
     private val operandDao: TagRuleOperandDao,
     private val dependencyDao: TagRuleDependencyDao,
     private val validator: TagRuleValidator,
+    private val recalculationQueue: RecalculationQueue,
 ) : ITagRuleService {
 
     override fun createDraft(tenantId: String, tagCode: String, expression: TagRuleExpression): TagRuleView {
@@ -94,7 +98,17 @@ open class TagRuleService(
         rule.status = TagRuleStatus.REBUILDING.name
         rule.version += 1
         check(ruleDao.update(rule)) { "Rule [$ruleId] could not enter rebuild." }
-        return TagRulePublication(rule.toView(tag, expression), "rule-full-rebuild:${rule.id}:${rule.ruleVersion}")
+        val rebuildJobId = recalculationQueue.request(
+            RecalculationRequest(
+                tenantId = tenantId,
+                jobType = RecalculationJobType.RULE_FULL_REBUILD,
+                tagId = tag.id,
+                ruleVersion = rule.ruleVersion,
+                subjectType = tag.subjectType,
+                priority = 0,
+            )
+        )
+        return TagRulePublication(rule.toView(tag, expression), rebuildJobId)
     }
 
     /** Called by the successful full-rebuild promotion transaction implemented in Task 14. */

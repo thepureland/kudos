@@ -25,5 +25,5 @@ data class TagRuleView(
 /** Publication request handed to the replaceable rebuild runtime in Task 7. */
 data class TagRulePublication(
     val rule: TagRuleView,
-    val rebuildRequestKey: String,
+    val rebuildJobId: String,
 )
