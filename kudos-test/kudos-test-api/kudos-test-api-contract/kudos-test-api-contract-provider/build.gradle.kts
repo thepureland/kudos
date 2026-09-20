@@ -1,12 +1,12 @@
 plugins {
     java
-    id("org.springframework.cloud.contract") version "5.0.2"
+    alias(libs.plugins.spring.cloud.contract)
 }
 
 dependencies {
     implementation(project(":kudos-context"))
     api(project(":kudos-test:kudos-test-common"))
-    api("org.springframework.cloud:spring-cloud-starter-contract-verifier")
+    api(libs.spring.cloud.starter.contract.verifier)
     api(libs.spring.boot.starter.webmvc.test)
 
     testImplementation(libs.spring.boot.starter.web)

@@ -3,17 +3,18 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-kotlin = "2.4.10"
+kotlin = "2.4.20"
 kotlinxDatetime = "0.8.0"
 kotlinxSerializationJSON = "1.11.0"
 kotlinxCoroutines = "1.11.0"
-ktor = "3.5.2"
-ktor-plugin = "3.5.2"
+ktor = "3.6.0"
+ktor-plugin = "3.6.0"
 ktorm = "4.2.1"
-spring-boot = "4.1.0"
-spring-cloud = "2025.1.2"
+spring-boot = "4.1.1"
+spring-cloud = "2025.1.3"
+spring-cloud-contract = "5.0.3"
 alibaba-cloud = "2025.1.0.0"
-github-ben-manes-plugin = "0.61.0"
+github-ben-manes-plugin = "0.64.0"
 
 # kudos-base
 apache-commons-beanutils = "1.11.0"
@@ -26,21 +27,21 @@ sourceforge-jxl = "2.6.12"
 google-zxing = "3.5.4"
 lingala-zip4j = "2.11.6"
 apache-xmlgraphics-batik = "1.19"
-github-classgraph = "4.8.190"
+github-classgraph = "4.8.195"
 
 # kudos-tools
-freemarker = "2.3.34"
+freemarker = "2.3.35"
 javafx-plugin = "0.1.0"
 javafx = "26.0.2"
 
 # kudos-ability
 github-caffeine = "3.2.4"
 alibabacloud-dysmsapi = "4.0.11"
-alibaba-fastjson2 = "2.0.64"
+alibaba-fastjson2 = "2.0.65"
 apache-seata = "2.6.0"
-amazon-awssdk = "2.52.0"
-google-cloud-secretmanager = "2.95.0"
-azure-security-keyvault-secrets = "4.11.0"
+amazon-awssdk = "2.55.1"
+google-cloud-secretmanager = "2.97.0"
+azure-security-keyvault-secrets = "4.11.2"
 apache-common-pool2 = "2.13.1"
 baomidou-dynamic-datasource = "4.5.0"
 redisson = "4.7.0"
@@ -48,11 +49,11 @@ usefulness-webp-imageio = "0.11.0"
 coobird-thumbnailator = "0.4.21"
 xqlee-pngquant-png = "1.0.0"
 minio = "9.0.3"
-controlsfx = "11.2.4"
+controlsfx = "11.2.5"
 commons-fileupload = "1.6.0"
 servlet-api = "6.1.0"
-springdoc-openapi = "3.1.0"
-clickhouse-jdbc = "0.9.8"
+springdoc-openapi = "3.1.1"
+clickhouse-jdbc = "0.10.0"
 influxdb-client = "8.0.0"
 yubico-webauthn-server = "2.9.0"
 
@@ -113,6 +114,8 @@ testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-jun
 testcontainers-mongodb = { module = "org.testcontainers:testcontainers-mongodb" }
 testcontainers-clickhouse = { module = "org.testcontainers:testcontainers-clickhouse" }
 testcontainers-influxdb = { module = "org.testcontainers:testcontainers-influxdb" }
+spring-cloud-starter-contract-verifier = { module = "org.springframework.cloud:spring-cloud-starter-contract-verifier", version.ref = "spring-cloud-contract" }
+spring-cloud-starter-contract-stub-runner = { module = "org.springframework.cloud:spring-cloud-starter-contract-stub-runner", version.ref = "spring-cloud-contract" }
 
 # kudos-tools
 freemarker = { module = "org.freemarker:freemarker", version.ref = "freemarker" }
@@ -148,7 +151,7 @@ spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-
 # Bouncy Castle PKIX — test-only dep used by the JWT module to programmatically build a self-signed
 # X.509 + PKCS12 keystore at test setup time, instead of committing a binary keystore blob to the
 # repo. Standard Java has no portable API for X.509 cert creation.
-bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version = "1.85" }
+bouncycastle-bcpkix = { module = "org.bouncycastle:bcpkix-jdk18on", version = "1.86" }
 # ClickHouse JDBC driver — used by kudos-ability-log-audit-rdb-clickhouse. Version pinned because
 # Spring Boot BOM does not manage ClickHouse. Use the "shaded" classifier so Apache HTTP Client +
 # Lz4 + other transitive deps don't conflict with other modules.
@@ -249,3 +252,4 @@ kotlinPluginSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", 
 javafx = { id = "org.openjfx.javafxplugin", version.ref = "javafx-plugin" }
 github-ben-manes = { id = "io.github.ben-manes.versions", version.ref = "github-ben-manes-plugin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor-plugin" }
+spring-cloud-contract = { id = "org.springframework.cloud.contract", version.ref = "spring-cloud-contract" }

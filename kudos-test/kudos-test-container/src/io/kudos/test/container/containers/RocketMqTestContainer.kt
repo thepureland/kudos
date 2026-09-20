@@ -47,6 +47,9 @@ object RocketMqTestContainer {
     private val brokerServerContainer = GenericContainer(IMAGE).apply {
         withExposedPorts(10909, 10911, 10912)
         bindingPort(Pair(10909, 10909), Pair(10911, 10911), Pair(10912, 10912))
+        // Keep the integration-test message store independent of Docker Desktop's virtual-disk
+        // utilization. RocketMQ rejects writes when that filesystem crosses its safety threshold.
+        withTmpFs(mapOf("/home/rocketmq/store" to "rw,size=512m"))
         withPrivilegedMode(true)
         withEnv("NAMESRV_ADDR", NAMESRV_ADDR)
         withEnv("MAX_POSSIBLE_HEAP", "200000000")
@@ -122,4 +125,3 @@ object RocketMqTestContainer {
     }
 
 }
-
