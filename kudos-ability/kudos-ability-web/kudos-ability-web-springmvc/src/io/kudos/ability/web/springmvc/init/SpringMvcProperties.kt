@@ -43,11 +43,8 @@ open class SpringMvcProperties {
     /**
      * CORS settings.
      *
-     * The defaults are deliberately permissive so that CORS never blocks local development. They are
-     * **not** safe for production: `allowedOriginPatterns = ["*"]` together with `allowCredentials = true`
-     * means "reflect whatever Origin the caller sends, and let it carry cookies", which is an open door.
-     * [SpringMvcAutoConfiguration] logs a startup warning whenever that combination is still active, so the
-     * risk is visible in the logs of any environment that forgot to tighten it.
+     * Cross-origin access is denied by default. Applications must configure explicit trusted origins;
+     * credentials are an additional opt-in. Wildcard origins cannot be combined with credentials.
      */
     open class Cors {
 
@@ -64,7 +61,7 @@ open class SpringMvcProperties {
         var allowedOrigins: List<String> = emptyList()
 
         /** Allowed origin patterns; used only when [allowedOrigins] is empty. */
-        var allowedOriginPatterns: List<String> = listOf("*")
+        var allowedOriginPatterns: List<String> = emptyList()
 
         /** Allowed HTTP methods. */
         var allowedMethods: List<String> = listOf("GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS", "HEAD")
@@ -76,7 +73,7 @@ open class SpringMvcProperties {
         var exposedHeaders: List<String> = emptyList()
 
         /** Whether the browser may send credentials (cookies / Authorization) cross-origin. */
-        var allowCredentials: Boolean = true
+        var allowCredentials: Boolean = false
 
         /** Preflight cache lifetime, in seconds. */
         var maxAge: Long = 24 * 60 * 60

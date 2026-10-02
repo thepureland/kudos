@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.PropertySource
 import org.springframework.core.Ordered
 import org.springframework.beans.factory.SmartInitializingSingleton
+import org.springframework.beans.factory.ListableBeanFactory
 import org.springframework.core.env.Environment
 
 
@@ -110,6 +111,29 @@ open class EnforcementAutoConfiguration : IComponentInitializer {
             }
             check(!properties.shadowMode) {
                 "URL/method authorization enforcement is still in shadow mode in a production profile."
+            }
+        }
+    }
+
+    /** An enabled flag is not protection when conditional wiring omitted the actual filter. */
+    @Bean
+    open fun enforcementBackendSafetyCheck(
+        properties: EnforcementProperties,
+        beanFactory: ListableBeanFactory,
+    ): SmartInitializingSingleton = SmartInitializingSingleton {
+        if (properties.enabled) {
+            check(beanFactory.getBeanNamesForType(IAuthzDecisionProvider::class.java).isNotEmpty()) {
+                "Authorization is enabled but no decision provider is installed."
+            }
+            check(beanFactory.getBeanNamesForType(IPermissionPointRegistry::class.java).isNotEmpty()) {
+                "Authorization is enabled but no permission registry is installed."
+            }
+            check(beanFactory.containsBean("permissionEnforcementFilterRegistration")) {
+                "Authorization is enabled but its HTTP filter was not installed."
+            }
+            val registration = beanFactory.getBean("permissionEnforcementFilterRegistration") as? FilterRegistrationBean<*>
+            check(registration?.isEnabled == true) {
+                "Authorization is enabled but its HTTP filter registration is disabled."
             }
         }
     }

@@ -340,6 +340,10 @@ internal class AuthenticationTransactionServiceTest {
     @Test
     fun externalProviderFlowCarriesEnrollmentAdvisoryDuringGrace() {
         val enforcer = mock(AuthenticationMfaPolicyEnforcer::class.java)
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", DefaultAuthenticationAssurancePolicy.ACR_MFA))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.ALLOW))
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", DefaultAuthenticationAssurancePolicy.ACR_PHISHING_RESISTANT))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.ALLOW))
         val isolated = AuthenticationTransactionService(
             InMemoryAuthenticationTransactionStore(),
             AuthenticationMethodRegistry(listOf(provider)),
@@ -368,6 +372,10 @@ internal class AuthenticationTransactionServiceTest {
     @Test
     fun externalProviderCannotBypassRequiredSecondFactor() {
         val enforcer = mock(AuthenticationMfaPolicyEnforcer::class.java)
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", DefaultAuthenticationAssurancePolicy.ACR_MFA))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.ALLOW))
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", DefaultAuthenticationAssurancePolicy.ACR_PHISHING_RESISTANT))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.ALLOW))
         val isolated = AuthenticationTransactionService(
             InMemoryAuthenticationTransactionStore(),
             AuthenticationMethodRegistry(listOf(provider)),
@@ -397,6 +405,10 @@ internal class AuthenticationTransactionServiceTest {
     @Test
     fun externalProviderCanContinueWithPinnedLocalSecondFactor() {
         val enforcer = mock(AuthenticationMfaPolicyEnforcer::class.java)
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", DefaultAuthenticationAssurancePolicy.ACR_MFA))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.ALLOW))
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", DefaultAuthenticationAssurancePolicy.ACR_PHISHING_RESISTANT))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.ALLOW))
         val secondFactor = mock(FederatedSecondFactorVerifier::class.java)
         val isolated = AuthenticationTransactionService(
             InMemoryAuthenticationTransactionStore(),
@@ -448,6 +460,10 @@ internal class AuthenticationTransactionServiceTest {
     @Test
     fun externalProviderCanContinueWithTransactionBoundPluggableSecondFactor() {
         val enforcer = mock(AuthenticationMfaPolicyEnforcer::class.java)
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", DefaultAuthenticationAssurancePolicy.ACR_MFA))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.ALLOW))
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", DefaultAuthenticationAssurancePolicy.ACR_PHISHING_RESISTANT))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.ALLOW))
         val passkey = mock(IAuthenticationSecondFactorProvider::class.java)
         `when`(passkey.action()).thenReturn(AuthenticationActionEnum.VERIFY_PASSKEY)
         `when`(passkey.policyMethod()).thenReturn(MfaMethodEnum.WEBAUTHN)
@@ -598,5 +614,61 @@ internal class AuthenticationTransactionServiceTest {
         kotlin.test.assertFailsWith<IllegalStateException> {
             service.completeExternalLink(created.id, "provider-2", "u-1")
         }
+    }
+    @Test
+    fun everySuccessfulProviderMustPassTenantMfaPolicyBeforeCompleting() {
+        val enforcer = mock(AuthenticationMfaPolicyEnforcer::class.java)
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", "urn:test:acr"))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.DENY_ENROLLMENT_REQUIRED))
+        val isolated = AuthenticationTransactionService(
+            InMemoryAuthenticationTransactionStore(), AuthenticationMethodRegistry(listOf(provider)),
+            mfaPolicyEnforcer = enforcer,
+        )
+        val created = isolated.create(AuthenticationTransactionCreateRequest("t-1", "test"))
+        val completed = isolated.act(created.id, AuthenticationActionEnum.VERIFY_PASSWORD,
+            AuthenticationActionRequest(username = "alice", plainPassword = "correct"))
+        assertEquals(AuthenticationTransactionStatusEnum.FAILED, completed.status)
+        assertEquals("MFA_ENROLLMENT_REQUIRED", completed.errorCode)
+        assertNull(completed.context)
+    }
+
+    @Test
+    fun verifiedLoginSubjectCannotChangeInProviderContinuation() {
+        val created = service.create(AuthenticationTransactionCreateRequest("t-1", "test"))
+        val challenged = service.act(created.id, AuthenticationActionEnum.VERIFY_PASSWORD,
+            AuthenticationActionRequest(username = "alice", plainPassword = "passkey-alternative"))
+        // A buggy provider returns success for another username. The common service still rejects it.
+        val failed = service.act(challenged.id, AuthenticationActionEnum.VERIFY_PASSKEY,
+            AuthenticationActionRequest(username = "mallory", plainPassword = "correct"))
+        assertEquals(AuthenticationTransactionStatusEnum.FAILED, failed.status)
+        assertEquals("AUTHENTICATION_SUBJECT_MISMATCH", failed.errorCode)
+        assertNull(failed.context)
+    }
+
+    @Test
+    fun primaryProviderSuccessCanContinueWithTotpWithoutReplayingThePrimaryCredential() {
+        val enforcer = mock(AuthenticationMfaPolicyEnforcer::class.java)
+        val secondFactor = mock(FederatedSecondFactorVerifier::class.java)
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", "urn:test:acr"))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.REQUIRE_SECOND_FACTOR))
+        `when`(enforcer.enforce(AuthenticationTransactionPurposeEnum.LOGIN, "t-1", "u-1", DefaultAuthenticationAssurancePolicy.ACR_MFA))
+            .thenReturn(MfaPolicyEnforcementResult(MfaPolicyEnforcementOutcomeEnum.ALLOW))
+        `when`(secondFactor.availableActions("u-1", "t-1")).thenReturn(setOf(AuthenticationActionEnum.VERIFY_TOTP))
+        val otp = AuthenticationActionRequest(code = "123456", username = "mallory")
+        `when`(secondFactor.verify("u-1", "t-1", "alice", AuthenticationActionEnum.VERIFY_TOTP, otp))
+            .thenReturn(SecondFactorVerificationResult(true, "totp"))
+        val isolated = AuthenticationTransactionService(
+            InMemoryAuthenticationTransactionStore(), AuthenticationMethodRegistry(listOf(provider)),
+            mfaPolicyEnforcer = enforcer, federatedSecondFactorVerifier = secondFactor,
+        )
+        val created = isolated.create(AuthenticationTransactionCreateRequest("t-1", "test"))
+        val challenged = isolated.act(created.id, AuthenticationActionEnum.VERIFY_PASSWORD,
+            AuthenticationActionRequest(username = "alice", plainPassword = "correct"))
+        assertEquals(AuthenticationTransactionStatusEnum.CHALLENGE_REQUIRED, challenged.status)
+        assertNull(challenged.context)
+        val completed = isolated.act(challenged.id, AuthenticationActionEnum.VERIFY_TOTP, otp)
+        assertEquals(AuthenticationTransactionStatusEnum.COMPLETED, completed.status)
+        assertEquals("u-1", completed.context?.userId)
+        assertEquals(setOf("test", "totp"), completed.amr)
     }
 }

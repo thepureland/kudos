@@ -29,13 +29,19 @@ data class PassportLoginResult(
     /** Earliest suggested retry delay for a temporary rate limit; absent for other outcomes. */
     val retryAfterSeconds: Long? = null,
 
+    /** Factors actually verified by Passport; never inferred from the requested action. */
+    val verifiedMethods: Set<String> = emptySet(),
+
+    /** Subject whose password passed before an OTP challenge; populated by the credential verifier itself. */
+    val verifiedUserId: String? = null,
+
 ) : Serializable {
 
     companion object {
         private const val serialVersionUID = 1L
 
-        fun success(userInfo: UserInfoModel): PassportLoginResult =
-            PassportLoginResult(status = PassportLoginStatusEnum.SUCCESS, userInfo = userInfo)
+        fun success(userInfo: UserInfoModel, verifiedMethods: Set<String> = setOf("password")): PassportLoginResult =
+            PassportLoginResult(status = PassportLoginStatusEnum.SUCCESS, userInfo = userInfo, verifiedMethods = verifiedMethods)
 
         fun userNotFound(): PassportLoginResult =
             PassportLoginResult(status = PassportLoginStatusEnum.USER_NOT_FOUND, message = "User does not exist")
@@ -64,8 +70,13 @@ data class PassportLoginResult(
             )
 
         /** The user has enabled OTP but did not provide authCode; the client should prompt for the OTP and retry. */
-        fun otpRequired(): PassportLoginResult =
-            PassportLoginResult(status = PassportLoginStatusEnum.OTP_REQUIRED, message = "Please enter the dynamic verification code")
+        fun otpRequired(verifiedUserId: String? = null): PassportLoginResult =
+            PassportLoginResult(
+                status = PassportLoginStatusEnum.OTP_REQUIRED,
+                message = "Please enter the dynamic verification code",
+                verifiedMethods = setOf("password"),
+                verifiedUserId = verifiedUserId,
+            )
 
         /** OTP code is incorrect; its failure window is independent from the password counter. */
         fun otpWrong(): PassportLoginResult =

@@ -4,14 +4,13 @@ import com.alibaba.fastjson2.JSONObject
 import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgService
 import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
 import io.kudos.ability.distributed.stream.rocketmq.init.properties.RocketMqProperties
+import io.kudos.ability.distributed.stream.common.support.StreamMessageSerialization
 import io.kudos.base.logger.LogFactory
 import io.kudos.context.kit.SpringKit
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer
 import org.apache.rocketmq.client.exception.MQClientException
 import org.apache.rocketmq.common.message.MessageExt
-import java.io.ByteArrayInputStream
 import java.io.ObjectInputFilter
-import java.io.ObjectInputStream
 import java.time.LocalDateTime
 import kotlin.concurrent.thread
 
@@ -267,7 +266,7 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
 
     @Suppress("UNCHECKED_CAST")
     private fun decodeBody(body: ByteArray): T {
-        return decodeJdkBody(body, rocketMqProperties.batchConsumerDeserializationFilter) as T
+        return decodeJdkBody(body, rocketMqProperties.batchConsumerDeserializationFilter, rocketMqProperties.messageSerialization) as T
     }
 
     /**
@@ -322,14 +321,15 @@ class RocketMqBatchConsumer<T> @JvmOverloads constructor(
         /** Daemon-thread sleep duration (ms) on idle polls to avoid 100% CPU spinning. */
         private const val IDLE_POLL_SLEEP_MS = 100L
 
-        internal fun decodeJdkBody(body: ByteArray, deserializationFilter: String): Any? =
-            ObjectInputStream(ByteArrayInputStream(body)).use { input ->
-                val filter = deserializationFilter.takeIf { it.isNotBlank() }
-                if (filter != null) {
-                    input.setObjectInputFilter(ObjectInputFilter.Config.createFilter(filter))
-                }
-                input.readObject()
-            }
+        internal fun decodeJdkBody(
+            body: ByteArray,
+            deserializationFilter: String,
+            serialization: StreamMessageSerialization = StreamMessageSerialization()
+        ): Any = serialization.deserialize(
+            body,
+            additionalFilter = deserializationFilter.takeIf { it.isNotBlank() }
+                ?.let { ObjectInputFilter.Config.createFilter(it) }
+        )
     }
 
 }

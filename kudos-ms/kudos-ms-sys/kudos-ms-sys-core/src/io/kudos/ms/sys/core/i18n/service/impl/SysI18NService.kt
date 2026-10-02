@@ -4,10 +4,12 @@ import io.kudos.ms.sys.core.platform.service.impl.completeCrudInsert
 import io.kudos.ms.sys.core.platform.service.impl.completeCrudUpdate
 
 import io.kudos.base.support.service.impl.BaseCrudService
+import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.sys.core.platform.service.impl.requireStringId
 import io.kudos.ms.sys.common.i18n.vo.SysI18nCacheEntry
 import io.kudos.ms.sys.common.i18n.vo.request.SysI18nFormUpdate
+import io.kudos.ms.sys.common.i18n.vo.request.I18nPathPolicy
 import io.kudos.ms.sys.core.i18n.cache.SysI18nHashCache
 import io.kudos.ms.sys.core.i18n.dao.SysI18nDao
 import io.kudos.ms.sys.core.i18n.event.SysI18nBatchDeleted
@@ -104,6 +106,7 @@ open class SysI18NService(
 
     @Transactional
     override fun insert(any: Any): String {
+        validateMessagePaths(any)
         val id = super.insert(any)
         completeCrudInsert(log, "Inserted i18n entry with id $id.") {
             eventPublisher.publishEvent(SysI18nInserted(id = id))
@@ -113,6 +116,7 @@ open class SysI18NService(
 
     @Transactional
     override fun update(any: Any): Boolean {
+        validateMessagePaths(any)
         val id = requireStringId(any, "i18n entry")
         return completeCrudUpdate(
             success = super.update(any),
@@ -201,6 +205,7 @@ open class SysI18NService(
     private fun toI18n(form: SysI18nFormUpdate, creating: Boolean): SysI18n {
         val operation = if (creating) "insert" else "update"
         val (namespace, key) = resolveNamespaceAndKey(form)
+        validateMessagePaths(form.copy(namespace = namespace))
         return SysI18n {
             if (!creating) {
                 this.id = requireNotNull(form.id) { "id must not be null when updating an i18n entry." }
@@ -216,6 +221,12 @@ open class SysI18NService(
             this.key = key
             this.value = requireNotNull(form.value) { "value must not be null when $operation of an i18n entry." }
             this.remark = form.remark
+        }
+    }
+
+    private fun validateMessagePaths(payload: Any) {
+        listOf("atomicServiceCode", "i18nTypeDictCode", "namespace", "key").forEach { field ->
+            (BeanKit.getProperty(payload, field) as? String)?.let(I18nPathPolicy::requireSafe)
         }
     }
 

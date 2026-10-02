@@ -144,8 +144,8 @@ open class AuthenticationTransactionService(
             else -> {
                 if (isPendingPluggableSecondFactor(current, action)) {
                     applyPluggableSecondFactor(current, action, request)
-                } else if (isPendingFederatedMfa(current, action)) {
-                    applyFederatedSecondFactor(current, action, request)
+                } else if (isPendingLocalSecondFactor(current, action)) {
+                    applyLocalSecondFactor(current, action, request)
                 } else {
                     val method = requireNotNull(current.method) { "Authentication method has not been selected" }
                     val provider = requireNotNull(methodRegistry.find(method)) {
@@ -426,87 +426,103 @@ open class AuthenticationTransactionService(
     private fun applyMethodResult(
         transaction: AuthenticationTransaction,
         result: AuthenticationMethodResult,
-    ): AuthenticationTransaction = when (result.outcome) {
-        AuthenticationMethodOutcomeEnum.SUCCESS -> {
-            val userId = requireNotNull(result.userId) { "Successful authentication must provide userId" }
-            val tenantId = requireNotNull(result.tenantId ?: transaction.tenantId) {
-                "Successful authentication must provide tenantId"
-            }
-            val acr = requireNotNull(result.acr) { "Successful authentication must provide acr" }
-            val now = Instant.now()
-            val subjectMismatch = transaction.purpose == AuthenticationTransactionPurposeEnum.STEP_UP &&
-                (transaction.initiatorUserId != userId || transaction.tenantId != tenantId)
-            val requiredAcr = transaction.requiredAcr
-            val insufficientAssurance = transaction.purpose == AuthenticationTransactionPurposeEnum.STEP_UP &&
-                (requiredAcr == null || !assurancePolicy.isSatisfied(acr, requiredAcr))
-            when {
-                subjectMismatch -> transaction.copy(
-                    status = AuthenticationTransactionStatusEnum.FAILED,
-                    nextActions = emptySet(),
-                    errorCode = "STEP_UP_SUBJECT_MISMATCH",
-                )
+    ): AuthenticationTransaction {
+        // Once a provider has verified a subject, no continuation may substitute it or its tenant.
+        if ((result.tenantId != null && transaction.tenantId != null && result.tenantId != transaction.tenantId) ||
+            (result.userId != null && transaction.userId != null && result.userId != transaction.userId) ||
+            (transaction.amr.isNotEmpty() && result.username != null && transaction.username != null &&
+                result.username != transaction.username)
+        ) {
+            return transaction.copy(
+                status = AuthenticationTransactionStatusEnum.FAILED,
+                nextActions = emptySet(),
+                errorCode = if (transaction.purpose == AuthenticationTransactionPurposeEnum.STEP_UP)
+                    "STEP_UP_SUBJECT_MISMATCH" else "AUTHENTICATION_SUBJECT_MISMATCH",
+            )
+        }
+        return when (result.outcome) {
+            AuthenticationMethodOutcomeEnum.SUCCESS -> {
+                val userId = requireNotNull(result.userId) { "Successful authentication must provide userId" }
+                val tenantId = requireNotNull(result.tenantId ?: transaction.tenantId) {
+                    "Successful authentication must provide tenantId"
+                }
+                val acr = requireNotNull(result.acr) { "Successful authentication must provide acr" }
+                val now = Instant.now()
+                val subjectMismatch = transaction.purpose == AuthenticationTransactionPurposeEnum.STEP_UP &&
+                    (transaction.initiatorUserId != userId || transaction.tenantId != tenantId)
+                val requiredAcr = transaction.requiredAcr
+                val insufficientAssurance = transaction.purpose == AuthenticationTransactionPurposeEnum.STEP_UP &&
+                    (requiredAcr == null || !assurancePolicy.isSatisfied(acr, requiredAcr))
+                when {
+                    subjectMismatch -> transaction.copy(
+                        status = AuthenticationTransactionStatusEnum.FAILED,
+                        nextActions = emptySet(),
+                        errorCode = "STEP_UP_SUBJECT_MISMATCH",
+                    )
 
-                insufficientAssurance -> transaction.copy(
-                    status = AuthenticationTransactionStatusEnum.FAILED,
-                    nextActions = emptySet(),
-                    errorCode = "REQUIRED_ACR_NOT_SATISFIED",
-                )
+                    insufficientAssurance -> transaction.copy(
+                        status = AuthenticationTransactionStatusEnum.FAILED,
+                        nextActions = emptySet(),
+                        errorCode = "REQUIRED_ACR_NOT_SATISFIED",
+                    )
 
-                else -> transaction.copy(
-                    tenantId = tenantId,
-                    userId = userId,
-                    username = result.username,
-                    status = AuthenticationTransactionStatusEnum.COMPLETED,
-                    nextActions = emptySet(),
-                    amr = result.amr,
-                    acr = acr,
-                    context = AuthenticationContext(
-                        userId = userId,
+                    else -> transaction.copy(
                         tenantId = tenantId,
-                        authTime = now,
+                        userId = userId,
+                        username = result.username,
+                        status = AuthenticationTransactionStatusEnum.COMPLETED,
+                        nextActions = emptySet(),
                         amr = result.amr,
                         acr = acr,
-                    ),
-                    errorCode = null,
-                    postAuthenticationActions = result.postAuthenticationActions,
-                )
+                        context = AuthenticationContext(
+                            userId = userId,
+                            tenantId = tenantId,
+                            authTime = now,
+                            amr = result.amr,
+                            acr = acr,
+                        ),
+                        errorCode = null,
+                        postAuthenticationActions = result.postAuthenticationActions,
+                    )
+                }
             }
+
+            AuthenticationMethodOutcomeEnum.CHALLENGE -> transaction.copy(
+                tenantId = result.tenantId ?: transaction.tenantId,
+                userId = result.userId ?: transaction.userId,
+                username = result.username ?: transaction.username,
+                status = AuthenticationTransactionStatusEnum.CHALLENGE_REQUIRED,
+                nextActions = result.nextActions.ifEmpty { setOf(requireNotNull(result.nextAction)) },
+                amr = result.amr.ifEmpty { transaction.amr },
+                acr = result.acr ?: transaction.acr,
+                context = null,
+                errorCode = result.errorCode,
+            )
+
+            AuthenticationMethodOutcomeEnum.FAILURE -> transaction.copy(
+                username = result.username ?: transaction.username,
+                status = if (result.terminal) {
+                    AuthenticationTransactionStatusEnum.FAILED
+                } else {
+                    AuthenticationTransactionStatusEnum.CHALLENGE_REQUIRED
+                },
+                nextActions = if (result.terminal) {
+                    emptySet()
+                } else {
+                    result.nextActions.ifEmpty { setOf(requireNotNull(result.nextAction)) }
+                },
+                errorCode = result.errorCode ?: "AUTHENTICATION_FAILED",
+            )
         }
-
-        AuthenticationMethodOutcomeEnum.CHALLENGE -> transaction.copy(
-            tenantId = result.tenantId ?: transaction.tenantId,
-            userId = result.userId ?: transaction.userId,
-            username = result.username ?: transaction.username,
-            status = AuthenticationTransactionStatusEnum.CHALLENGE_REQUIRED,
-            nextActions = result.nextActions.ifEmpty { setOf(requireNotNull(result.nextAction)) },
-            amr = result.amr.ifEmpty { transaction.amr },
-            acr = result.acr ?: transaction.acr,
-            context = null,
-            errorCode = result.errorCode,
-        )
-
-        AuthenticationMethodOutcomeEnum.FAILURE -> transaction.copy(
-            username = result.username ?: transaction.username,
-            status = if (result.terminal) {
-                AuthenticationTransactionStatusEnum.FAILED
-            } else {
-                AuthenticationTransactionStatusEnum.CHALLENGE_REQUIRED
-            },
-            nextActions = if (result.terminal) {
-                emptySet()
-            } else {
-                result.nextActions.ifEmpty { setOf(requireNotNull(result.nextAction)) }
-            },
-            errorCode = result.errorCode ?: "AUTHENTICATION_FAILED",
-        )
     }
 
-    private fun isPendingFederatedMfa(
+    private fun isPendingLocalSecondFactor(
         transaction: AuthenticationTransaction,
         action: AuthenticationActionEnum,
     ): Boolean = transaction.status == AuthenticationTransactionStatusEnum.CHALLENGE_REQUIRED &&
-        transaction.method?.startsWith(METHOD_EXTERNAL_PREFIX) == true &&
-        transaction.userId != null && transaction.acr == ACR_FEDERATED && transaction.context == null &&
+        transaction.purpose == AuthenticationTransactionPurposeEnum.LOGIN &&
+        federatedSecondFactorVerifier != null && transaction.userId != null &&
+        transaction.acr != null && transaction.context == null &&
         action in LOCAL_SECOND_FACTOR_ACTIONS
 
     private fun isPendingPluggableSecondFactor(
@@ -517,7 +533,7 @@ open class AuthenticationTransactionService(
         transaction.userId != null && transaction.tenantId != null && transaction.acr != null &&
         transaction.context == null && secondFactorRegistry.supports(action)
 
-    private fun applyFederatedSecondFactor(
+    private fun applyLocalSecondFactor(
         transaction: AuthenticationTransaction,
         action: AuthenticationActionEnum,
         request: AuthenticationActionRequest,
@@ -525,7 +541,7 @@ open class AuthenticationTransactionService(
         val userId = requireNotNull(transaction.userId)
         val tenantId = requireNotNull(transaction.tenantId)
         val verifier = requireNotNull(federatedSecondFactorVerifier) {
-            "Federated second-factor verifier is not available"
+            "Local second-factor verifier is not available"
         }
         val result = verifier.verify(userId, tenantId, requireNotNull(transaction.username), action, request)
         return applySecondFactorResult(transaction, result)
@@ -591,11 +607,45 @@ open class AuthenticationTransactionService(
         updated: AuthenticationTransaction,
         observation: AuthLoginEventObservation = AuthLoginEventObservation.EMPTY,
     ): AuthenticationTransaction {
-        val saved = requireNotNull(store.save(updated, current.version)) {
+        val guarded = if (!current.isTerminal()) enforceLoginCompletion(updated) else updated
+        val saved = requireNotNull(store.save(guarded, current.version)) {
             "Authentication transaction was modified concurrently: ${current.id}"
         }
         if (!current.isTerminal()) recordOutcome(saved, observation)
         return saved
+    }
+
+    /** Every provider, including email OTP and future providers, passes this gate before session issuance. */
+    private fun enforceLoginCompletion(transaction: AuthenticationTransaction): AuthenticationTransaction {
+        if (transaction.purpose != AuthenticationTransactionPurposeEnum.LOGIN ||
+            transaction.status != AuthenticationTransactionStatusEnum.COMPLETED
+        ) return transaction
+        val enforcer = mfaPolicyEnforcer ?: return transaction
+        val userId = requireNotNull(transaction.userId)
+        val tenantId = requireNotNull(transaction.tenantId)
+        val enforcement = enforcer.enforce(transaction.purpose, tenantId, userId, requireNotNull(transaction.acr))
+        return when (enforcement.outcome) {
+            MfaPolicyEnforcementOutcomeEnum.ALLOW -> transaction
+            MfaPolicyEnforcementOutcomeEnum.ALLOW_ENROLLMENT_REQUIRED -> transaction.copy(
+                postAuthenticationActions = transaction.postAuthenticationActions + AuthenticationActionEnum.ENROLL_MFA,
+            )
+            MfaPolicyEnforcementOutcomeEnum.DENY_ENROLLMENT_REQUIRED -> transaction.copy(
+                status = AuthenticationTransactionStatusEnum.FAILED,
+                nextActions = emptySet(), context = null, errorCode = "MFA_ENROLLMENT_REQUIRED",
+            )
+            MfaPolicyEnforcementOutcomeEnum.REQUIRE_SECOND_FACTOR -> {
+                val actions = availableFederatedSecondFactors(
+                    userId, tenantId,
+                    enforcement.decision?.policy?.allowedMethods ?: setOf(MfaMethodEnum.TOTP),
+                )
+                transaction.copy(
+                    status = if (actions.isEmpty()) AuthenticationTransactionStatusEnum.FAILED
+                        else AuthenticationTransactionStatusEnum.CHALLENGE_REQUIRED,
+                    nextActions = actions, context = null, errorCode = "MFA_REQUIRED",
+                    postAuthenticationActions = emptySet(),
+                )
+            }
+        }
     }
 
     /**

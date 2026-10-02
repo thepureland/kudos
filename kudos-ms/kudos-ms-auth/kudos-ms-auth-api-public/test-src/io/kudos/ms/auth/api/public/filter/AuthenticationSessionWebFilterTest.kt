@@ -92,7 +92,7 @@ internal class AuthenticationSessionWebFilterTest {
     }
 
     @Test
-    fun legacySessionWithoutLogicalId_isLeftForCompatibilityFilter() {
+    fun legacySessionWithoutLogicalId_isInvalidated() {
         val session = MockHttpSession().apply {
             setAttribute(KudosContext.SESSION_KEY_USER, SessionUserPrincipal("u-1", "t-1", "alice"))
         }
@@ -102,7 +102,7 @@ internal class AuthenticationSessionWebFilterTest {
         filter.doFilter(request, MockHttpServletResponse(), chain)
 
         assertTrue(chain.invoked)
-        assertTrue(!session.isInvalid)
+        assertTrue(session.isInvalid)
         assertNull(KudosContextHolder.getOrNull())
     }
 }

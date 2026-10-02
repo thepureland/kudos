@@ -1,7 +1,7 @@
 package io.kudos.ms.user.core.account.service.impl
 
 import io.kudos.base.logger.LogFactory
-import io.kudos.base.support.service.impl.BaseCrudService
+import io.kudos.ms.user.core.security.UserOwnedCrudService
 import io.kudos.ms.user.core.account.dao.UserAccountDao
 import io.kudos.ms.user.core.account.dao.UserAccountThirdDao
 import io.kudos.ms.user.core.account.model.AdminExternalAccountBindingCommand
@@ -31,17 +31,25 @@ open class UserAccountThirdService(
     dao: UserAccountThirdDao,
     private val userAccountDao: UserAccountDao,
     private val auditService: IUserAccountThirdAuditService,
-) : BaseCrudService<String, UserAccountThird, UserAccountThirdDao>(dao), IUserAccountThirdService {
+) : UserOwnedCrudService<String, UserAccountThird, UserAccountThirdDao>(dao), IUserAccountThirdService {
+
+    init {
+        ownerAccountDao = userAccountDao
+    }
 
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getByUserAccountId(userId: String): List<UserAccountThird> =
-        dao.searchByUserId(userId)
+    override fun getByUserAccountId(userId: String): List<UserAccountThird> {
+        if (tenantAccess.hasPrincipal()) assertAccountAccess(userId)
+        return dao.searchByUserId(userId)
+    }
 
     @Transactional(readOnly = true)
-    override fun getActiveByUserAccountId(userId: String): List<UserAccountThird> =
-        dao.searchActiveByUserId(userId)
+    override fun getActiveByUserAccountId(userId: String): List<UserAccountThird> {
+        if (tenantAccess.hasPrincipal()) assertAccountAccess(userId)
+        return dao.searchActiveByUserId(userId)
+    }
 
     override fun updateLastLoginTime(bindingId: String, lastLoginTime: LocalDateTime): Boolean =
         dao.updateProperties(bindingId, mapOf(UserAccountThird::lastLoginTime.name to lastLoginTime))
@@ -80,6 +88,7 @@ open class UserAccountThirdService(
         action: String,
         operationReason: String?,
     ): UserAccountThird {
+        tenantAccess.assertCanAccess(command.tenantId)
         validate(command)
         userAccountDao.lockAccount(command.userId)
         val account = userAccountDao.get(command.userId)
@@ -186,6 +195,7 @@ open class UserAccountThirdService(
         actorUserId: String,
         operationReason: String,
     ): Boolean {
+        tenantAccess.assertCanAccess(tenantId)
         require(actorUserId.isNotBlank()) { "actorUserId must not be blank" }
         require(operationReason.isNotBlank()) { "operationReason must not be blank" }
         val binding = dao.get(bindingId) ?: throw ExternalAccountBindingException("EXTERNAL_BINDING_NOT_FOUND")

@@ -4,6 +4,7 @@ import io.kudos.ms.auth.common.authz.vo.SubjectRef
 import io.kudos.ms.auth.core.platform.authz.init.properties.AuthzProperties
 import io.kudos.ms.auth.core.role.cache.AuthRoleHashCache
 import io.kudos.ms.auth.core.role.cache.RoleIdsByUserIdCache
+import io.kudos.ms.user.common.security.IPlatformAdministratorPolicy
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Component
  * @author AI: Codex
  */
 @Component
-open class PlatformAdministratorPolicy {
+open class PlatformAdministratorPolicy : IPlatformAdministratorPolicy {
 
     @Resource
     private lateinit var properties: AuthzProperties
@@ -32,7 +33,7 @@ open class PlatformAdministratorPolicy {
     open fun isPlatformAdministrator(subject: SubjectRef): Boolean =
         isPlatformAdministrator(subject.principalId)
 
-    open fun isPlatformAdministrator(principalId: String): Boolean {
+    override fun isPlatformAdministrator(principalId: String): Boolean {
         if (principalId.isBlank()) return false
         val adminCodes = properties.platformAdminRoleCodes
         val adminTenants = properties.platformAdminTenantIds

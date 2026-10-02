@@ -1,6 +1,6 @@
 package io.kudos.ms.user.core.account.service.impl
 
-import io.kudos.base.support.service.impl.BaseCrudService
+import io.kudos.ms.user.core.security.UserOwnedCrudService
 import io.kudos.ms.user.core.account.dao.UserAccountProtectionDao
 import io.kudos.ms.user.core.account.model.po.UserAccountProtection
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountProtectionService
@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 open class UserAccountProtectionService(
     dao: UserAccountProtectionDao
-) : BaseCrudService<String, UserAccountProtection, UserAccountProtectionDao>(dao), IUserAccountProtectionService {
+) : UserOwnedCrudService<String, UserAccountProtection, UserAccountProtectionDao>(dao), IUserAccountProtectionService {
 
 
 

@@ -1,6 +1,8 @@
 package io.kudos.ability.distributed.stream.rocketmq.init.properties
 
 import io.kudos.context.kit.SpringKit
+import io.kudos.ability.distributed.stream.common.support.StreamMessageSerialization
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 
@@ -23,12 +25,15 @@ class RocketMqProperties {
     /**
      * JDK deserialization allowlist for RocketMqBatchConsumer.
      *
-     * Same syntax as [java.io.ObjectInputFilter.Config.createFilter]; empty preserves the historical unrestricted behavior.
-     * Refer to the JDK ObjectInputFilter pattern for examples: allow Java primitive types and this project's message
-     * types, then reject everything else.
+     * Optional additional restriction using [java.io.ObjectInputFilter.Config.createFilter] syntax.
+     * The shared class allowlist and resource limits always apply, even when this string is empty.
+     * This filter cannot expand the shared allowlist.
      */
     @Value($$"${kudos.ability.distributed.stream.rocketmq.batch-consumer.deserialization-filter:}")
     var batchConsumerDeserializationFilter: String = ""
+
+    @Autowired(required = false)
+    var messageSerialization: StreamMessageSerialization = StreamMessageSerialization()
 
     companion object {
         val instance: RocketMqProperties

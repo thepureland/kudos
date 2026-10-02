@@ -80,6 +80,8 @@ subprojects {
 
     tasks.withType<Test> {
         useJUnitPlatform()
+        // Explicit fixture key only for test workers; never packaged into application configuration.
+        systemProperty("kudos.crypto.default-key", "kudos-test-fixture-only-0123456789-abcdef")
         testLogging {
             showStandardStreams = true
             // Optional: print standard out/err as events more explicitly

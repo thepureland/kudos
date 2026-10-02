@@ -293,6 +293,7 @@ object CryptoKit {
 
     /**
      * Decrypts an AES-encrypted, hex-encoded string, with backward compatibility for unencrypted historical data.
+     * Marked ciphertext fails closed on a wrong key or corruption; it never becomes an empty credential.
      *
      * @param contentHex the AES-encrypted, hex-encoded string
      * @return the original string
@@ -302,7 +303,8 @@ object CryptoKit {
     fun aesDecrypt(contentHex: String): String {
         return if (contentHex.startsWith(PREFIX)) { // encrypted
             val content = contentHex.removePrefix(PREFIX)
-            aesDecrypt(content, CryptoKey.KEY_DEFAULT)
+            // Never turn a corrupted secret or wrong deployment key into an absent credential.
+            tryAesDecrypt(content, CryptoKey.KEY_DEFAULT).getOrThrow()
         } else { // unencrypted historical data
             contentHex
         }

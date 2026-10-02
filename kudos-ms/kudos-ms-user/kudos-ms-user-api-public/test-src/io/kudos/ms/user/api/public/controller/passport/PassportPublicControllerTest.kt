@@ -41,7 +41,7 @@ import kotlin.test.assertTrue
  * through [KudosContextHolder] (the same data source [io.kudos.ms.user.common.passport.CurrentUserKit] reads).
  *
  * Covers every branch:
- *  - login: SUCCESS + userInfo (writes session), SUCCESS + null userInfo (early return, no session), non-SUCCESS
+ *  - legacy login is retired without issuing unmanaged sessions
  *  - logout: explicit userId / session-resolved userId / no userId at all; session invalidation present vs absent
  *  - me: principal present (field mapping) vs absent (null)
  *  - verify / change delegations
@@ -117,87 +117,14 @@ internal class PassportPublicControllerTest {
     // ---------------- login ----------------
 
     @Test
-    fun login_success_withUserInfo_writesPrincipalIntoSession() {
-        val info = sampleUserInfo()
-        val result = PassportLoginResult.success(info)
-        `when`(service.login(observedLoginReq())).thenReturn(result)
+    fun legacyLoginIsRetiredWithoutVerifyingCredentialsOrIssuingSession() {
         val request = clientRequest()
-
-        val res = controller.login(loginReq(), request)
-
-        assertSame(result, res)
-        val stored = request.getSession(false)!!.getAttribute(KudosContext.SESSION_KEY_USER)
-        assertTrue(stored is SessionUserPrincipal)
-        assertEquals("u-1", stored.id)
-        assertEquals("t-1", stored.tenantId)
-        assertEquals("alice", stored.username)
-        verify(service).login(observedLoginReq())
-    }
-
-    @Test
-    fun login_success_rotatesExistingSessionId() {
-        val result = PassportLoginResult.success(sampleUserInfo())
-        `when`(service.login(observedLoginReq())).thenReturn(result)
-        val request = clientRequest()
-        val session = MockHttpSession()
-        request.setSession(session)
-        val previousId = session.id
-
-        controller.login(loginReq(), request)
-
-        assertNotEquals(previousId, session.id)
-    }
-
-    @Test
-    fun login_success_butNullUserInfo_returnsEarlyWithoutSession() {
-        // status SUCCESS but userInfo == null -> hits the `?: return res` branch, no session created
-        val result = PassportLoginResult(status = PassportLoginStatusEnum.SUCCESS, userInfo = null)
-        `when`(service.login(observedLoginReq())).thenReturn(result)
-        val request = clientRequest()
-
-        val res = controller.login(loginReq(), request)
-
-        assertSame(result, res)
-        // getSession(false) must be null: controller never touched the session
+        val failure = kotlin.test.assertFailsWith<org.springframework.web.server.ResponseStatusException> {
+            controller.login(loginReq(), request)
+        }
+        assertEquals(410, failure.statusCode.value())
+        org.mockito.Mockito.verifyNoInteractions(service)
         assertNull(request.getSession(false))
-    }
-
-    @Test
-    fun login_accountRevealingFailures_collapseToOnePublicResultWithoutSession() {
-        val internalResults = listOf(
-            PassportLoginResult.userNotFound(),
-            PassportLoginResult.wrongPassword(3),
-            PassportLoginResult.inactive(),
-            PassportLoginResult.locked(5),
-            PassportLoginResult.accountFrozen("Investigation in progress"),
-        )
-
-        internalResults.forEach { internalResult ->
-            `when`(service.login(observedLoginReq())).thenReturn(internalResult)
-            val request = clientRequest()
-
-            val res = controller.login(loginReq(), request)
-
-            assertEquals(PassportLoginResult.invalidCredentials(), res)
-            assertNull(res.loginErrorTimes)
-            assertNull(res.userInfo)
-            assertNull(request.getSession(false))
-        }
-    }
-
-    @Test
-    fun login_challengeAndRateLimitResults_remainActionable() {
-        val publicResults = listOf(
-            PassportLoginResult.otpRequired(),
-            PassportLoginResult.otpWrong(),
-            PassportLoginResult.rateLimited(23),
-        )
-
-        publicResults.forEach { result ->
-            `when`(service.login(observedLoginReq())).thenReturn(result)
-
-            assertSame(result, controller.login(loginReq(), clientRequest()))
-        }
     }
 
     // ---------------- logout ----------------

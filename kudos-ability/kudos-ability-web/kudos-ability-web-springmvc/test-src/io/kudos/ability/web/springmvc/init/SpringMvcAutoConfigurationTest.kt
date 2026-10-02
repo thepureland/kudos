@@ -156,13 +156,14 @@ internal class SpringMvcAutoConfigurationTest {
         buildConverters(configuration).filterIsInstance<JacksonJsonHttpMessageConverter>().single()
 
     @Test
-    fun addCorsMappings_appliesPermissiveDefaults() {
+    fun addCorsMappings_deniesCrossOriginRequestsByDefault() {
         val registry = ExposedCorsRegistry()
         config().addCorsMappings(registry)
 
         val cors = assertNotNull(registry.configurations()["/**"])
-        assertEquals(listOf("*"), cors.allowedOriginPatterns)
-        assertEquals(true, cors.allowCredentials)
+        assertTrue(cors.allowedOriginPatterns.isNullOrEmpty())
+        assertNull(cors.checkOrigin("https://attacker.example"))
+        assertEquals(false, cors.allowCredentials)
         assertEquals(listOf("GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS", "HEAD"), cors.allowedMethods)
         assertEquals(3600L * 24, cors.maxAge)
     }
@@ -198,6 +199,17 @@ internal class SpringMvcAutoConfigurationTest {
     }
 
     /** Exposes the protected CORS configuration map for assertions. */
+    @Test
+    fun credentialedCorsRejectsWildcardPatterns() {
+        val props = SpringMvcProperties().apply {
+            cors.allowCredentials = true
+            cors.allowedOriginPatterns = listOf("https://*.example")
+        }
+        kotlin.test.assertFailsWith<IllegalArgumentException> {
+            config(props).addCorsMappings(ExposedCorsRegistry())
+        }
+    }
+
     private class ExposedCorsRegistry : CorsRegistry() {
         fun configurations() = corsConfigurations
     }

@@ -3,7 +3,7 @@ package io.kudos.ms.user.core.contact.service.impl
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.eq
 import io.kudos.base.query.inList
-import io.kudos.base.support.service.impl.BaseCrudService
+import io.kudos.ms.user.core.security.UserOwnedCrudService
 import io.kudos.ms.user.core.contact.dao.UserContactWayDao
 import io.kudos.ms.user.core.contact.model.po.UserContactWay
 import io.kudos.ms.user.core.contact.service.iservice.IUserContactWayService
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional
 open class UserContactWayService(
     dao: UserContactWayDao
-) : BaseCrudService<String, UserContactWay, UserContactWayDao>(dao), IUserContactWayService {
+) : UserOwnedCrudService<String, UserContactWay, UserContactWayDao>(dao), IUserContactWayService {
 
     @Transactional(readOnly = true)
     override fun getActiveContactValuesByUserIds(
@@ -30,6 +30,7 @@ open class UserContactWayService(
         contactWayDictCode: String,
     ): Map<String, String> {
         if (userIds.isEmpty()) return emptyMap()
+        if (tenantAccess.hasPrincipal()) userIds.forEach(::assertAccountAccess)
         val criteria = Criteria(UserContactWay::userId inList userIds.toList())
             .addAnd(UserContactWay::contactWayDictCode eq contactWayDictCode)
             .addAnd(UserContactWay::active eq true)

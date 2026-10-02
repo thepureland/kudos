@@ -72,7 +72,9 @@ internal class StreamMessageConverterTest {
     ) : Serializable
 
     private class TestStreamMessageConverter {
-        private val delegate = StreamMessageConverter()
+        private val delegate = StreamMessageConverter(StreamMessageSerialization().apply {
+            allowedClasses = setOf(TestPayload::class.java.name)
+        })
 
         fun toInternal(payload: Any): Any {
             val method = StreamMessageConverter::class.java.getDeclaredMethod(

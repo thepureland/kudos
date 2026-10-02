@@ -1,41 +1,31 @@
 package io.kudos.base.security
 
 /**
- * Crypto key constants and global default key configuration entry point.
- *
- * In production, call [configureDefaultKey] at startup to inject a strong random key; when not configured, a
- * placeholder default is used — for local development/testing only.
- *
- * @author K
- * @since 1.0.0
+ * Default encryption key supplied explicitly by the operator. There is no built-in fallback.
+ * Non-Spring applications may configure it programmatically, with `-Dkudos.crypto.default-key`,
+ * or with `KUDOS_CRYPTO_DEFAULT_KEY`. Use at least 32 random characters from a secret manager.
+ * Changing this key requires explicit migration of existing ciphertext with the old key first.
  */
 object CryptoKey {
-
-    private const val PLACEHOLDER_DEFAULT = "io．Kudos．base.security "
-
     @Volatile
     private var configuredKey: String? = null
 
-    /**
-     * Current global default key material.
-     * When not written via [configureDefaultKey] or by assignment, the built-in placeholder is used
-     * (do not use in production).
-     * The setter is retained for legacy compatibility; new code should prefer [configureDefaultKey]
-     * (which includes a non-blank check).
-     */
     var KEY_DEFAULT: String
-        get() = configuredKey ?: PLACEHOLDER_DEFAULT
-        set(value) {
-            configuredKey = value
-        }
+        get() = requireKey(configuredKey ?: System.getProperty("kudos.crypto.default-key")
+            ?: System.getenv("KUDOS_CRYPTO_DEFAULT_KEY"))
+        set(value) { configureDefaultKey(value) }
 
-    /**
-     * Configures the global default key at application startup (recommended for production).
-     *
-     * @throws IllegalArgumentException if key is blank
-     */
     fun configureDefaultKey(key: String) {
-        require(key.isNotBlank()) { "Crypto default key must not be blank" }
-        configuredKey = key
+        configuredKey = requireKey(key)
+    }
+
+    internal fun requireKey(key: String?): String {
+        check(!key.isNullOrBlank()) {
+            "Missing encryption key: configure kudos.crypto.default-key or KUDOS_CRYPTO_DEFAULT_KEY"
+        }
+        require(key.length >= 32 && key != "io．Kudos．base.security ") {
+            "Encryption key must contain at least 32 characters of externally generated key material"
+        }
+        return key
     }
 }

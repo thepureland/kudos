@@ -5,6 +5,13 @@ import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
 import io.kudos.base.query.Criteria
 import io.kudos.base.query.lt
+import io.kudos.base.query.eq
+import io.kudos.base.model.payload.ListSearchPayload
+import io.kudos.base.query.PagingSearchResult
+import io.kudos.ms.user.core.security.UserTenantAccessGuard
+import io.kudos.ms.user.core.org.dao.UserOrgDao
+import org.springframework.beans.factory.annotation.Autowired
+import kotlin.reflect.KClass
 import io.kudos.base.security.GoogleAuthenticator
 import io.kudos.ability.security.common.support.PasswordEncodingKit
 import io.kudos.ms.user.common.account.vo.response.AuthKeySetup
@@ -77,14 +84,69 @@ open class UserAccountService(
     @Resource
     private lateinit var orgIdsByUserIdCache: OrgIdsByUserIdCache
 
+    @Autowired
+    private var tenantAccess = UserTenantAccessGuard()
+
+    @Resource
+    private lateinit var userOrgDao: UserOrgDao
+
+    /** Authorize the persisted tenant, never the tenant supplied in a request body. */
+    private fun accessibleAccount(id: String): UserAccount? =
+        dao.get(id)?.also { if (tenantAccess.hasPrincipal()) tenantAccess.assertCanAccess(it.tenantId) }
+
+    private fun assertOrganization(organizationId: String, tenantId: String? = null) {
+        if (!tenantAccess.hasPrincipal()) return
+        val org = requireNotNull(userOrgDao.get(organizationId)) { "Organization not found" }
+        tenantAccess.assertCanAccess(org.tenantId)
+        require(tenantId == null || tenantId == org.tenantId) { "Account and organization must belong to the same tenant" }
+    }
+
+    private fun assertAccountReferences(value: Any, tenantId: String) {
+        if (!tenantAccess.hasPrincipal()) return
+        stringProperty(value, "orgId")?.takeIf(String::isNotBlank)?.let { assertOrganization(it, tenantId) }
+        stringProperty(value, "supervisorId")?.takeIf(String::isNotBlank)?.let {
+            val supervisor = requireNotNull(dao.get(it)) { "Supervisor not found" }
+            require(supervisor.tenantId == tenantId) { "Account and supervisor must belong to the same tenant" }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    override fun get(id: String): UserAccount? = accessibleAccount(id)
+
+    @Transactional(readOnly = true)
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        if (tenantAccess.hasPrincipal()) accessibleAccount(id) ?: return null
+        return dao.get(id, returnType)
+    }
+
+    @Transactional(readOnly = true)
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
+        val restricted = tenantAccess.restrictedTenantId()
+        if (restricted == null) return super.pagingSearch(listSearchPayload)
+        require(listSearchPayload is UserAccountQuery) { "A tenant-scoped account query is required" }
+        val scoped = listSearchPayload.copy(tenantId = tenantAccess.queryTenantId(listSearchPayload.tenantId)).apply {
+            pageNo = listSearchPayload.pageNo
+            pageSize = listSearchPayload.pageSize
+            orders = listSearchPayload.orders
+        }
+        scoped.orgId?.takeIf(String::isNotBlank)?.let { assertOrganization(it, restricted) }
+        return super.pagingSearch(scoped)
+    }
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
-    override fun getUserOrgIds(userId: String): List<String> = orgIdsByUserIdCache.getOrgIds(userId)
+    override fun getUserOrgIds(userId: String): List<String> {
+        if (tenantAccess.hasPrincipal()) accessibleAccount(userId) ?: return emptyList()
+        return orgIdsByUserIdCache.getOrgIds(userId)
+    }
 
 
     @Transactional(readOnly = true)
-    override fun getUserIds(tenantId: String): List<String> = dao.searchActiveUserIdsByTenantId(tenantId)
+    override fun getUserIds(tenantId: String): List<String> {
+        tenantAccess.assertCanAccess(tenantId)
+        return dao.searchActiveUserIdsByTenantId(tenantId)
+    }
 
 
     @Transactional(readOnly = true)
@@ -99,26 +161,30 @@ open class UserAccountService(
     override fun isUserInOrg(userId: String, orgId: String): Boolean = orgId in getUserOrgIds(userId)
 
     @Transactional(readOnly = true)
-    override fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? =
-        userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
+    override fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? {
+        tenantAccess.assertCanAccess(tenantId)
+        return userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
             ?.let { userAccountHashCache.getUserById(it) }
+    }
 
     @Transactional(readOnly = true)
-    override fun getUserRecord(id: String): UserAccountRow? = dao.getAs<UserAccountRow>(id)
+    override fun getUserRecord(id: String): UserAccountRow? = get(id, UserAccountRow::class)
 
     @Transactional(readOnly = true)
-    override fun getUsersByTenantId(tenantId: String): List<UserAccountRow> =
-        @Suppress("UNCHECKED_CAST")
-        dao.search(UserAccountQuery(tenantId = tenantId), UserAccountRow::class)
+    override fun getUsersByTenantId(tenantId: String): List<UserAccountRow> {
+        tenantAccess.assertCanAccess(tenantId)
+        return dao.search(UserAccountQuery(tenantId = tenantId), UserAccountRow::class)
+    }
 
     @Transactional(readOnly = true)
-    override fun getUsersByOrgId(orgId: String): List<UserAccountRow> =
-        @Suppress("UNCHECKED_CAST")
-        dao.search(UserAccountQuery(orgId = orgId), UserAccountRow::class)
+    override fun getUsersByOrgId(orgId: String): List<UserAccountRow> {
+        assertOrganization(orgId)
+        return dao.search(UserAccountQuery(orgId = orgId, tenantId = tenantAccess.restrictedTenantId()), UserAccountRow::class)
+    }
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
-        val tenantId = if (active) null else dao.get(id)?.tenantId
+        val tenantId = if (active) null else accessibleAccount(id)?.tenantId
         val success = updateAndPublish(id, "Updated active flag of user id=${id} to ${active}") {
             this.active = active
         }
@@ -134,7 +200,7 @@ open class UserAccountService(
 
     @Transactional
     override fun resetPassword(id: String, newPassword: String): Boolean {
-        val existing = dao.get(id) ?: return false
+        val existing = accessibleAccount(id) ?: return false
         val context = PasswordPolicyContext(PasswordPurpose.LOGIN, id, existing.username, existing.tenantId)
         val encryptedPassword = protectPassword(newPassword, context, existing.loginPassword)
         val success = updateAndPublish(id, "Reset login password of user id=${id}") {
@@ -160,7 +226,7 @@ open class UserAccountService(
 
     @Transactional
     override fun resetSecurityPassword(id: String, newPassword: String): Boolean {
-        val existing = dao.get(id) ?: return false
+        val existing = accessibleAccount(id) ?: return false
         val encryptedPassword = protectPassword(
             newPassword,
             PasswordPolicyContext(PasswordPurpose.SECURITY, id, existing.username, existing.tenantId),
@@ -200,7 +266,7 @@ open class UserAccountService(
 
     @Transactional
     override fun incrementLoginErrorTimes(id: String): Boolean {
-        val existing = dao.get(id) ?: return false
+        val existing = accessibleAccount(id) ?: return false
         val current = existing.loginErrorTimes ?: 0
         return updateAndPublish(id, "Incremented login error count of user id=${id}") {
             this.loginErrorTimes = current + 1
@@ -215,7 +281,7 @@ open class UserAccountService(
 
     @Transactional
     override fun incrementSecurityPasswordErrorTimes(id: String): Boolean {
-        val existing = dao.get(id) ?: return false
+        val existing = accessibleAccount(id) ?: return false
         val current = existing.securityPasswordErrorTimes ?: 0
         return updateAndPublish(id, "Incremented security-password error count of user id=${id}") {
             this.securityPasswordErrorTimes = current + 1
@@ -236,6 +302,7 @@ open class UserAccountService(
      * scattered across 9 update methods, avoiding missed events or drifting log wording when fields are added.
      */
     private inline fun updateAndPublish(id: String, actionDesc: String, build: UserAccount.() -> Unit): Boolean {
+        if (tenantAccess.hasPrincipal()) accessibleAccount(id) ?: return false
         val user = UserAccount { this.id = id }.apply(build)
         val success = dao.update(user)
         if (success) {
@@ -250,6 +317,10 @@ open class UserAccountService(
     @Transactional
     override fun insert(any: Any): String {
         val account = mutableAccount(any)
+        if (tenantAccess.hasPrincipal()) {
+            tenantAccess.assertCanAccess(account.tenantId)
+            assertAccountReferences(any, account.tenantId)
+        }
         val loginPassword = stringProperty(any, UserAccount::loginPassword.name)
         val encodedLoginPassword = loginPassword
             ?.takeIf(String::isNotBlank)
@@ -296,12 +367,13 @@ open class UserAccountService(
     @Transactional
     override fun update(any: Any): Boolean {
         val id = BeanKit.getProperty(any, UserAccount::id.name) as String
-        val existing = dao.get(id) ?: return false
+        val existing = accessibleAccount(id) ?: return false
         val requestedTenantId = stringProperty(any, UserAccount::tenantId.name)
         require(requestedTenantId.isNullOrBlank() || requestedTenantId == existing.tenantId) {
             "A user account cannot be moved to another tenant"
         }
         val account = mutableAccount(any)
+        assertAccountReferences(any, existing.tenantId)
         val requestedUsername = stringProperty(any, UserAccount::username.name) ?: existing.username
         val requestedLoginPassword = stringProperty(any, UserAccount::loginPassword.name)
         val loginContext =
@@ -373,7 +445,7 @@ open class UserAccountService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val user = dao.get(id) ?: run {
+        val user = accessibleAccount(id) ?: run {
             log.warn("Failed to delete user id=${id}: already does not exist!")
             return false
         }
@@ -409,7 +481,7 @@ open class UserAccountService(
     override fun activateVerifiedAuthKey(id: String, secret: String): Boolean {
         val normalized = secret.trim().uppercase()
         require(TOTP_SECRET_PATTERN.matches(normalized)) { "Invalid TOTP secret format" }
-        val tenantId = dao.get(id)?.tenantId ?: return false
+        val tenantId = accessibleAccount(id)?.tenantId ?: return false
         val success = dao.activateAuthenticationKeyIfAbsent(id, normalized)
         if (success) {
             eventPublisher.publishEvent(UserAccountUpdated(id = id))
@@ -424,7 +496,7 @@ open class UserAccountService(
     }
 
     private fun persistAuthKey(id: String, secret: String): Boolean {
-        val tenantId = dao.get(id)?.tenantId ?: return false
+        val tenantId = accessibleAccount(id)?.tenantId ?: return false
         val user = UserAccount {
             this.id = id
             this.authenticationKey = secret
@@ -441,7 +513,7 @@ open class UserAccountService(
 
     @Transactional
     override fun cleanAuthKey(id: String): Boolean {
-        val tenantId = dao.get(id)?.tenantId
+        val tenantId = accessibleAccount(id)?.tenantId
         // For ktorm update, setting a column to null requires dao.updateProperties.
         val success = dao.updateProperties(id, mapOf(UserAccount::authenticationKey.name to null))
         if (success) {
@@ -462,7 +534,7 @@ open class UserAccountService(
 
     @Transactional(readOnly = true)
     override fun verifyAuthCode(id: String, code: Long): Boolean {
-        val key = dao.get(id)?.authenticationKey ?: return false
+        val key = accessibleAccount(id)?.authenticationKey ?: return false
         return GoogleAuthenticator().checkCode(key, code, System.currentTimeMillis())
     }
 
@@ -501,7 +573,7 @@ open class UserAccountService(
         freezeEndTime: LocalDateTime?,
     ): Boolean {
         require(freezeType.isNotBlank()) { "freezeType must not be blank" }
-        val tenantId = dao.get(id)?.tenantId
+        val tenantId = accessibleAccount(id)?.tenantId
         // Use updateProperties to update explicitly (including nulls). ktorm's plain update is a no-op
         // for null fields, but here we must clear start/end when the caller does not pass them.
         val success = dao.updateProperties(
@@ -536,6 +608,7 @@ open class UserAccountService(
         expectedEncodedPassword: String,
         upgradedEncodedPassword: String,
     ): Boolean {
+        if (tenantAccess.hasPrincipal()) accessibleAccount(id) ?: return false
         require(PasswordEncodingKit.looksLikeEncodedPassword(expectedEncodedPassword)) {
             "Expected password must be encoded"
         }
@@ -627,6 +700,7 @@ open class UserAccountService(
 
     @Transactional
     override fun unfreezeAccount(id: String): Boolean {
+        if (tenantAccess.hasPrincipal()) accessibleAccount(id) ?: return false
         // Clear all 6 columns. freezeTime is also cleared to avoid the misleading "was once frozen" residue.
         val success = dao.updateProperties(
             id, mapOf(
@@ -652,7 +726,9 @@ open class UserAccountService(
         // freeze_end_time IS NOT NULL AND freeze_end_time < now()
         // The `lt` operator maps to SQL `<`, which naturally does not match NULL --
         // permanent freezes (freeze_end_time=null) are not cleared.
-        val expired = dao.searchAs<UserAccount>(Criteria(UserAccount::freezeEndTime lt LocalDateTime.now()))
+        val criteria = Criteria(UserAccount::freezeEndTime lt LocalDateTime.now())
+        tenantAccess.restrictedTenantId()?.let { criteria.addAnd(UserAccount::tenantId eq it) }
+        val expired = dao.searchAs<UserAccount>(criteria)
         val cleared = expired.count { unfreezeAccount(it.id) }
         if (cleared > 0) log.info("auto-unfreeze: cleaned $cleared expired freeze records in total")
         return cleared
@@ -663,7 +739,10 @@ open class UserAccountService(
         // Snapshot tenantId/username first; after AFTER_COMMIT, downstream (tenantId, username) caches
         // can no longer look them up.
         val snapshots = if (ids.isEmpty()) emptyList()
-            else dao.getByIds(ids).map { UserAccountBatchDeleted.Item(it.id, it.tenantId, it.username) }
+            else dao.getByIds(ids).map {
+                tenantAccess.assertCanAccess(it.tenantId)
+                UserAccountBatchDeleted.Item(it.id, it.tenantId, it.username)
+            }
         val count = super.batchDelete(ids)
         log.debug("Batch deleted users: expected ${ids.size}, actually deleted ${count}.")
         if (snapshots.isNotEmpty()) {

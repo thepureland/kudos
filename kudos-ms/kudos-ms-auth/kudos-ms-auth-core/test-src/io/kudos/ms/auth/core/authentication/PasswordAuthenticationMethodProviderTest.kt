@@ -108,7 +108,9 @@ internal class PasswordAuthenticationMethodProviderTest {
             accountTypeDictCode = null, defaultLocale = null, defaultTimezone = null,
             defaultCurrency = null, loginTime = LocalDateTime.now(),
         )
-        `when`(passportService.login(passportRequest(123456L))).thenReturn(PassportLoginResult.success(info))
+        `when`(passportService.login(passportRequest(123456L))).thenReturn(
+            PassportLoginResult.success(info, setOf("password", "totp")),
+        )
 
         val result = provider.verify(transaction(), AuthenticationActionEnum.VERIFY_TOTP, action("123456"))
 
@@ -143,7 +145,7 @@ internal class PasswordAuthenticationMethodProviderTest {
             defaultCurrency = null, loginTime = LocalDateTime.now(),
         )
         `when`(passportService.login(passportRequest(recoveryCode = "2345-6789-ABCD-EFGH")))
-            .thenReturn(PassportLoginResult.success(info))
+            .thenReturn(PassportLoginResult.success(info, setOf("password", "recovery_code")))
 
         val result = provider.verify(
             transaction(),
@@ -321,4 +323,22 @@ internal class PasswordAuthenticationMethodProviderTest {
         accountTypeDictCode = null, defaultLocale = null, defaultTimezone = null,
         defaultCurrency = null, loginTime = LocalDateTime.now(),
     )
+    @Test
+    fun loginContinuationCannotSwitchUsernameAfterPasswordWasVerified() {
+        `when`(passportService.login(passportRequest(123456L))).thenReturn(
+            PassportLoginResult.success(userInfo(), setOf("password", "totp")),
+        )
+        val bound = transaction().copy(userId = "u-1", username = "alice", amr = setOf("password"))
+        val result = provider.verify(bound, AuthenticationActionEnum.VERIFY_TOTP, action("123456").copy(username = "mallory"))
+        verify(passportService).login(passportRequest(123456L))
+        assertEquals("alice", result.username)
+    }
+
+    @Test
+    fun requestingTotpDoesNotInventAnUnverifiedSecondFactor() {
+        `when`(passportService.login(passportRequest(123456L))).thenReturn(PassportLoginResult.success(userInfo()))
+        val result = provider.verify(transaction(), AuthenticationActionEnum.VERIFY_TOTP, action("123456"))
+        assertEquals(setOf("password"), result.amr)
+        assertEquals(PasswordAuthenticationMethodProvider.ACR_PASSWORD, result.acr)
+    }
 }

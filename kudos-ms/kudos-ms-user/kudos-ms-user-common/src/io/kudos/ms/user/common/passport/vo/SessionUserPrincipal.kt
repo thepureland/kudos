@@ -30,5 +30,7 @@ data class SessionUserPrincipal(
 
     companion object {
         private const val serialVersionUID = 1L
+        /** Server-side request marker set only after the logical session registry accepts the principal. */
+        const val VALIDATED_REQUEST_ATTRIBUTE = "kudos.auth.validatedSessionPrincipal"
     }
 }

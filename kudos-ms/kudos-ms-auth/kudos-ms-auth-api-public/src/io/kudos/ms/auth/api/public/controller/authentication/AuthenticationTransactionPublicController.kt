@@ -85,9 +85,25 @@ open class AuthenticationTransactionPublicController(
         @RequestBody @Valid request: AuthenticationActionRequest,
         servletRequest: HttpServletRequest,
     ): AuthenticationTransaction {
-        transactionService.get(id)
-            ?.takeIf { it.purpose == AuthenticationTransactionPurposeEnum.STEP_UP }
-            ?.let { requireStepUpSource(it, servletRequest) }
+        transactionService.get(id)?.let { pending ->
+            when (pending.purpose) {
+                AuthenticationTransactionPurposeEnum.STEP_UP -> requireStepUpSource(pending, servletRequest)
+                AuthenticationTransactionPurposeEnum.LOGIN -> {
+                    val targetTenantId = if (action == AuthenticationActionEnum.SELECT_TENANT) {
+                        request.tenantId?.trim()?.takeIf(String::isNotEmpty)
+                    } else pending.tenantId
+                    val current = servletRequest.getSession(false)
+                        ?.getAttribute(KudosContext.SESSION_KEY_USER) as? SessionUserPrincipal
+                    if (current != null && targetTenantId != null && current.tenantId != targetTenantId) {
+                        throw ResponseStatusException(
+                            HttpStatus.CONFLICT,
+                            "Sign out before signing in to another tenant",
+                        )
+                    }
+                }
+                AuthenticationTransactionPurposeEnum.LINK_EXTERNAL_IDENTITY -> Unit
+            }
+        }
         val observedRequest = request.copy(
             loginIp = IpKit.ipv4StringToLong(servletRequest.remoteAddr).takeIf { it >= 0 },
             loginDevice = servletRequest.getClientTerminal(),

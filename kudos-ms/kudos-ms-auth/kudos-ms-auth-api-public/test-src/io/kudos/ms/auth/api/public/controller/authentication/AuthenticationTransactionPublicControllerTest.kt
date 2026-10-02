@@ -334,4 +334,50 @@ internal class AuthenticationTransactionPublicControllerTest {
         assertTrue(principal is SessionUserPrincipal)
         assertEquals("user-1", principal.id)
     }
+    @Test
+    fun authenticatedBrowserMustSignOutBeforeCrossTenantLoginButCanContinueSameTenant() {
+        var verificationCalls = 0
+        val method = object : IAuthenticationMethodProvider {
+            override fun method() = "test"
+            override fun begin(transaction: AuthenticationTransaction, request: AuthenticationTransactionCreateRequest) =
+                AuthenticationChallenge(AuthenticationTransactionStatusEnum.CHALLENGE_REQUIRED,
+                    if (transaction.tenantId == null) AuthenticationActionEnum.SELECT_TENANT
+                    else AuthenticationActionEnum.VERIFY_PASSWORD)
+            override fun verify(transaction: AuthenticationTransaction, action: AuthenticationActionEnum,
+                                request: AuthenticationActionRequest): AuthenticationMethodResult {
+                verificationCalls++
+                return AuthenticationMethodResult(AuthenticationMethodOutcomeEnum.CHALLENGE,
+                    nextAction = AuthenticationActionEnum.VERIFY_PASSWORD)
+            }
+        }
+        val transactions = AuthenticationTransactionService(InMemoryAuthenticationTransactionStore(),
+            AuthenticationMethodRegistry(listOf(method)))
+        val controller = AuthenticationTransactionPublicController(transactions,
+            AuthenticationSessionService(InMemoryAuthenticationSessionStore()))
+        val session = MockHttpSession().apply {
+            setAttribute(KudosContext.SESSION_KEY_USER, SessionUserPrincipal("u-1", "tenant-1", "alice"))
+        }
+        val browser = MockHttpServletRequest().apply { setSession(session) }
+        val crossTenant = transactions.create(AuthenticationTransactionCreateRequest("tenant-2", "test"))
+        val failure = assertFailsWith<ResponseStatusException> {
+            controller.act(crossTenant.id, AuthenticationActionEnum.VERIFY_PASSWORD,
+                AuthenticationActionRequest(username = "bob", plainPassword = "secret"), browser)
+        }
+        assertEquals(409, failure.statusCode.value())
+        assertEquals(0, verificationCalls)
+        assertEquals(0, transactions.get(crossTenant.id)?.version)
+
+        val unselected = transactions.create(AuthenticationTransactionCreateRequest(requestedMethod = "test"))
+        val selectionFailure = assertFailsWith<ResponseStatusException> {
+            controller.act(unselected.id, AuthenticationActionEnum.SELECT_TENANT,
+                AuthenticationActionRequest(tenantId = "tenant-2"), browser)
+        }
+        assertEquals(409, selectionFailure.statusCode.value())
+
+        val sameTenant = transactions.create(AuthenticationTransactionCreateRequest("tenant-1", "test"))
+        controller.act(sameTenant.id, AuthenticationActionEnum.VERIFY_PASSWORD,
+            AuthenticationActionRequest(username = "alice", plainPassword = "secret"), browser)
+        assertEquals(1, verificationCalls)
+        assertTrue(!session.isInvalid)
+    }
 }

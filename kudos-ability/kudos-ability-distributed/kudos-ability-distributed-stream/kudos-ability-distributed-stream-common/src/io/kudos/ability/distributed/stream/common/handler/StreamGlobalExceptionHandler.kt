@@ -6,7 +6,7 @@ import io.kudos.ability.distributed.stream.common.model.vo.StreamHeader
 import io.kudos.ability.distributed.stream.common.model.vo.StreamMessageVo
 import io.kudos.ability.distributed.stream.common.model.vo.StreamProducerMsgVo
 import io.kudos.base.data.json.JsonKit
-import io.kudos.base.lang.SerializationKit
+import io.kudos.ability.distributed.stream.common.support.StreamMessageSerialization
 import io.kudos.base.logger.LogFactory
 import jakarta.annotation.Resource
 import org.springframework.beans.factory.annotation.Value
@@ -41,7 +41,9 @@ import java.util.Locale
  * @author AI: Codex
  * @since 1.0.0
  */
-class StreamGlobalExceptionHandler {
+class StreamGlobalExceptionHandler(
+    private val serialization: StreamMessageSerialization = StreamMessageSerialization()
+) {
 
     /** Whether to persist consumer-side exception messages; injected from `kudos.ability.distributed.stream.save-exception`. `var` so Spring's field injection does not have to write a final field reflectively. */
     @Value($$"${kudos.ability.distributed.stream.save-exception:true}")
@@ -64,7 +66,7 @@ class StreamGlobalExceptionHandler {
             val headers = message.headers
             if (!isFromConsumer(headers)) return
             LOG.warn("Received stream exception message, starting persistence...")
-            val body = SerializationKit.deserialize(message.getPayload() as ByteArray)
+            val body = serialization.deserialize(message.getPayload() as ByteArray)
 
             val exceptionMsg = SysMqFailMsg().apply {
                 topic = headers.get(StreamHeader.TOPIC_KEY).toString()
@@ -178,7 +180,7 @@ class StreamGlobalExceptionHandler {
         }
         LOG.warn("Received stream exception message, starting persistence...")
         val headers = message.headers
-        val body = SerializationKit.deserialize(message.getPayload() as ByteArray) as? StreamMessageVo<*>
+        val body = serialization.deserialize(message.getPayload() as ByteArray) as? StreamMessageVo<*>
             ?: return
         val bindName = headers.get(StreamHeader.SCST_BIND_NAME).toString()
         val producerMsgVo = StreamProducerMsgVo().apply {

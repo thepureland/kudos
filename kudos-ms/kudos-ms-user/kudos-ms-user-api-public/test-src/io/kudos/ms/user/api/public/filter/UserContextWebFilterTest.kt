@@ -100,6 +100,7 @@ internal class UserContextWebFilterTest {
         val session = MockHttpSession()
         session.setAttribute(KudosContext.SESSION_KEY_USER, principal)
         request.setSession(session)
+        request.setAttribute(SessionUserPrincipal.VALIDATED_REQUEST_ATTRIBUTE, principal)
         val chain = RecordingChain()
 
         filter.doFilter(request, MockHttpServletResponse(), chain)
@@ -119,6 +120,7 @@ internal class UserContextWebFilterTest {
         val session = MockHttpSession()
         session.setAttribute(KudosContext.SESSION_KEY_USER, principal)
         request.setSession(session)
+        request.setAttribute(SessionUserPrincipal.VALIDATED_REQUEST_ATTRIBUTE, principal)
         val chain = RecordingChain()
 
         filter.doFilter(request, MockHttpServletResponse(), chain)
@@ -126,5 +128,16 @@ internal class UserContextWebFilterTest {
         // same context instance reused, only user filled in
         assertSame(existing, KudosContextHolder.getOrNull())
         assertEquals(principal, existing.user)
+    }
+    @Test
+    fun unvalidatedLegacyPrincipalIsInvalidatedEvenWithoutAuthFilter() {
+        val request = MockHttpServletRequest()
+        val session = MockHttpSession().apply {
+            setAttribute(KudosContext.SESSION_KEY_USER, SessionUserPrincipal("u-1", "t-1", "alice"))
+        }
+        request.setSession(session)
+        filter.doFilter(request, MockHttpServletResponse(), RecordingChain())
+        assertTrue(session.isInvalid)
+        assertNull(KudosContextHolder.getOrNull())
     }
 }

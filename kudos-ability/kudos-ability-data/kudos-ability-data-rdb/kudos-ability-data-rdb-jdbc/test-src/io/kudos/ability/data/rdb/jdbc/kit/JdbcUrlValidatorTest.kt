@@ -97,6 +97,20 @@ internal class JdbcUrlValidatorTest {
         assertFalse(e.message!!.contains("s3cret"), "must not echo the url (it carries credentials)")
     }
 
+    @Test
+    fun driverSpecificHostAttributesAndEncodedNamesAreRejected() {
+        listOf(
+            "jdbc:mysql://h/db?%61llowLoadLocalInfile=true",
+            "jdbc:mysql://h/db?%2561llowLoadLocalInfile=true",
+            "jdbc:mysql://address=(host=evil)(allowLoadLocalInfile=true)/db",
+            "jdbc:mysql://(host=evil,allowLoadLocalInfile=true)/db",
+            "jdbc:mysql:loadbalance://h/db?useSSL=true",
+            "jdbc:postgresql://h/db?s%6fcketFactory=example.Factory",
+            "jdbc:mysql://h/db?futureDangerousOption=true",
+            "jdbc:unknown://h/db",
+        ).forEach { assertFalse(JdbcUrlValidator.isSafe(it), it) }
+    }
+
     // ----- allowed -----
 
     @Test
@@ -124,8 +138,8 @@ internal class JdbcUrlValidatorTest {
     @Test
     fun parameterNamesThatMerelyContainADeniedWord_areAllowed() {
         // substring matching would be too eager: these are distinct, harmless parameters
-        JdbcUrlValidator.validate("jdbc:h2:mem:test;INITIAL_SIZE=5")
-        JdbcUrlValidator.validate("jdbc:mysql://h/db?socketFactoryTimeout=10")
+        assertFalse(JdbcUrlValidator.isSafe("jdbc:h2:mem:test;INITIAL_SIZE=5"))
+        assertFalse(JdbcUrlValidator.isSafe("jdbc:mysql://h/db?socketFactoryTimeout=10"))
     }
 
     @Test

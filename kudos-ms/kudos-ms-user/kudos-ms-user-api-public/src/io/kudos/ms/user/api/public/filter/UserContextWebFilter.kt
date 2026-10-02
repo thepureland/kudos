@@ -20,8 +20,8 @@ import org.springframework.web.filter.OncePerRequestFilter
  * Ordering uses [Order]: `WebContextInitFilter` defaults to a non-primary Spring auto-configured order (>=0),
  * so we use `Ordered.LOWEST_PRECEDENCE - 100` for a relatively late position.
  *
- * **Does not auto-invalidate session**: logout policy is triggered explicitly by `PassportPublicController.logout`;
- * this filter only does a one-way "read session -> write context".
+ * Only forwards a principal already validated by the authentication session registry.
+ * Persisted legacy sessions without that per-request validation are invalidated.
  *
  * @author K
  * @since 1.0.0
@@ -38,10 +38,16 @@ open class UserContextWebFilter : OncePerRequestFilter() {
         // session=false: do not force-create an empty session for this request; only existing logged-in sessions are read
         val session = request.getSession(false)
         val raw = session?.getAttribute(KudosContext.SESSION_KEY_USER)
-        if (raw is SessionUserPrincipal) {
+        if (raw is SessionUserPrincipal &&
+            request.getAttribute(SessionUserPrincipal.VALIDATED_REQUEST_ATTRIBUTE) == raw
+        ) {
             // KudosContextHolder.get() auto-creates an empty context and writes it into ThreadLocal (compatible
             // even if WebContextInitFilter did not run first); we only fill in the user field.
             KudosContextHolder.get().user = raw
+        } else if (raw is SessionUserPrincipal) {
+            // No auth registry accepted this principal: retire persisted legacy/unmanaged sessions.
+            session?.invalidate()
+            KudosContextHolder.getOrNull()?.user = null
         }
         filterChain.doFilter(request, response)
     }

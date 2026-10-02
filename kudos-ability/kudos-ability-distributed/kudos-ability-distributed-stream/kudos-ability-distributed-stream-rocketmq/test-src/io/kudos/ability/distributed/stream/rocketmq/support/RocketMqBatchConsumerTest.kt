@@ -4,6 +4,7 @@ import io.kudos.ability.distributed.stream.common.biz.ISysMqFailMsgService
 import io.kudos.ability.distributed.stream.common.model.po.SysMqFailMsg
 import io.kudos.ability.distributed.stream.rocketmq.init.properties.RocketMqProperties
 import io.kudos.context.kit.SpringKit
+import io.kudos.ability.distributed.stream.common.support.StreamMessageSerialization
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer
 import org.apache.rocketmq.client.exception.MQClientException
 import org.apache.rocketmq.common.message.MessageExt
@@ -40,7 +41,7 @@ import kotlin.test.assertTrue
  * - default constructor args resolved from Spring ([RocketMqProperties.instance] and
  *   `SpringKit.getBean<ISysMqFailMsgService>()`)
  * - destroy: null daemon thread, shutdown exception warn branch, InterruptedException on join
- * - decodeJdkBody: filter allow / reject and blank-filter (unrestricted) paths
+ * - decodeJdkBody: filter allow / reject and mandatory baseline even with blank filters
  *
  * @author K
  * @author AI: Claude
@@ -58,7 +59,8 @@ internal class RocketMqBatchConsumerTest {
 
         val decoded = RocketMqBatchConsumer.decodeJdkBody(
             serialize(payload),
-            "io.kudos.ability.distributed.stream.rocketmq.support.*;java.base/*;!*"
+            "io.kudos.ability.distributed.stream.rocketmq.support.*;java.base/*;!*",
+            testSerialization()
         )
 
         assertEquals(payload, decoded)
@@ -69,16 +71,19 @@ internal class RocketMqBatchConsumerTest {
         val payload = TestPayload("blocked")
 
         assertFailsWith<InvalidClassException> {
-            RocketMqBatchConsumer.decodeJdkBody(serialize(payload), "java.base/*;!*")
+            RocketMqBatchConsumer.decodeJdkBody(serialize(payload), "java.base/*;!*", testSerialization())
         }
     }
 
     @Test
-    fun decodeJdkBody_blankFilterIsUnrestricted() {
+    fun decodeJdkBody_blankOrPermissiveFilterStillRejectsUnapprovedClasses() {
         val payload = TestPayload("unicode-值-é")
 
-        assertEquals(payload, RocketMqBatchConsumer.decodeJdkBody(serialize(payload), ""))
-        assertEquals(payload, RocketMqBatchConsumer.decodeJdkBody(serialize(payload), "   "))
+        listOf("", "   ", "*").forEach { filter ->
+            assertFailsWith<InvalidClassException> {
+                RocketMqBatchConsumer.decodeJdkBody(serialize(payload), filter)
+            }
+        }
     }
 
     // ---------------------------------------------------------------------
@@ -445,6 +450,10 @@ internal class RocketMqBatchConsumerTest {
         Mockito.mockConstruction(DefaultLitePullConsumer::class.java).use(block)
     }
 
+    private fun testSerialization() = StreamMessageSerialization().apply {
+        allowedClasses = setOf(TestPayload::class.java.name)
+    }
+
     private fun props(
         nameSrv: String? = "127.0.0.1:9876",
         saveException: Boolean = true,
@@ -453,6 +462,7 @@ internal class RocketMqBatchConsumerTest {
         nameSrvAddr = nameSrv
         this.saveException = saveException
         batchConsumerDeserializationFilter = filter
+        messageSerialization = testSerialization()
     }
 
     private fun newConsumer(

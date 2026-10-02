@@ -36,15 +36,21 @@ open class AuthenticationSessionWebFilter(
                 authSession.tenantId == principal.tenantId
             ) {
                 request.setAttribute(AuthenticationSession.REQUEST_ATTRIBUTE, authSession)
+                request.setAttribute(SessionUserPrincipal.VALIDATED_REQUEST_ATTRIBUTE, principal)
                 KudosContextHolder.get().user = principal
             } else {
                 // This makes registry revocation authoritative even before a distributed servlet-session
                 // repository physically deletes the remote session entry.
                 httpSession.invalidate()
+                KudosContextHolder.getOrNull()?.user = null
             }
         }
-        // Sessions created by the legacy Passport endpoint do not carry an auth-session id and
-        // remain the responsibility of UserContextWebFilter during the compatibility period.
+        if (httpSession != null && authSessionId == null &&
+            httpSession.getAttribute(KudosContext.SESSION_KEY_USER) != null
+        ) {
+            httpSession.invalidate()
+            KudosContextHolder.getOrNull()?.user = null
+        }
         filterChain.doFilter(request, response)
     }
 }

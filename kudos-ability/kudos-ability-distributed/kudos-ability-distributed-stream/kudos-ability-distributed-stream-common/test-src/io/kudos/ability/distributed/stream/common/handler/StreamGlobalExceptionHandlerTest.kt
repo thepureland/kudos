@@ -56,6 +56,30 @@ internal class StreamGlobalExceptionHandlerTest {
         StreamFailHandlerRegistryTestOps.restore(snapshot)
     }
 
+    private class UnapprovedPayload : java.io.Serializable {
+        private fun readObject(input: java.io.ObjectInputStream) {
+            executed = true
+            input.defaultReadObject()
+        }
+        companion object { var executed = false }
+    }
+
+    @Test
+    fun failureHandlingCannotDeserializeUnapprovedBrokerClasses() {
+        val service = mock(ISysMqFailMsgService::class.java)
+        val handler = newHandler(service)
+        UnapprovedPayload.executed = false
+        val message = GenericMessage(SerializationKit.serialize(StreamMessageVo(UnapprovedPayload())),
+            mapOf<String, Any>("kafka_receivedTopic" to "untrusted"))
+        handler.globalHandleError(ErrorMessage(MessageHandlingException(message)))
+        kotlin.test.assertFalse(UnapprovedPayload.executed)
+        verifyNoInteractions(service)
+        val producer = GenericMessage(SerializationKit.serialize(StreamMessageVo(UnapprovedPayload())),
+            mapOf<String, Any>(StreamHeader.SCST_BIND_NAME to "untrusted"))
+        handler.handleProducerError(ErrorMessage(MessageHandlingException(producer)))
+        kotlin.test.assertFalse(UnapprovedPayload.executed)
+    }
+
     // ----- consumer side: globalHandleError -----
 
     @Test

@@ -24,19 +24,40 @@ internal class KudosOAuth2AuthorizationRequestRepositoryTest {
     private val response = MockHttpServletResponse()
 
     @Test
-    fun saveLoadAndRemovePreservePkceAndNonceWithoutCreatingSession() {
+    fun saveLoadAndRemovePreservePkceAndNonceInInitiatingBrowser() {
         val authorization = authorizationRequest("state-1")
-        repository.saveAuthorizationRequest(authorization, MockHttpServletRequest(), response)
-        val callback = MockHttpServletRequest().apply { setParameter("state", "state-1") }
+        val start = MockHttpServletRequest()
+        repository.saveAuthorizationRequest(authorization, start, response)
+        val callback = MockHttpServletRequest().apply {
+            setSession(requireNotNull(start.getSession(false)))
+            setParameter("state", "state-1")
+        }
 
         assertEquals(authorization, repository.loadAuthorizationRequest(callback))
         assertEquals("verifier", repository.loadAuthorizationRequest(callback)?.getAttribute("code_verifier"))
         assertEquals("nonce-1", repository.loadAuthorizationRequest(callback)?.additionalParameters?.get("nonce"))
-        assertNull(callback.getSession(false))
+        assertEquals(start.getSession(false), callback.getSession(false))
 
         assertEquals(authorization, repository.removeAuthorizationRequest(callback, response))
         assertNull(repository.removeAuthorizationRequest(callback, response))
-        assertNull(callback.getSession(false))
+        assertEquals(start.getSession(false), callback.getSession(false))
+    }
+
+    @Test
+    fun callbackFromAnotherBrowserCannotLoadOrConsumeState() {
+        val authorization = authorizationRequest("stolen-state")
+        val initiatingBrowser = MockHttpServletRequest()
+        repository.saveAuthorizationRequest(authorization, initiatingBrowser, response)
+        val attackerCallback = MockHttpServletRequest().apply { setParameter("state", "stolen-state") }
+        assertNull(repository.loadAuthorizationRequest(attackerCallback))
+        assertNull(repository.removeAuthorizationRequest(attackerCallback, response))
+        assertNull(attackerCallback.getSession(false))
+        val validCallback = MockHttpServletRequest().apply {
+            setSession(requireNotNull(initiatingBrowser.getSession(false)))
+            setParameter("state", "stolen-state")
+        }
+        assertEquals(authorization, repository.removeAuthorizationRequest(validCallback, response))
+        assertNull(repository.removeAuthorizationRequest(validCallback, response))
     }
 
     @Test

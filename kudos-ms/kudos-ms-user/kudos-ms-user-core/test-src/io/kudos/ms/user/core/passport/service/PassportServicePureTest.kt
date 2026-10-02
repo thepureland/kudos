@@ -421,6 +421,8 @@ internal class PassportServicePureTest {
         stub("t1", "alice", entry(authenticationKey = "JBSWY3DPEHPK3PXP"))
         val res = service.login(PassportLoginRequest("t1", "alice", plain, authCode = null))
         assertEquals(PassportLoginStatusEnum.OTP_REQUIRED, res.status)
+        assertEquals("u1", res.verifiedUserId)
+        assertEquals(setOf("password"), res.verifiedMethods)
         // OTP_REQUIRED must not consume the error counter
         verify(userAccountService, never()).upgradeLoginPasswordEncoding(anyString(), anyString(), anyString())
         verify(userAccountService, never()).incrementLoginErrorTimes(anyString())
@@ -507,6 +509,7 @@ internal class PassportServicePureTest {
         val code = currentTotpCode(secret)
         val res = service.login(PassportLoginRequest("t1", "alice", plain, authCode = code))
         assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
+        assertEquals(setOf("password", "totp"), res.verifiedMethods)
         verify(userAccountService).resetLoginErrorTimes("u1")
     }
 
@@ -528,6 +531,7 @@ internal class PassportServicePureTest {
         )
 
         assertEquals(PassportLoginStatusEnum.SUCCESS, result.status)
+        assertEquals(setOf("password", "recovery_code"), result.verifiedMethods)
         verify(verifier).consumeRecoveryCode("t1", "u1", "2345-6789-ABCD-EFGH")
         verify(userAccountService).resetLoginErrorTimes("u1")
     }
@@ -562,6 +566,7 @@ internal class PassportServicePureTest {
         stub("t1", "alice", entry(authenticationKey = "   "))
         val res = service.login(PassportLoginRequest("t1", "alice", plain, authCode = 123456L))
         assertEquals(PassportLoginStatusEnum.SUCCESS, res.status)
+        assertEquals(setOf("password"), res.verifiedMethods)
     }
 
     // ---- logout ----------------------------------------------------------------------------

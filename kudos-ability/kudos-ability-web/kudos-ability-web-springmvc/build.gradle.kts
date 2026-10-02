@@ -1,5 +1,6 @@
 dependencies {
     api(project(":kudos-ability:kudos-ability-web:kudos-ability-web-common"))
+    api(project(":kudos-ability:kudos-ability-security:kudos-ability-security-enforcement"))
 
     api(libs.spring.boot.starter.web)
     // Kotlin data classes have no no-arg constructor, so without this module Jackson cannot build

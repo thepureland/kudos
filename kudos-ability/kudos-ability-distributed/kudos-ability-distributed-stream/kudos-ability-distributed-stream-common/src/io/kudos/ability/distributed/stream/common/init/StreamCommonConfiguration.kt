@@ -9,6 +9,7 @@ import io.kudos.ability.distributed.stream.common.handler.StreamGlobalExceptionH
 import io.kudos.ability.distributed.stream.common.handler.StreamProducerExceptionHandler
 import io.kudos.ability.distributed.stream.common.init.properties.StreamBindingVerifyProperties
 import io.kudos.ability.distributed.stream.common.init.properties.StreamProducerLimitProperties
+import io.kudos.ability.distributed.stream.common.support.StreamMessageSerialization
 import io.kudos.ability.distributed.stream.common.support.StreamMessageConverter
 import io.kudos.ability.distributed.stream.common.support.StreamProducerFailHandlerProcessor
 import io.kudos.ability.distributed.stream.common.support.StreamProducerHelper
@@ -17,6 +18,7 @@ import io.kudos.base.logger.LogFactory
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.cloud.stream.config.BindingServiceProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.integration.channel.DirectChannel
@@ -64,7 +66,9 @@ open class StreamCommonConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    open fun streamGlobalExceptionHandler() = StreamGlobalExceptionHandler()
+    open fun streamGlobalExceptionHandler(
+        serialization: StreamMessageSerialization = StreamMessageSerialization()
+    ) = StreamGlobalExceptionHandler(serialization)
 
     @Bean
     @ConditionalOnMissingBean
@@ -80,7 +84,14 @@ open class StreamCommonConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    open fun customMessageConverter() = StreamMessageConverter()
+    open fun customMessageConverter(
+        serialization: StreamMessageSerialization = StreamMessageSerialization()
+    ) = StreamMessageConverter(serialization)
+
+    @Bean
+    @ConditionalOnMissingBean
+    @ConfigurationProperties(prefix = "kudos.ability.distributed.stream.deserialization")
+    open fun streamMessageSerialization() = StreamMessageSerialization()
 
     @Bean
     @ConditionalOnMissingBean

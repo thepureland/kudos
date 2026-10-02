@@ -3,6 +3,11 @@ package io.kudos.ms.user.core.org.service.impl
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.bean.BeanKit
 import io.kudos.base.logger.LogFactory
+import io.kudos.base.model.payload.ListSearchPayload
+import io.kudos.base.query.PagingSearchResult
+import io.kudos.ms.user.common.org.vo.request.UserOrgQuery
+import io.kudos.ms.user.core.security.UserTenantAccessGuard
+import kotlin.reflect.KClass
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.common.org.vo.response.UserOrgTreeRow
 import io.kudos.ms.user.common.account.vo.UserAccountCacheEntry
@@ -53,29 +58,83 @@ open class UserOrgService(
     @Autowired
     private lateinit var eventPublisher: ApplicationEventPublisher
 
+    @Autowired
+    private var tenantAccess = UserTenantAccessGuard()
+
+    private fun accessibleOrg(id: String): UserOrg? =
+        dao.get(id)?.also { if (tenantAccess.hasPrincipal()) tenantAccess.assertCanAccess(it.tenantId) }
+
+    private fun stringProperty(value: Any, name: String): String? =
+        runCatching { BeanKit.getProperty(value, name) as? String }.getOrNull()
+
+    private fun assertParent(parentId: String?, tenantId: String, movingId: String? = null) {
+        if (!tenantAccess.hasPrincipal() || parentId.isNullOrBlank()) return
+        val parent = requireNotNull(accessibleOrg(parentId)) { "Parent organization not found" }
+        require(parent.tenantId == tenantId) { "Parent and child organizations must belong to the same tenant" }
+        val visited = mutableSetOf<String>()
+        var ancestor: UserOrg? = parent
+        while (ancestor != null) {
+            val id = ancestor.id
+            require(id != movingId && visited.add(id)) { "Organization hierarchy cannot contain a cycle" }
+            require(ancestor.tenantId == tenantId) { "Organization ancestry crosses tenants" }
+            ancestor = ancestor.parentId?.takeIf(String::isNotBlank)?.let { dao.get(it) }
+        }
+    }
+
+    @Transactional(readOnly = true)
+    override fun get(id: String): UserOrg? = accessibleOrg(id)
+
+    @Transactional(readOnly = true)
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        if (tenantAccess.hasPrincipal()) accessibleOrg(id) ?: return null
+        return dao.get(id, returnType)
+    }
+
+    @Transactional(readOnly = true)
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
+        val restricted = tenantAccess.restrictedTenantId()
+        if (restricted == null) return super.pagingSearch(listSearchPayload)
+        require(listSearchPayload is UserOrgQuery) { "A tenant-scoped organization query is required" }
+        val scoped = listSearchPayload.copy(tenantId = tenantAccess.queryTenantId(listSearchPayload.tenantId)).apply {
+            pageNo = listSearchPayload.pageNo
+            pageSize = listSearchPayload.pageSize
+            orders = listSearchPayload.orders
+        }
+        scoped.parentId?.takeIf(String::isNotBlank)?.let { assertParent(it, restricted) }
+        return super.pagingSearch(scoped)
+    }
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
     override fun getOrgAdmins(orgId: String): List<UserAccountCacheEntry> {
+        val org = if (tenantAccess.hasPrincipal()) accessibleOrg(orgId) ?: return emptyList() else null
         val adminUserIds = userOrgUserDao.searchAdminUserIdsByOrgId(orgId)
         if (adminUserIds.isEmpty()) return emptyList()
         // Batch fetch user info, returned in original ID order.
         val usersMap = userAccountHashCache.getUsersByIds(adminUserIds)
-        return adminUserIds.mapNotNull { usersMap[it] }
+        return adminUserIds.mapNotNull { usersMap[it] }.filter { org == null || it.tenantId == org.tenantId }
     }
 
     @Transactional(readOnly = true)
-    override fun getOrgUserIds(orgId: String): List<String> = userIdsByOrgIdCache.getUserIds(orgId)
+    override fun getOrgUserIds(orgId: String): List<String> {
+        if (tenantAccess.hasPrincipal()) accessibleOrg(orgId) ?: return emptyList()
+        return userIdsByOrgIdCache.getUserIds(orgId)
+    }
 
     @Transactional(readOnly = true)
-    override fun getChildOrgIds(orgId: String): List<String> = dao.searchActiveChildOrgIds(orgId)
+    override fun getChildOrgIds(orgId: String): List<String> {
+        if (tenantAccess.hasPrincipal()) accessibleOrg(orgId) ?: return emptyList()
+        return dao.searchActiveChildOrgIds(orgId)
+    }
 
     @Transactional(readOnly = true)
     override fun getOrgUsers(orgId: String): List<UserAccountCacheEntry> {
+        val org = if (tenantAccess.hasPrincipal()) accessibleOrg(orgId) ?: return emptyList() else null
         val userIds = getOrgUserIds(orgId)
         if (userIds.isEmpty()) return emptyList()
         val usersMap = userAccountHashCache.getUsersByIds(userIds)
-        return userIds.mapNotNull { usersMap[it] }
+        return userIds.mapNotNull { usersMap[it] }.filter { org == null || it.tenantId == org.tenantId }
     }
 
     @Transactional(readOnly = true)
@@ -90,14 +149,20 @@ open class UserOrgService(
     }
 
     @Transactional(readOnly = true)
-    override fun getParentOrg(orgId: String): UserOrgCacheEntry? =
-        userOrgHashCache.getOrgById(orgId)?.parentId?.let { userOrgHashCache.getOrgById(it) }
+    override fun getParentOrg(orgId: String): UserOrgCacheEntry? {
+        val org = getOrgRecord(orgId) ?: return null
+        return org.parentId?.let { getOrgRecord(it) }?.takeIf { it.tenantId == org.tenantId }
+    }
 
     @Transactional(readOnly = true)
-    override fun getOrgRecord(id: String): UserOrgCacheEntry? = userOrgHashCache.getOrgById(id)
+    override fun getOrgRecord(id: String): UserOrgCacheEntry? {
+        if (tenantAccess.hasPrincipal()) accessibleOrg(id) ?: return null
+        return userOrgHashCache.getOrgById(id)
+    }
 
     @Transactional(readOnly = true)
     override fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheEntry> {
+        tenantAccess.assertCanAccess(tenantId)
         val orgIds = userOrgHashCache.getOrgsByTenantId(tenantId).map { it.id }
         if (orgIds.isEmpty()) return emptyList()
         val orgsMap = userOrgHashCache.getOrgsByIds(orgIds)
@@ -106,6 +171,8 @@ open class UserOrgService(
 
     @Transactional(readOnly = true)
     override fun getOrgTree(tenantId: String, parentId: String?): List<UserOrgTreeRow> {
+        tenantAccess.assertCanAccess(tenantId)
+        assertParent(parentId, tenantId)
         // If parentId is specified, only query direct child organizations under that parent organization;
         // otherwise query all enabled organizations under the tenant.
         val orgs = dao.searchActiveOrgsByTenantId(tenantId, parentId)
@@ -167,10 +234,14 @@ open class UserOrgService(
 
     @Transactional(readOnly = true)
     override fun getAllAncestorOrgIds(orgId: String): List<String> {
+        if (tenantAccess.hasPrincipal()) accessibleOrg(orgId) ?: return emptyList()
+        val visited = mutableSetOf(orgId)
         val ancestors = mutableListOf<String>()
         var currentOrg = userOrgHashCache.getOrgById(orgId) ?: return emptyList()
         while (true) {
             val parentId = currentOrg.parentId ?: break
+            if (!visited.add(parentId)) break
+            if (tenantAccess.hasPrincipal()) accessibleOrg(parentId) ?: break
             ancestors.add(parentId)
             // When the cache misses, still keep the parentId just added (ancestor chain may span cache boundaries, cannot truncate the whole segment).
             currentOrg = userOrgHashCache.getOrgById(parentId) ?: break
@@ -180,11 +251,13 @@ open class UserOrgService(
 
     @Transactional(readOnly = true)
     override fun getAllDescendantOrgIds(orgId: String): List<String> {
+        if (tenantAccess.hasPrincipal()) accessibleOrg(orgId) ?: return emptyList()
         val descendants = mutableListOf<String>()
+        val visited = mutableSetOf(orgId)
         // ArrayDeque.removeFirst is O(1); avoids the O(n) shift each time with MutableList.removeAt(0).
         val queue = ArrayDeque(listOf(orgId))
         while (queue.isNotEmpty()) {
-            val childIds = getChildOrgIds(queue.removeFirst())
+            val childIds = getChildOrgIds(queue.removeFirst()).filter { visited.add(it) }
             descendants.addAll(childIds)
             queue.addAll(childIds)
         }
@@ -197,7 +270,7 @@ open class UserOrgService(
         // (child organization disabled -> this subtree should be empty in the parent view).
         // Therefore, even if parentId is unchanged, the parentId snapshot must be put into the event
         // so the listener can clear caches along the ancestor chain.
-        val parentId = dao.get(id)?.parentId
+        val parentId = (accessibleOrg(id) ?: return false).parentId
         val success = dao.updateProperties(id, mapOf(UserOrg::active.name to active))
         if (success) {
             log.debug("Updated the enabled status of the organization with id ${id} to ${active}.")
@@ -211,7 +284,9 @@ open class UserOrgService(
     @Transactional
     override fun moveOrg(id: String, newParentId: String?, newSortNum: Int?): Boolean {
         // Snapshot oldParentId before moving -- after the transaction commits, the dao cannot see the old value.
-        val oldParentId = dao.get(id)?.parentId
+        val org = accessibleOrg(id) ?: return false
+        if (tenantAccess.hasPrincipal()) assertParent(newParentId, org.tenantId, id)
+        val oldParentId = org.parentId
         val props = mutableMapOf<String, Any?>(UserOrg::parentId.name to newParentId)
         newSortNum?.let { props[UserOrg::sortNum.name] = it }
         val success = dao.updateProperties(id, props)
@@ -226,6 +301,11 @@ open class UserOrgService(
 
     @Transactional
     override fun insert(any: Any): String {
+        if (tenantAccess.hasPrincipal()) {
+            val tenantId = requireNotNull(stringProperty(any, "tenantId")) { "Tenant is required" }
+            tenantAccess.assertCanAccess(tenantId)
+            assertParent(stringProperty(any, "parentId"), tenantId)
+        }
         val id = super.insert(any)
         log.debug("Added the organization with id ${id}.")
         eventPublisher.publishEvent(UserOrgInserted(id))
@@ -236,7 +316,13 @@ open class UserOrgService(
     override fun update(any: Any): Boolean {
         // Generic update: snapshot pre-update parentId, then read post-update parentId after update.
         val id = BeanKit.getProperty(any, UserOrg::id.name) as String
-        val oldParentId = dao.get(id)?.parentId
+        val org = accessibleOrg(id) ?: return false
+        val requestedTenantId = stringProperty(any, "tenantId")
+        require(requestedTenantId == null || requestedTenantId == org.tenantId) {
+            "An organization cannot be moved to another tenant"
+        }
+        if (tenantAccess.hasPrincipal()) assertParent(stringProperty(any, "parentId"), org.tenantId, id)
+        val oldParentId = org.parentId
         val success = super.update(any)
         if (success) {
             val newParentId = dao.get(id)?.parentId
@@ -250,7 +336,7 @@ open class UserOrgService(
 
     @Transactional
     override fun deleteById(id: String): Boolean {
-        val org = dao.get(id) ?: run {
+        val org = accessibleOrg(id) ?: run {
             log.warn("When deleting the organization with id ${id}, found it no longer exists!")
             return false
         }
@@ -269,7 +355,10 @@ open class UserOrgService(
     override fun batchDelete(ids: Collection<String>): Int {
         // First snapshot (id, parentId); at AFTER_COMMIT the rows have been deleted, the listener cannot query back.
         val snapshots = if (ids.isEmpty()) emptyList()
-            else dao.getByIds(ids).map { UserOrgBatchDeleted.Item(it.id, it.parentId) }
+            else dao.getByIds(ids).map {
+                if (tenantAccess.hasPrincipal()) tenantAccess.assertCanAccess(it.tenantId)
+                UserOrgBatchDeleted.Item(it.id, it.parentId)
+            }
         val count = super.batchDelete(ids)
         log.debug("Batch deleted organizations, expected to delete ${ids.size} records, actually deleted ${count} records.")
         if (snapshots.isNotEmpty()) {

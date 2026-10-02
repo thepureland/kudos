@@ -1,91 +1,70 @@
 package io.kudos.ability.data.rdb.jdbc.kit
 
+import java.util.Locale
+
 /**
- * Rejects JDBC connection urls carrying connection parameters that turn "may configure a data
- * source" into "may read arbitrary files on, or execute code inside, the application server".
+ * Validates the restricted JDBC URL syntax accepted from data-source configuration.
  *
- * Why this exists: data source urls in this framework are not always operator-authored. They also
- * arrive from the sys console (`sys_datasource` rows, connectivity tests) and from
- * [io.kudos.ability.data.rdb.jdbc.datasource.IDynamicDataSourceLoad] implementations reading such
- * rows. JDBC drivers accept parameters that make the *client* do dangerous things when it talks to
- * a server the attacker controls, so a url is an executable payload, not just an address:
- *
- *  - MySQL / MariaDB `allowLoadLocalInfile` + a malicious server → server asks the client for a
- *    local file (`LOCAL INFILE`) and the driver hands it over: arbitrary file read on the app host.
- *  - MySQL `autoDeserialize`, `queryInterceptors`, `statementInterceptors`, `propertiesTransform` →
- *    Java deserialization / arbitrary class loading: remote code execution.
- *  - PostgreSQL `socketFactory` / `sslfactory` (+ their `*Arg` variants) → instantiate an
- *    arbitrary class with an attacker-chosen argument: remote code execution.
- *  - PostgreSQL `loggerFile` → write a file at an attacker-chosen path.
- *  - H2 `INIT` / `RUNSCRIPT` → run arbitrary SQL (and therefore arbitrary Java) at connect time.
- *
- * Policy is a **deny list, not an allow list**: connection parameters are open-ended and vendor
- * specific, so allow-listing would break legitimate tuning (`characterEncoding`, `currentSchema`,
- * `ApplicationName`, …). Only parameters with no legitimate use in a server-side connection string
- * are refused. Parameters that merely widen an existing risk without adding a new capability (e.g.
- * `allowMultiQueries`) are deliberately **not** refused — that would break working deployments for
- * little gain.
- *
- * This does not make an arbitrary url safe: it still points the application at whatever host the
- * author chose. Restricting *which hosts* are reachable is a network/allow-list concern that
- * belongs to the deployment, not to this validator.
- *
- * @author K
- * @author AI: Claude
- * @since 1.0.0
+ * Only known drivers and reviewed properties are accepted. Encoded property names and driver-specific
+ * host attribute grammars are rejected rather than interpreted differently from the actual driver.
+ * Credentials belong in the separate user/password fields. Host reachability must additionally be
+ * restricted by deployment network policy; this validation does not prevent connections to internal hosts.
  */
 object JdbcUrlValidator {
-
-    /**
-     * Connection parameter names (lower-cased) that are refused. See the class KDoc for what each
-     * family buys an attacker.
-     */
-    private val DENIED_PARAMETERS: Set<String> = setOf(
-        // MySQL / MariaDB — client-side file read
-        "allowloadlocalinfile", "allowloadlocalinfileinpath", "allowurlinlocalinfile",
-        "uselocalinfile", "localinfile",
-        // MySQL / MariaDB — deserialization + arbitrary class loading
-        "autodeserialize", "queryinterceptors", "statementinterceptors", "propertiestransform",
-        // PostgreSQL — arbitrary class instantiation / file write
-        "socketfactory", "socketfactoryarg", "sslfactory", "sslfactoryarg",
-        "sslhostnameverifier", "loggerfile",
-        // H2 — arbitrary SQL at connect time
-        "init", "runscript",
+    private val common = setOf("connecttimeout", "sockettimeout", "logintimeout")
+    private val allowedParameters = mapOf(
+        "mysql" to common + setOf("usessl", "sslmode", "requiressl", "verifyservercertificate",
+            "useunicode", "characterencoding", "connectioncollation", "servertimezone", "connectiontimezone",
+            "allowpublickeyretrieval", "cacheprepstmts", "prepstmtcachesize", "prepstmtcachesqllimit",
+            "useserverprepstmts", "rewritebatchedstatements", "allowmultiqueries", "tcpkeepalive",
+            "zerodatetimebehavior", "tinyint1isbit", "useaffectedrows"),
+        "mariadb" to common + setOf("usessl", "sslmode", "useunicode", "characterencoding",
+            "servertimezone", "allowmultiqueries", "usebulkstmts", "tcpkeepalive"),
+        "postgresql" to common + setOf("ssl", "sslmode", "currentschema", "applicationname",
+            "tcpkeepalive", "preparethreshold", "preparedstatementcachequeries",
+            "preparedstatementcachesizemib", "defaultrowfetchsize", "rewritebatchedinserts",
+            "targetservertype", "loadbalancehosts", "hostrecheckseconds", "stringtype"),
+        "h2" to setOf("database_to_lower", "database_to_upper", "db_close_delay", "db_close_on_exit",
+            "mode", "auto_server", "ifexists", "lock_timeout", "max_memory_rows", "cache_size",
+            "case_insensitive_identifiers", "default_null_ordering", "non_keywords"),
+        "sqlserver" to common + setOf("databasename", "encrypt", "trustservercertificate",
+            "applicationname", "multisubnetfailover", "sendstringparametersasunicode"),
+        "clickhouse" to common + setOf("ssl", "sslmode", "database", "compress", "decompress",
+            "connection_timeout", "socket_timeout"),
+        "oracle" to emptySet(),
     )
+    private val host = Regex("(?:[A-Za-z0-9._-]+|\\[[0-9A-Fa-f:]+\\])(?::[0-9]{1,5})?")
+    private val propertyName = Regex("[A-Za-z][A-Za-z0-9_]*")
 
-    /**
-     * Throws [IllegalArgumentException] if [url] carries a denied connection parameter.
-     *
-     * @param url the JDBC url to inspect
-     * @throws IllegalArgumentException naming the offending parameter(s); the url itself is not
-     *   echoed because it usually embeds credentials
-     */
+    /** Errors never echo the URL or property values, which can contain credentials. */
     fun validate(url: String) {
-        val denied = deniedParametersIn(url)
-        require(denied.isEmpty()) {
-            "Refusing JDBC url with unsafe connection parameter(s): ${denied.sorted().joinToString()}. " +
-                    "These let a connection string read local files or execute code on this host. " +
-                    "If a driver-level feature is genuinely required, build the DataSource explicitly " +
-                    "instead of going through DataSourceKit / RdbKit."
+        require(url.startsWith("jdbc:") && url.none { it.isISOControl() }) { "Invalid JDBC URL" }
+        val driver = url.removePrefix("jdbc:").substringBefore(':').lowercase(Locale.ROOT)
+        val allowed = requireNotNull(allowedParameters[driver]) { "Unsupported JDBC URL driver" }
+        val location = url.substringBefore('?').substringBefore(';')
+        require('#' !in url && location.none { it in "()%\\\"'=" }) {
+            "JDBC URL contains unsupported address attributes or escaping"
+        }
+        if (driver in setOf("mysql", "mariadb", "postgresql", "sqlserver", "clickhouse")) {
+            val prefix = "jdbc:$driver://"
+            require(location.startsWith(prefix)) { "Unsupported JDBC URL address syntax" }
+            val authority = location.removePrefix(prefix).substringBefore('/')
+            require(authority.split(',').all { host.matches(it) }) { "Unsupported JDBC URL host syntax" }
+        }
+        if (driver == "oracle") {
+            require(Regex("jdbc:oracle:thin:@(?://)?[A-Za-z0-9._-]+:[0-9]{1,5}[:/][A-Za-z0-9._-]+").matches(location)) {
+                "Only direct Oracle thin host connections are accepted"
+            }
+        }
+        val parameterStart = url.indexOfFirst { it == '?' || it == ';' }
+        if (parameterStart < 0) return
+        url.substring(parameterStart + 1).split('&', ';').filter { it.isNotEmpty() }.forEach { parameter ->
+            val rawName = parameter.substringBefore('=')
+            require('=' in parameter && propertyName.matches(rawName)) { "Invalid JDBC connection parameter name" }
+            val name = rawName.lowercase(Locale.ROOT)
+            require(name in allowed) { "Refusing unapproved JDBC connection parameter: $name" }
         }
     }
 
-    /** Non-throwing form of [validate]: true when the url carries no denied parameter. */
-    fun isSafe(url: String): Boolean = deniedParametersIn(url).isEmpty()
-
-    /**
-     * Returns the denied parameter names found in [url].
-     *
-     * JDBC urls carry parameters in two shapes — `?a=1&b=2` (MySQL / PostgreSQL) and `;a=1;b=2`
-     * (H2 / SQL Server) — and a value may itself contain a separator. Splitting on every separator
-     * over-segments such values, which only ever makes the scan more suspicious, never less, so it
-     * is the safe direction to err in.
-     */
-    private fun deniedParametersIn(url: String): Set<String> =
-        url.split('?', '&', ';', '#')
-            .asSequence()
-            .filter { '=' in it }
-            .map { it.substringBefore('=').trim().lowercase() }
-            .filter { it in DENIED_PARAMETERS }
-            .toSet()
+    fun isSafe(url: String): Boolean = runCatching { validate(url) }.isSuccess
 }

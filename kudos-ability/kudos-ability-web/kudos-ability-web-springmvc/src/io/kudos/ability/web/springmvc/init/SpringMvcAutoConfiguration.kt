@@ -28,6 +28,7 @@ import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.context.annotation.PropertySource
 import org.springframework.http.converter.HttpMessageConverters
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter
@@ -66,6 +67,7 @@ import java.util.EventListener
  * @since 1.0.0
  */
 @Configuration
+@Import(AdminAuthorizationConfiguration::class)
 @PropertySource(
     value = ["classpath:kudos-ability-web-springmvc.yml"],
     factory = YamlPropertySourceFactory::class
@@ -222,8 +224,7 @@ open class SpringMvcAutoConfiguration(
      * `Vary` headers and credential rules correctly, and two writers disagreeing about the same response headers
      * is a bug waiting to be debugged.
      *
-     * Defaults remain permissive so CORS never blocks development, and [warnIfCorsWideOpen] makes the risk
-     * visible when they survive into a deployed environment.
+     * No origins are allowed by default. Credentialed cross-origin access requires explicit trusted origins.
      */
     override fun addCorsMappings(registry: CorsRegistry) {
         val cors = properties.cors
@@ -231,7 +232,12 @@ open class SpringMvcAutoConfiguration(
             log.info("CORS mapping disabled via kudos.ability.web.springmvc.cors.enabled=false")
             return
         }
+        val effectiveOrigins = cors.allowedOrigins.ifEmpty { cors.allowedOriginPatterns }
+        require(!cors.allowCredentials || effectiveOrigins.none { '*' in it }) {
+            "Credentialed CORS requires explicit origins without wildcards"
+        }
         val registration = registry.addMapping(cors.pathPattern)
+            .allowedOrigins(*emptyArray<String>())
             .allowedMethods(*cors.allowedMethods.toTypedArray())
             .allowedHeaders(*cors.allowedHeaders.toTypedArray())
             .allowCredentials(cors.allowCredentials)
@@ -243,29 +249,6 @@ open class SpringMvcAutoConfiguration(
         }
         if (cors.exposedHeaders.isNotEmpty()) {
             registration.exposedHeaders(*cors.exposedHeaders.toTypedArray())
-        }
-        warnIfCorsWideOpen(cors)
-    }
-
-    /**
-     * Log a warning when the effective CORS policy reflects any origin *and* permits credentials.
-     *
-     * That pair is accepted by Spring but is equivalent to "any website may call this API as the logged-in user",
-     * so it must not pass unnoticed into an environment that believed it was protected.
-     *
-     * @param cors the effective CORS settings
-     * @author K
-     * @since 1.0.0
-     */
-    private fun warnIfCorsWideOpen(cors: SpringMvcProperties.Cors) {
-        val reflectsAnyOrigin = cors.allowedOrigins.isEmpty() && cors.allowedOriginPatterns.contains("*")
-        if (reflectsAnyOrigin && cors.allowCredentials) {
-            log.warn(
-                "CORS is configured to reflect ANY origin while allowing credentials " +
-                    "(kudos.ability.web.springmvc.cors.allowed-origin-patterns=[*], allow-credentials=true). " +
-                    "This is a development-friendly default and is unsafe for production: set " +
-                    "kudos.ability.web.springmvc.cors.allowed-origins to an explicit whitelist."
-            )
         }
     }
 

@@ -1,32 +1,50 @@
 package io.kudos.ms.auth.core.authentication.store
 
 import io.kudos.ms.auth.common.authentication.vo.AuthenticationTransaction
-import java.util.concurrent.ConcurrentHashMap
+import java.time.Clock
+import java.time.Instant
+import java.util.TreeMap
 
-/**
- * Single-node default store used until a deployment supplies a distributed implementation.
- * Compare-and-set semantics already match the contract required by Redis/JDBC implementations.
- */
-open class InMemoryAuthenticationTransactionStore : IAuthenticationTransactionStore {
-    private val transactions = ConcurrentHashMap<String, AuthenticationTransaction>()
+/** Bounded single-node store with real expiry and atomic compare-and-set updates. */
+open class InMemoryAuthenticationTransactionStore(
+    private val clock: Clock = Clock.systemUTC(),
+    private val maxEntries: Int = 10_000,
+) : IAuthenticationTransactionStore {
+    private val transactions = HashMap<String, AuthenticationTransaction>()
+    private val expirations = TreeMap<Instant, MutableSet<String>>()
 
-    override fun create(transaction: AuthenticationTransaction): Boolean =
-        transactions.putIfAbsent(transaction.id, transaction) == null
+    init { require(maxEntries > 0) { "Authentication transaction capacity must be positive" } }
 
-    override fun get(id: String): AuthenticationTransaction? = transactions[id]
+    @Synchronized
+    override fun create(transaction: AuthenticationTransaction): Boolean {
+        expire()
+        if (!transaction.expiresAt.isAfter(clock.instant()) || transactions.containsKey(transaction.id)) return false
+        check(transactions.size < maxEntries) { "Authentication transaction capacity reached" }
+        transactions[transaction.id] = transaction
+        expirations.getOrPut(transaction.expiresAt) { mutableSetOf() }.add(transaction.id)
+        return true
+    }
 
-    override fun save(
-        transaction: AuthenticationTransaction,
-        expectedVersion: Long,
-    ): AuthenticationTransaction? {
-        var saved: AuthenticationTransaction? = null
-        transactions.computeIfPresent(transaction.id) { _, current ->
-            if (current.version != expectedVersion) {
-                current
-            } else {
-                transaction.copy(version = expectedVersion + 1).also { saved = it }
-            }
+    @Synchronized
+    override fun get(id: String): AuthenticationTransaction? {
+        expire()
+        return transactions[id]
+    }
+
+    @Synchronized
+    override fun save(transaction: AuthenticationTransaction, expectedVersion: Long): AuthenticationTransaction? {
+        expire()
+        val current = transactions[transaction.id] ?: return null
+        if (current.version != expectedVersion || !transaction.expiresAt.isAfter(clock.instant())) return null
+        // A continuation cannot extend an anonymous transaction's lifetime indefinitely.
+        if (transaction.expiresAt != current.expiresAt) return null
+        return transaction.copy(version = expectedVersion + 1).also { transactions[it.id] = it }
+    }
+
+    private fun expire() {
+        val now = clock.instant()
+        while (expirations.isNotEmpty() && !expirations.firstKey().isAfter(now)) {
+            expirations.pollFirstEntry().value.forEach(transactions::remove)
         }
-        return saved
     }
 }

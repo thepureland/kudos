@@ -55,7 +55,9 @@ open class PasswordAuthenticationMethodProvider(
     ): AuthenticationMethodResult {
         val tenantId = transaction.tenantId
             ?: return retry(AuthenticationActionEnum.SELECT_TENANT, "TENANT_REQUIRED", request.username)
-        val username = if (transaction.purpose == AuthenticationTransactionPurposeEnum.STEP_UP) {
+        val username = if (transaction.purpose == AuthenticationTransactionPurposeEnum.STEP_UP ||
+            transaction.userId != null || METHOD_PASSWORD in transaction.amr
+        ) {
             transaction.username
         } else {
             request.username?.trim()?.takeIf { it.isNotEmpty() } ?: transaction.username
@@ -93,10 +95,13 @@ open class PasswordAuthenticationMethodProvider(
         return when (result.status) {
             PassportLoginStatusEnum.SUCCESS -> {
                 val user = requireNotNull(result.userInfo)
-                val amr = when (action) {
-                    AuthenticationActionEnum.VERIFY_TOTP -> setOf(METHOD_PASSWORD, METHOD_TOTP)
-                    AuthenticationActionEnum.VERIFY_RECOVERY_CODE -> setOf(METHOD_PASSWORD, METHOD_RECOVERY_CODE)
-                    else -> setOf(METHOD_PASSWORD)
+                val amr = result.verifiedMethods
+                if (METHOD_PASSWORD !in amr) {
+                    return AuthenticationMethodResult(
+                        outcome = AuthenticationMethodOutcomeEnum.FAILURE,
+                        terminal = true,
+                        errorCode = "UNVERIFIED_AUTHENTICATION_RESULT",
+                    )
                 }
                 val success = AuthenticationMethodResult(
                     outcome = AuthenticationMethodOutcomeEnum.SUCCESS,
@@ -104,7 +109,7 @@ open class PasswordAuthenticationMethodProvider(
                     tenantId = user.tenantId,
                     username = user.username,
                     amr = amr,
-                    acr = if (amr.size > 1) ACR_MFA else ACR_PASSWORD,
+                    acr = if (METHOD_TOTP in amr || METHOD_RECOVERY_CODE in amr) ACR_MFA else ACR_PASSWORD,
                 )
                 enforceMfaPolicy(transaction, success)
             }
@@ -125,7 +130,7 @@ open class PasswordAuthenticationMethodProvider(
                     errorCode = null,
                     username = username,
                     tenantId = tenantId,
-                    verifiedUserId = account?.id,
+                    verifiedUserId = result.verifiedUserId ?: account?.id,
                     allowedMethods = allowedMethods,
                     forceTotp = true,
                 )
@@ -220,8 +225,8 @@ open class PasswordAuthenticationMethodProvider(
             userId = userId,
             tenantId = tenantId,
             username = username,
-            amr = if (userId != null) setOf(METHOD_PASSWORD) else emptySet(),
-            acr = if (userId != null) ACR_PASSWORD else null,
+            amr = setOf(METHOD_PASSWORD),
+            acr = ACR_PASSWORD,
             errorCode = errorCode,
         )
     }

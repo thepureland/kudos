@@ -165,6 +165,7 @@ open class PassportService(
         )
 
         // Password correct, check whether OTP secondary verification is enabled.
+        val verifiedMethods = mutableSetOf("password")
         val authKey = user.authenticationKey
         if (!authKey.isNullOrBlank()) {
             val authCode = req.authCode
@@ -173,7 +174,7 @@ open class PassportService(
                 log.debug("Login pending - OTP required: userId=${user.id}")
                 // This is a challenge continuation, not a terminal login outcome. Logging it would
                 // over-count a single password + OTP flow as two attempts.
-                return PassportLoginResult.otpRequired()
+                return PassportLoginResult.otpRequired(user.id)
             }
             if (recoveryCode != null && authCode == null) {
                 authenticationAttemptLimiter.checkFailureLimit(
@@ -190,6 +191,7 @@ open class PassportService(
                     log.debug("Login failed - recovery code wrong: userId=${user.id}")
                     return finish(user.id, PassportLoginResult.recoveryCodeWrong())
                 }
+                verifiedMethods.add("recovery_code")
                 authenticationAttemptLimiter.clearFailures(
                     attemptContext,
                     setOf(AuthenticationAttemptFactorEnum.RECOVERY_CODE),
@@ -210,6 +212,7 @@ open class PassportService(
                     log.debug("Login failed - OTP wrong: userId=${user.id}")
                     return finish(user.id, PassportLoginResult.otpWrong())
                 }
+                verifiedMethods.add("totp")
             }
         }
 
@@ -237,7 +240,8 @@ open class PassportService(
                 defaultTimezone = user.defaultTimezone,
                 defaultCurrency = user.defaultCurrency,
                 loginTime = now,
-            )
+            ),
+            verifiedMethods = verifiedMethods,
         ))
     }
 

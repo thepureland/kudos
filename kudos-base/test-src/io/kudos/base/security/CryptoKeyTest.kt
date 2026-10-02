@@ -2,100 +2,31 @@ package io.kudos.base.security
 
 import kotlin.test.*
 
-/**
- * CryptoKey test cases
- *
- * @author AI: cursor
- * @author K
- * @since 1.0.0
- */
 internal class CryptoKeyTest {
+    private var originalKey = ""
+    @BeforeTest fun saveKey() { originalKey = CryptoKey.KEY_DEFAULT }
+    @AfterTest fun restoreKey() { CryptoKey.KEY_DEFAULT = originalKey }
 
-    private var originalKey: String = ""
-
-    @BeforeTest
-    fun setup() {
-        // Save original value
-        originalKey = CryptoKey.KEY_DEFAULT
+    @Test fun noImplicitDefaultOrBlankKey() {
+        assertFailsWith<IllegalStateException> { CryptoKey.requireKey(null) }
+        assertFailsWith<IllegalStateException> { CryptoKey.requireKey(" ") }
+        assertFailsWith<IllegalArgumentException> { CryptoKey.requireKey("io．Kudos．base.security ") }
+        assertFailsWith<IllegalArgumentException> { CryptoKey.KEY_DEFAULT = "short" }
     }
 
-    @AfterTest
-    fun teardown() {
-        // Restore original value
-        CryptoKey.KEY_DEFAULT = originalKey
+    @Test fun wrongDeploymentKeyCannotTurnAnEncryptedSecretIntoAnEmptyCredential() {
+        val encrypted = CryptoKit.aesEncrypt("totp-secret")
+        CryptoKey.configureDefaultKey("different-deployment-key-0123456789-abcdef")
+        assertFails { CryptoKit.aesDecrypt(encrypted) }
+        assertFails { CryptoKit.aesDecrypt("┼zz") }
     }
 
-    @Test
-    fun testDefaultKey() {
-        val defaultKey = CryptoKey.KEY_DEFAULT
-        assertNotNull(defaultKey)
-        assertEquals("io．Kudos．base.security ", defaultKey)
-    }
-
-    @Test
-    fun testConfigureDefaultKeyRejectsBlank() {
-        assertFailsWith<IllegalArgumentException> {
-            CryptoKey.configureDefaultKey("   ")
-        }
-        assertFailsWith<IllegalArgumentException> {
-            CryptoKey.configureDefaultKey("")
-        }
-    }
-
-    @Test
-    fun testConfigureDefaultKeySetsKey() {
-        val k = "configured-at-startup-${System.nanoTime()}"
-        CryptoKey.configureDefaultKey(k)
-        assertEquals(k, CryptoKey.KEY_DEFAULT)
-    }
-
-    @Test
-    fun testSetKey() {
-        val newKey = "new-secret-key"
-        
-        CryptoKey.KEY_DEFAULT = newKey
-        assertEquals(newKey, CryptoKey.KEY_DEFAULT)
-    }
-
-    @Test
-    fun testKeyCanBeChanged() {
-        val key1 = "key1"
-        val key2 = "key2"
-        
-        CryptoKey.KEY_DEFAULT = key1
-        assertEquals(key1, CryptoKey.KEY_DEFAULT)
-        
-        CryptoKey.KEY_DEFAULT = key2
-        assertEquals(key2, CryptoKey.KEY_DEFAULT)
-    }
-
-    @Test
-    fun testKeyWithSpecialCharacters() {
-        val specialKey = "key-with-special-chars!@#$%^&*()"
-        
-        CryptoKey.KEY_DEFAULT = specialKey
-        assertEquals(specialKey, CryptoKey.KEY_DEFAULT)
-    }
-
-    @Test
-    fun testKeyWithUnicode() {
-        val unicodeKey = "密钥-中文-🔐"
-        
-        CryptoKey.KEY_DEFAULT = unicodeKey
-        assertEquals(unicodeKey, CryptoKey.KEY_DEFAULT)
-    }
-
-    @Test
-    fun testKeyCanBeEmpty() {
-        CryptoKey.KEY_DEFAULT = ""
-        assertEquals("", CryptoKey.KEY_DEFAULT)
-    }
-
-    @Test
-    fun testKeyCanBeVeryLong() {
-        val longKey = "a".repeat(1000)
-        
-        CryptoKey.KEY_DEFAULT = longKey
-        assertEquals(longKey, CryptoKey.KEY_DEFAULT)
+    @Test fun explicitKeyIsUsedForEncryption() {
+        val key = "unit-test-only-key-0123456789-abcdefgh"
+        CryptoKey.configureDefaultKey(key)
+        assertEquals(key, CryptoKey.KEY_DEFAULT)
+        val ciphertext = CryptoKit.aesEncrypt("test-secret")
+        assertEquals("test-secret", CryptoKit.aesDecrypt(ciphertext))
+        assertEquals("test-secret", CryptoKit.aesDecrypt(ciphertext.removePrefix("┼"), key))
     }
 }

@@ -1,15 +1,8 @@
 package io.kudos.ms.user.api.public.controller.passport
 
 import io.kudos.base.security.BarcodeKit
-import io.kudos.base.net.IpKit
-import io.kudos.ability.web.springmvc.support.getBrowserInfo
-import io.kudos.ability.web.springmvc.support.getClientTerminal
-import io.kudos.ability.web.springmvc.support.getOsInfo
-import io.kudos.context.core.KudosContext
 import io.kudos.ms.user.common.passport.CurrentUserKit
 import io.kudos.ms.user.common.passport.enums.ChangePasswordResultEnum
-import io.kudos.ms.user.common.passport.enums.PassportLoginStatusEnum
-import io.kudos.ms.user.common.passport.vo.SessionUserPrincipal
 import io.kudos.ms.user.common.passport.vo.request.ChangePasswordRequest
 import io.kudos.ms.user.common.passport.vo.request.PassportLoginRequest
 import io.kudos.ms.user.common.passport.vo.request.VerifyPasswordRequest
@@ -30,10 +23,9 @@ import org.springframework.web.bind.annotation.RestController
 /**
  * Passport public HTTP controller (accessed by end users).
  *
- * **Session model**: on successful login a `SessionUserPrincipal` is written to
- * `HttpSession[SESSION_KEY_USER]`, and `UserContextWebFilter` injects it into
- * `KudosContext.user` on subsequent requests. `CurrentUserKit` is the standard
- * entry point for reading the current user from controllers/services.
+ * Sign-in is handled exclusively by the auth transaction API. This legacy login route
+ * returns 410 so it cannot bypass tenant MFA or managed-session revocation.
+ * `CurrentUserKit` reads the principal validated by the auth session filter.
  *
  * Public self-service operations always bind the request user id to the current session principal.
  * Trusted cross-service calls belong on an internal API and must not reuse this public boundary.
@@ -49,33 +41,11 @@ class PassportPublicController(
 
     @PostMapping("/login")
     fun login(@RequestBody @Valid req: PassportLoginRequest, request: HttpServletRequest): PassportLoginResult {
-        // Never trust client-supplied audit metadata on the public boundary. Forwarded headers are
-        // deliberately not parsed here; a trusted proxy/container should normalize remoteAddr.
-        val browser = request.getBrowserInfo().asClientDescription()
-        val os = request.getOsInfo().asClientDescription()
-        val observedIp = IpKit.ipv4StringToLong(request.remoteAddr).takeIf { it >= 0 }
-        val observedReq = req.copy(
-            loginIp = observedIp,
-            loginDevice = request.getClientTerminal(),
-            loginBrowser = browser,
-            loginOs = os,
-            userAgent = request.getHeader("User-Agent"),
+        // This endpoint cannot enforce the shared MFA policy or issue a revocable auth session.
+        throw org.springframework.web.server.ResponseStatusException(
+            org.springframework.http.HttpStatus.GONE,
+            "Use /api/public/auth/authentication/transactions for sign-in",
         )
-        val res = passportService.login(observedReq)
-        if (res.status == PassportLoginStatusEnum.SUCCESS) {
-            val info = res.userInfo ?: return res
-            // Write into HttpSession; UserContextWebFilter reads it back into KudosContext.user on subsequent requests
-            val principal = SessionUserPrincipal(
-                id = info.id,
-                tenantId = info.tenantId,
-                username = info.username,
-            )
-            val session = request.getSession(true)
-            // Rotate the id after credential verification to prevent session fixation.
-            request.changeSessionId()
-            session.setAttribute(KudosContext.SESSION_KEY_USER, principal)
-        }
-        return res.toPublicLoginResult()
     }
 
     /**
@@ -171,22 +141,5 @@ class PassportPublicController(
     }
 
     private fun isCurrentUser(userId: String): Boolean = CurrentUserKit.currentUserIdOrNull() == userId
-
-    private fun Pair<String, String>.asClientDescription(): String =
-        if (second == "unknown") first else "$first $second"
-
-    /**
-     * Keep the detailed result inside the Passport domain for audit, but do not disclose whether
-     * the username exists or whether its account is disabled, locked, or administratively frozen.
-     */
-    private fun PassportLoginResult.toPublicLoginResult(): PassportLoginResult = when (status) {
-        PassportLoginStatusEnum.USER_NOT_FOUND,
-        PassportLoginStatusEnum.WRONG_PASSWORD,
-        PassportLoginStatusEnum.INACTIVE,
-        PassportLoginStatusEnum.LOCKED,
-        PassportLoginStatusEnum.ACCOUNT_FROZEN -> PassportLoginResult.invalidCredentials()
-
-        else -> this
-    }
 
 }
