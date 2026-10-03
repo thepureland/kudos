@@ -53,6 +53,8 @@ open class RefreshTokenService(
                     acr = source.acr,
                     credentialVersion = source.credentialVersion,
                     riskLevel = source.riskLevel,
+                    organizationId = source.organizationId,
+                    subSystemCode = source.subSystemCode,
                 ),
                 username = source.username,
                 clientId = clientId?.trim()?.takeIf(String::isNotEmpty)?.take(MAX_CLIENT_ID_LENGTH),

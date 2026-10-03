@@ -19,6 +19,15 @@ import org.springframework.stereotype.Repository
 @Repository
 open class UserOrgDao : BaseCrudDao<String, UserOrg, UserOrgs>() {
 
+    open fun searchOrgsByOrganizationId(organizationId: String): List<UserOrgCacheEntry> =
+        searchAs<UserOrgCacheEntry>(Criteria(UserOrg::organizationId eq organizationId))
+
+    open fun searchActiveOrgsByOrganizationId(organizationId: String, parentId: String? = null): List<UserOrg> {
+        val criteria = Criteria.and(UserOrg::organizationId eq organizationId, UserOrg::active eq true)
+        parentId?.let { criteria.addAnd(UserOrg::parentId eq it) }
+        return search(criteria)
+    }
+
 
     /**
      * Queries by tenant ID and returns a list of cache VOs.

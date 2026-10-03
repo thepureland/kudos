@@ -68,6 +68,7 @@ data class AuthRoleCacheEntry (
     /** Delegation ceiling; platform administrator roles must be non-delegable. */
     val delegableMax: Int? = null,
 
+    val organizationId: String? = null,
 ) : IIdEntity<String>, Serializable {
 
     companion object {

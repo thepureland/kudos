@@ -8,7 +8,13 @@ import io.kudos.base.query.lt
 import io.kudos.base.query.eq
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.base.query.PagingSearchResult
+import io.kudos.ms.user.common.passport.CurrentUserKit
+import io.kudos.ms.user.core.security.UserAccessScope
 import io.kudos.ms.user.core.security.UserTenantAccessGuard
+import io.kudos.ms.user.core.security.UserTenantAccessGuard.Companion.ownerKey
+import io.kudos.ms.user.core.org.service.impl.OrganizationDirectoryGate
+import io.kudos.ms.user.core.org.service.impl.isOrganizationRoot
+import io.kudos.ms.user.core.org.service.iservice.IOrganizationOwnershipService
 import io.kudos.ms.user.core.org.dao.UserOrgDao
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass
@@ -90,24 +96,65 @@ open class UserAccountService(
     @Resource
     private lateinit var userOrgDao: UserOrgDao
 
-    /** Authorize the persisted tenant, never the tenant supplied in a request body. */
-    private fun accessibleAccount(id: String): UserAccount? =
-        dao.get(id)?.also { if (tenantAccess.hasPrincipal()) tenantAccess.assertCanAccess(it.tenantId) }
+    /** Organization-mode checks; absent only in pure unit tests, where only legacy rows exist. */
+    @Autowired(required = false)
+    private var directoryGate: OrganizationDirectoryGate? = null
 
-    private fun assertOrganization(organizationId: String, tenantId: String? = null) {
-        if (!tenantAccess.hasPrincipal()) return
-        val org = requireNotNull(userOrgDao.get(organizationId)) { "Organization not found" }
-        tenantAccess.assertCanAccess(org.tenantId)
-        require(tenantId == null || tenantId == org.tenantId) { "Account and organization must belong to the same tenant" }
+    private fun gate(): OrganizationDirectoryGate = requireNotNull(directoryGate) { "ORGANIZATION_MODE_UNAVAILABLE" }
+
+    /** Authorize the persisted owner, never the tenant supplied in a request body. */
+    private fun accessibleAccount(id: String): UserAccount? =
+        dao.get(id)?.also { if (tenantAccess.hasPrincipal()) tenantAccess.assertCanAccessOwner(it.tenantId, it.organizationId) }
+
+    /**
+     * The department [orgId] is visible to the caller and, when an account owner is given, has the same
+     * owner. Legacy accounts are checked for authenticated callers only, as before; organization accounts
+     * always.
+     */
+    private fun assertOrganization(orgId: String, tenantId: String? = null, organizationId: String? = null) {
+        if (organizationId == null && !tenantAccess.hasPrincipal()) return
+        val org = requireNotNull(userOrgDao.get(orgId)) { "Organization not found" }
+        tenantAccess.assertCanAccessOwner(org.tenantId, org.organizationId)
+        if (organizationId != null) {
+            require(org.organizationId == organizationId) { "Account and department must belong to the same organization" }
+        } else {
+            require(tenantId == null || (org.organizationId == null && tenantId == org.tenantId)) {
+                "Account and organization must belong to the same tenant"
+            }
+        }
     }
 
-    private fun assertAccountReferences(value: Any, tenantId: String) {
-        if (!tenantAccess.hasPrincipal()) return
-        stringProperty(value, "orgId")?.takeIf(String::isNotBlank)?.let { assertOrganization(it, tenantId) }
+    private fun assertAccountReferences(value: Any, tenantId: String, organizationId: String? = null) {
+        if (organizationId == null && !tenantAccess.hasPrincipal()) return
+        stringProperty(value, "orgId")?.takeIf(String::isNotBlank)?.let { assertOrganization(it, tenantId, organizationId) }
         stringProperty(value, "supervisorId")?.takeIf(String::isNotBlank)?.let {
             val supervisor = requireNotNull(dao.get(it)) { "Supervisor not found" }
-            require(supervisor.tenantId == tenantId) { "Account and supervisor must belong to the same tenant" }
+            require(ownerKey(supervisor.tenantId, supervisor.organizationId) == ownerKey(tenantId, organizationId)) {
+                if (organizationId == null) "Account and supervisor must belong to the same tenant"
+                else "Account and supervisor must belong to the same organization"
+            }
         }
+    }
+
+    @Autowired(required = false)
+    private var ownership: IOrganizationOwnershipService? = null
+
+    private fun organizationOfTenant(tenantId: String): String? =
+        if (directoryGate?.organizationModeEnabled == true) ownership?.organizationIdForTenant(tenantId) else null
+
+    /** Member management on organization accounts goes through the organization member policy. */
+    private fun assertCanManage(account: UserAccount) {
+        account.organizationId?.let { gate().assertCanManageMember(it, account.id) }
+    }
+
+    /** Credential maintenance on someone else's organization account is member management; on one's own it is not. */
+    private fun assertCanMaintainCredentials(account: UserAccount) {
+        if (CurrentUserKit.currentUserIdOrNull() != account.id) assertCanManage(account)
+    }
+
+    /** Disabling, freezing or deleting an organization account ends or suspends a membership (G-16, G-17). */
+    private fun assertCanEnd(account: UserAccount) {
+        account.organizationId?.let { gate().assertCanEndMembership(it, account.id) }
     }
 
     @Transactional(readOnly = true)
@@ -121,8 +168,21 @@ open class UserAccountService(
 
     @Transactional(readOnly = true)
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
-        val restricted = tenantAccess.restrictedTenantId()
-        if (restricted == null) return super.pagingSearch(listSearchPayload)
+        val scope = tenantAccess.restrictedScope()
+        if (scope is UserAccessScope.Organization) {
+            require(listSearchPayload is UserAccountQuery) { "An organization-scoped account query is required" }
+            require(listSearchPayload.organizationId.isNullOrBlank() || listSearchPayload.organizationId == scope.organizationId) {
+                "Cross-organization user administration is forbidden"
+            }
+            val scoped = listSearchPayload.copy(organizationId = scope.organizationId, tenantId = null).apply {
+                pageNo = listSearchPayload.pageNo
+                pageSize = listSearchPayload.pageSize
+                orders = listSearchPayload.orders
+            }
+            scoped.orgId?.takeIf(String::isNotBlank)?.let { assertOrganization(it, organizationId = scope.organizationId) }
+            return super.pagingSearch(scoped)
+        }
+        val restricted = (scope as? UserAccessScope.Tenant)?.tenantId ?: return super.pagingSearch(listSearchPayload)
         require(listSearchPayload is UserAccountQuery) { "A tenant-scoped account query is required" }
         val scoped = listSearchPayload.copy(tenantId = tenantAccess.queryTenantId(listSearchPayload.tenantId)).apply {
             pageNo = listSearchPayload.pageNo
@@ -162,9 +222,25 @@ open class UserAccountService(
 
     @Transactional(readOnly = true)
     override fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? {
+        // In organization mode a tenant owned by an organization is served by that organization's
+        // shared accounts: usernames are unique per organization, not per tenant.
+        organizationOfTenant(tenantId)?.let { return getUserByOrganizationIdAndUsername(it, username) }
         tenantAccess.assertCanAccess(tenantId)
         return userAccountHashCache.getUsersByTenantIdAndUsername(tenantId, username)?.id
             ?.let { userAccountHashCache.getUserById(it) }
+    }
+
+    @Transactional(readOnly = true)
+    override fun getUserByOrganizationIdAndUsername(organizationId: String, username: String): UserAccountCacheEntry? {
+        tenantAccess.assertCanAccessOrganization(organizationId)
+        return userAccountHashCache.getUserByOrganizationIdAndUsername(organizationId, username)?.id
+            ?.let { userAccountHashCache.getUserById(it) }
+    }
+
+    @Transactional(readOnly = true)
+    override fun getUsersByOrganizationId(organizationId: String): List<UserAccountRow> {
+        tenantAccess.assertCanAccessOrganization(organizationId)
+        return dao.search(UserAccountQuery(organizationId = organizationId), UserAccountRow::class)
     }
 
     @Transactional(readOnly = true)
@@ -179,12 +255,19 @@ open class UserAccountService(
     @Transactional(readOnly = true)
     override fun getUsersByOrgId(orgId: String): List<UserAccountRow> {
         assertOrganization(orgId)
-        return dao.search(UserAccountQuery(orgId = orgId, tenantId = tenantAccess.restrictedTenantId()), UserAccountRow::class)
+        return when (val scope = tenantAccess.restrictedScope()) {
+            is UserAccessScope.Organization ->
+                dao.search(UserAccountQuery(orgId = orgId, organizationId = scope.organizationId), UserAccountRow::class)
+            else -> dao.search(UserAccountQuery(orgId = orgId, tenantId = tenantAccess.restrictedTenantId()), UserAccountRow::class)
+        }
     }
 
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
-        val tenantId = if (active) null else accessibleAccount(id)?.tenantId
+        // Enabling needs no lookup in legacy mode (as before); organization accounts need the member policy.
+        val existing = if (active && directoryGate?.organizationModeEnabled != true) null else accessibleAccount(id)
+        existing?.let { if (active) assertCanManage(it) else assertCanEnd(it) }
+        val tenantId = if (active) null else existing?.tenantId
         val success = updateAndPublish(id, "Updated active flag of user id=${id} to ${active}") {
             this.active = active
         }
@@ -193,6 +276,7 @@ open class UserAccountService(
                 id,
                 tenantId,
                 UserAuthenticationInvalidated.Reason.ACCOUNT_DISABLED,
+                existing?.organizationId,
             )
         }
         return success
@@ -201,6 +285,7 @@ open class UserAccountService(
     @Transactional
     override fun resetPassword(id: String, newPassword: String): Boolean {
         val existing = accessibleAccount(id) ?: return false
+        assertCanMaintainCredentials(existing)
         val context = PasswordPolicyContext(PasswordPurpose.LOGIN, id, existing.username, existing.tenantId)
         val encryptedPassword = protectPassword(newPassword, context, existing.loginPassword)
         val success = updateAndPublish(id, "Reset login password of user id=${id}") {
@@ -227,6 +312,7 @@ open class UserAccountService(
     @Transactional
     override fun resetSecurityPassword(id: String, newPassword: String): Boolean {
         val existing = accessibleAccount(id) ?: return false
+        assertCanMaintainCredentials(existing)
         val encryptedPassword = protectPassword(
             newPassword,
             PasswordPolicyContext(PasswordPurpose.SECURITY, id, existing.username, existing.tenantId),
@@ -317,9 +403,24 @@ open class UserAccountService(
     @Transactional
     override fun insert(any: Any): String {
         val account = mutableAccount(any)
-        if (tenantAccess.hasPrincipal()) {
-            tenantAccess.assertCanAccess(account.tenantId)
-            assertAccountReferences(any, account.tenantId)
+        val scope = tenantAccess.restrictedScope()
+        val organizationId = account.organizationId?.takeIf(String::isNotBlank)
+            ?: (scope as? UserAccessScope.Organization)?.organizationId
+        if (organizationId != null) {
+            // An organization account: owned by the organization, shared by all its tenants.
+            gate().assertCanManageMember(organizationId, null)
+            val root = requireNotNull(userOrgDao.get(organizationId)?.takeIf { it.isOrganizationRoot() }) { "ORGANIZATION_NOT_FOUND" }
+            require(root.active) { "ORGANIZATION_DISABLED" }
+            account.organizationId = organizationId
+            account.tenantId = ""
+            assertAccountReferences(any, "", organizationId)
+        } else {
+            account.organizationId = null
+            directoryGate?.assertLegacyTenantAllowed(account.tenantId)
+            if (tenantAccess.hasPrincipal()) {
+                tenantAccess.assertCanAccess(account.tenantId)
+                assertAccountReferences(any, account.tenantId)
+            }
         }
         val loginPassword = stringProperty(any, UserAccount::loginPassword.name)
         val encodedLoginPassword = loginPassword
@@ -330,7 +431,7 @@ open class UserAccountService(
                     PasswordPolicyContext(
                         purpose = PasswordPurpose.LOGIN,
                         username = stringProperty(any, UserAccount::username.name),
-                        tenantId = stringProperty(any, UserAccount::tenantId.name),
+                        tenantId = account.tenantId,
                     ),
                     allowExistingHash = any is UserAccount,
                 )
@@ -347,7 +448,7 @@ open class UserAccountService(
                     PasswordPolicyContext(
                         purpose = PasswordPurpose.SECURITY,
                         username = stringProperty(any, UserAccount::username.name),
-                        tenantId = stringProperty(any, UserAccount::tenantId.name),
+                        tenantId = account.tenantId,
                     ),
                     allowExistingHash = any is UserAccount,
                 )
@@ -372,8 +473,13 @@ open class UserAccountService(
         require(requestedTenantId.isNullOrBlank() || requestedTenantId == existing.tenantId) {
             "A user account cannot be moved to another tenant"
         }
+        val requestedOrganizationId = stringProperty(any, UserAccount::organizationId.name)
+        require(requestedOrganizationId.isNullOrBlank() || requestedOrganizationId == existing.organizationId) {
+            "A user account cannot be moved to another organization"
+        }
+        assertCanManage(existing)
         val account = mutableAccount(any)
-        assertAccountReferences(any, existing.tenantId)
+        assertAccountReferences(any, existing.tenantId, existing.organizationId)
         val requestedUsername = stringProperty(any, UserAccount::username.name) ?: existing.username
         val requestedLoginPassword = stringProperty(any, UserAccount::loginPassword.name)
         val loginContext =
@@ -407,6 +513,7 @@ open class UserAccountService(
             }
             ?: existing.securityPassword
         account.tenantId = existing.tenantId
+        account.organizationId = existing.organizationId
         account.loginPassword = protectedLoginPassword
         account.securityPassword = protectedSecurityPassword
         // These credentials have dedicated maintenance endpoints and are never writable through generic CRUD.
@@ -436,7 +543,7 @@ open class UserAccountService(
                     UserAuthenticationInvalidated.Reason.SECURITY_PASSWORD_CHANGED
                 else -> null
             }
-            if (reason != null) publishAuthenticationInvalidated(id, existing.tenantId, reason)
+            if (reason != null) publishAuthenticationInvalidated(id, existing.tenantId, reason, existing.organizationId)
         } else {
             log.error("Failed to update user id=${id}!")
         }
@@ -449,10 +556,11 @@ open class UserAccountService(
             log.warn("Failed to delete user id=${id}: already does not exist!")
             return false
         }
+        assertCanEnd(user)
         val success = super.deleteById(id)
         if (success) {
             log.debug("Deleted user id=${id}.")
-            eventPublisher.publishEvent(UserAccountDeleted(id, user.tenantId, user.username))
+            eventPublisher.publishEvent(UserAccountDeleted(id, user.tenantId, user.username, user.organizationId))
         } else {
             log.error("Failed to delete user id=${id}!")
         }
@@ -513,7 +621,9 @@ open class UserAccountService(
 
     @Transactional
     override fun cleanAuthKey(id: String): Boolean {
-        val tenantId = accessibleAccount(id)?.tenantId
+        val existing = accessibleAccount(id)
+        existing?.let(::assertCanMaintainCredentials)
+        val tenantId = existing?.tenantId
         // For ktorm update, setting a column to null requires dao.updateProperties.
         val success = dao.updateProperties(id, mapOf(UserAccount::authenticationKey.name to null))
         if (success) {
@@ -573,7 +683,9 @@ open class UserAccountService(
         freezeEndTime: LocalDateTime?,
     ): Boolean {
         require(freezeType.isNotBlank()) { "freezeType must not be blank" }
-        val tenantId = accessibleAccount(id)?.tenantId
+        val existing = accessibleAccount(id)
+        existing?.let(::assertCanEnd)
+        val tenantId = existing?.tenantId
         // Use updateProperties to update explicitly (including nulls). ktorm's plain update is a no-op
         // for null fields, but here we must clear start/end when the caller does not pass them.
         val success = dao.updateProperties(
@@ -594,6 +706,7 @@ open class UserAccountService(
                     id,
                     tenantId,
                     UserAuthenticationInvalidated.Reason.ACCOUNT_FROZEN,
+                    existing.organizationId,
                 )
             }
         } else {
@@ -664,8 +777,10 @@ open class UserAccountService(
         currentHash: String?,
     ): Boolean {
         val store = credentialStore
-        if (store != null && context.purpose == PasswordPurpose.LOGIN &&
-            !context.userId.isNullOrBlank() && !context.tenantId.isNullOrBlank()
+        // An organization account's context carries its own empty tenant; the store files its password
+        // under the organization, so the empty tenant is no reason to skip the store.
+        if (store != null && context.purpose == PasswordPurpose.LOGIN && !context.userId.isNullOrBlank() &&
+            (!context.tenantId.isNullOrBlank() || !dao.get(context.userId!!)?.organizationId.isNullOrBlank())
         ) {
             return store.verifyPassword(password, context)
         }
@@ -694,8 +809,9 @@ open class UserAccountService(
         id: String,
         tenantId: String,
         reason: UserAuthenticationInvalidated.Reason,
+        organizationId: String? = null,
     ) {
-        eventPublisher.publishEvent(UserAuthenticationInvalidated(id, tenantId, reason))
+        eventPublisher.publishEvent(UserAuthenticationInvalidated(id, tenantId, reason, organizationId))
     }
 
     @Transactional
@@ -727,7 +843,11 @@ open class UserAccountService(
         // The `lt` operator maps to SQL `<`, which naturally does not match NULL --
         // permanent freezes (freeze_end_time=null) are not cleared.
         val criteria = Criteria(UserAccount::freezeEndTime lt LocalDateTime.now())
-        tenantAccess.restrictedTenantId()?.let { criteria.addAnd(UserAccount::tenantId eq it) }
+        when (val scope = tenantAccess.restrictedScope()) {
+            UserAccessScope.Unrestricted -> Unit
+            is UserAccessScope.Tenant -> criteria.addAnd(UserAccount::tenantId eq scope.tenantId)
+            is UserAccessScope.Organization -> criteria.addAnd(UserAccount::organizationId eq scope.organizationId)
+        }
         val expired = dao.searchAs<UserAccount>(criteria)
         val cleared = expired.count { unfreezeAccount(it.id) }
         if (cleared > 0) log.info("auto-unfreeze: cleaned $cleared expired freeze records in total")
@@ -740,8 +860,9 @@ open class UserAccountService(
         // can no longer look them up.
         val snapshots = if (ids.isEmpty()) emptyList()
             else dao.getByIds(ids).map {
-                tenantAccess.assertCanAccess(it.tenantId)
-                UserAccountBatchDeleted.Item(it.id, it.tenantId, it.username)
+                tenantAccess.assertCanAccessOwner(it.tenantId, it.organizationId)
+                assertCanEnd(it)
+                UserAccountBatchDeleted.Item(it.id, it.tenantId, it.username, it.organizationId)
             }
         val count = super.batchDelete(ids)
         log.debug("Batch deleted users: expected ${ids.size}, actually deleted ${count}.")

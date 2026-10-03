@@ -20,6 +20,8 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.Locale
 import java.util.UUID
+import io.kudos.ms.auth.core.authentication.credential.service.impl.CredentialOwnerResolver
+import org.springframework.beans.factory.annotation.Autowired
 
 @Service
 @Transactional
@@ -33,11 +35,13 @@ open class RecoveryCodeService(
 ) : IRecoveryCodeService, IRecoveryCodeVerifier {
 
     override fun generate(userId: String, tenantId: String): RecoveryCodeSet {
-        requireTotp(userId, tenantId)
+        // Policy is the tenant's; the codes are the account's (one set per organization account).
         requireRecoveryCodesEnabled(tenantId)
+        val owner = ownerOf(tenantId, userId)
+        requireTotp(userId, owner)
         val generatedAt = clock.instant()
         val now = LocalDateTime.ofInstant(generatedAt, ZoneOffset.UTC)
-        dao.revokeActive(tenantId, userId, now)
+        dao.revokeActive(owner, userId, now)
         val setId = UUID.randomUUID().toString()
         val codes = generateSequence(::newCode)
             .distinct()
@@ -46,10 +50,10 @@ open class RecoveryCodeService(
         codes.forEach { rawCode ->
             dao.insert(AuthRecoveryCode {
                 id = UUID.randomUUID().toString()
-                this.tenantId = tenantId
+                this.tenantId = owner
                 this.userId = userId
                 this.setId = setId
-                codeHash = hash(tenantId, userId, setId, normalize(rawCode))
+                codeHash = hash(owner, userId, setId, normalize(rawCode))
                 createdAt = now
                 consumedAt = null
                 revokedAt = null
@@ -60,24 +64,26 @@ open class RecoveryCodeService(
 
     @Transactional(readOnly = true)
     override fun status(userId: String, tenantId: String): RecoveryCodeStatus {
-        ownedAccount(userId, tenantId)
+        val owner = ownerOf(tenantId, userId)
+        ownedAccount(userId, owner)
         if (!recoveryCodesEnabled(tenantId)) return RecoveryCodeStatus(enabled = false, remaining = 0)
-        val setId = dao.findActiveSetId(tenantId, userId)
+        val setId = dao.findActiveSetId(owner, userId)
             ?: return RecoveryCodeStatus(enabled = false, remaining = 0)
-        val remaining = dao.countUnused(tenantId, userId, setId)
+        val remaining = dao.countUnused(owner, userId, setId)
         return RecoveryCodeStatus(enabled = remaining > 0, remaining = remaining)
     }
 
     override fun consume(userId: String, tenantId: String, rawCode: String): Boolean {
         if (!recoveryCodesEnabled(tenantId)) return false
-        val setId = dao.findActiveSetId(tenantId, userId) ?: return false
+        val owner = ownerOf(tenantId, userId)
+        val setId = dao.findActiveSetId(owner, userId) ?: return false
         val normalized = normalize(rawCode)
         if (!isValid(normalized)) return false
         return dao.consume(
-            tenantId,
+            owner,
             userId,
             setId,
-            hash(tenantId, userId, setId, normalized),
+            hash(owner, userId, setId, normalized),
             LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC),
         )
     }
@@ -86,9 +92,10 @@ open class RecoveryCodeService(
         consume(userId = userId, tenantId = tenantId, rawCode = rawCode)
 
     override fun revoke(userId: String, tenantId: String): Boolean {
-        ownedAccount(userId, tenantId)
+        val owner = ownerOf(tenantId, userId)
+        ownedAccount(userId, owner)
         return dao.revokeActive(
-            tenantId,
+            owner,
             userId,
             LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC),
         ) > 0
@@ -109,8 +116,14 @@ open class RecoveryCodeService(
     private fun recoveryCodesEnabled(tenantId: String): Boolean =
         mfaPolicyService?.getEffective(tenantId)?.recoveryCodesEnabled ?: true
 
-    private fun ownedAccount(userId: String, tenantId: String) =
-        userAccountService.get(userId)?.takeIf { it.tenantId == tenantId }
+    @Autowired(required = false)
+    private var owners: CredentialOwnerResolver? = null
+
+    /** The owner the account's codes are filed under: its tenant, or its organization (see [CredentialOwnerResolver]). */
+    private fun ownerOf(tenantId: String, userId: String): String = owners?.ownerOf(tenantId, userId) ?: tenantId
+
+    private fun ownedAccount(userId: String, owner: String) =
+        userAccountService.get(userId)?.takeIf { (it.organizationId?.takeIf(String::isNotBlank) ?: it.tenantId) == owner }
             ?: fail(RecoveryCodeErrorCodeEnum.ACCOUNT_NOT_FOUND, "User account was not found.")
 
     private fun newCode(): String = buildString(CODE_LENGTH + 3) {

@@ -10,6 +10,8 @@ import io.kudos.ms.user.core.account.service.iservice.IUserAccountThirdService
 import java.security.MessageDigest
 import java.time.LocalDateTime
 import java.util.Locale
+import io.kudos.ms.user.core.org.service.iservice.IOrganizationOwnershipService
+import org.springframework.beans.factory.annotation.Autowired
 
 /** Maps a proved email address to Kudos user master data and optionally performs JIT registration. */
 open class KudosEmailOtpPrincipalService(
@@ -18,6 +20,9 @@ open class KudosEmailOtpPrincipalService(
     private val accountService: IUserAccountService,
     private val properties: EmailOtpProperties,
 ) : IEmailOtpPrincipalService {
+
+    @Autowired(required = false)
+    private var ownership: IOrganizationOwnershipService? = null
 
     override fun resolveOrProvision(tenantId: String, email: String): EmailOtpPrincipal {
         require(tenantId.isNotBlank()) { "tenantId must not be blank" }
@@ -34,7 +39,11 @@ open class KudosEmailOtpPrincipalService(
         val frozen = user.freezeType != null &&
             (user.freezeStartTime == null || !now.isBefore(user.freezeStartTime)) &&
             (user.freezeEndTime == null || now.isBefore(user.freezeEndTime))
-        if (user.tenantId != tenantId || user.active != true || frozen || user.username.isNullOrBlank()) {
+        // An organization account serves every tenant of its organization.
+        val serves = user.organizationId?.takeIf(String::isNotBlank)
+            ?.let { ownership?.organizationIdForTenant(tenantId) == it }
+            ?: (user.tenantId == tenantId)
+        if (!serves || user.active != true || frozen || user.username.isNullOrBlank()) {
             throw EmailOtpPrincipalException("EMAIL_OTP_ACCOUNT_UNAVAILABLE")
         }
         return EmailOtpPrincipal(user.id, tenantId, requireNotNull(user.username))

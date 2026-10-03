@@ -42,6 +42,9 @@ data class UserInfoModel(
     /** Login time of this session (server time) */
     val loginTime: LocalDateTime,
 
+    /** Customer organization owning this shared identity; orgId remains the department. */
+    val organizationId: String? = null,
+
 ) : Serializable {
 
     companion object {

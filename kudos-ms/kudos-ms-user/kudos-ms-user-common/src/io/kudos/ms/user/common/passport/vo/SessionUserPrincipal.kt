@@ -26,6 +26,10 @@ data class SessionUserPrincipal(
 
     val username: String,
 
+    val organizationId: String? = null,
+
+    val subSystemCode: String? = null,
+
 ) : IIdEntity<String>, Serializable {
 
     companion object {

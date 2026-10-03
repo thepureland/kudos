@@ -39,6 +39,9 @@ data class UserAccountQuery (
     /** Whether built-in */
     val builtIn: Boolean? = null,
 
+    /** Owning customer root organization. */
+    val organizationId: String? = null,
+
 ) : ListSearchPayload() {
 
     override fun getReturnEntityClass() = UserAccountRow::class

@@ -49,6 +49,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
+import io.kudos.ms.auth.core.organization.init.OrganizationAuthorizationProperties
 
 
 /**
@@ -71,6 +72,7 @@ import org.springframework.context.annotation.Configuration
     AuthSecurityEventSlaProperties::class,
     AuthSecurityEventEscalationProperties::class,
     AuthSecurityEventNotificationProperties::class,
+    OrganizationAuthorizationProperties::class,
 )
 open class AuthAutoConfiguration : IComponentInitializer {
 

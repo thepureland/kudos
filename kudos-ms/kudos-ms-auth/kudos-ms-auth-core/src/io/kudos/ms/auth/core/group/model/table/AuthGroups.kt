@@ -22,6 +22,7 @@ object AuthGroups : ManagedTable<AuthGroup>("auth_group") {
 
     /** Tenant id. */
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
+    var organizationId = varchar("organization_id").bindTo { it.organizationId }
 
     /** Subsystem code. */
     var subsysCode = varchar("subsys_code").bindTo { it.subsysCode }

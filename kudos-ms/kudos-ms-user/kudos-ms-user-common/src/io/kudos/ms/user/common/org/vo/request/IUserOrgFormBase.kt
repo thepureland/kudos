@@ -10,6 +10,9 @@ import io.kudos.base.bean.validation.constraint.annotations.MaxLength
  */
 interface IUserOrgFormBase {
 
+    val organizationId: String? get() = null
+    val nodeKind: String? get() = null
+
     /** Organization name */
     val name: String?
 

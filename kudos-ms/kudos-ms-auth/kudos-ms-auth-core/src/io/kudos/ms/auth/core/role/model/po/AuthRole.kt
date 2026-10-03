@@ -25,6 +25,9 @@ interface AuthRole : IManagedDbEntity<String, AuthRole> {
     /** Tenant id */
     var tenantId: String
 
+    /** Owning customer organization (organization mode); tenantId then holds the same id as the owner. */
+    var organizationId: String?
+
     /** Subsystem code */
     var subsysCode: String
 

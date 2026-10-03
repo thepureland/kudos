@@ -15,6 +15,8 @@ import java.time.Clock
 import java.time.LocalDateTime
 import java.util.Base64
 import java.util.UUID
+import io.kudos.ms.auth.core.authentication.credential.service.impl.CredentialOwnerResolver
+import org.springframework.beans.factory.annotation.Autowired
 
 @Service
 @Transactional
@@ -26,7 +28,8 @@ open class WebAuthnCredentialService(
     private val authenticatorRiskService: IWebAuthnAuthenticatorRiskService? = null,
 ) : IWebAuthnCredentialService {
 
-    override fun registerVerified(command: VerifiedWebAuthnCredentialRegistration): WebAuthnCredentialSummary {
+    override fun registerVerified(original: VerifiedWebAuthnCredentialRegistration): WebAuthnCredentialSummary {
+        val command = original.copy(tenantId = ownerOf(original.tenantId, original.userId))
         validateAccount(command.tenantId, command.userId)
         val credentialId = requireBase64Url(command.credentialId, "WEBAUTHN_CREDENTIAL_ID_INVALID", 1024)
         val userHandle = requireBase64Url(command.userHandle, "WEBAUTHN_USER_HANDLE_INVALID", 64)
@@ -66,12 +69,14 @@ open class WebAuthnCredentialService(
 
     @Transactional(readOnly = true)
     override fun findActive(tenantId: String, credentialId: String): AuthWebAuthnCredential? {
+        val tenantId = ownerOfTenant(tenantId)
         requireScope(tenantId, credentialId)
         return dao.findActiveByCredentialId(tenantId, credentialId)
     }
 
     @Transactional(readOnly = true)
     override fun findActiveUserIdByUserHandle(tenantId: String, userHandle: String): String? {
+        val tenantId = ownerOfTenant(tenantId)
         requireScope(tenantId, userHandle)
         val normalizedHandle = requireBase64Url(userHandle, "WEBAUTHN_USER_HANDLE_INVALID", 64)
         val userIds = dao.findActiveByUserHandle(tenantId, normalizedHandle).map { it.userId }.distinct()
@@ -81,12 +86,14 @@ open class WebAuthnCredentialService(
 
     @Transactional(readOnly = true)
     override fun listActive(tenantId: String, userId: String): List<WebAuthnCredentialSummary> {
+        val tenantId = ownerOf(tenantId, userId)
         requireScope(tenantId, userId)
         return dao.findActiveByUser(tenantId, userId).map { it.toSummary() }
     }
 
     @Transactional(readOnly = true)
     override fun listForAudit(tenantId: String, userId: String): List<WebAuthnCredentialAuditSummary> {
+        val tenantId = ownerOf(tenantId, userId)
         requireScope(tenantId, userId)
         return dao.findByUser(tenantId, userId)
             .sortedByDescending { it.createdAt }
@@ -95,11 +102,13 @@ open class WebAuthnCredentialService(
 
     @Transactional(readOnly = true)
     override fun isEnrolled(userId: String, tenantId: String): Boolean {
+        val tenantId = ownerOf(tenantId, userId)
         requireScope(tenantId, userId)
         return dao.hasActive(tenantId, userId)
     }
 
-    override fun recordVerifiedAssertion(command: VerifiedWebAuthnAssertion): WebAuthnCredentialSummary {
+    override fun recordVerifiedAssertion(original: VerifiedWebAuthnAssertion): WebAuthnCredentialSummary {
+        val command = original.copy(tenantId = ownerOf(original.tenantId, original.userId))
         requireScope(command.tenantId, command.userId)
         val credentialId = requireBase64Url(command.credentialId, "WEBAUTHN_CREDENTIAL_ID_INVALID", 1024)
         requireSignatureCount(command.signatureCount)
@@ -130,6 +139,7 @@ open class WebAuthnCredentialService(
     }
 
     override fun revoke(tenantId: String, userId: String, credentialId: String): Boolean {
+        val tenantId = ownerOf(tenantId, userId)
         requireScope(tenantId, userId)
         val normalizedId = requireBase64Url(credentialId, "WEBAUTHN_CREDENTIAL_ID_INVALID", 1024)
         return dao.revoke(tenantId, userId, normalizedId, LocalDateTime.now(clock)).also { revoked ->
@@ -143,6 +153,7 @@ open class WebAuthnCredentialService(
         credentialId: String,
         displayName: String,
     ): WebAuthnCredentialSummary {
+        val tenantId = ownerOf(tenantId, userId)
         requireScope(tenantId, userId)
         val normalizedId = requireBase64Url(credentialId, "WEBAUTHN_CREDENTIAL_ID_INVALID", 1024)
         val normalizedName = normalizeDisplayName(displayName)
@@ -160,8 +171,17 @@ open class WebAuthnCredentialService(
     private fun validateAccount(tenantId: String, userId: String) {
         requireScope(tenantId, userId)
         val account = userAccountService.get(userId) ?: fail("WEBAUTHN_ACCOUNT_NOT_FOUND")
-        if (account.tenantId != tenantId) fail("WEBAUTHN_ACCOUNT_TENANT_MISMATCH")
+        if ((account.organizationId?.takeIf(String::isNotBlank) ?: account.tenantId) != tenantId) fail("WEBAUTHN_ACCOUNT_TENANT_MISMATCH")
     }
+
+    @Autowired(required = false)
+    private var owners: CredentialOwnerResolver? = null
+
+    /** Organization accounts' credentials are filed under their organization (see [CredentialOwnerResolver]). */
+    private fun ownerOf(tenantId: String, userId: String): String =
+        owners?.let { runCatching { it.ownerOf(tenantId, userId) }.getOrElse { fail("WEBAUTHN_ACCOUNT_TENANT_MISMATCH") } } ?: tenantId
+
+    private fun ownerOfTenant(tenantId: String): String = owners?.ownerOfTenant(tenantId) ?: tenantId
 
     private fun publishCredentialChanged(userId: String, tenantId: String) {
         eventPublisher?.publishEvent(

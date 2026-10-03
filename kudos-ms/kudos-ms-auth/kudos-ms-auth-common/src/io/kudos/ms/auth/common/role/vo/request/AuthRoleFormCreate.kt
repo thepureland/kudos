@@ -27,4 +27,5 @@ data class AuthRoleFormCreate (
 
     override val remark: String? ,
 
+    override val organizationId: String? = null,
 ) : IAuthRoleFormBase

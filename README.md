@@ -108,6 +108,8 @@
 | sys | [`sys`](kudos-ms/kudos-ms-sys/README.md) | [`-core`](kudos-ms/kudos-ms-sys/kudos-ms-sys-core/README.md) · [`-common`](kudos-ms/kudos-ms-sys/kudos-ms-sys-common/README.md) · [`-client`](kudos-ms/kudos-ms-sys/kudos-ms-sys-client/README.md) |
 | user | [`user`](kudos-ms/kudos-ms-user/README.md) | [`-core`](kudos-ms/kudos-ms-user/kudos-ms-user-core/README.md) · [`-common`](kudos-ms/kudos-ms-user/kudos-ms-user-common/README.md) · [`-client`](kudos-ms/kudos-ms-user/kudos-ms-user-client/README.md) |
 
+组织模式（一个客户组织持有多个 tenant，共享账号与角色，`kudos.ms.organization.enabled`，默认关闭）：[设计](docs/superpowers/specs/2026-10-03-organization-tenant-identity-permission-design.md) · [实施交接](docs/superpowers/specs/2026-10-03-organization-tenant-implementation-handoff.md)
+
 ### 测试 / 工具
 
 | 路径 | 内容 |

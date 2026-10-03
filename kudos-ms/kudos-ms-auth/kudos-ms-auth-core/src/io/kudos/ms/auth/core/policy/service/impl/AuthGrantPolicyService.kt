@@ -162,6 +162,18 @@ open class AuthGrantPolicyService : IAuthGrantPolicyService {
                 continue
             }
 
+            // Organization roles: every write path (direct bind, group membership, temporal grant,
+            // approved request) changes the member's organization defaults, which nobody may do for
+            // themselves (G-12), and which are not delegable: an organization's defaults are set by
+            // its administrators, not handed down a delegation chain.
+            if (tenantAdministrationGuard.isOrganizationOwner(role.tenantId)) {
+                tenantAdministrationGuard.assertCanChangeHolder(role.tenantId, candidate.principalId)
+                if (candidate.operatorId != null) {
+                    rejections += GrantRejection(candidate, "organization roles cannot be delegated")
+                    continue
+                }
+            }
+
             // A role that requires approval may only be assigned through the workflow that collects
             // it. Enforced here rather than at the controller so that every write path — direct
             // bind, group membership, broadcast, delegation — is covered by the one check.

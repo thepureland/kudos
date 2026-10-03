@@ -63,4 +63,5 @@ data class AuthRoleDetail (
     /** Last update time. */
     val updateTime: LocalDateTime? = null,
 
+    val organizationId: String? = null,
 ) : IIdEntity<String>

@@ -17,6 +17,7 @@ object AuthRoleExclusions : StringIdTable<AuthRoleExclusion>("auth_role_exclusio
     var roleAId = varchar("role_a_id").bindTo { it.roleAId }
     var roleBId = varchar("role_b_id").bindTo { it.roleBId }
     var tenantId = varchar("tenant_id").bindTo { it.tenantId }
+    var organizationId = varchar("organization_id").bindTo { it.organizationId }
     var description = varchar("description").bindTo { it.description }
     var createUserId = varchar("create_user_id").bindTo { it.createUserId }
     var createUserName = varchar("create_user_name").bindTo { it.createUserName }

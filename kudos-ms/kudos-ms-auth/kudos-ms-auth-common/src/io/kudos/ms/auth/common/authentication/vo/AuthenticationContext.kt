@@ -19,6 +19,8 @@ data class AuthenticationContext(
     val acr: String,
     val credentialVersion: Long = 0,
     val riskLevel: String? = null,
+    val organizationId: String? = null,
+    val subSystemCode: String? = null,
 ) : Serializable {
     companion object {
         private const val serialVersionUID = 1L

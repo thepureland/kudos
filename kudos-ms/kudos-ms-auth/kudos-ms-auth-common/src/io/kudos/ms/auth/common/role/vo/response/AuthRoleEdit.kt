@@ -42,4 +42,5 @@ data class AuthRoleEdit (
     /** Remark. */
     val remark: String? = null,
 
+    val organizationId: String? = null,
 ) : IIdEntity<String>

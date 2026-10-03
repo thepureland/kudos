@@ -116,6 +116,15 @@ interface IUserOrgService : IBaseCrudService<String, UserOrg> {
     fun getOrgTree(tenantId: String, parentId: String? = null): List<UserOrgTreeRow>
 
     /**
+     * Departments (and the root) of a customer organization, as a tree; organization-mode counterpart
+     * of [getOrgTree].
+     */
+    fun getOrgTreeByOrganizationId(organizationId: String, parentId: String? = null): List<UserOrgTreeRow>
+
+    /** All nodes of a customer organization; organization-mode counterpart of [getOrgsByTenantId]. */
+    fun getOrgsByOrganizationId(organizationId: String): List<UserOrgCacheEntry>
+
+    /**
      * Gets all ancestor organization IDs (recursing upward).
      *
      * @param orgId organization ID

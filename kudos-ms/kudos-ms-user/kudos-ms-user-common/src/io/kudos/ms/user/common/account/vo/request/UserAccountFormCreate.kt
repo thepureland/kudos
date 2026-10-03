@@ -13,7 +13,7 @@ data class UserAccountFormCreate (
 
     override val username: String? ,
 
-    override val tenantId: String? ,
+    override val tenantId: String? = null,
 
     override val loginPassword: String? ,
 
@@ -48,5 +48,8 @@ data class UserAccountFormCreate (
     override val supervisorId: String? ,
 
     override val remark: String? ,
+
+    /** Owning customer root organization. */
+    override val organizationId: String? = null,
 
 ) : IUserAccountFormBase

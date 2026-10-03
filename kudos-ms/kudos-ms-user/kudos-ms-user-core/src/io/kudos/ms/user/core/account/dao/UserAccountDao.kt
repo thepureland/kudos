@@ -25,6 +25,15 @@ import java.time.LocalDateTime
 @Repository
 open class UserAccountDao : BaseCrudDao<String, UserAccount, UserAccounts>() {
 
+    open fun getUserByOrganizationIdAndUsername(organizationId: String, username: String): UserAccountCacheEntry? =
+        searchAs<UserAccountCacheEntry>(Criteria.and(
+            UserAccount::organizationId eq organizationId, UserAccount::username eq username,
+        )).singleOrNull()
+
+    open fun searchActiveUserIdsByOrganizationId(organizationId: String): List<String> =
+        searchProperty(Criteria.and(UserAccount::organizationId eq organizationId, UserAccount::active eq true),
+            UserAccount::id).filterNotNull()
+
 
     /**
      * Query by tenant id + username, returning the cache VO.

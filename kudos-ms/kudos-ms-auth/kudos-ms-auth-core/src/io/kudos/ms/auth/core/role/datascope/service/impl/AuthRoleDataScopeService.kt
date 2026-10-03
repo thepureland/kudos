@@ -25,6 +25,10 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
+import org.springframework.beans.factory.annotation.Autowired
+import io.kudos.ms.auth.core.organization.service.OrganizationAuthorizationResolver
+import io.kudos.ms.auth.core.organization.service.OrganizationRequestTargetResolver
 
 
 /**
@@ -94,8 +98,22 @@ open class AuthRoleDataScopeService(
 
     private val log = LogFactory.getLog(this::class)
 
+    @Autowired(required = false)
+    private var tenantAdministrationGuard: TenantAdministrationGuard? = null
+
+    /**
+     * A data scope is part of an organization role's definition (G-5, G-12). Legacy roles keep their
+     * previous (controller-level) protection unchanged.
+     */
+    private fun assertCanEditOrganizationRole(roleId: String) {
+        val role = authRoleDao.get(roleId) ?: return
+        val guard = tenantAdministrationGuard ?: return
+        if (guard.isOrganizationOwner(role.tenantId)) guard.assertCanEditRole(roleId, role.tenantId)
+    }
+
     @Transactional
     override fun updateScope(roleId: String, dataScope: String?): Boolean {
+        assertCanEditOrganizationRole(roleId)
         // Validate the code (NULL/blank is allowed and means ALL). Reject unrecognised codes so a
         // typo can't silently disable row filtering.
         val normalized = dataScope?.trim()?.takeIf { it.isNotEmpty() }
@@ -130,6 +148,7 @@ open class AuthRoleDataScopeService(
 
     @Transactional
     override fun bindScope(roleId: String, dimension: String, values: Collection<String>): Int {
+        assertCanEditOrganizationRole(roleId)
         require(dimension.isNotBlank()) { "a scope grant must name its dimension." }
         // Replace semantics, scoped to this dimension only.
         dao.deleteByRoleId(roleId, dimension)
@@ -160,13 +179,36 @@ open class AuthRoleDataScopeService(
         bindScope(roleId, AuthRoleScopeDao.DIMENSION_ORG, orgIds)
 
     @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-    override fun resolveUserDataScope(userId: String): DataScopeVo =
-        dataScopeByUserIdCache.getDataScope(userId)
+    override fun resolveUserDataScope(userId: String): DataScopeVo {
+        // Organization accounts: their current tenant's effective roles, uncached; an organization
+        // administrator sees everything of that tenant (the tenant boundary itself stays enforced).
+        organizationTargets?.forUser(userId)?.let { target ->
+            val authorization = requireNotNull(organizationAuthorization).resolve(target)
+            return when {
+                !authorization.allowed -> DataScopeVo.selfOnly()
+                authorization.organizationAdmin -> DataScopeVo.all()
+                else -> computeDataScopeOfRoles(userId, authorization.roleIds)
+            }
+        }
+        return dataScopeByUserIdCache.getDataScope(userId)
+    }
+
+    @Autowired(required = false)
+    private var organizationTargets: OrganizationRequestTargetResolver? = null
+
+    @Autowired(required = false)
+    private var organizationAuthorization: OrganizationAuthorizationResolver? = null
 
     @Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-    override fun computeUserDataScope(userId: String): DataScopeVo {
+    override fun computeUserDataScope(userId: String): DataScopeVo =
         // Effective roles include group- and parent-inherited roles (the cache already unions them).
-        val roleIds = roleIdsByUserIdCache.getRoleIds(userId)
+        computeDataScopeOfRoles(userId, roleIdsByUserIdCache.getRoleIds(userId))
+
+    /**
+     * The data scope [roleIds] give [userId]. Shared by both modes: in organization mode the role set is
+     * the account's effective roles in its current tenant (data scope follows the role, G-5).
+     */
+    open fun computeDataScopeOfRoles(userId: String, roleIds: Collection<String>): DataScopeVo {
         if (roleIds.isEmpty()) return DataScopeVo.selfOnly()
 
         val roles = authRoleHashCache.getRolesByIds(roleIds).values

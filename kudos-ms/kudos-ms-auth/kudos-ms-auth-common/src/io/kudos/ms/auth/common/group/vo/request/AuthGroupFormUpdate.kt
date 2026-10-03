@@ -24,4 +24,5 @@ data class AuthGroupFormUpdate (
 
     override val remark: String?,
 
+    override val organizationId: String? = null,
 ) : IIdEntity<String>, IAuthGroupFormBase

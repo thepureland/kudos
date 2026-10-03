@@ -33,6 +33,11 @@ data class UserOrgQuery (
     /** Whether built-in */
     val builtIn: Boolean? = null,
 
+    /** Owning customer root organization. */
+    val organizationId: String? = null,
+
+    val nodeKind: String? = null,
+
 ) : ListSearchPayload() {
 
     override fun getReturnEntityClass() = UserOrgRow::class

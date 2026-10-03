@@ -46,6 +46,7 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
         /** Filterable secondary properties: indexed by tenantId for tenant-scoped queries. */
         val FILTERABLE_PROPERTIES = setOf(
             UserOrgCacheEntry::tenantId.name,
+            UserOrgCacheEntry::organizationId.name,
         )
     }
 
@@ -68,7 +69,7 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
         key = "#id",
         entityClass = UserOrgCacheEntry::class,
         unless = "#result == null",
-        filterableProperties = ["tenantId"]
+        filterableProperties = ["tenantId", "organizationId"]
     )
     open fun getOrgById(id: String): UserOrgCacheEntry? {
         require(id.isNotBlank()) { "id must not be blank when fetching an organization" }
@@ -84,7 +85,7 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
         entityClass = UserOrgCacheEntry::class,
-        filterableProperties = ["tenantId"]
+        filterableProperties = ["tenantId", "organizationId"]
     )
     open fun getOrgsByIds(ids: Collection<String>): Map<String, UserOrgCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
@@ -110,6 +111,15 @@ open class UserOrgHashCache : AbstractHashCacheHandler<UserOrgCacheEntry>() {
     open fun getOrgsByTenantId(tenantId: String): List<UserOrgCacheEntry> {
         return userOrgDao.searchOrgsByTenantIdForCache(tenantId)
     }
+
+    @HashCacheableBySecondary(
+        cacheNames = [CACHE_NAME],
+        filterExpressions = ["#organizationId"],
+        entityClass = UserOrgCacheEntry::class,
+        filterableProperties = ["organizationId"]
+    )
+    open fun getOrgsByOrganizationId(organizationId: String): List<UserOrgCacheEntry> =
+        userOrgDao.searchOrgsByOrganizationId(organizationId)
 
     /**
      * Load all organizations from DB and refresh the Hash cache (including active=false, equivalent to the legacy OrgByIdCache full load).

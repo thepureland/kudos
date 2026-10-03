@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service
 import java.net.URLEncoder
 import java.time.Clock
 import java.util.UUID
+import io.kudos.ms.auth.core.authentication.credential.service.impl.CredentialOwnerResolver
+import org.springframework.beans.factory.annotation.Autowired
 
 @Service
 open class TotpEnrollmentService(
@@ -91,8 +93,15 @@ open class TotpEnrollmentService(
         return userAccountService.cleanAuthKey(userId)
     }
 
+    @Autowired(required = false)
+    private var owners: CredentialOwnerResolver? = null
+
+    /** The account, when it is used in [tenantId]: its own tenant, or any tenant of its organization. */
     private fun ownedAccount(userId: String, tenantId: String) =
-        userAccountService.get(userId)?.takeIf { it.tenantId == tenantId }
+        userAccountService.get(userId)?.takeIf {
+            val owner = runCatching { owners?.ownerOf(tenantId, userId) ?: tenantId }.getOrNull()
+            owner != null && (it.organizationId?.takeIf(String::isNotBlank) ?: it.tenantId) == owner
+        }
             ?: fail(TotpEnrollmentErrorCodeEnum.ACCOUNT_NOT_FOUND, "User account was not found.")
 
     private fun ownedEnrollment(enrollmentId: String, userId: String, tenantId: String): TotpEnrollment {

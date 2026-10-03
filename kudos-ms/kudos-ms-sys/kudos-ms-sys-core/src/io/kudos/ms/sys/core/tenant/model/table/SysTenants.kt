@@ -2,6 +2,7 @@ package io.kudos.ms.sys.core.tenant.model.table
 
 import io.kudos.ability.data.rdb.ktorm.support.ManagedTable
 import io.kudos.ms.sys.core.tenant.model.po.SysTenant
+import org.ktorm.schema.boolean
 import org.ktorm.schema.varchar
 
 
@@ -21,6 +22,12 @@ object SysTenants : ManagedTable<SysTenant>("sys_tenant") {
 
     /** Default language code */
     var defaultLanguageCode = varchar("default_language_code").bindTo { it.defaultLanguageCode }
+
+    /** Owning customer organization */
+    var organizationId = varchar("organization_id").bindTo { it.organizationId }
+
+    /** Whether organization members may enter */
+    var organizationOpen = boolean("organization_open").bindTo { it.organizationOpen }
 
 
 

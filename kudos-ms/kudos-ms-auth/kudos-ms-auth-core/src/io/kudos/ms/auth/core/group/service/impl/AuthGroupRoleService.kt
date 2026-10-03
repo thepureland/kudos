@@ -149,6 +149,12 @@ open class AuthGroupRoleService(
     override fun unbind(groupId: String, roleId: String): Boolean {
         val group = authGroupDao.get(groupId) ?: throw IllegalArgumentException("Group not found: $groupId")
         tenantAdministrationGuard.assertCanManage(group.tenantId)
+        // Removing a role from an organization group changes every member's defaults, the actor's included.
+        if (tenantAdministrationGuard.isOrganizationOwner(group.tenantId)) {
+            authGroupUserDao.searchUserIdsByGroupId(groupId).forEach {
+                tenantAdministrationGuard.assertCanChangeHolder(group.tenantId, it, removal = true)
+            }
+        }
         val row = dao.searchBindingsByGroupId(groupId)
             .firstOrNull { it.roleId == roleId && it.revoked != true }
         val success = row != null

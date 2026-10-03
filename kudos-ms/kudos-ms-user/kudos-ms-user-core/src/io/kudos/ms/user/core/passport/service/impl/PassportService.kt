@@ -33,6 +33,8 @@ import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import io.kudos.ms.user.core.org.service.impl.OrganizationDirectoryGate
+import org.springframework.beans.factory.annotation.Autowired
 
 
 /**
@@ -79,6 +81,11 @@ open class PassportService(
     private val credentialStores: List<IAccountCredentialStore> = emptyList(),
 ) : IPassportService {
 
+    /** Organization-mode entry check; absent in pure unit tests. */
+    @Autowired(required = false)
+    private var directoryGate: OrganizationDirectoryGate? = null
+
+
     /** The credential owner when one is deployed; otherwise the login password is still in the column. */
     private val credentialStore: IAccountCredentialStore?
         get() = credentialStores.firstOrNull()
@@ -95,7 +102,10 @@ open class PassportService(
 
     override fun login(req: PassportLoginRequest): PassportLoginResult {
         val attemptStartedAt = LocalDateTime.now()
-        val attemptContext = AuthenticationAttemptContext(req.tenantId, req.username, req.loginIp)
+        // An organization's tenants share one account per username, so they share its attempt budget too:
+        // signing in through N tenants must not multiply the attempts allowed.
+        val attemptScope = directoryGate?.organizationOfTenant(req.tenantId) ?: req.tenantId
+        val attemptContext = AuthenticationAttemptContext(attemptScope, req.username, req.loginIp)
         fun finish(userId: String?, result: PassportLoginResult): PassportLoginResult {
             recordLoginAttempt(req, userId, result.status, attemptStartedAt)
             return result
@@ -148,7 +158,7 @@ open class PassportService(
         }
 
         val passwordMatches =
-            loginPasswordMatches(user.id, req.tenantId, req.username, req.plainPassword, user.loginPassword)
+            loginPasswordMatches(user.id, user.credentialTenantId(), req.username, req.plainPassword, user.loginPassword)
         if (!passwordMatches) {
             authenticationAttemptLimiter.recordFailure(
                 attemptContext,
@@ -216,10 +226,18 @@ open class PassportService(
             }
         }
 
+        // An organization account authenticates once for its whole organization; getting a session through
+        // this tenant is still an authorization decision (entry, or an organization management identity),
+        // taken after every factor so it reveals nothing to someone without the credentials.
+        if (!user.organizationId.isNullOrBlank() && directoryGate?.canSignIn(req.tenantId, user.id) != true) {
+            log.debug("Login rejected - organization account may not enter tenant: userId=${user.id} tenantId=${req.tenantId}")
+            return finish(user.id, PassportLoginResult.tenantAccessDenied())
+        }
+
         // Upgrade only after every factor succeeds. A failed/racing upgrade must never alter this
         // authentication result, and the service CAS prevents overwriting a concurrent password change.
         upgradePasswordEncodingIfNeeded(
-            user.id, req.tenantId, req.username, req.plainPassword, user.loginPassword,
+            user.id, user.credentialTenantId(), req.username, req.plainPassword, user.loginPassword,
         )
 
         // All verifications pass: reset the error count + record last login info.
@@ -233,13 +251,15 @@ open class PassportService(
             UserInfoModel(
                 id = user.id,
                 username = user.username.orEmpty(),
-                tenantId = user.tenantId.orEmpty(),
+                // The tenant this session works in; an organization account serves all its organization's tenants.
+                tenantId = if (user.organizationId.isNullOrBlank()) user.tenantId.orEmpty() else req.tenantId,
                 orgId = user.orgId,
                 accountTypeDictCode = user.accountTypeDictCode,
                 defaultLocale = user.defaultLocale,
                 defaultTimezone = user.defaultTimezone,
                 defaultCurrency = user.defaultCurrency,
                 loginTime = now,
+                organizationId = user.organizationId,
             ),
             verifiedMethods = verifiedMethods,
         ))
@@ -525,3 +545,10 @@ open class PassportService(
         }
     }
 }
+
+/**
+ * The tenant an account's credentials are filed under: its own tenant, which is empty for an
+ * organization account (one credential set serves every tenant of the organization). For legacy
+ * accounts this equals the login tenant, exactly as before.
+ */
+internal fun UserAccountCacheEntry.credentialTenantId(): String = tenantId.orEmpty()

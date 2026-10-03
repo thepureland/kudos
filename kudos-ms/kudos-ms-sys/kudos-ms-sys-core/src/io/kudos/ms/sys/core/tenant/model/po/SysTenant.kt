@@ -24,4 +24,13 @@ interface SysTenant : IManagedDbEntity<String, SysTenant> {
     /** Default language code */
     var defaultLanguageCode: String?
 
+    /**
+     * Owning customer organization (a `user_org` root). Null for platform tenants and for every tenant
+     * while organization mode is off. Changed only through the platform association flow.
+     */
+    var organizationId: String?
+
+    /** Whether organization members may enter. A newly associated tenant starts closed (G-2). */
+    var organizationOpen: Boolean
+
 }

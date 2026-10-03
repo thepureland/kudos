@@ -29,9 +29,11 @@ open class UserAccountPrincipalDirectory : IPrincipalDirectory {
         return PrincipalFacts(
             principalId = principalId,
             principalType = PRINCIPAL_TYPE_USER,
-            tenantId = user.tenantId,
+            // An organization account is owned by its organization, like the organization's roles and groups.
+            tenantId = user.organizationId?.takeIf(String::isNotBlank) ?: user.tenantId,
             active = user.active != false,
             displayName = user.username,
+            organizationId = user.organizationId?.takeIf(String::isNotBlank),
         )
     }
 

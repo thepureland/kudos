@@ -23,6 +23,11 @@ open class InMemoryAuthenticationSessionStore : IAuthenticationSessionStore {
         return sessions.values.filter { it.tenantId == tenantId && it.userId == userId }
     }
 
+    override fun findByPrincipal(userId: String): List<AuthenticationSession> {
+        sessions.keys.forEach(::removeIfAbsolutelyExpired)
+        return sessions.values.filter { it.userId == userId }
+    }
+
     override fun save(session: AuthenticationSession, expectedVersion: Long): AuthenticationSession? {
         var saved: AuthenticationSession? = null
         sessions.computeIfPresent(session.id) { _, current ->

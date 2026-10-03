@@ -88,14 +88,14 @@ open class UserAccountThirdService(
         action: String,
         operationReason: String?,
     ): UserAccountThird {
-        tenantAccess.assertCanAccess(command.tenantId)
+        tenantAccess.assertCanWorkInTenant(command.tenantId)
         validate(command)
         userAccountDao.lockAccount(command.userId)
         val account = userAccountDao.get(command.userId)
         if (account == null || account.active != true) {
             deny(command, action, "ACCOUNT_UNAVAILABLE", actorUserId = actorUserId, operationReason = operationReason)
         }
-        if (account.tenantId != command.tenantId) {
+        if (!tenantAccess.accountServesTenant(account.tenantId, account.organizationId, command.tenantId)) {
             deny(command, action, "ACCOUNT_TENANT_MISMATCH", actorUserId = actorUserId, operationReason = operationReason)
         }
 
@@ -195,7 +195,7 @@ open class UserAccountThirdService(
         actorUserId: String,
         operationReason: String,
     ): Boolean {
-        tenantAccess.assertCanAccess(tenantId)
+        tenantAccess.assertCanWorkInTenant(tenantId)
         require(actorUserId.isNotBlank()) { "actorUserId must not be blank" }
         require(operationReason.isNotBlank()) { "operationReason must not be blank" }
         val binding = dao.get(bindingId) ?: throw ExternalAccountBindingException("EXTERNAL_BINDING_NOT_FOUND")
@@ -237,7 +237,7 @@ open class UserAccountThirdService(
                 binding.toAuditSnapshot(),
             )
         }
-        if (account.tenantId != tenantId) {
+        if (!tenantAccess.accountServesTenant(account.tenantId, account.organizationId, tenantId)) {
             deny(binding, action, actorUserId, "ACCOUNT_TENANT_MISMATCH", operationReason)
         }
         if (binding.active != true) return false

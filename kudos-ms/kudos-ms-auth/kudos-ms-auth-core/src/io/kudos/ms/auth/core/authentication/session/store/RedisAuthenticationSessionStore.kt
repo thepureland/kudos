@@ -20,9 +20,10 @@ open class RedisAuthenticationSessionStore(
             connection.scriptingCommands().eval(
                 CREATE_SCRIPT,
                 ReturnType.INTEGER,
-                2,
+                3,
                 key(session.id),
                 userIndexKey(session.tenantId, session.userId),
+                principalIndexKey(session.userId),
                 VERSION_FIELD,
                 session.version.toString().bytes(),
                 PAYLOAD_FIELD,
@@ -42,8 +43,13 @@ open class RedisAuthenticationSessionStore(
         })
 
     override fun findByUser(tenantId: String, userId: String): List<AuthenticationSession> =
+        findIndexed(userIndexKey(tenantId, userId), userId, tenantId)
+
+    override fun findByPrincipal(userId: String): List<AuthenticationSession> =
+        findIndexed(principalIndexKey(userId), userId, null)
+
+    private fun findIndexed(indexKey: ByteArray, userId: String, tenantId: String?): List<AuthenticationSession> =
         template.execute(RedisCallback<List<AuthenticationSession>> { connection ->
-            val indexKey = userIndexKey(tenantId, userId)
             val sessionIds = connection.setCommands().sMembers(indexKey).orEmpty()
             val staleIds = mutableListOf<ByteArray>()
             val sessions = sessionIds.mapNotNull { encodedId ->
@@ -52,7 +58,7 @@ open class RedisAuthenticationSessionStore(
                     ?.let(serializer::deserialize)
                     as? AuthenticationSession
                 session
-                    ?.takeIf { it.tenantId == tenantId && it.userId == userId }
+                    ?.takeIf { (tenantId == null || it.tenantId == tenantId) && it.userId == userId }
                     ?: run {
                         staleIds += encodedId
                         null
@@ -92,6 +98,9 @@ open class RedisAuthenticationSessionStore(
         return "$USER_INDEX_KEY_PREFIX$digest".bytes()
     }
 
+    private fun principalIndexKey(userId: String): ByteArray =
+        "kudos:auth:session:principal:${MessageDigest.getInstance("SHA-256").digest(userId.bytes()).joinToString("") { "%02x".format(it) }}".bytes()
+
     private fun String.bytes(): ByteArray = toByteArray(Charsets.UTF_8)
 
     companion object {
@@ -107,12 +116,15 @@ open class RedisAuthenticationSessionStore(
             redis.call('HSET', KEYS[1], ARGV[1], ARGV[2], ARGV[3], ARGV[4])
             redis.call('PEXPIREAT', KEYS[1], ARGV[5])
             redis.call('SADD', KEYS[2], ARGV[6])
+            redis.call('SADD', KEYS[3], ARGV[6])
             local redisTime = redis.call('TIME')
             local nowMillis = redisTime[1] * 1000 + math.floor(redisTime[2] / 1000)
             local requestedTtl = tonumber(ARGV[5]) - nowMillis
-            local currentTtl = redis.call('PTTL', KEYS[2])
-            if requestedTtl > 0 and (currentTtl < 0 or requestedTtl > currentTtl) then
-                redis.call('PEXPIRE', KEYS[2], requestedTtl)
+            for i = 2, 3 do
+                local currentTtl = redis.call('PTTL', KEYS[i])
+                if requestedTtl > 0 and (currentTtl < 0 or requestedTtl > currentTtl) then
+                    redis.call('PEXPIRE', KEYS[i], requestedTtl)
+                end
             end
             return 1
         """.trimIndent().toByteArray(Charsets.UTF_8)

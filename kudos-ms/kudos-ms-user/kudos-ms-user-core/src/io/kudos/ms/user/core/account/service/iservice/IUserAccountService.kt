@@ -71,6 +71,15 @@ interface IUserAccountService : IBaseCrudService<String, UserAccount> {
     fun getUserByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry?
 
     /**
+     * Organization-mode counterpart of [getUserByTenantIdAndUsername]: usernames are unique per
+     * customer organization, and one account serves every tenant of it.
+     */
+    fun getUserByOrganizationIdAndUsername(organizationId: String, username: String): UserAccountCacheEntry?
+
+    /** All accounts of a customer organization. */
+    fun getUsersByOrganizationId(organizationId: String): List<UserAccountRow>
+
+    /**
      * Get a user record by id (bypasses cache).
      *
      * @param id user id

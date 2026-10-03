@@ -13,6 +13,8 @@ import io.kudos.ms.auth.core.instance.service.iservice.IAuthInstanceGrantService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import io.kudos.ms.user.core.org.service.iservice.IOrganizationOwnershipService
+import org.springframework.beans.factory.annotation.Autowired
 
 
 /**
@@ -36,6 +38,9 @@ open class AuthInstanceGrantService(
     private lateinit var principalDirectoryRegistry: PrincipalDirectoryRegistry
 
     private val log = LogFactory.getLog(this::class)
+
+    @Autowired(required = false)
+    private var organizationOwnership: IOrganizationOwnershipService? = null
 
     @Transactional
     override fun share(
@@ -64,7 +69,12 @@ open class AuthInstanceGrantService(
         require(principal.active) { "share recipient ${principalId} is disabled." }
         // Compared rather than trusted: with the recipient's real tenant known, a caller can no
         // longer place the row in a tenant the recipient is not in.
-        require(principal.tenantId.isNullOrBlank() || principal.tenantId == tenantId) {
+        // An organization account is in every tenant of its organization (its owner is the organization).
+        val recipientOrganization = principal.organizationId
+        require(
+            principal.tenantId.isNullOrBlank() || principal.tenantId == tenantId ||
+                (recipientOrganization != null && organizationOwnership?.organizationIdForTenant(tenantId) == recipientOrganization)
+        ) {
             "cross-tenant share: recipient is in tenant ${principal.tenantId}, share names ${tenantId}."
         }
         if (startTime != null && endTime != null) {

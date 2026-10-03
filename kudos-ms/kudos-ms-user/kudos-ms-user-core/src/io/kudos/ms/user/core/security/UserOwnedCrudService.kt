@@ -14,9 +14,12 @@ import io.kudos.base.support.logic.AndOrEnum
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.ms.user.core.account.dao.UserAccountDao
 import io.kudos.ms.user.core.account.model.po.UserAccount
+import io.kudos.ms.user.core.org.service.iservice.IOrganizationOwnershipService
 import org.springframework.beans.factory.annotation.Autowired
 import kotlin.reflect.KClass
 import kotlin.reflect.full.declaredMemberProperties
+import io.kudos.ms.user.common.passport.CurrentUserKit
+import io.kudos.ms.user.core.org.service.impl.OrganizationDirectoryGate
 
 /**
  * Authorizes the account owning each record at the CRUD service boundary used by admin controllers.
@@ -34,7 +37,7 @@ open class UserOwnedCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<
 
     protected fun assertAccountAccess(userId: String): UserAccount {
         val account = requireNotNull(ownerAccountDao.get(userId)) { "Account not found" }
-        tenantAccess.assertCanAccess(account.tenantId)
+        tenantAccess.assertCanAccessOwner(account.tenantId, account.organizationId)
         return account
     }
 
@@ -44,8 +47,45 @@ open class UserOwnedCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<
     private fun assertOwned(value: Any) {
         if (!tenantAccess.hasPrincipal()) return
         val owner = assertAccountAccess(requireNotNull(property(value, "userId")) { "Account owner is required" })
-        property(value, "tenantId")?.let {
-            require(it == owner.tenantId) { "Record and account must belong to the same tenant" }
+        property(value, "tenantId")?.let { assertRecordTenant(it, owner) }
+    }
+
+    @Autowired(required = false)
+    private var directoryGate: OrganizationDirectoryGate? = null
+
+    /**
+     * Writing someone else's account records (contacts, recovery data, remembered logins) of an
+     * organization account is member management: it goes through the organization member policy, which
+     * also refuses targets that outrank the caller. One's own records stay self-service.
+     */
+    private fun assertCanWrite(value: Any) {
+        assertOwned(value)
+        if (!tenantAccess.hasPrincipal()) return
+        val owner = ownerAccountDao.get(property(value, "userId") ?: return) ?: return
+        val organizationId = owner.organizationId?.takeIf(String::isNotBlank) ?: return
+        if (CurrentUserKit.currentUserIdOrNull() == owner.id) return
+        requireNotNull(directoryGate) { "ORGANIZATION_MODE_UNAVAILABLE" }.assertCanManageMember(organizationId, owner.id)
+    }
+
+    @Autowired(required = false)
+    private var ownership: IOrganizationOwnershipService? = null
+
+    /**
+     * A legacy account's records live in its own tenant. An organization account serves all tenants of
+     * its organization, so a record (an external identity binding, say) may name any of them, or none.
+     */
+    private fun assertRecordTenant(
+        tenantId: String,
+        owner: UserAccount,
+        legacyMessage: String = "Record and account must belong to the same tenant",
+    ) {
+        val organizationId = owner.organizationId
+        if (organizationId.isNullOrBlank()) {
+            require(tenantId == owner.tenantId) { legacyMessage }
+        } else {
+            require(tenantId.isBlank() || ownership?.organizationIdForTenant(tenantId) == organizationId) {
+                "Record and account must belong to the same organization"
+            }
         }
     }
 
@@ -57,7 +97,7 @@ open class UserOwnedCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<
     }
 
     override fun insert(any: Any): PK {
-        assertOwned(any)
+        assertCanWrite(any)
         return super.insert(any)
     }
 
@@ -65,36 +105,39 @@ open class UserOwnedCrudService<PK : Any, E : IIdEntity<PK>, DAO : IBaseCrudDao<
         @Suppress("UNCHECKED_CAST")
         val id = BeanKit.getProperty(any, "id") as PK
         val stored = get(id) ?: return false
+        assertCanWrite(stored)
         property(any, "userId")?.let {
             require(it == property(stored, "userId")) { "Record ownership cannot be changed" }
         }
         property(any, "tenantId")?.let {
-            require(it == assertAccountAccess(requireNotNull(property(stored, "userId"))).tenantId) {
-                "Record tenant cannot be changed"
-            }
+            assertRecordTenant(it, assertAccountAccess(requireNotNull(property(stored, "userId"))), "Record tenant cannot be changed")
         }
         return super.update(any)
     }
 
     override fun deleteById(id: PK): Boolean {
-        get(id) ?: return false
+        assertCanWrite(get(id) ?: return false)
         return super.deleteById(id)
     }
 
     override fun batchDelete(ids: Collection<PK>): Int {
-        dao.getByIds(ids).forEach(::assertOwned)
+        dao.getByIds(ids).forEach(::assertCanWrite)
         return super.batchDelete(ids)
     }
 
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
-        val tenantId = tenantAccess.restrictedTenantId() ?: return super.pagingSearch(listSearchPayload)
+        val ownerCriteria = when (val scope = tenantAccess.restrictedScope()) {
+            UserAccessScope.Unrestricted -> return super.pagingSearch(listSearchPayload)
+            is UserAccessScope.Tenant -> Criteria(UserAccount::tenantId eq scope.tenantId)
+            is UserAccessScope.Organization -> Criteria(UserAccount::organizationId eq scope.organizationId)
+        }
         // All user-admin query DTOs use conjunctions. Refuse a new unsupported query shape rather
         // than accidentally OR-ing the mandatory owner restriction with user-selected conditions.
         require(listSearchPayload.getAndOr() == AndOrEnum.AND) { "Tenant queries must use conjunctions" }
         val requestedOwner = property(listSearchPayload, "userId")?.takeIf(String::isNotBlank)
         requestedOwner?.let(::assertAccountAccess)
         val owners = requestedOwner?.let(::listOf) ?: ownerAccountDao.searchProperty(
-            Criteria(UserAccount::tenantId eq tenantId), UserAccount::id,
+            ownerCriteria, UserAccount::id,
         ).filterNotNull()
         if (owners.isEmpty()) return PagingSearchResult(emptyList<Any>(), 0)
         val operators = listSearchPayload.getOperators().orEmpty().mapKeys { it.key.name }

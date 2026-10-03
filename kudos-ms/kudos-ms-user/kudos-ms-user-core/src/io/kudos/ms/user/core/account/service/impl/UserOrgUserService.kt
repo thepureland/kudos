@@ -1,5 +1,9 @@
 package io.kudos.ms.user.core.account.service.impl
 
+import io.kudos.base.bean.BeanKit
+import io.kudos.ms.user.core.account.dao.UserAccountDao
+import io.kudos.ms.user.core.org.dao.UserOrgDao
+import io.kudos.ms.user.core.org.service.impl.OrganizationDirectoryGate
 import io.kudos.base.support.service.impl.BaseCrudService
 import io.kudos.base.logger.LogFactory
 import io.kudos.ms.user.core.account.dao.UserOrgUserDao
@@ -38,7 +42,31 @@ open class UserOrgUserService(
     @Autowired
     private lateinit var eventPublisher: ApplicationEventPublisher
 
+    /** Organization-mode checks; absent only in pure unit tests, where only legacy rows exist. */
+    @Autowired(required = false)
+    private var directoryGate: OrganizationDirectoryGate? = null
+
+    @Autowired(required = false)
+    private var userOrgDao: UserOrgDao? = null
+
+    @Autowired(required = false)
+    private var userAccountDao: UserAccountDao? = null
+
     private val log = LogFactory.getLog(this::class)
+
+    /**
+     * Membership in an organization's department is a directory write of that organization, and the
+     * member must belong to it. Legacy departments keep their previous (unchecked) behaviour.
+     */
+    private fun assertOrganizationRelation(orgId: String, userIds: Collection<String>) {
+        val department = userOrgDao?.get(orgId) ?: return
+        val organizationId = department.organizationId ?: return
+        requireNotNull(directoryGate) { "ORGANIZATION_MODE_UNAVAILABLE" }.assertCanManageDirectory(organizationId)
+        val accounts = requireNotNull(userAccountDao).getByIds(userIds).associateBy { it.id }
+        userIds.forEach { userId ->
+            require(accounts[userId]?.organizationId == organizationId) { "Department and member must belong to the same organization" }
+        }
+    }
 
     @Transactional(readOnly = true)
     override fun getUserIdsByOrgId(orgId: String): Set<String> =
@@ -49,8 +77,27 @@ open class UserOrgUserService(
         orgIdsByUserIdCache.getOrgIds(userId).toSet()
 
     @Transactional
+    override fun insert(any: Any): String {
+        relationOf(any)?.let { (orgId, userId) -> assertOrganizationRelation(orgId, listOf(userId)) }
+        return super.insert(any)
+    }
+
+    @Transactional
+    override fun update(any: Any): Boolean {
+        relationOf(any)?.let { (orgId, userId) -> assertOrganizationRelation(orgId, listOf(userId)) }
+        return super.update(any)
+    }
+
+    private fun relationOf(any: Any): Pair<String, String>? {
+        val orgId = runCatching { BeanKit.getProperty(any, UserOrgUser::orgId.name) as? String }.getOrNull()
+        val userId = runCatching { BeanKit.getProperty(any, UserOrgUser::userId.name) as? String }.getOrNull()
+        return if (orgId.isNullOrBlank() || userId.isNullOrBlank()) null else orgId to userId
+    }
+
+    @Transactional
     override fun batchBind(orgId: String, userIds: Collection<String>, orgAdmin: Boolean): Int {
         if (userIds.isEmpty()) return 0
+        assertOrganizationRelation(orgId, userIds)
         // One SELECT for existing associations, then one batchInsert for the new ids in the diff,
         // collapsing the original N+1 down to 2 SQL statements.
         val existing = dao.searchUserIdsByOrgId(orgId).toSet()
@@ -74,6 +121,9 @@ open class UserOrgUserService(
 
     @Transactional
     override fun unbind(orgId: String, userId: String): Boolean {
+        userOrgDao?.get(orgId)?.organizationId?.let {
+            requireNotNull(directoryGate) { "ORGANIZATION_MODE_UNAVAILABLE" }.assertCanManageDirectory(it)
+        }
         val count = dao.deleteByOrgIdAndUserId(orgId, userId)
         val success = count > 0
         if (success) {
@@ -90,6 +140,7 @@ open class UserOrgUserService(
 
     @Transactional
     override fun setOrgAdmin(orgId: String, userId: String, isAdmin: Boolean): Boolean {
+        assertOrganizationRelation(orgId, listOf(userId))
         val relation = dao.searchByOrgIdAndUserId(orgId, userId).firstOrNull() ?: run {
             log.warn("Failed to set user ${userId} as admin of organization ${orgId}: association does not exist.")
             return false

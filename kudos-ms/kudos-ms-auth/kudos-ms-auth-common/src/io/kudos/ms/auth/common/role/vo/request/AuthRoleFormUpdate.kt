@@ -33,4 +33,5 @@ data class AuthRoleFormUpdate (
 
     override val remark: String?,
 
+    override val organizationId: String? = null,
 ) : IIdEntity<String>, IAuthRoleFormBase

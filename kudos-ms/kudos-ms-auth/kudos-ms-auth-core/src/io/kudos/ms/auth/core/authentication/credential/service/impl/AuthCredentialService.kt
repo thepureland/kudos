@@ -14,6 +14,7 @@ import java.security.MessageDigest
 import java.time.Clock
 import java.time.LocalDateTime
 import java.util.UUID
+import org.springframework.beans.factory.annotation.Autowired
 
 /**
  * Holds the auth domain's password, security-password and TOTP secrets.
@@ -31,7 +32,8 @@ open class AuthCredentialService(
     private val clock: Clock = Clock.systemDefaultZone(),
 ) : IAuthCredentialService {
 
-    override fun store(command: AuthCredentialStoreCommand): AuthCredentialSummary {
+    override fun store(original: AuthCredentialStoreCommand): AuthCredentialSummary {
+        val command = original.copy(tenantId = owner(original.tenantId, original.userId))
         requireIdentifier(command.tenantId, TENANT_INVALID)
         requireIdentifier(command.userId, USER_INVALID)
         val secret = command.secretHashOrRef.trim()
@@ -76,6 +78,7 @@ open class AuthCredentialService(
         userId: String,
         type: AuthCredentialSecretTypeEnum,
     ): AuthCredentialSummary? {
+        val tenantId = owner(tenantId, userId)
         requireIdentifier(tenantId, TENANT_INVALID)
         requireIdentifier(userId, USER_INVALID)
         return dao.findActive(tenantId, userId, type.name)?.takeIf { it.isUsable() }?.toSummary()
@@ -83,6 +86,7 @@ open class AuthCredentialService(
 
     @Transactional(readOnly = true)
     override fun listForUser(tenantId: String, userId: String): List<AuthCredentialSummary> {
+        val tenantId = owner(tenantId, userId)
         requireIdentifier(tenantId, TENANT_INVALID)
         requireIdentifier(userId, USER_INVALID)
         return dao.findByUser(tenantId, userId).map { it.toSummary() }
@@ -103,6 +107,7 @@ open class AuthCredentialService(
         type: AuthCredentialSecretTypeEnum,
         verifier: (storedSecret: String) -> Boolean,
     ): Boolean {
+        val tenantId = owner(tenantId, userId)
         requireIdentifier(tenantId, TENANT_INVALID)
         requireIdentifier(userId, USER_INVALID)
         val stored = dao.findActive(tenantId, userId, type.name)?.takeIf { it.isUsable() } ?: return false
@@ -115,6 +120,7 @@ open class AuthCredentialService(
         type: AuthCredentialSecretTypeEnum,
         rotator: (storedSecret: String) -> String?,
     ): Boolean {
+        val tenantId = owner(tenantId, userId)
         requireIdentifier(tenantId, TENANT_INVALID)
         requireIdentifier(userId, USER_INVALID)
         val current = dao.findActive(tenantId, userId, type.name)?.takeIf { it.isUsable() } ?: return false
@@ -137,6 +143,7 @@ open class AuthCredentialService(
         userId: String,
         type: AuthCredentialSecretTypeEnum,
     ): Boolean {
+        val tenantId = owner(tenantId, userId)
         requireIdentifier(tenantId, TENANT_INVALID)
         requireIdentifier(userId, USER_INVALID)
         val credential = dao.findActive(tenantId, userId, type.name) ?: return false
@@ -149,6 +156,7 @@ open class AuthCredentialService(
         type: AuthCredentialSecretTypeEnum,
         reason: String,
     ): Int {
+        val tenantId = owner(tenantId, userId)
         requireIdentifier(tenantId, TENANT_INVALID)
         requireIdentifier(userId, USER_INVALID)
         val trimmed = reason.trim()
@@ -190,6 +198,12 @@ open class AuthCredentialService(
         revokedAt = revokedAt,
         revokeReason = revokeReason,
     )
+
+    /** Organization accounts' credentials are filed under their organization (see [CredentialOwnerResolver]). */
+    @Autowired(required = false)
+    private var owners: CredentialOwnerResolver? = null
+
+    private fun owner(tenantId: String, userId: String): String = owners?.ownerOf(tenantId, userId) ?: tenantId
 
     private fun requireIdentifier(value: String, errorCode: String) {
         if (value.isBlank() || value.length > MAX_IDENTIFIER_LENGTH || value.any(Char::isISOControl)) {

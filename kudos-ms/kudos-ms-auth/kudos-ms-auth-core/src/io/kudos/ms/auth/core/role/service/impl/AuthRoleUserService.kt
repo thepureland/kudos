@@ -268,6 +268,7 @@ open class AuthRoleUserService(
     @Transactional
     override fun unbind(roleId: String, userId: String): Boolean {
         assertCanManageRole(roleId)
+        authRoleDao.get(roleId)?.let { tenantAdministrationGuard.assertCanChangeHolder(it.tenantId, userId, removal = true) }
         // Whatever this principal delegated from this role goes with it. Cascading *before* the
         // delete matters: once the row is gone the chain below it is unreachable, and the downstream
         // grants would keep working with no traceable source of authority — the exact shape of a

@@ -54,4 +54,5 @@ data class AuthGroupDetail (
     /** Update time. */
     val updateTime: LocalDateTime? = null,
 
+    val organizationId: String? = null,
 ) : IIdEntity<String>

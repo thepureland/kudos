@@ -18,6 +18,13 @@ import io.kudos.ms.auth.core.group.dao.AuthGroupUserDao
 import jakarta.annotation.Resource
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import io.kudos.ms.auth.core.policy.TenantAdministrationGuard
+import io.kudos.base.model.payload.ListSearchPayload
+import io.kudos.base.query.PagingSearchResult
+import io.kudos.ms.auth.common.exclusion.vo.request.AuthRoleExclusionQuery
+import org.ktorm.entity.Entity
+import org.springframework.beans.factory.annotation.Autowired
+import kotlin.reflect.KClass
 
 /**
  * Service implementation for SoD mutual-exclusion pairs.
@@ -66,6 +73,30 @@ open class AuthRoleExclusionService(
 
     private val log = LogFactory.getLog(this::class)
 
+    /**
+     * Organization principals read their own organization's SoD rules only; everybody else reads exactly
+     * as before.
+     */
+    @Transactional(readOnly = true)
+    override fun get(id: String): AuthRoleExclusion? {
+        val organizationId = tenantAdministrationGuard?.callerOrganization() ?: return super.get(id)
+        return super.get(id)?.also { requireOwnRow(it.tenantId, organizationId) }
+    }
+
+    @Transactional(readOnly = true)
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        val organizationId = tenantAdministrationGuard?.callerOrganization() ?: return super.get(id, returnType)
+        val row = dao.get(id) ?: return null
+        requireOwnRow(row.tenantId, organizationId)
+        return super.get(id, returnType)
+    }
+
+    private fun requireOwnRow(ownerId: String, organizationId: String) =
+        require(ownerId == organizationId) { "cross-organization authorization administration is forbidden." }
+
+    @Autowired(required = false)
+    private var tenantAdministrationGuard: TenantAdministrationGuard? = null
+
     // ---------- Overrides: canonical ordering + validation ----------
 
     @Transactional
@@ -74,13 +105,71 @@ open class AuthRoleExclusionService(
         val roleAId = BeanKit.getProperty(canonicalized, AuthRoleExclusion::roleAId.name) as String
         val roleBId = BeanKit.getProperty(canonicalized, AuthRoleExclusion::roleBId.name) as String
         validateBeforeInsert(roleAId, roleBId, tenantId)
+        val guard = tenantAdministrationGuard
+        if (guard != null && guard.isOrganizationOwner(tenantId)) {
+            guard.assertCanManage(tenantId)
+            val exclusion = Entity.create<AuthRoleExclusion>().also { BeanKit.copyProperties(canonicalized, it) }
+            exclusion.organizationId = tenantId
+            return super.insert(exclusion)
+        }
         return super.insert(canonicalized)
     }
 
     @Transactional
     override fun update(any: Any): Boolean {
         // Only description is mutable; no re-validation of the pair needed.
-        return super.update(any)
+        val guard = tenantAdministrationGuard ?: return super.update(any)
+        val id = BeanKit.getProperty(any, AuthRoleExclusion::id.name) as String?
+        val existing = id?.let(dao::get)
+        if (existing == null || !guard.isOrganizationOwner(existing.tenantId)) return super.update(any)
+        guard.assertCanManage(existing.tenantId)
+        // The generic update copies every form property, nulls included: an organization rule keeps
+        // its owner columns and its pair.
+        return super.update(
+            Entity.create<AuthRoleExclusion>().also {
+                BeanKit.copyProperties(any, it)
+                it.tenantId = existing.tenantId
+                it.organizationId = existing.organizationId ?: existing.tenantId
+                it.roleAId = existing.roleAId
+                it.roleBId = existing.roleBId
+            },
+        )
+    }
+
+    @Transactional
+    override fun deleteById(id: String): Boolean {
+        val guard = tenantAdministrationGuard
+        if (guard != null) {
+            dao.get(id)?.let { assertCanManageIfOrganization(guard, it.tenantId) }
+        }
+        return super.deleteById(id)
+    }
+
+    @Transactional
+    override fun batchDelete(ids: Collection<String>): Int {
+        val guard = tenantAdministrationGuard
+        if (guard != null && ids.isNotEmpty()) {
+            dao.getByIds(ids).forEach { assertCanManageIfOrganization(guard, it.tenantId) }
+        }
+        return super.batchDelete(ids)
+    }
+
+    /** An organization principal lists only its own organization's SoD rules. */
+    @Transactional(readOnly = true)
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
+        val organizationId = tenantAdministrationGuard?.callerOrganization()
+            ?: return super.pagingSearch(listSearchPayload)
+        require(listSearchPayload is AuthRoleExclusionQuery) { "An organization-scoped SoD rule query is required" }
+        require(listSearchPayload.tenantId.isNullOrBlank() || listSearchPayload.tenantId == organizationId) {
+            "cross-organization authorization administration is forbidden."
+        }
+        // The query has no organizationId field: organization rules store the organization in tenantId.
+        val scoped = listSearchPayload.copy(tenantId = organizationId).apply {
+            pageNo = listSearchPayload.pageNo
+            pageSize = listSearchPayload.pageSize
+            orders = listSearchPayload.orders
+        }
+        return super.pagingSearch(scoped)
     }
 
     // ---------- Interface methods ----------
@@ -94,6 +183,7 @@ open class AuthRoleExclusionService(
         val exclusion = dao.get(exclusionId) ?: return AuthRoleExclusionViolationVo(
             exclusionId = exclusionId, roleAId = "", roleBId = "", violatingUserIds = emptyList(),
         )
+        tenantAdministrationGuard?.let { assertCanManageIfOrganization(it, exclusion.tenantId) }
         // All users holding role A plus all users holding role B (via any path).
         val usersWithA = computeEffectiveUsersForRole(exclusion.roleAId)
         val usersWithB = computeEffectiveUsersForRole(exclusion.roleBId)
@@ -130,6 +220,11 @@ open class AuthRoleExclusionService(
     }
 
     // ---------- Private helpers ----------
+
+    /** Organization-owned rules are managed by their organization only; legacy rules are unchanged. */
+    private fun assertCanManageIfOrganization(guard: TenantAdministrationGuard, ownerId: String) {
+        if (guard.isOrganizationOwner(ownerId)) guard.assertCanManage(ownerId)
+    }
 
     /** Swap roles so that roleAId < roleBId, then return the canonicalized object and tenantId. */
     private fun canonicalise(any: Any): Pair<Any, String> {

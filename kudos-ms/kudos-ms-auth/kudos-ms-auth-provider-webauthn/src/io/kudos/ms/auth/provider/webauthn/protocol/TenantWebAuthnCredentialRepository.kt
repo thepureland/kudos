@@ -9,6 +9,7 @@ import io.kudos.ms.auth.core.authentication.mfa.webauthn.model.po.AuthWebAuthnCr
 import io.kudos.ms.auth.core.authentication.mfa.webauthn.service.iservice.IWebAuthnCredentialService
 import io.kudos.ms.user.core.account.service.iservice.IUserAccountService
 import java.util.Optional
+import io.kudos.ms.user.core.account.model.po.UserAccount
 
 /** Tenant-scoped bridge from Kudos public-key storage to Yubico's read-only credential contract. */
 @Suppress("DEPRECATION")
@@ -19,6 +20,8 @@ internal class TenantWebAuthnCredentialRepository(
     private val knownUsername: String? = null,
     private val knownUserHandle: YubicoByteArray? = null,
     knownCredentialIds: Set<String> = emptySet(),
+    /** Whether the account may be used in [tenantId]: its own tenant, or (organization mode) one of its organization's. */
+    private val accountServes: (UserAccount) -> Boolean = { it.tenantId == tenantId },
 ) : CredentialRepository {
     private val descriptors = knownCredentialIds.mapTo(linkedSetOf()) { credentialId ->
         PublicKeyCredentialDescriptor.builder().id(YubicoByteArray.fromBase64Url(credentialId)).build()
@@ -35,7 +38,7 @@ internal class TenantWebAuthnCredentialRepository(
         val userId = credentialService.findActiveUserIdByUserHandle(tenantId, userHandle.base64Url)
             ?: return Optional.empty()
         val account = userAccountService.get(userId)
-            ?.takeIf { it.tenantId == tenantId && it.active }
+            ?.takeIf { accountServes(it) && it.active }
             ?: return Optional.empty()
         return Optional.of(account.username)
     }

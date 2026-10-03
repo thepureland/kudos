@@ -11,6 +11,8 @@ import java.time.LocalDateTime
  */
 interface IUserAccountFormBase {
 
+    val organizationId: String? get() = null
+
     /** Username */
     val username: String?
 

@@ -50,7 +50,12 @@ open class JwtAccessTokenService(
             .claim(CLAIM_AUTH_TIME, session.authTime.epochSecond)
             .claim(CLAIM_AMR, session.amr.toList().sorted())
             .claim(CLAIM_ACR, session.acr)
-            .apply { session.clientId?.let { claim(CLAIM_CLIENT_ID, it) } }
+            .apply {
+                session.clientId?.let { claim(CLAIM_CLIENT_ID, it) }
+                // Organization accounts: the session's scope travels with the token and is re-checked on verify.
+                session.organizationId?.let { claim(CLAIM_ORGANIZATION_ID, it) }
+                session.subSystemCode?.let { claim(CLAIM_SUBSYSTEM_CODE, it) }
+            }
             .build()
         val algorithm = SignatureAlgorithm.from(properties.signingAlgorithm)
             ?: throw IllegalArgumentException("Unsupported JWT signing algorithm: ${properties.signingAlgorithm}")
@@ -74,12 +79,18 @@ open class JwtAccessTokenService(
                 jwt.getClaimAsString(CLAIM_TOKEN_USE) != ACCESS_TOKEN_USE
             ) invalid()
             val userId = jwt.subject?.takeIf(String::isNotBlank) ?: invalid()
-            val tenantId = jwt.getClaimAsString(CLAIM_TENANT_ID)?.takeIf(String::isNotBlank) ?: invalid()
+            val organizationId = jwt.getClaimAsString(CLAIM_ORGANIZATION_ID)?.takeIf(String::isNotBlank)
+            // Only an organization-scope session (organization accounts) has no tenant.
+            val tenantId = jwt.getClaimAsString(CLAIM_TENANT_ID)?.takeIf { it.isNotBlank() || organizationId != null } ?: invalid()
+            val subSystemCode = jwt.getClaimAsString(CLAIM_SUBSYSTEM_CODE)
             val sessionId = jwt.getClaimAsString(CLAIM_SESSION_ID)?.takeIf(String::isNotBlank) ?: invalid()
             val permissionVersion = jwt.getClaimAsString(CLAIM_PERMISSION_VERSION) ?: invalid()
             if (!permissionVersionApi.isCurrent(SubjectRef.ofUser(userId), permissionVersion)) invalid()
             return sessionService.touch(sessionId)
-                ?.takeIf { it.isActive() && it.userId == userId && it.tenantId == tenantId }
+                ?.takeIf {
+                    it.isActive() && it.userId == userId && it.tenantId == tenantId &&
+                        it.organizationId == organizationId && (organizationId == null || it.subSystemCode == subSystemCode)
+                }
                 ?: invalid()
         } catch (_: AccessTokenException) {
             throw AccessTokenException()
@@ -99,6 +110,8 @@ open class JwtAccessTokenService(
         const val CLAIM_ISSUER = "iss"
         const val CLAIM_SESSION_ID = "sid"
         const val CLAIM_TENANT_ID = "tenant_id"
+        const val CLAIM_ORGANIZATION_ID = "organization_id"
+        const val CLAIM_SUBSYSTEM_CODE = "subsystem_code"
         const val CLAIM_PERMISSION_VERSION = "pv"
         const val CLAIM_AUTH_TIME = "auth_time"
         const val CLAIM_AMR = "amr"

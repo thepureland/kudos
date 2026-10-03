@@ -2,7 +2,9 @@ package io.kudos.ms.sys.core.platform.init
 
 import io.kudos.ability.data.rdb.ktorm.init.KtormAutoConfiguration
 import io.kudos.context.init.IComponentInitializer
+import io.kudos.ms.sys.core.organization.init.OrganizationModeProperties
 import org.springframework.boot.autoconfigure.AutoConfigureAfter
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 
@@ -16,6 +18,7 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 @ComponentScan(basePackages = ["io.kudos.ms.sys.core"])
 @AutoConfigureAfter(KtormAutoConfiguration::class)
+@EnableConfigurationProperties(OrganizationModeProperties::class)
 open class SysAutoConfiguration : IComponentInitializer {
 
 

@@ -34,6 +34,12 @@ data class SysTenantCacheEntry (
     /** Whether built-in. */
     val builtIn: Boolean,
 
+    /** Owning customer organization; null for platform tenants and legacy (non-organization) mode. */
+    val organizationId: String? = null,
+
+    /** Whether organization members may enter this tenant. Only meaningful when [organizationId] is set. */
+    val organizationOpen: Boolean = false,
+
 ) : IIdEntity<String>, Serializable {
 
     companion object {

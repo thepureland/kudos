@@ -134,6 +134,15 @@ data class AuthzDecision(
 
         /** Nothing matched. The default, and the reason an unregistered permission is refused. */
         DENIED_BY_DEFAULT,
+
+        /**
+         * Organization mode: an organization administrator inside an open tenant of its organization,
+         * within the tenant's subscribed sub-systems.
+         */
+        ORGANIZATION_ADMIN,
+
+        /** Organization mode: an organization management permission in the organization scope. */
+        ALLOWED_BY_ORGANIZATION_MANAGEMENT,
     }
 
     companion object {

@@ -157,17 +157,20 @@ open class AuthenticationTransactionPublicController(
             session.setAttribute(AuthenticationSession.PRINCIPAL_INDEX_SESSION_ATTRIBUTE, context.userId)
             session.setAttribute(
                 KudosContext.SESSION_KEY_USER,
+                // The issued session decides the scope (an organization account may land in its organization scope).
                 SessionUserPrincipal(
                     id = context.userId,
-                    tenantId = context.tenantId,
+                    tenantId = authSession.tenantId,
                     username = transaction.username.orEmpty(),
+                    organizationId = authSession.organizationId,
+                    subSystemCode = authSession.subSystemCode,
                 )
             )
             return bound
         } catch (e: Exception) {
             sessionService.revokeForUser(
                 authSession.id,
-                context.tenantId,
+                authSession.tenantId,
                 context.userId,
                 "SESSION_BIND_FAILED",
             )

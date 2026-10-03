@@ -12,6 +12,8 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.UUID
+import io.kudos.ms.auth.core.authentication.credential.service.impl.CredentialOwnerResolver
+import org.springframework.beans.factory.annotation.Autowired
 
 /** Auth-owned retired-password hashes exposed through the User migration SPI. */
 @Service
@@ -55,10 +57,14 @@ open class AuthPasswordHistoryService(
     private fun effectiveHistorySize(): Int = properties.historySize.coerceIn(0, MAX_HISTORY_SIZE)
 
     private fun scope(context: PasswordPolicyContext): Scope? {
-        val tenantId = context.tenantId?.takeIf(String::isNotBlank) ?: return null
         val userId = context.userId?.takeIf(String::isNotBlank) ?: return null
+        // An organization account's history is filed under its organization, like its password.
+        val tenantId = (owners?.ownerOf(context.tenantId, userId) ?: context.tenantId)?.takeIf(String::isNotBlank) ?: return null
         return Scope(tenantId, userId, context.purpose.name)
     }
+
+    @Autowired(required = false)
+    private var owners: CredentialOwnerResolver? = null
 
     private data class Scope(val tenantId: String, val userId: String, val purpose: String)
 

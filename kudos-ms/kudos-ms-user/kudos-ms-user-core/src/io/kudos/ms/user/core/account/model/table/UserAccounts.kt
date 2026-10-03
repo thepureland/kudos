@@ -15,6 +15,8 @@ import org.ktorm.schema.*
  */
 object UserAccounts : ManagedTable<UserAccount>("user_account") {
 
+    var organizationId = varchar("organization_id").bindTo { it.organizationId }
+
     /** Username */
     var username = varchar("username").bindTo { it.username }
 

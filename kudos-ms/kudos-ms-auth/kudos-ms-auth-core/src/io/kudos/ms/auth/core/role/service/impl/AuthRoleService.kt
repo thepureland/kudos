@@ -45,6 +45,14 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import org.ktorm.entity.Entity
+import io.kudos.ms.auth.core.organization.dao.AuthTenantRoleOverrideDao
+import org.springframework.beans.factory.annotation.Autowired
+import io.kudos.ms.auth.core.organization.service.OrganizationAuthorizationResolver
+import io.kudos.ms.auth.core.organization.service.OrganizationRequestTargetResolver
+import io.kudos.base.model.payload.ListSearchPayload
+import io.kudos.base.query.PagingSearchResult
+import kotlin.reflect.KClass
 
 
 /**
@@ -135,7 +143,43 @@ open class AuthRoleService(
     @Resource
     private lateinit var tenantAdministrationGuard: TenantAdministrationGuard
 
+    /** Organization-mode run time: roles and resources of an organization account's current tenant. */
+    @Autowired(required = false)
+    private var organizationTargets: OrganizationRequestTargetResolver? = null
+
+    @Autowired(required = false)
+    private var organizationAuthorization: OrganizationAuthorizationResolver? = null
+
+    /** The current organization authorization when it is [userId]'s own; null for everything legacy. */
+    private fun organizationAuthorizationOf(userId: String) =
+        organizationTargets?.forUser(userId)?.let { requireNotNull(organizationAuthorization).resolve(it) }
+
+    /** Organization per-tenant overrides naming a deleted role go with it. */
+    @Autowired(required = false)
+    private var tenantRoleOverrideDao: AuthTenantRoleOverrideDao? = null
+
     private val log = LogFactory.getLog(this::class)
+
+    /**
+     * Organization principals read their own organization's roles only; everybody else reads exactly
+     * as before.
+     */
+    @Transactional(readOnly = true)
+    override fun get(id: String): AuthRole? {
+        val organizationId = tenantAdministrationGuard.callerOrganization() ?: return super.get(id)
+        return super.get(id)?.also { requireOwnRow(it.tenantId, organizationId) }
+    }
+
+    @Transactional(readOnly = true)
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        val organizationId = tenantAdministrationGuard.callerOrganization() ?: return super.get(id, returnType)
+        val row = dao.get(id) ?: return null
+        requireOwnRow(row.tenantId, organizationId)
+        return super.get(id, returnType)
+    }
+
+    private fun requireOwnRow(ownerId: String, organizationId: String) =
+        require(ownerId == organizationId) { "cross-organization authorization administration is forbidden." }
 
     @Transactional(readOnly = true)
     override fun getRoleUserIds(roleId: String): List<String> = userIdsByRoleIdCache.getUserIds(roleId)
@@ -200,7 +244,7 @@ open class AuthRoleService(
     @Transactional
     override fun updateActive(id: String, active: Boolean): Boolean {
         val existing = dao.get(id) ?: return false
-        tenantAdministrationGuard.assertCanManage(existing.tenantId)
+        tenantAdministrationGuard.assertCanEditRole(id, existing.tenantId)
         require(!existing.builtIn) { "built-in role $id cannot be modified." }
         val role = AuthRole.Companion {
             this.id = id
@@ -216,16 +260,44 @@ open class AuthRoleService(
         return success
     }
 
+    /**
+     * Organization principals list their own organization's roles only (organization roles keep
+     * the organization id as their owner); everybody else lists exactly as before.
+     */
+    @Transactional(readOnly = true)
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
+        val organizationId = tenantAdministrationGuard.callerOrganization() ?: return super.pagingSearch(listSearchPayload)
+        require(listSearchPayload is AuthRoleQuery) { "An organization-scoped role query is required" }
+        require(listSearchPayload.organizationId.isNullOrBlank() || listSearchPayload.organizationId == organizationId) {
+            "cross-organization authorization administration is forbidden."
+        }
+        val scoped = listSearchPayload.copy(organizationId = organizationId, tenantId = organizationId).apply {
+            pageNo = listSearchPayload.pageNo
+            pageSize = listSearchPayload.pageSize
+            orders = listSearchPayload.orders
+        }
+        return super.pagingSearch(scoped)
+    }
+
     @Transactional
     override fun insert(any: Any): String {
-        val tenantId = BeanKit.getProperty(any, AuthRole::tenantId.name) as String?
+        val owner = tenantAdministrationGuard.resolveOwner(
+            BeanKit.getProperty(any, AuthRole::tenantId.name) as String?,
+            BeanKit.getProperty(any, AuthRole::organizationId.name) as String?,
+        )
         val code = BeanKit.getProperty(any, AuthRole::code.name) as String?
         tenantAdministrationGuard.assertRoleCodeManageable(
             requireNotNull(code) { "role code is required." },
-            requireNotNull(tenantId) { "role tenantId is required." },
+            requireNotNull(owner.ownerId) { "role tenantId is required." },
         )
-        validateParentId(any, selfId = null)
-        val id = super.insert(any)
+        // Organization roles carry their owner in both columns; legacy inserts go through untouched.
+        val role: Any = if (owner.organizationId == null) any else Entity.create<AuthRole>().also {
+            BeanKit.copyProperties(any, it)
+            it.tenantId = owner.organizationId
+            it.organizationId = owner.organizationId
+        }
+        validateParentId(role, selfId = null)
+        val id = super.insert(role)
         log.debug("Added role with id ${id}.")
         eventPublisher.publishEvent(AuthRoleInserted(id))
         return id
@@ -235,7 +307,7 @@ open class AuthRoleService(
     override fun update(any: Any): Boolean {
         val id = BeanKit.getProperty(any, AuthRole::id.name) as String
         val existing = dao.get(id) ?: throw IllegalArgumentException("Role not found: $id")
-        tenantAdministrationGuard.assertCanManage(existing.tenantId)
+        tenantAdministrationGuard.assertCanEditRole(id, existing.tenantId)
         require(!existing.builtIn) { "built-in role $id cannot be modified." }
         val requestedTenant = BeanKit.getProperty(any, AuthRole::tenantId.name) as String?
         val requestedSubsys = BeanKit.getProperty(any, AuthRole::subsysCode.name) as String?
@@ -248,7 +320,19 @@ open class AuthRoleService(
         }
         tenantAdministrationGuard.assertRoleCodeManageable(requestedCode ?: existing.code, existing.tenantId)
         validateParentId(any, selfId = id)
-        val success = super.update(any)
+        // The generic update copies every form property, nulls included: an organization role keeps its owner columns.
+        // Ownership is decided at creation: a tenant-owned row never becomes an organization row.
+        val requestedOrganization = BeanKit.getProperty(any, AuthRole::organizationId.name) as String?
+        require(requestedOrganization.isNullOrBlank() || requestedOrganization == existing.organizationId) {
+            "organizationId is immutable (stored=${existing.organizationId}, requested=$requestedOrganization)."
+        }
+        val success = if (existing.organizationId == null) super.update(any) else super.update(
+            Entity.create<AuthRole>().also {
+                BeanKit.copyProperties(any, it)
+                it.tenantId = existing.tenantId
+                it.organizationId = existing.organizationId
+            },
+        )
         if (success) {
             log.debug("Updated role with id ${id}.")
             eventPublisher.publishEvent(AuthRoleUpdated(id))
@@ -265,7 +349,7 @@ open class AuthRoleService(
             log.warn("Role with id ${id} no longer exists when attempting to delete!")
             return false
         }
-        tenantAdministrationGuard.assertCanManage(role.tenantId)
+        tenantAdministrationGuard.assertCanEditRole(id, role.tenantId)
         // Snapshot the affected users / resources / groups BEFORE the relation rows are removed —
         // the cache-invalidation events need them, and they are unqueryable afterwards.
         val relations = snapshotRoleRelations(id)
@@ -287,7 +371,7 @@ open class AuthRoleService(
         // Snapshot tenantId/code first; after AFTER_COMMIT the rows are deleted and downstream (tenantId, code) caches
         // can no longer query back. Ditto for the relation snapshots feeding the cleanup events.
         val roles = dao.getByIds(ids)
-        roles.forEach { tenantAdministrationGuard.assertCanManage(it.tenantId) }
+        roles.forEach { tenantAdministrationGuard.assertCanEditRole(it.id, it.tenantId) }
         val snapshots = roles.map { AuthRoleBatchDeleted.Item(it.id, it.tenantId, it.code) }
         val relationSnapshots = snapshots.associate { it.id to snapshotRoleRelations(it.id) }
         val count = super.batchDelete(ids)
@@ -334,6 +418,7 @@ open class AuthRoleService(
         val groups = authGroupRoleDao.deleteByRoleId(roleId)
         val orgs = authRoleScopeDao.deleteAllByRoleId(roleId)
         val exclusions = authRoleExclusionDao.deleteByRoleId(roleId)
+        tenantRoleOverrideDao?.deleteByRole(roleId)
         log.debug(
             "Cascade-deleted relations of role ${roleId}: ${users} user grants, ${resources} resource grants, " +
                 "${groups} group bindings, ${orgs} data-scope orgs, ${exclusions} exclusion pairs."
@@ -376,7 +461,9 @@ open class AuthRoleService(
     }
 
     @Transactional(readOnly = true)
-    override fun getUserRoleIds(userId: String): List<String> = roleIdsByUserIdCache.getRoleIds(userId)
+    override fun getUserRoleIds(userId: String): List<String> =
+        organizationAuthorizationOf(userId)?.let { if (it.allowed) it.roleIds.toList() else emptyList() }
+            ?: roleIdsByUserIdCache.getRoleIds(userId)
 
     @Transactional(readOnly = true)
     override fun getUsersByRoleCode(tenantId: String, roleCode: String): List<UserAccountCacheEntry> {
@@ -392,12 +479,13 @@ open class AuthRoleService(
 
     @Transactional(readOnly = true)
     override fun getUserResourceIds(userId: String): Set<String> =
-        resourceIdsByUserIdCache.getResourceIds(userId).toSet()
+        organizationAuthorizationOf(userId)?.let { requireNotNull(organizationAuthorization).resourceIds(it) }
+            ?: resourceIdsByUserIdCache.getResourceIds(userId).toSet()
 
     @Transactional(readOnly = true)
     override fun getResources(userId: String): List<SysResourceCacheEntry> {
         // Get the list of resource IDs by user ID
-        val resourceIds = resourceIdsByUserIdCache.getResourceIds(userId)
+        val resourceIds = getUserResourceIds(userId).toList()
         if (resourceIds.isEmpty()) return emptyList()
         // Batch fetch resource cache objects (sysResourceHashCache.getResourcesByIds accepts a Set, perform a dedup conversion)
         val resourcesMap = sysResourceHashCache.getResourcesByIds(resourceIds.toSet())

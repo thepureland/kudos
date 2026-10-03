@@ -186,7 +186,8 @@ open class AuthRoleResourceService(
 
     private fun assertCanManageRole(roleId: String) {
         val role = authRoleDao.get(roleId) ?: throw IllegalArgumentException("Role not found: $roleId")
-        tenantAdministrationGuard.assertCanManage(role.tenantId)
+        // Permission bindings are part of the role's definition (G-12 for organization roles).
+        tenantAdministrationGuard.assertCanEditRole(roleId, role.tenantId)
     }
 
 }

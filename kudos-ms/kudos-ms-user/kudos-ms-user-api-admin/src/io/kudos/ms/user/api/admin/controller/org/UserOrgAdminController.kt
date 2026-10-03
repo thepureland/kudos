@@ -44,12 +44,20 @@ class UserOrgAdminController :
         @RequestParam(required = false) newSortNum: Int?,
     ): Boolean = service.moveOrg(id, newParentId, newSortNum)
 
-    /** Get the organization tree (by tenant, optional root). */
+    /**
+     * Get the organization tree, optionally from a root: by customer organization in organization mode
+     * (`organizationId`), otherwise by tenant (`tenantId`).
+     */
     @GetMapping("/getOrgTree")
     fun getOrgTree(
-        @RequestParam tenantId: String,
+        @RequestParam(required = false) tenantId: String?,
         @RequestParam(required = false) parentId: String?,
-    ): List<UserOrgTreeRow> = service.getOrgTree(tenantId, parentId)
+        @RequestParam(required = false) organizationId: String? = null,
+    ): List<UserOrgTreeRow> = when {
+        !organizationId.isNullOrBlank() -> service.getOrgTreeByOrganizationId(organizationId, parentId)
+        !tenantId.isNullOrBlank() -> service.getOrgTree(tenantId, parentId)
+        else -> throw IllegalArgumentException("tenantId or organizationId is required")
+    }
 
     /** Get all users by organization id (including admins). Credential fields are erased before returning. */
     @GetMapping("/getOrgUsers")

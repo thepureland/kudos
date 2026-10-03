@@ -15,6 +15,9 @@ interface UserAccount : IManagedDbEntity<String, UserAccount> {
 
     companion object : DbEntityFactory<UserAccount>()
 
+    /** Owning customer root organization; null only for unmigrated legacy records. */
+    var organizationId: String?
+
     /** Username. */
     var username: String
 

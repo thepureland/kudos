@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.sql.SQLIntegrityConstraintViolationException
+import io.kudos.ms.sys.core.organization.OrganizationMode
+import org.springframework.beans.factory.annotation.Autowired
 import java.time.LocalDateTime
 import java.util.Locale
 
@@ -28,6 +30,9 @@ open class ExternalAccountProvisioningService(
     private val userOrgUserService: IUserOrgUserService,
     private val userContactWayService: IUserContactWayService,
 ) : IExternalAccountProvisioningService {
+
+    @Autowired(required = false)
+    private var organizationMode: OrganizationMode? = null
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     override fun provision(command: ExternalAccountProvisioningCommand): UserAccountThird {
@@ -41,6 +46,11 @@ open class ExternalAccountProvisioningService(
         if (existing != null) {
             if (existing.active == true) return existing
             throw ExternalAccountProvisioningException("EXTERNAL_IDENTITY_DISABLED")
+        }
+        // Organization mode never creates accounts on first external login: an organization's people are
+        // maintained once by its administrators, and an external identity may only bind to one of them.
+        if (organizationMode?.enabled == true && organizationMode?.isPlatformTenant(command.tenantId) != true) {
+            throw ExternalAccountProvisioningException("EXTERNAL_JIT_DISABLED_IN_ORGANIZATION_MODE")
         }
 
         val now = LocalDateTime.now()

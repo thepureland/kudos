@@ -55,6 +55,7 @@ data class AuthGroupCacheEntry (
     /** Update time. */
     val updateTime: LocalDateTime?,
 
+    val organizationId: String? = null,
 ) : IIdEntity<String>, Serializable {
 
     companion object {

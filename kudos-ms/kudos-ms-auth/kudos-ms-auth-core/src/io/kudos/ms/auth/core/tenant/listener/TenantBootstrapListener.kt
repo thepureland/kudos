@@ -8,6 +8,8 @@ import jakarta.annotation.Resource
 import org.springframework.stereotype.Component
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
+import io.kudos.ms.sys.core.organization.OrganizationMode
+import org.springframework.beans.factory.annotation.Autowired
 
 
 /**
@@ -33,11 +35,16 @@ open class TenantBootstrapListener {
     @Resource
     private lateinit var properties: TenantBootstrapProperties
 
+    @Autowired(required = false)
+    private var organizationMode: OrganizationMode? = null
+
     private val log = LogFactory.getLog(this::class)
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     open fun on(event: SysTenantInserted) {
         if (!properties.enabled) return
+        // Organization mode: roles belong to organizations, not tenants; only platform tenants seed.
+        if (organizationMode?.enabled == true && organizationMode?.isPlatformTenant(event.id) != true) return
         try {
             val result = bootstrapService.seedRoles(event.id)
             if (result.createdRoleCodes.isNotEmpty()) {

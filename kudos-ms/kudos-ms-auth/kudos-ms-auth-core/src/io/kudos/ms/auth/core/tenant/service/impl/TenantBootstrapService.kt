@@ -22,6 +22,8 @@ import jakarta.annotation.Resource
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import io.kudos.ms.sys.core.organization.OrganizationMode
+import org.springframework.beans.factory.annotation.Autowired
 
 
 /**
@@ -56,11 +58,26 @@ open class TenantBootstrapService : ITenantBootstrapService {
     @Resource
     private lateinit var eventPublisher: ApplicationEventPublisher
 
+    @Autowired(required = false)
+    private var organizationMode: OrganizationMode? = null
+
+    /**
+     * Per-tenant bootstrap is the legacy model. In organization mode an organization's roles and its first
+     * administrator are set up once for the organization (designation by the platform), so only platform
+     * tenants bootstrap here.
+     */
+    private fun requireLegacyBootstrap(tenantId: String) {
+        require(organizationMode?.enabled != true || organizationMode?.isPlatformTenant(tenantId) == true) {
+            "ORGANIZATION_MODE_TENANT_BOOTSTRAP_UNSUPPORTED"
+        }
+    }
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional
     override fun seedRoles(tenantId: String): TenantBootstrapResult {
         require(tenantId.isNotBlank()) { "tenantId must not be blank." }
+        requireLegacyBootstrap(tenantId)
         val created = mutableListOf<String>()
         val existing = mutableListOf<String>()
         var bindings = 0
@@ -145,6 +162,7 @@ open class TenantBootstrapService : ITenantBootstrapService {
     ): TenantBootstrapResult {
         require(tenantId.isNotBlank()) { "tenantId must not be blank." }
         require(userId.isNotBlank()) { "userId must not be blank." }
+        requireLegacyBootstrap(tenantId)
         val code = roleCode?.trim()?.takeIf { it.isNotEmpty() }
             ?: properties.roles.firstOrNull()?.code
             ?: throw IllegalArgumentException("no bootstrap role is configured.")

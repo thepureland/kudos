@@ -34,6 +34,8 @@ data class AuthenticationSession(
     val revokedAt: Instant? = null,
     val revokeReason: String? = null,
     val version: Long = 0,
+    val organizationId: String? = null,
+    val subSystemCode: String? = null,
 ) : Serializable {
 
     fun isActive(at: Instant = Instant.now()): Boolean =

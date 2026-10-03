@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 import org.springframework.security.web.context.SecurityContextRepository
 import org.springframework.web.util.UriComponentsBuilder
+import io.kudos.ms.auth.core.organization.service.OrganizationSessionDeniedException
 
 /** Converts the verified provider principal, completes the Kudos transaction and issues a local session. */
 open class ExternalLoginAuthenticationSuccessHandler(
@@ -96,7 +97,6 @@ open class ExternalLoginAuthenticationSuccessHandler(
                 )
                 return
             }
-            val principal = SessionUserPrincipal(identity.userId, identity.tenantId, identity.username)
             val session = request.getSession(true)
             request.changeSessionId()
             val authSession = sessionService.issue(
@@ -107,6 +107,14 @@ open class ExternalLoginAuthenticationSuccessHandler(
                     userAgent = request.getHeader("User-Agent"),
                 )
             )
+            // The issued session decides the scope (an organization account may land in its organization scope).
+            val principal = SessionUserPrincipal(
+                id = authSession.userId,
+                tenantId = authSession.tenantId,
+                username = identity.username,
+                organizationId = authSession.organizationId,
+                subSystemCode = authSession.subSystemCode,
+            )
             try {
                 transaction = transactionService.bindSession(transaction.id, authSession.id)
                 session.setAttribute(AuthenticationSession.HTTP_SESSION_ATTRIBUTE, authSession.id)
@@ -114,7 +122,7 @@ open class ExternalLoginAuthenticationSuccessHandler(
             } catch (e: Exception) {
                 sessionService.revokeForUser(
                     authSession.id,
-                    identity.tenantId,
+                    authSession.tenantId,
                     identity.userId,
                     "SESSION_BIND_FAILED",
                 )
@@ -136,6 +144,10 @@ open class ExternalLoginAuthenticationSuccessHandler(
         } catch (e: ExternalIdentityAuthenticationException) {
             transactionService.failExternal(state.transactionId, state.providerId, e.errorCode)
             redirectFailure(response, purpose, state.transactionId, e.errorCode)
+        } catch (e: OrganizationSessionDeniedException) {
+            val code = e.message ?: "AUTHENTICATION_TENANT_ACCESS_DENIED"
+            transactionService.failExternal(state.transactionId, state.providerId, code)
+            redirectFailure(response, purpose, state.transactionId, code)
         } catch (e: Exception) {
             log.error(e, "External authentication callback failed")
             runCatching {

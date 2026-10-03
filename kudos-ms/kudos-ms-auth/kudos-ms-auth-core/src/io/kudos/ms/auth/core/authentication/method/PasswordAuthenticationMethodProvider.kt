@@ -147,6 +147,14 @@ open class PasswordAuthenticationMethodProvider(
                 username,
             )
 
+            // Organization mode: valid credentials, but neither this tenant nor the organization scope is
+            // open to the account. Terminal: retrying the password changes nothing.
+            PassportLoginStatusEnum.TENANT_ACCESS_DENIED -> AuthenticationMethodResult(
+                outcome = AuthenticationMethodOutcomeEnum.FAILURE,
+                terminal = true,
+                errorCode = "TENANT_ACCESS_DENIED",
+            )
+
             PassportLoginStatusEnum.OTP_WRONG -> retry(
                 AuthenticationActionEnum.VERIFY_TOTP,
                 "INVALID_OTP",

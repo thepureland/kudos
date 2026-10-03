@@ -61,6 +61,11 @@ data class UserOrgCacheEntry (
     /** Update time */
     val updateTime: LocalDateTime?,
 
+    /** Owning customer root organization. */
+    val organizationId: String? = null,
+
+    val nodeKind: String? = null,
+
 ) : IIdEntity<String>, Serializable {
 
     companion object {

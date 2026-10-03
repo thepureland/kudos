@@ -18,7 +18,7 @@ data class UserOrgFormUpdate (
 
     override val shortName: String?,
 
-    override val tenantId: String?,
+    override val tenantId: String? = null,
 
     override val parentId: String?,
 
@@ -27,5 +27,10 @@ data class UserOrgFormUpdate (
     override val sortNum: Int?,
 
     override val remark: String?,
+
+    /** Owning customer root organization. */
+    override val organizationId: String? = null,
+
+    override val nodeKind: String? = null,
 
 ) : IIdEntity<String>, IUserOrgFormBase

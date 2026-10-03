@@ -28,6 +28,8 @@ import java.security.MessageDigest
 import java.net.IDN
 import java.time.LocalDateTime
 import java.util.Locale
+import io.kudos.ms.user.core.org.service.iservice.IOrganizationOwnershipService
+import org.springframework.beans.factory.annotation.Autowired
 
 /** Maps verified Spring principals to Kudos identities and accepts bound accounts only. */
 @Service
@@ -42,6 +44,10 @@ open class ExternalIdentityAuthenticationService(
     private val userAccountService: IUserAccountService,
     private val userLogLoginService: IUserLogLoginService,
 ) {
+
+    @Autowired(required = false)
+    private var ownership: IOrganizationOwnershipService? = null
+
 
     private val log = LogFactory.getLog(this::class)
 
@@ -121,7 +127,12 @@ open class ExternalIdentityAuthenticationService(
         val frozen = user?.freezeType != null &&
             (user.freezeStartTime == null || !now.isBefore(user.freezeStartTime)) &&
             (user.freezeEndTime == null || now.isBefore(user.freezeEndTime))
-        if (user == null || user.tenantId != resolved.tenantId || user.active != true || frozen) {
+        // An organization account serves every tenant of its organization; whether it may enter this one is
+        // decided when its session is issued.
+        val serves = user != null && (user.organizationId?.takeIf(String::isNotBlank)
+            ?.let { ownership?.organizationIdForTenant(resolved.tenantId) == it }
+            ?: (user.tenantId == resolved.tenantId))
+        if (user == null || !serves || user.active != true || frozen) {
             recordAttempt(resolved.tenantId, activeBinding.userId, subject, loginIp, userAgent, false, "ACCOUNT_UNAVAILABLE")
             throw ExternalIdentityAuthenticationException("ACCOUNT_UNAVAILABLE")
         }

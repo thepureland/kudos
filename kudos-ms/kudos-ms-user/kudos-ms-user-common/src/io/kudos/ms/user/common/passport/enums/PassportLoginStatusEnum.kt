@@ -61,5 +61,11 @@ enum class PassportLoginStatusEnum {
      * cannot authenticate. It intentionally carries no account state or failure counter.
      */
     INVALID_CREDENTIALS,
+
+    /**
+     * Organization mode: the credentials are valid but the shared account may not enter the requested
+     * tenant (tenant not open, or no effective role there).
+     */
+    TENANT_ACCESS_DENIED,
 }
 

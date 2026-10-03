@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.LocalDateTime
+import io.kudos.ms.auth.core.authentication.credential.service.impl.CredentialOwnerResolver
+import org.springframework.beans.factory.annotation.Autowired
 
 @Service
 @Transactional
@@ -80,12 +82,17 @@ open class TenantMfaPolicyService(
         return policy.toEffective()
     }
 
+    @Autowired(required = false)
+    private var owners: CredentialOwnerResolver? = null
+
     @Transactional(readOnly = true)
     override fun evaluate(tenantId: String, userId: String): MfaPolicyDecision {
         requireTenantId(tenantId)
         if (userId.isBlank()) fail("MFA_POLICY_USER_REQUIRED")
         val user = userAccountService.get(userId) ?: fail("MFA_POLICY_ACCOUNT_NOT_FOUND")
-        if (user.tenantId != tenantId) fail("MFA_POLICY_ACCOUNT_TENANT_MISMATCH")
+        // The policy is the tenant's; an organization account is evaluated in any tenant of its organization.
+        val serves = owners?.accountServes(tenantId, userId) ?: (user.tenantId == tenantId)
+        if (!serves) fail("MFA_POLICY_ACCOUNT_TENANT_MISMATCH")
         val policy = getEffective(tenantId)
         val required = when (policy.mode) {
             MfaRequirementModeEnum.OPTIONAL -> false

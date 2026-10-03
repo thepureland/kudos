@@ -30,6 +30,9 @@ interface AuthRoleExclusion : IDbEntity<String, AuthRoleExclusion> {
     /** Tenant id. Both roles must belong to this tenant. */
     var tenantId: String
 
+    /** Owning customer organization (organization mode); tenantId then holds the same id as the owner. */
+    var organizationId: String?
+
     /** Human-readable description of why these roles are mutually exclusive. */
     var description: String?
 

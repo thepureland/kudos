@@ -29,4 +29,5 @@ data class AuthGroupEdit (
     /** Remark. */
     val remark: String? = null,
 
+    val organizationId: String? = null,
 ) : IIdEntity<String>

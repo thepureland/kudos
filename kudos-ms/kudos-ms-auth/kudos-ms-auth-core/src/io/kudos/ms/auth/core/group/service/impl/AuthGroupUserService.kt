@@ -150,6 +150,7 @@ open class AuthGroupUserService(
     override fun unbind(groupId: String, userId: String, reason: String?): Boolean {
         val group = requireGroup(groupId)
         tenantAdministrationGuard.assertCanManage(group.tenantId)
+        tenantAdministrationGuard.assertCanChangeHolder(group.tenantId, userId, removal = true)
         // Soft, like every other revocation in this module. The `revoked` column had a read-path
         // filter and no writer — meaning removal was a hard delete and the audit trail for "who was
         // in this group, and who took them out" simply did not survive the act. Keeping the row is

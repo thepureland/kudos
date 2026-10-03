@@ -14,6 +14,12 @@ interface UserOrg : IManagedDbEntity<String, UserOrg> {
 
     companion object : DbEntityFactory<UserOrg>()
 
+    /** Owning customer root organization; null only for unmigrated legacy records. */
+    var organizationId: String?
+
+    /** ORGANIZATION root or DEPARTMENT; null only for legacy records. */
+    var nodeKind: String?
+
     /** Organization name. */
     var name: String
 

@@ -40,7 +40,18 @@ open class JwtBearerAuthenticationFilter(
                 id = session.userId,
                 tenantId = session.tenantId,
                 username = session.username.orEmpty(),
+                organizationId = session.organizationId,
+                subSystemCode = session.subSystemCode,
             )
+            // Organization sessions work in the session's tenant (none in the organization scope) and
+            // sub-system; legacy sessions keep the context exactly as before.
+            if (session.organizationId != null) {
+                KudosContextHolder.get().apply {
+                    tenantId = session.tenantId
+                    _datasourceTenantId = session.tenantId.takeIf(String::isNotBlank)
+                    subSystemCode = session.subSystemCode
+                }
+            }
             filterChain.doFilter(request, response)
         } catch (_: AccessTokenException) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED)

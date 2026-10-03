@@ -143,6 +143,18 @@ open class PermissionGrantsByUserIdCache : AbstractKeyValueCacheHandler<List<Per
         val effectiveRoleIds = authRoleDao.filterActiveRoleIds(granted + ancestors)
         if (effectiveRoleIds.isEmpty()) return emptyList()
 
+        val grants = grantsOfRoles(effectiveRoleIds)
+        log.debug("Resolved ${grants.size} permission grant(s) for user ${userId} from ${effectiveRoleIds.size} active effective role(s).")
+        return grants
+    }
+
+    /**
+     * Every binding of an already resolved, already expanded set of effective roles. Not cached: the
+     * organization-mode decision path resolves its per-tenant role set first and projects it here, so
+     * both modes read bindings exactly the same way.
+     */
+    open fun grantsOfRoles(effectiveRoleIds: Collection<String>): List<PermissionGrantVo> {
+        if (effectiveRoleIds.isEmpty()) return emptyList()
         val bindings = authRoleResourceDao.searchBindingsByRoleIds(effectiveRoleIds)
         if (bindings.isEmpty()) return emptyList()
 
@@ -150,7 +162,7 @@ open class PermissionGrantsByUserIdCache : AbstractKeyValueCacheHandler<List<Per
         val resourceIds = bindings.mapNotNull { it.resourceId?.trim() }.filter { it.isNotEmpty() }.toSet()
         val resources = if (resourceIds.isEmpty()) emptyMap() else sysResourceHashCache.getResourcesByIds(resourceIds)
 
-        val grants = bindings.mapNotNull { binding ->
+        return bindings.mapNotNull { binding ->
             val code = binding.permissionCode?.trim()?.takeIf { it.isNotEmpty() }
                 ?: binding.resourceId?.trim()?.let { resources[it]?.permissionCode?.trim() }?.takeIf { it.isNotEmpty() }
                 ?: return@mapNotNull null
@@ -161,12 +173,6 @@ open class PermissionGrantsByUserIdCache : AbstractKeyValueCacheHandler<List<Per
                 roleId = binding.roleId,
             )
         }.distinct()
-
-        log.debug(
-            "Resolved ${grants.size} permission grant(s) for user ${userId} " +
-                "from ${effectiveRoleIds.size} active effective role(s) and ${bindings.size} binding(s).",
-        )
-        return grants
     }
 
     /** Invalidate in batch; the next decision recomputes. */

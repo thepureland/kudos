@@ -6,7 +6,16 @@ import io.kudos.base.logger.LogFactory
 import io.kudos.base.model.payload.ListSearchPayload
 import io.kudos.base.query.PagingSearchResult
 import io.kudos.ms.user.common.org.vo.request.UserOrgQuery
+import io.kudos.ms.user.core.security.UserAccessScope
 import io.kudos.ms.user.core.security.UserTenantAccessGuard
+import io.kudos.ms.user.core.security.UserTenantAccessGuard.Companion.ownerKey
+import io.kudos.ms.user.core.account.dao.UserAccountDao
+import io.kudos.base.query.Criteria
+import io.kudos.base.query.eq
+import io.kudos.ms.sys.core.tenant.dao.SysTenantDao
+import io.kudos.ms.sys.core.tenant.model.po.SysTenant
+import org.ktorm.entity.Entity
+import java.util.UUID
 import kotlin.reflect.KClass
 import io.kudos.ms.user.common.org.vo.UserOrgCacheEntry
 import io.kudos.ms.user.common.org.vo.response.UserOrgTreeRow
@@ -61,22 +70,48 @@ open class UserOrgService(
     @Autowired
     private var tenantAccess = UserTenantAccessGuard()
 
+    /** Organization-mode checks; absent only in pure unit tests, where only legacy rows exist. */
+    @Autowired(required = false)
+    private var directoryGate: OrganizationDirectoryGate? = null
+
+    @Autowired(required = false)
+    private var userAccountDao: UserAccountDao? = null
+
+    @Autowired(required = false)
+    private var sysTenantDao: SysTenantDao? = null
+
+    private fun gate(): OrganizationDirectoryGate = requireNotNull(directoryGate) { "ORGANIZATION_MODE_UNAVAILABLE" }
+
     private fun accessibleOrg(id: String): UserOrg? =
-        dao.get(id)?.also { if (tenantAccess.hasPrincipal()) tenantAccess.assertCanAccess(it.tenantId) }
+        dao.get(id)?.also { if (tenantAccess.hasPrincipal()) tenantAccess.assertCanAccessOwner(it.tenantId, it.organizationId) }
+
+    /** Organization rows need the directory policy for every write; legacy rows keep the old rules. */
+    private fun assertCanWrite(org: UserOrg) {
+        val organizationId = org.organizationId ?: return
+        if (org.isOrganizationRoot()) gate().assertPlatform() else gate().assertCanManageDirectory(organizationId)
+    }
 
     private fun stringProperty(value: Any, name: String): String? =
         runCatching { BeanKit.getProperty(value, name) as? String }.getOrNull()
 
-    private fun assertParent(parentId: String?, tenantId: String, movingId: String? = null) {
-        if (!tenantAccess.hasPrincipal() || parentId.isNullOrBlank()) return
+    /**
+     * Parent and every ancestor share the child's owner, and the chain has no cycle. Legacy rows are
+     * checked only for authenticated callers, as before; organization rows always.
+     */
+    private fun assertParent(parentId: String?, tenantId: String, movingId: String? = null, organizationId: String? = null) {
+        if (parentId.isNullOrBlank() || (organizationId == null && !tenantAccess.hasPrincipal())) return
         val parent = requireNotNull(accessibleOrg(parentId)) { "Parent organization not found" }
-        require(parent.tenantId == tenantId) { "Parent and child organizations must belong to the same tenant" }
+        val owner = ownerKey(tenantId, organizationId)
+        require(ownerKey(parent.tenantId, parent.organizationId) == owner) {
+            if (organizationId == null) "Parent and child organizations must belong to the same tenant"
+            else "Parent and child departments must belong to the same organization"
+        }
         val visited = mutableSetOf<String>()
         var ancestor: UserOrg? = parent
         while (ancestor != null) {
             val id = ancestor.id
             require(id != movingId && visited.add(id)) { "Organization hierarchy cannot contain a cycle" }
-            require(ancestor.tenantId == tenantId) { "Organization ancestry crosses tenants" }
+            require(ownerKey(ancestor.tenantId, ancestor.organizationId) == owner) { "Organization ancestry crosses tenants" }
             ancestor = ancestor.parentId?.takeIf(String::isNotBlank)?.let { dao.get(it) }
         }
     }
@@ -92,8 +127,21 @@ open class UserOrgService(
 
     @Transactional(readOnly = true)
     override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
-        val restricted = tenantAccess.restrictedTenantId()
-        if (restricted == null) return super.pagingSearch(listSearchPayload)
+        val scope = tenantAccess.restrictedScope()
+        if (scope is UserAccessScope.Organization) {
+            require(listSearchPayload is UserOrgQuery) { "An organization-scoped query is required" }
+            require(listSearchPayload.organizationId.isNullOrBlank() || listSearchPayload.organizationId == scope.organizationId) {
+                "Cross-organization user administration is forbidden"
+            }
+            val scoped = listSearchPayload.copy(organizationId = scope.organizationId, tenantId = null).apply {
+                pageNo = listSearchPayload.pageNo
+                pageSize = listSearchPayload.pageSize
+                orders = listSearchPayload.orders
+            }
+            scoped.parentId?.takeIf(String::isNotBlank)?.let { assertParent(it, "", organizationId = scope.organizationId) }
+            return super.pagingSearch(scoped)
+        }
+        val restricted = (scope as? UserAccessScope.Tenant)?.tenantId ?: return super.pagingSearch(listSearchPayload)
         require(listSearchPayload is UserOrgQuery) { "A tenant-scoped organization query is required" }
         val scoped = listSearchPayload.copy(tenantId = tenantAccess.queryTenantId(listSearchPayload.tenantId)).apply {
             pageNo = listSearchPayload.pageNo
@@ -113,7 +161,7 @@ open class UserOrgService(
         if (adminUserIds.isEmpty()) return emptyList()
         // Batch fetch user info, returned in original ID order.
         val usersMap = userAccountHashCache.getUsersByIds(adminUserIds)
-        return adminUserIds.mapNotNull { usersMap[it] }.filter { org == null || it.tenantId == org.tenantId }
+        return adminUserIds.mapNotNull { usersMap[it] }.filter { org == null || sameOwner(org, it) }
     }
 
     @Transactional(readOnly = true)
@@ -134,7 +182,7 @@ open class UserOrgService(
         val userIds = getOrgUserIds(orgId)
         if (userIds.isEmpty()) return emptyList()
         val usersMap = userAccountHashCache.getUsersByIds(userIds)
-        return userIds.mapNotNull { usersMap[it] }.filter { org == null || it.tenantId == org.tenantId }
+        return userIds.mapNotNull { usersMap[it] }.filter { org == null || sameOwner(org, it) }
     }
 
     @Transactional(readOnly = true)
@@ -151,7 +199,8 @@ open class UserOrgService(
     @Transactional(readOnly = true)
     override fun getParentOrg(orgId: String): UserOrgCacheEntry? {
         val org = getOrgRecord(orgId) ?: return null
-        return org.parentId?.let { getOrgRecord(it) }?.takeIf { it.tenantId == org.tenantId }
+        return org.parentId?.let { getOrgRecord(it) }
+            ?.takeIf { ownerKey(it.tenantId, it.organizationId) == ownerKey(org.tenantId, org.organizationId) }
     }
 
     @Transactional(readOnly = true)
@@ -170,12 +219,28 @@ open class UserOrgService(
     }
 
     @Transactional(readOnly = true)
+    override fun getOrgsByOrganizationId(organizationId: String): List<UserOrgCacheEntry> {
+        tenantAccess.assertCanAccessOrganization(organizationId)
+        return userOrgHashCache.getOrgsByOrganizationId(organizationId)
+    }
+
+    @Transactional(readOnly = true)
+    override fun getOrgTreeByOrganizationId(organizationId: String, parentId: String?): List<UserOrgTreeRow> {
+        tenantAccess.assertCanAccessOrganization(organizationId)
+        assertParent(parentId, "", organizationId = organizationId)
+        return buildTree(dao.searchActiveOrgsByOrganizationId(organizationId, parentId), parentId)
+    }
+
+    @Transactional(readOnly = true)
     override fun getOrgTree(tenantId: String, parentId: String?): List<UserOrgTreeRow> {
         tenantAccess.assertCanAccess(tenantId)
         assertParent(parentId, tenantId)
         // If parentId is specified, only query direct child organizations under that parent organization;
         // otherwise query all enabled organizations under the tenant.
-        val orgs = dao.searchActiveOrgsByTenantId(tenantId, parentId)
+        return buildTree(dao.searchActiveOrgsByTenantId(tenantId, parentId), parentId)
+    }
+
+    private fun buildTree(orgs: List<UserOrg>, parentId: String?): List<UserOrgTreeRow> {
 
         // Convert to tree nodes (UserOrgTreeRow is an immutable data class with all val properties,
         // use constructor to pass values; BeanKit.copyProperties uses setters and is unusable here, would leave an empty row).
@@ -198,6 +263,8 @@ open class UserOrgService(
                 updateUserId = cacheItem.updateUserId,
                 updateUserName = cacheItem.updateUserName,
                 updateTime = cacheItem.updateTime,
+                organizationId = cacheItem.organizationId,
+                nodeKind = cacheItem.nodeKind,
                 children = mutableListOf(),
             )
         }
@@ -270,7 +337,9 @@ open class UserOrgService(
         // (child organization disabled -> this subtree should be empty in the parent view).
         // Therefore, even if parentId is unchanged, the parentId snapshot must be put into the event
         // so the listener can clear caches along the ancestor chain.
-        val parentId = (accessibleOrg(id) ?: return false).parentId
+        val org = accessibleOrg(id) ?: return false
+        assertCanWrite(org)
+        val parentId = org.parentId
         val success = dao.updateProperties(id, mapOf(UserOrg::active.name to active))
         if (success) {
             log.debug("Updated the enabled status of the organization with id ${id} to ${active}.")
@@ -285,14 +354,18 @@ open class UserOrgService(
     override fun moveOrg(id: String, newParentId: String?, newSortNum: Int?): Boolean {
         // Snapshot oldParentId before moving -- after the transaction commits, the dao cannot see the old value.
         val org = accessibleOrg(id) ?: return false
-        if (tenantAccess.hasPrincipal()) assertParent(newParentId, org.tenantId, id)
+        assertCanWrite(org)
+        // An organization root never moves; a department moved to "no parent" goes under its root.
+        require(!org.isOrganizationRoot()) { "An organization root cannot be moved" }
+        val targetParentId = if (org.organizationId != null) newParentId?.takeIf(String::isNotBlank) ?: org.organizationId else newParentId
+        if (tenantAccess.hasPrincipal() || org.organizationId != null) assertParent(targetParentId, org.tenantId, id, org.organizationId)
         val oldParentId = org.parentId
-        val props = mutableMapOf<String, Any?>(UserOrg::parentId.name to newParentId)
+        val props = mutableMapOf<String, Any?>(UserOrg::parentId.name to targetParentId)
         newSortNum?.let { props[UserOrg::sortNum.name] = it }
         val success = dao.updateProperties(id, props)
         if (success) {
             log.debug("Moved the organization with id ${id} to parent organization ${newParentId}, sort number ${newSortNum}.")
-            eventPublisher.publishEvent(UserOrgUpdated(id, oldParentId = oldParentId, newParentId = newParentId))
+            eventPublisher.publishEvent(UserOrgUpdated(id, oldParentId = oldParentId, newParentId = targetParentId))
         } else {
             log.error("Failed to move the organization with id ${id}!")
         }
@@ -301,12 +374,27 @@ open class UserOrgService(
 
     @Transactional
     override fun insert(any: Any): String {
-        if (tenantAccess.hasPrincipal()) {
-            val tenantId = requireNotNull(stringProperty(any, "tenantId")) { "Tenant is required" }
-            tenantAccess.assertCanAccess(tenantId)
-            assertParent(stringProperty(any, "parentId"), tenantId)
+        val nodeKind = stringProperty(any, "nodeKind")?.takeIf(String::isNotBlank)
+        val parentId = stringProperty(any, "parentId")?.takeIf(String::isNotBlank)
+        val parent = parentId?.let { dao.get(it) }
+        val scope = tenantAccess.restrictedScope()
+        val organizationId = stringProperty(any, "organizationId")?.takeIf(String::isNotBlank)
+            ?: parent?.organizationId
+            ?: (scope as? UserAccessScope.Organization)?.organizationId
+        val id = when {
+            nodeKind == UserOrgNodeKind.ORGANIZATION -> insertOrganizationRoot(any, parentId)
+            nodeKind == UserOrgNodeKind.DEPARTMENT || organizationId != null ->
+                insertDepartment(any, requireNotNull(organizationId) { "Organization is required" }, parentId)
+            else -> {
+                val tenantId = stringProperty(any, "tenantId")
+                directoryGate?.assertLegacyTenantAllowed(tenantId)
+                if (tenantAccess.hasPrincipal()) {
+                    tenantAccess.assertCanAccess(requireNotNull(tenantId) { "Tenant is required" })
+                    assertParent(parentId, tenantId)
+                }
+                super.insert(any)
+            }
         }
-        val id = super.insert(any)
         log.debug("Added the organization with id ${id}.")
         eventPublisher.publishEvent(UserOrgInserted(id))
         return id
@@ -318,12 +406,25 @@ open class UserOrgService(
         val id = BeanKit.getProperty(any, UserOrg::id.name) as String
         val org = accessibleOrg(id) ?: return false
         val requestedTenantId = stringProperty(any, "tenantId")
-        require(requestedTenantId == null || requestedTenantId == org.tenantId) {
-            "An organization cannot be moved to another tenant"
+        val organizationId = org.organizationId
+        if (organizationId == null) {
+            require(requestedTenantId == null || requestedTenantId == org.tenantId) {
+                "An organization cannot be moved to another tenant"
+            }
+            // A legacy node never becomes an organization node: ownership is decided at creation only.
+            require(stringProperty(any, "organizationId").isNullOrBlank() && stringProperty(any, "nodeKind").isNullOrBlank()) {
+                "A tenant-owned organization cannot be moved into a customer organization"
+            }
+            if (tenantAccess.hasPrincipal()) assertParent(stringProperty(any, "parentId"), org.tenantId, id)
+        } else {
+            assertCanWrite(org)
+            require(stringProperty(any, "organizationId").let { it.isNullOrBlank() || it == organizationId }) {
+                "A department cannot be moved to another organization"
+            }
+            require(stringProperty(any, "nodeKind").let { it.isNullOrBlank() || it == org.nodeKind }) { "Node kind is immutable" }
         }
-        if (tenantAccess.hasPrincipal()) assertParent(stringProperty(any, "parentId"), org.tenantId, id)
         val oldParentId = org.parentId
-        val success = super.update(any)
+        val success = if (organizationId == null) super.update(any) else dao.update(pinnedOwnership(any, org))
         if (success) {
             val newParentId = dao.get(id)?.parentId
             log.debug("Updated the organization with id ${id}.")
@@ -340,6 +441,7 @@ open class UserOrgService(
             log.warn("When deleting the organization with id ${id}, found it no longer exists!")
             return false
         }
+        assertDeletable(org)
         val parentIdSnapshot = org.parentId
         val success = super.deleteById(id)
         if (success) {
@@ -356,7 +458,8 @@ open class UserOrgService(
         // First snapshot (id, parentId); at AFTER_COMMIT the rows have been deleted, the listener cannot query back.
         val snapshots = if (ids.isEmpty()) emptyList()
             else dao.getByIds(ids).map {
-                if (tenantAccess.hasPrincipal()) tenantAccess.assertCanAccess(it.tenantId)
+                if (tenantAccess.hasPrincipal()) tenantAccess.assertCanAccessOwner(it.tenantId, it.organizationId)
+                assertDeletable(it)
                 UserOrgBatchDeleted.Item(it.id, it.parentId)
             }
         val count = super.batchDelete(ids)
@@ -367,5 +470,74 @@ open class UserOrgService(
         return count
     }
 
+
+
+    /** A customer organization: a self-owned root without tenant or parent. Platform only. */
+    private fun insertOrganizationRoot(any: Any, parentId: String?): String {
+        gate().assertPlatform()
+        require(parentId == null) { "An organization root has no parent" }
+        val root = Entity.create<UserOrg>()
+        BeanKit.copyProperties(any, root)
+        val id = UUID.randomUUID().toString()
+        root.id = id
+        root.organizationId = id
+        root.nodeKind = UserOrgNodeKind.ORGANIZATION
+        root.tenantId = ""
+        root.parentId = null
+        return dao.insert(root)
+    }
+
+    /** A department of [organizationId]; with no parent it hangs directly under the root. */
+    private fun insertDepartment(any: Any, organizationId: String, parentId: String?): String {
+        val root = requireNotNull(dao.get(organizationId)?.takeIf { it.isOrganizationRoot() }) { "ORGANIZATION_NOT_FOUND" }
+        require(root.active) { "ORGANIZATION_DISABLED" }
+        gate().assertCanManageDirectory(organizationId)
+        val targetParentId = parentId ?: organizationId
+        assertParent(targetParentId, "", organizationId = organizationId)
+        val department = Entity.create<UserOrg>()
+        BeanKit.copyProperties(any, department)
+        department.organizationId = organizationId
+        department.nodeKind = UserOrgNodeKind.DEPARTMENT
+        department.tenantId = ""
+        department.parentId = targetParentId
+        return dao.insert(department)
+    }
+
+    /** Organization nodes still in use are not deleted; legacy deletes keep their old behaviour. */
+    private fun assertDeletable(org: UserOrg) {
+        val organizationId = org.organizationId ?: return
+        assertCanWrite(org)
+        require(dao.searchActiveChildOrgIds(org.id).isEmpty() && dao.search(Criteria(UserOrg::parentId eq org.id)).isEmpty()) {
+            "A department with sub-departments cannot be deleted"
+        }
+        require(userOrgUserDao.searchUserIdsByOrgId(org.id).isEmpty()) { "A department with members cannot be deleted" }
+        if (org.isOrganizationRoot()) {
+            require(userAccountDao?.search(Criteria(io.kudos.ms.user.core.account.model.po.UserAccount::organizationId eq organizationId))
+                .isNullOrEmpty()) { "An organization with accounts cannot be deleted" }
+            require(sysTenantDao?.search(Criteria(SysTenant::organizationId eq organizationId)).isNullOrEmpty()) {
+                "An organization that owns tenants cannot be deleted"
+            }
+        }
+    }
+
+    /**
+     * An update entity for an organization node whose ownership columns cannot be changed or wiped by
+     * the form: the generic update copies every form property, nulls included.
+     */
+    private fun pinnedOwnership(any: Any, existing: UserOrg): UserOrg {
+        val entity = Entity.create<UserOrg>()
+        BeanKit.copyProperties(any, entity)
+        entity.id = existing.id
+        entity.organizationId = existing.organizationId
+        entity.nodeKind = existing.nodeKind
+        entity.tenantId = existing.tenantId
+        val requestedParent = stringProperty(any, "parentId")?.takeIf(String::isNotBlank)
+        entity.parentId = if (existing.isOrganizationRoot()) null else requestedParent ?: existing.parentId
+        if (!existing.isOrganizationRoot()) assertParent(entity.parentId, "", existing.id, existing.organizationId)
+        return entity
+    }
+
+    private fun sameOwner(org: UserOrg, account: UserAccountCacheEntry): Boolean =
+        ownerKey(account.tenantId, account.organizationId) == ownerKey(org.tenantId, org.organizationId)
 
 }

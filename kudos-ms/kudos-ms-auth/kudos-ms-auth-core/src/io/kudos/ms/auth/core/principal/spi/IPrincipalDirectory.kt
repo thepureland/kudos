@@ -16,7 +16,11 @@ data class PrincipalFacts(
     /** Subject kind: USER / SERVICE / API_KEY / whatever a deployment registers. */
     val principalType: String,
 
-    /** Tenant, the hard boundary of the whole model. Null only for platform-level principals. */
+    /**
+     * Owner, the hard boundary of the whole model: the tenant of a legacy principal, or the customer
+     * organization of an organization account (whose roles and groups use the same owner id). Null
+     * only for platform-level principals.
+     */
     val tenantId: String?,
 
     /** Whether the principal is usable at all; a disabled one may hold no new grants. */
@@ -24,6 +28,9 @@ data class PrincipalFacts(
 
     /** For messages and audit lines. */
     val displayName: String? = null,
+
+    /** Customer organization of an organization account; equal to [tenantId] then. Null for legacy principals. */
+    val organizationId: String? = null,
 )
 
 

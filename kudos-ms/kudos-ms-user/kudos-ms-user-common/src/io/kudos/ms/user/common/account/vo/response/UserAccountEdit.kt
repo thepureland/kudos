@@ -72,4 +72,7 @@ data class UserAccountEdit (
     /** Remark */
     val remark: String? = null,
 
+    /** Owning customer root organization. */
+    val organizationId: String? = null,
+
 ) : IIdEntity<String>

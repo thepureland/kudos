@@ -30,6 +30,7 @@ data class AuthGroupQuery (
     /** Whether the group is built-in. */
     val builtIn: Boolean? = null,
 
+    val organizationId: String? = null,
 ) : ListSearchPayload() {
 
     override fun getReturnEntityClass() = AuthGroupRow::class

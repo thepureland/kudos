@@ -35,4 +35,9 @@ data class UserOrgEdit (
     /** Remark */
     val remark: String? = null,
 
+    /** Owning customer root organization. */
+    val organizationId: String? = null,
+
+    val nodeKind: String? = null,
+
 ) : IIdEntity<String>

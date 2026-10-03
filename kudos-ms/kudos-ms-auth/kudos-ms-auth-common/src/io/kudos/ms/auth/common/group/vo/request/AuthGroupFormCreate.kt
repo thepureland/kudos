@@ -18,4 +18,5 @@ data class AuthGroupFormCreate (
 
     override val remark: String? ,
 
+    override val organizationId: String? = null,
 ) : IAuthGroupFormBase

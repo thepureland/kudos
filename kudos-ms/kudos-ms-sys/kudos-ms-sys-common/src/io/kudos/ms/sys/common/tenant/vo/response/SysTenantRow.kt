@@ -36,6 +36,12 @@ data class SysTenantRow (
     /** Whether built-in. */
     val builtIn: Boolean = false,
 
+    /** Owning customer organization; null for platform tenants and legacy (non-organization) mode. */
+    val organizationId: String? = null,
+
+    /** Whether organization members may enter this tenant. */
+    val organizationOpen: Boolean = false,
+
 ) : IIdEntity<String> {
 
 

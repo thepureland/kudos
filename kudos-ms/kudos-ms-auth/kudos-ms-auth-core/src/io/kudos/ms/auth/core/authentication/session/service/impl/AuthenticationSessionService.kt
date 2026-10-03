@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
+import io.kudos.ms.auth.core.organization.service.OrganizationSessionTargeting
+import org.springframework.beans.factory.annotation.Autowired
 
 /** Issues and manages protocol-neutral Kudos session metadata. */
 @Service
@@ -22,6 +24,9 @@ open class AuthenticationSessionService(
     private val assurancePolicy: IAuthenticationAssurancePolicy = DefaultAuthenticationAssurancePolicy(),
     private val containerSessionPurger: IAuthenticationContainerSessionPurger? = null,
 ) : IAuthenticationSessionService {
+
+    @Autowired(required = false)
+    private var organizationTargeting: OrganizationSessionTargeting? = null
 
     private val log = LogFactory.getLog(this::class)
 
@@ -32,9 +37,11 @@ open class AuthenticationSessionService(
     protected var absoluteTimeoutSeconds: Long = 43200
 
     override fun issue(command: AuthenticationSessionIssueCommand): AuthenticationSession {
-        val context = command.context
+        // Organization accounts: the session's scope (a tenant, or the organization itself) is decided here.
+        val context = organizationTargeting?.resolve(command.context) ?: command.context
         require(context.userId.isNotBlank()) { "Session user id must not be blank" }
-        require(context.tenantId.isNotBlank()) { "Session tenant id must not be blank" }
+        // Only an organization-scope session has no tenant.
+        require(context.tenantId.isNotBlank() || !context.organizationId.isNullOrBlank()) { "Session tenant id must not be blank" }
         require(context.amr.isNotEmpty()) { "Session authentication methods must not be empty" }
         require(context.acr.isNotBlank()) { "Session authentication context class must not be blank" }
         val now = Instant.now()
@@ -54,6 +61,8 @@ open class AuthenticationSessionService(
                 id = UUID.randomUUID().toString(),
                 tenantId = context.tenantId,
                 userId = context.userId,
+                organizationId = context.organizationId,
+                subSystemCode = context.subSystemCode,
                 username = command.username,
                 clientId = command.clientId,
                 deviceId = command.deviceId,
@@ -107,7 +116,7 @@ open class AuthenticationSessionService(
         userId: String,
         context: AuthenticationContext,
     ): AuthenticationSession? {
-        require(tenantId.isNotBlank()) { "Session tenant id must not be blank" }
+        // A blank tenant names an organization account's organization-scope sessions (no tenant).
         require(userId.isNotBlank()) { "Session user id must not be blank" }
         require(context.tenantId == tenantId && context.userId == userId) {
             "Step-up authentication context does not match the session owner"
@@ -141,13 +150,27 @@ open class AuthenticationSessionService(
     }
 
     override fun listForUser(tenantId: String, userId: String): List<AuthenticationSession> {
-        require(tenantId.isNotBlank()) { "Session tenant id must not be blank" }
+        // A blank tenant names an organization account's organization-scope sessions (no tenant).
         require(userId.isNotBlank()) { "Session user id must not be blank" }
         return store.findByUser(tenantId, userId)
             .mapNotNull { get(it.id) }
             .filter { it.isActive() && it.tenantId == tenantId && it.userId == userId }
             .sortedByDescending(AuthenticationSession::lastSeenAt)
     }
+
+    override fun listForPrincipal(userId: String): List<AuthenticationSession> {
+        require(userId.isNotBlank()) { "Session user id must not be blank" }
+        return store.findByPrincipal(userId).mapNotNull { get(it.id) }
+            .filter { it.isActive() && it.userId == userId }
+            .sortedByDescending(AuthenticationSession::lastSeenAt)
+    }
+
+    override fun revokeAllForPrincipal(userId: String, reason: String): List<AuthenticationSession> =
+        listForPrincipal(userId).groupBy { it.tenantId }.flatMap { (tenantId, sessions) ->
+            sessions.mapNotNull { revokeOne(it.id, tenantId, userId, reason) }.also { revoked ->
+                if (revoked.isNotEmpty()) purgeContainerSessions(tenantId, userId, revoked.map { it.id }.toSet())
+            }
+        }
 
     override fun revokeForUser(
         id: String,
@@ -163,7 +186,7 @@ open class AuthenticationSessionService(
         userId: String,
         reason: String,
     ): AuthenticationSession? {
-        require(tenantId.isNotBlank()) { "Session tenant id must not be blank" }
+        // A blank tenant names an organization account's organization-scope sessions (no tenant).
         require(userId.isNotBlank()) { "Session user id must not be blank" }
         require(reason.isNotBlank()) { "Session revoke reason must not be blank" }
         repeat(MAX_REVOKE_ATTEMPTS) {
@@ -187,7 +210,7 @@ open class AuthenticationSessionService(
         userId: String,
         reason: String,
     ): List<AuthenticationSession> {
-        require(tenantId.isNotBlank()) { "Session tenant id must not be blank" }
+        // A blank tenant names an organization account's organization-scope sessions (no tenant).
         require(userId.isNotBlank()) { "Session user id must not be blank" }
         require(reason.isNotBlank()) { "Session revoke reason must not be blank" }
         // One purge for the whole batch rather than one per session: the store lookup an implementation has to

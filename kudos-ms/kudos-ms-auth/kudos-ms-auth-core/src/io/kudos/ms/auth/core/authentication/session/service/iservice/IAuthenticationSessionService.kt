@@ -15,6 +15,8 @@ interface IAuthenticationSessionService {
         context: AuthenticationContext,
     ): AuthenticationSession?
     fun listForUser(tenantId: String, userId: String): List<AuthenticationSession>
+    fun listForPrincipal(userId: String): List<AuthenticationSession>
+    fun revokeAllForPrincipal(userId: String, reason: String): List<AuthenticationSession>
     fun revokeForUser(id: String, tenantId: String, userId: String, reason: String): AuthenticationSession?
     fun revokeAllForUser(tenantId: String, userId: String, reason: String): List<AuthenticationSession>
 }

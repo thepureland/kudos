@@ -46,6 +46,7 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
         /** Filterable secondary properties: secondary indexes on tenantId and username. */
         val FILTERABLE_PROPERTIES = setOf(
             UserAccountCacheEntry::tenantId.name,
+            UserAccountCacheEntry::organizationId.name,
             UserAccountCacheEntry::username.name
         )
     }
@@ -69,7 +70,7 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
         key = "#id",
         entityClass = UserAccountCacheEntry::class,
         unless = "#result == null",
-        filterableProperties = ["tenantId", "username"]
+        filterableProperties = ["tenantId", "username", "organizationId"]
     )
     open fun getUserById(id: String): UserAccountCacheEntry? {
         require(id.isNotBlank()) { "id must not be blank when fetching a user" }
@@ -85,7 +86,7 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
     @HashBatchCacheableByPrimary(
         cacheNames = [CACHE_NAME],
         entityClass = UserAccountCacheEntry::class,
-        filterableProperties = ["tenantId", "username"]
+        filterableProperties = ["tenantId", "username", "organizationId"]
     )
     open fun getUsersByIds(ids: Collection<String>): Map<String, UserAccountCacheEntry> {
         if (ids.isEmpty()) return emptyMap()
@@ -109,6 +110,15 @@ open class UserAccountHashCache : AbstractHashCacheHandler<UserAccountCacheEntry
     open fun getUsersByTenantIdAndUsername(tenantId: String, username: String): UserAccountCacheEntry? {
         return userAccountDao.getUsersByTenantIdAndUsername(tenantId, username)
     }
+
+    @HashCacheableBySecondary(
+        cacheNames = [CACHE_NAME],
+        filterExpressions = ["#organizationId", "#username"],
+        entityClass = UserAccountCacheEntry::class,
+        filterableProperties = ["organizationId", "username"]
+    )
+    open fun getUserByOrganizationIdAndUsername(organizationId: String, username: String): UserAccountCacheEntry? =
+        userAccountDao.getUserByOrganizationIdAndUsername(organizationId, username)
 
     /**
      * Load all users from DB and refresh the Hash cache (including active=false, equivalent to the legacy UserByIdCache full load).

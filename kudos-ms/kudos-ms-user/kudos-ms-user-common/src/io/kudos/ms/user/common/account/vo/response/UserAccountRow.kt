@@ -90,4 +90,7 @@ data class UserAccountRow (
     /** Update time */
     val updateTime: LocalDateTime? = null,
 
+    /** Owning customer root organization. */
+    val organizationId: String? = null,
+
 ) : IIdEntity<String>

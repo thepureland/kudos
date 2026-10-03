@@ -24,18 +24,19 @@ open class AuthenticationLifecycleService(
         userId: String,
         reason: String,
     ): AuthenticationInvalidationResult {
-        require(tenantId.isNotBlank()) { "Tenant id must not be blank" }
         require(userId.isNotBlank()) { "User id must not be blank" }
         val sanitizedReason = reason.trim().take(MAX_REASON_LENGTH)
         require(sanitizedReason.isNotEmpty()) { "Authentication invalidation reason must not be blank" }
 
         // Bump first: even if a later store operation fails, access-token freshness and refresh rotation fail closed.
         val tokenEpoch = permissionVersionApi.revokeAllTokens(userId, sanitizedReason)
-        val sessions = sessionService.listForUser(tenantId, userId)
+        val sessions = (sessionService.listForPrincipal(userId) +
+            if (tenantId.isNotBlank()) sessionService.listForUser(tenantId, userId) else emptyList()).distinctBy { it.id }
         val revokedRefreshTokens = sessions.sumOf {
             refreshTokenService.revokeBySession(it.id, sanitizedReason)
         }
-        val revokedSessions = sessionService.revokeAllForUser(tenantId, userId, sanitizedReason)
+        val revokedSessions = (sessionService.revokeAllForPrincipal(userId, sanitizedReason) +
+            (if (tenantId.isNotBlank()) sessionService.revokeAllForUser(tenantId, userId, sanitizedReason) else emptyList())).distinctBy { it.id }
         return AuthenticationInvalidationResult(
             tokenEpoch = tokenEpoch,
             revokedSessionCount = revokedSessions.size,

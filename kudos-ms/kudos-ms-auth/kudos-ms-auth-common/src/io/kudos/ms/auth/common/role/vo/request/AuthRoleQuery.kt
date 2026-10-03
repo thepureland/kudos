@@ -39,6 +39,7 @@ data class AuthRoleQuery (
     /** Whether the role is built-in. */
     val builtIn: Boolean? = null,
 
+    val organizationId: String? = null,
 ) : ListSearchPayload() {
 
     override fun getReturnEntityClass() = AuthRoleRow::class

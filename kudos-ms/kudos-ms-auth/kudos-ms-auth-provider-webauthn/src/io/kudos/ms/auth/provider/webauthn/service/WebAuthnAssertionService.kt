@@ -35,6 +35,8 @@ import java.security.SecureRandom
 import java.time.Clock
 import java.util.Base64
 import java.util.Optional
+import io.kudos.ms.auth.core.authentication.credential.service.impl.CredentialOwnerResolver
+import org.springframework.beans.factory.annotation.Autowired
 
 /** Orchestrates known-user and username-less WebAuthn authentication ceremonies. */
 @Service
@@ -59,7 +61,7 @@ open class WebAuthnAssertionService(
         requireScope(tenantId, userId, bindingId)
         val configuration = providerConfiguration.validated()
         val account = userId?.let { activeAccount(it, tenantId) }
-        val userHandle = userId?.let { WebAuthnUserHandles.derive(tenantId, it) }
+        val userHandle = userId?.let { WebAuthnUserHandles.derive(handleOwner(tenantId, it), it) }
         val repository = repository(tenantId, account, userHandle)
         val options = StartAssertionOptions.builder()
             .userVerification(configuration.userVerification)
@@ -117,7 +119,7 @@ open class WebAuthnAssertionService(
             fail("WEBAUTHN_CEREMONY_INVALID")
         }
         val knownAccount = state.userId?.let { activeAccount(it, tenantId) }
-        val knownUserHandle = state.userId?.let { WebAuthnUserHandles.derive(tenantId, it) }
+        val knownUserHandle = state.userId?.let { WebAuthnUserHandles.derive(handleOwner(tenantId, it), it) }
         validateRequestSubject(request, knownAccount, knownUserHandle)
         val repository = repository(tenantId, knownAccount, knownUserHandle)
         val verified = runCatching {
@@ -194,6 +196,7 @@ open class WebAuthnAssertionService(
         knownCredentialIds = account?.let {
             credentialService.listActive(tenantId, it.id).map { summary -> summary.credentialId }.toSet()
         } ?: emptySet(),
+        accountServes = { serves(tenantId, it) },
     )
 
     private fun validateRequestSubject(
@@ -228,8 +231,17 @@ open class WebAuthnAssertionService(
 
     private fun activeAccount(userId: String, tenantId: String): UserAccount =
         userAccountService.get(userId)
-            ?.takeIf { it.tenantId == tenantId && it.active }
+            ?.takeIf { serves(tenantId, it) && it.active }
             ?: fail("WEBAUTHN_ACCOUNT_NOT_FOUND")
+
+    @Autowired(required = false)
+    private var owners: CredentialOwnerResolver? = null
+
+    /** Organization accounts derive one user handle for every tenant of their organization. */
+    private fun handleOwner(tenantId: String, userId: String): String = owners?.ownerOf(tenantId, userId) ?: tenantId
+
+    private fun serves(tenantId: String, account: UserAccount): Boolean =
+        owners?.accountServes(tenantId, account.id) ?: (account.tenantId == tenantId)
 
     private fun relyingParty(
         configuration: ValidatedWebAuthnProviderConfiguration,

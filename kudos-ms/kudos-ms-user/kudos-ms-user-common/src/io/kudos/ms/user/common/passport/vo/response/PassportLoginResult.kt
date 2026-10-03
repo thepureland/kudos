@@ -116,5 +116,12 @@ data class PassportLoginResult(
                 status = PassportLoginStatusEnum.INVALID_CREDENTIALS,
                 message = "Invalid username or password",
             )
+
+        /** Organization mode: valid credentials, but no access to the requested tenant. */
+        fun tenantAccessDenied(): PassportLoginResult =
+            PassportLoginResult(
+                status = PassportLoginStatusEnum.TENANT_ACCESS_DENIED,
+                message = "No access to this tenant",
+            )
     }
 }

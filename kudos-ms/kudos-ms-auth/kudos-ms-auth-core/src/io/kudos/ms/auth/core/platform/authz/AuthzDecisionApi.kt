@@ -21,6 +21,11 @@ import jakarta.annotation.Resource
 import org.springframework.context.annotation.Primary
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import io.kudos.ms.auth.core.organization.service.OrganizationAuthorizationResolver
+import io.kudos.ms.auth.core.organization.service.OrganizationRequestTarget
+import io.kudos.ms.auth.core.organization.service.OrganizationRequestTargetResolver
+import io.kudos.ms.sys.core.organization.OrganizationMode
+import org.springframework.beans.factory.annotation.Autowired
 
 
 /**
@@ -71,6 +76,16 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
     @Resource
     private lateinit var principalDirectoryRegistry: PrincipalDirectoryRegistry
 
+    /** Organization-mode decisions; absent in pure unit tests. */
+    @Autowired(required = false)
+    private var organizationTargets: OrganizationRequestTargetResolver? = null
+
+    @Autowired(required = false)
+    private var organizationAuthorization: OrganizationAuthorizationResolver? = null
+
+    @Autowired(required = false)
+    private var organizationMode: OrganizationMode? = null
+
     private val log = LogFactory.getLog(this::class)
 
     @Transactional(readOnly = true)
@@ -94,15 +109,40 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
             )
         }
 
+        // 1b. Organization mode: an organization account is judged in the scope its session works in.
+        organizationTargetOf(request.subject)?.let { return decideForOrganization(request, it) }
+        if (isOrganizationAccount(request.subject)) {
+            return AuthzDecision.deny(
+                AuthzDecision.Reason.DENIED_BY_DEFAULT,
+                code = request.permissionCode,
+                detail = "an organization account is authorized only within its current organization scope",
+            )
+        }
+
+        // The directory lookup behind the instance-grant tenant bound runs only when the request names an instance.
+        return evaluate(request, resolveGrants(request.subject)) { instanceTenantOf(request.subject) }
+    }
+
+    /**
+     * Steps 2–4 of the algebra over [grants]; [instanceTenant] supplies the tenant that bounds the
+     * instance grants that may join. It is invoked only when the request names an instance, so the
+     * legacy path pays no directory lookup for ordinary decisions.
+     */
+    private fun evaluate(
+        request: AuthzRequest,
+        grants: List<PermissionGrantVo>,
+        context: Map<String, Any?> = request.context,
+        instanceTenant: () -> String?,
+    ): AuthzDecision {
         // 2. Collect, then 3. drop bindings whose condition does not hold in this context. A
         //    condition judged false makes the binding *absent*, not denying; one that cannot be
         //    judged at all is asymmetric by effect — see applies() below.
-        val applicable = resolveGrants(request.subject)
-            .filter { it.applies(request.context) }
+        val applicable = grants
+            .filter { it.applies(context) }
             .filter { PermissionCodes.matches(it.permissionCode, request.permissionCode) }
 
         // Instance-level grants join the same collection when the question names a particular thing.
-        val instanceGrants = collectInstanceGrants(request)
+        val instanceGrants = collectInstanceGrants(request, instanceTenant)
 
         // 4. DENY wins, then ALLOW, then default deny. Instance grants are merged by the same rule
         //    rather than layered on top: a share that could override a DENY would make "revoke this
@@ -172,6 +212,15 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
 
     @Transactional(readOnly = true)
     override fun permissionCodes(subject: SubjectRef, context: Map<String, Any?>): Set<String> {
+        organizationTargetOf(subject)?.let { target ->
+            val resolver = requireNotNull(organizationAuthorization)
+            val authorization = resolver.resolve(target)
+            // Administrators and the organization scope hold rule-shaped permissions (management codes,
+            // entitled resources) rather than role bindings; their code set is listed as such.
+            if (authorization.allowed && (target is OrganizationRequestTarget.Organization || authorization.organizationAdmin)) {
+                return resolver.permissionCodesForAdministration(authorization)
+            }
+        }
         val applicable = resolveGrants(subject).filter { it.applies(context) }
         val denied = applicable.filter { it.effect == PermissionEffect.DENY }.map { it.permissionCode }
         return applicable.asSequence()
@@ -183,9 +232,64 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
             .toSet()
     }
 
+    /** The legacy subject's own tenant, for bounding instance grants. */
+    private fun instanceTenantOf(subject: SubjectRef): String? =
+        principalDirectoryRegistry.find(subject.principalId, subject.principalType)?.tenantId
+
+    /** The current organization request target when it belongs to [subject]. */
+    private fun organizationTargetOf(subject: SubjectRef): OrganizationRequestTarget? =
+        if (subject.principalType != SUBJECT_TYPE_USER) null else organizationTargets?.forUser(subject.principalId)
+
+    private fun isOrganizationAccount(subject: SubjectRef): Boolean =
+        organizationMode?.enabled == true &&
+            !principalDirectoryRegistry.find(subject.principalId, subject.principalType)?.organizationId.isNullOrBlank()
+
+    /**
+     * Organization mode (G-4, G-6, G-9). Tenant scope: the account must be able to enter the tenant now;
+     * an organization administrator then holds every entitled function, anybody else exactly the grants
+     * of their effective roles there, under the same DENY-first algebra. Organization scope: management
+     * permissions only, for administrators and management role holders.
+     */
+    private fun decideForOrganization(request: AuthzRequest, target: OrganizationRequestTarget): AuthzDecision {
+        val resolver = requireNotNull(organizationAuthorization)
+        val authorization = resolver.resolve(target)
+        val code = request.permissionCode
+        if (!authorization.allowed) {
+            return AuthzDecision.deny(AuthzDecision.Reason.DENIED_BY_DEFAULT, code = code, detail = "organization: ${authorization.denial}")
+        }
+        if (target is OrganizationRequestTarget.Organization) {
+            return if (resolver.isManagementCode(code)) {
+                AuthzDecision.permit(AuthzDecision.Reason.ALLOWED_BY_ORGANIZATION_MANAGEMENT, code = code, detail = "rank ${authorization.rank}")
+            } else {
+                AuthzDecision.deny(AuthzDecision.Reason.DENIED_BY_DEFAULT, code = code, detail = "the organization scope holds management permissions only")
+            }
+        }
+        val tenant = target as OrganizationRequestTarget.Tenant
+        if (authorization.organizationAdmin) {
+            return if (resolver.permitsForOrganizationAdmin(tenant.tenantId, code)) {
+                AuthzDecision.permit(AuthzDecision.Reason.ORGANIZATION_ADMIN, code = code, detail = "organization administrator in ${tenant.tenantId}")
+            } else {
+                AuthzDecision.deny(AuthzDecision.Reason.DENIED_BY_DEFAULT, code = code, detail = "outside the tenant's subscribed sub-systems")
+            }
+        }
+        val context = request.context + mapOf(
+            "organizationId" to tenant.organizationId,
+            "tenantId" to tenant.tenantId,
+            "subSystemCode" to tenant.subSystemCode,
+        )
+        return evaluate(request, authorization.grants, context) { tenant.tenantId }
+    }
+
     @Transactional(readOnly = true)
-    override fun resolveGrants(subject: SubjectRef): List<PermissionGrantVo> =
-        permissionGrantsByUserIdCache.getGrants(subject.principalId)
+    override fun resolveGrants(subject: SubjectRef): List<PermissionGrantVo> {
+        // An organization account's grants exist only per tenant: those of its current tenant, or none.
+        organizationTargetOf(subject)?.let { target ->
+            val authorization = requireNotNull(organizationAuthorization).resolve(target)
+            return if (authorization.allowed) authorization.grants else emptyList()
+        }
+        if (isOrganizationAccount(subject)) return emptyList()
+        return permissionGrantsByUserIdCache.getGrants(subject.principalId)
+    }
 
     /**
      * The subject's grants on the particular instance the request names, matched by the same
@@ -197,16 +301,15 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
      * keeping every share of every principal in memory, which trades a bounded per-request read for
      * an unbounded resident set. Requests that do not name an instance never take this branch.
      */
-    private fun collectInstanceGrants(request: AuthzRequest): List<AuthInstanceGrant> {
+    private fun collectInstanceGrants(request: AuthzRequest, subjectTenantOf: () -> String?): List<AuthInstanceGrant> {
         val resourceType = request.resourceType?.takeIf { it.isNotBlank() } ?: return emptyList()
         val instanceId = request.instanceId?.takeIf { it.isNotBlank() } ?: return emptyList()
-        // The subject's real tenant, so a grant row cannot reach across the boundary even if one
-        // was written before the share path validated it (or straight into the database). Defence in
-        // depth: the write path is where this is properly enforced, but the tenant boundary is the
-        // one invariant worth checking on both sides.
-        val subjectTenant = principalDirectoryRegistry
-            .find(request.subject.principalId, request.subject.principalType)
-            ?.tenantId
+        val subjectTenant = subjectTenantOf()
+        // The subject's real tenant (for an organization account: the tenant it works in now), so a
+        // grant row cannot reach across the boundary even if one was written before the share path
+        // validated it (or straight into the database). Defence in depth: the write path is where
+        // this is properly enforced, but the tenant boundary is the one invariant worth checking on
+        // both sides.
         return authInstanceGrantDao
             .searchLiveGrants(request.subject.principalId, resourceType, instanceId)
             .filter { subjectTenant.isNullOrBlank() || it.tenantId == subjectTenant }
@@ -238,5 +341,9 @@ open class AuthzDecisionApi : IAuthzDecisionApi {
             )
             denies
         }
+    }
+
+    private companion object {
+        const val SUBJECT_TYPE_USER = "USER"
     }
 }

@@ -25,6 +25,12 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import org.ktorm.entity.Entity
+import io.kudos.base.model.payload.ListSearchPayload
+import io.kudos.base.query.PagingSearchResult
+import io.kudos.ms.auth.common.group.vo.request.AuthGroupQuery
+import io.kudos.ms.auth.core.policy.AdministrationOwner
+import kotlin.reflect.KClass
 
 
 /**
@@ -61,11 +67,62 @@ open class AuthGroupService(
 
     private val log = LogFactory.getLog(this::class)
 
+    /**
+     * Organization principals read their own organization's groups only; everybody else reads exactly
+     * as before.
+     */
+    @Transactional(readOnly = true)
+    override fun get(id: String): AuthGroup? {
+        val organizationId = tenantAdministrationGuard.callerOrganization() ?: return super.get(id)
+        return super.get(id)?.also { requireOwnRow(it.tenantId, organizationId) }
+    }
+
+    @Transactional(readOnly = true)
+    override fun <R : Any> get(id: String, returnType: KClass<R>): R? {
+        val organizationId = tenantAdministrationGuard.callerOrganization() ?: return super.get(id, returnType)
+        val row = dao.get(id) ?: return null
+        requireOwnRow(row.tenantId, organizationId)
+        return super.get(id, returnType)
+    }
+
+    private fun requireOwnRow(ownerId: String, organizationId: String) =
+        require(ownerId == organizationId) { "cross-organization authorization administration is forbidden." }
+
+    /**
+     * Organization principals list their own organization's groups only (organization groups keep
+     * the organization id as their owner); everybody else lists exactly as before.
+     */
+    @Transactional(readOnly = true)
+    override fun pagingSearch(listSearchPayload: ListSearchPayload): PagingSearchResult<*> {
+        val organizationId = tenantAdministrationGuard.callerOrganization() ?: return super.pagingSearch(listSearchPayload)
+        require(listSearchPayload is AuthGroupQuery) { "An organization-scoped group query is required" }
+        require(listSearchPayload.organizationId.isNullOrBlank() || listSearchPayload.organizationId == organizationId) {
+            "cross-organization authorization administration is forbidden."
+        }
+        val scoped = listSearchPayload.copy(organizationId = organizationId, tenantId = organizationId).apply {
+            pageNo = listSearchPayload.pageNo
+            pageSize = listSearchPayload.pageSize
+            orders = listSearchPayload.orders
+        }
+        return super.pagingSearch(scoped)
+    }
+
     @Transactional
     override fun insert(any: Any): String {
-        val tenantId = BeanKit.getProperty(any, AuthGroup::tenantId.name) as String?
-        tenantAdministrationGuard.assertCanManage(requireNotNull(tenantId) { "group tenantId is required." })
-        val id = super.insert(any)
+        val requestedTenant = BeanKit.getProperty(any, AuthGroup::tenantId.name) as String?
+        val requestedOrganization = BeanKit.getProperty(any, AuthGroup::organizationId.name) as String?
+        val owner = if (tenantAdministrationGuard.requestsOrganizationOwner(requestedTenant, requestedOrganization)) {
+            tenantAdministrationGuard.resolveOwner(requestedTenant, requestedOrganization)
+        } else AdministrationOwner(requestedTenant, null)
+        tenantAdministrationGuard.assertCanManage(requireNotNull(owner.ownerId) { "group tenantId is required." })
+        // Organization groups carry their owner in both columns; legacy inserts go through untouched.
+        val id = if (owner.organizationId == null) super.insert(any) else super.insert(
+            Entity.create<AuthGroup>().also {
+                BeanKit.copyProperties(any, it)
+                it.tenantId = owner.organizationId
+                it.organizationId = owner.organizationId
+            },
+        )
         log.debug("Inserted user group with id ${id}.")
         eventPublisher.publishEvent(AuthGroupInserted(id))
         return id
@@ -85,7 +142,19 @@ open class AuthGroupService(
         require(requestedSubsys == null || requestedSubsys == existing.subsysCode) {
             "group subsysCode is immutable (stored=${existing.subsysCode}, requested=$requestedSubsys)."
         }
-        val success = super.update(any)
+        // The generic update copies every form property, nulls included: an organization group keeps its owner columns.
+        // Ownership is decided at creation: a tenant-owned row never becomes an organization row.
+        val requestedOrganization = BeanKit.getProperty(any, AuthGroup::organizationId.name) as String?
+        require(requestedOrganization.isNullOrBlank() || requestedOrganization == existing.organizationId) {
+            "organizationId is immutable (stored=${existing.organizationId}, requested=$requestedOrganization)."
+        }
+        val success = if (existing.organizationId == null) super.update(any) else super.update(
+            Entity.create<AuthGroup>().also {
+                BeanKit.copyProperties(any, it)
+                it.tenantId = existing.tenantId
+                it.organizationId = existing.organizationId
+            },
+        )
         if (success) {
             log.debug("Updated user group with id ${id}.")
             eventPublisher.publishEvent(AuthGroupUpdated(id))

@@ -115,6 +115,9 @@ data class UserAccountCacheEntry (
     /** Update time */
     val updateTime: LocalDateTime?,
 
+    /** Owning customer root organization. */
+    val organizationId: String? = null,
+
 ) : IIdEntity<String>, Serializable {
 
     companion object {

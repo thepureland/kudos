@@ -15,6 +15,9 @@ import org.ktorm.schema.varchar
  */
 object UserOrgs : ManagedTable<UserOrg>("user_org") {
 
+    var organizationId = varchar("organization_id").bindTo { it.organizationId }
+    var nodeKind = varchar("node_kind").bindTo { it.nodeKind }
+
     /** Organization name. */
     var name = varchar("name").bindTo { it.name }
 

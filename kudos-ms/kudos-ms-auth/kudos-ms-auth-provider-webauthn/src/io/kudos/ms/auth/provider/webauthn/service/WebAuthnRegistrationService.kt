@@ -36,6 +36,8 @@ import org.springframework.stereotype.Service
 import java.security.SecureRandom
 import java.time.Clock
 import java.util.Base64
+import io.kudos.ms.auth.core.authentication.credential.service.impl.CredentialOwnerResolver
+import org.springframework.beans.factory.annotation.Autowired
 
 /** Orchestrates registration while keeping browser data behind the protocol-verification boundary. */
 @Service
@@ -54,7 +56,7 @@ open class WebAuthnRegistrationService(
     open fun begin(userId: String, tenantId: String): WebAuthnRegistrationStart {
         val configuration = providerConfiguration.validated()
         val account = activeAccount(userId, tenantId)
-        val userHandle = WebAuthnUserHandles.derive(tenantId, userId)
+        val userHandle = WebAuthnUserHandles.derive(handleOwner(tenantId, userId), userId)
         val repository = TenantWebAuthnCredentialRepository(
             tenantId = tenantId,
             credentialService = credentialService,
@@ -62,6 +64,7 @@ open class WebAuthnRegistrationService(
             knownUsername = account.username,
             knownUserHandle = userHandle,
             knownCredentialIds = credentialService.listActive(tenantId, userId).map { it.credentialId }.toSet(),
+            accountServes = { serves(tenantId, it) },
         )
         val relyingParty = relyingParty(configuration, repository, requiresDirectAttestation(tenantId))
         val request = relyingParty.startRegistration(
@@ -119,7 +122,7 @@ open class WebAuthnRegistrationService(
             ?: fail("WEBAUTHN_CEREMONY_INVALID")
         val configuration = providerConfiguration.validated()
         val account = activeAccount(userId, tenantId)
-        val userHandle = WebAuthnUserHandles.derive(tenantId, userId)
+        val userHandle = WebAuthnUserHandles.derive(handleOwner(tenantId, userId), userId)
         val request = runCatching { PublicKeyCredentialCreationOptions.fromJson(state.requestJson) }
             .getOrElse { fail("WEBAUTHN_CEREMONY_INVALID", it) }
         if (request.rp.id != configuration.rpId || request.user.id != userHandle) {
@@ -132,6 +135,7 @@ open class WebAuthnRegistrationService(
             knownUsername = account.username,
             knownUserHandle = userHandle,
             knownCredentialIds = credentialService.listActive(tenantId, userId).map { it.credentialId }.toSet(),
+            accountServes = { serves(tenantId, it) },
         )
         val verified = runCatching {
             registrationVerifier.verify(
@@ -198,8 +202,17 @@ open class WebAuthnRegistrationService(
 
     private fun activeAccount(userId: String, tenantId: String): UserAccount =
         userAccountService.get(userId)
-            ?.takeIf { it.tenantId == tenantId && it.active }
+            ?.takeIf { serves(tenantId, it) && it.active }
             ?: fail("WEBAUTHN_ACCOUNT_NOT_FOUND")
+
+    @Autowired(required = false)
+    private var owners: CredentialOwnerResolver? = null
+
+    /** Organization accounts derive one user handle for every tenant of their organization. */
+    private fun handleOwner(tenantId: String, userId: String): String = owners?.ownerOf(tenantId, userId) ?: tenantId
+
+    private fun serves(tenantId: String, account: UserAccount): Boolean =
+        owners?.accountServes(tenantId, account.id) ?: (account.tenantId == tenantId)
 
     private fun requiresDirectAttestation(tenantId: String): Boolean = try {
         attestationPolicyService?.getEffective(tenantId)?.let { policy ->

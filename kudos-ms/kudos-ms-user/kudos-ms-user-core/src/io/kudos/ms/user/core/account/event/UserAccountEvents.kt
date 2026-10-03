@@ -31,6 +31,8 @@ data class UserAuthenticationInvalidated(
     override val id: String,
     val tenantId: String,
     val reason: Reason,
+    /** Owning organization of an organization account; its sessions span all of that organization's tenants. */
+    val organizationId: String? = null,
 ) : UserAccountEvent {
     enum class Reason {
         LOGIN_PASSWORD_CHANGED,
@@ -46,10 +48,12 @@ data class UserAccountDeleted(
     override val id: String,
     val tenantId: String,
     val username: String,
+    /** Owning organization of an organization account. */
+    val organizationId: String? = null,
 ) : UserAccountEvent
 
 data class UserAccountBatchDeleted(val items: Collection<Item>) : UserAccountEvent {
-    data class Item(val id: String, val tenantId: String, val username: String)
+    data class Item(val id: String, val tenantId: String, val username: String, val organizationId: String? = null)
 
     override val id: String get() = items.first().id
 

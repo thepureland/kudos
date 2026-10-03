@@ -63,4 +63,9 @@ data class UserOrgTreeRow (
     /** Child organization list */
     var children: MutableList<UserOrgTreeRow>? = null,
 
+    /** Owning customer root organization. */
+    val organizationId: String? = null,
+
+    val nodeKind: String? = null,
+
 ) : IIdEntity<String>

@@ -10,6 +10,7 @@ import io.kudos.ms.user.core.account.security.IPasswordHistory
 import io.kudos.ms.user.core.account.security.PasswordPolicyContext
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import org.springframework.beans.factory.annotation.Autowired
 
 /**
  * Makes `auth_credential` the login password's home, through the port the User domain exposes.
@@ -99,8 +100,17 @@ open class AuthAccountCredentialStore(
         }
     }
 
+    /**
+     * An organization account's context carries its own (empty) tenant; the credential service files
+     * its credentials under the organization, so only a legacy account needs a tenant here.
+     */
     private fun PasswordPolicyContext.tenantIdOrFail(): String =
-        tenantId?.takeIf { it.isNotBlank() } ?: error("A credential operation requires a tenant")
+        tenantId?.takeIf { it.isNotBlank() }
+            ?: owners?.ownerOf(tenantId, userIdOrFail())?.takeIf { it.isNotBlank() }
+            ?: error("A credential operation requires a tenant")
+
+    @Autowired(required = false)
+    private var owners: CredentialOwnerResolver? = null
 
     private fun PasswordPolicyContext.userIdOrFail(): String =
         userId?.takeIf { it.isNotBlank() } ?: error("A credential operation requires a user")

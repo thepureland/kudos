@@ -19,6 +19,7 @@ interface IAuthRoleFormBase {
 
     /** Tenant id. */
     val tenantId: String?
+    val organizationId: String? get() = null
 
     /** Subsystem code. */
     val subsysCode: String?

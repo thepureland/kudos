@@ -33,11 +33,30 @@ open class AuthenticationSessionWebFilter(
             val authSession = sessionService.touch(authSessionId)
             if (principal != null &&
                 authSession?.userId == principal.id &&
-                authSession.tenantId == principal.tenantId
+                authSession.tenantId == principal.tenantId &&
+                authSession.organizationId == principal.organizationId &&
+                authSession.subSystemCode == principal.subSystemCode
             ) {
+                // A page loaded before a context switch must not submit into the new context.
+                val expectedContext = request.getHeader(CONTEXT_VERSION_HEADER)
+                if (expectedContext != null && expectedContext != authSession.id) {
+                    response.status = HttpServletResponse.SC_CONFLICT
+                    response.contentType = "application/json;charset=UTF-8"
+                    response.writer.write("""{"code":"AUTHENTICATION_CONTEXT_CHANGED","message":"The session context changed; reload before submitting"}""")
+                    return
+                }
                 request.setAttribute(AuthenticationSession.REQUEST_ATTRIBUTE, authSession)
                 request.setAttribute(SessionUserPrincipal.VALIDATED_REQUEST_ATTRIBUTE, principal)
                 KudosContextHolder.get().user = principal
+                // Organization sessions work in the session's tenant (none in the organization scope) and
+                // sub-system; legacy sessions keep the context exactly as before.
+                if (authSession.organizationId != null) {
+                    KudosContextHolder.get().apply {
+                        tenantId = authSession.tenantId
+                        _datasourceTenantId = authSession.tenantId.takeIf(String::isNotBlank)
+                        subSystemCode = authSession.subSystemCode
+                    }
+                }
             } else {
                 // This makes registry revocation authoritative even before a distributed servlet-session
                 // repository physically deletes the remote session entry.
@@ -52,5 +71,10 @@ open class AuthenticationSessionWebFilter(
             KudosContextHolder.getOrNull()?.user = null
         }
         filterChain.doFilter(request, response)
+    }
+
+    companion object {
+        /** Sent by the console with the session id it rendered for; a mismatch means a stale page. */
+        const val CONTEXT_VERSION_HEADER = "X-Kudos-Context-Version"
     }
 }
